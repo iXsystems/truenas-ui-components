@@ -31,12 +31,18 @@
  * `axe-testing.ts`'s own docblock is about. Add a step when a spec needs it, with
  * the spec.
  *
- * WHY A DANGLING REFERENCE IS `null` AND NOT `''`
- * -----------------------------------------------
- * `aria-labelledby="nope"` resolves to no text, so the element is unnamed —
- * which is the same outcome as having no naming attribute at all, and the
- * assertion should be the same. It matters because axe cannot report it: a
- * dangling IDREF lands in `incomplete`, not `violations` (see `axeScan`'s
+ * A DANGLING REFERENCE IS NOT AN ANSWER, IT IS A STEP THAT PRODUCED NOTHING
+ * -------------------------------------------------------------------------
+ * `aria-labelledby="nope"` resolves to no text, and accname says a step that
+ * yields the empty string does not end the computation — so the next step runs
+ * and an `aria-label` beside it is what the element is announced as. That is
+ * what a browser does, and reporting `null` there would have this function
+ * disagree with every screen reader on markup that works.
+ *
+ * With nothing after it to fall through to, the element really is unnamed and
+ * the result is `null` — not `''`, so that a dangling reference and a missing
+ * attribute assert identically. That case matters because axe cannot report it:
+ * a dangling IDREF lands in `incomplete`, not `violations` (see `axeScan`'s
  * docblock), so this function is the only thing in a spec that catches it.
  *
  * Not exported from `public-api.ts`, and must not be — the same rule as
@@ -59,12 +65,14 @@ function nativeLabel(el: HTMLElement): string | null {
   if (!LABELABLE.includes(el.tagName.toLowerCase())) {
     return null;
   }
-  // `labels` is the DOM's own answer and covers both forms at once, but it is
-  // only on labelable elements and jsdom leaves it null on some of them — so the
-  // two lookups are done by hand rather than trusted to be there.
+  // The explicit label is found by comparing `for` rather than by building a
+  // `label[for="…"]` selector, which would need `CSS.escape` for an id
+  // containing a `.` or a `:` — and `CSS` is simply not defined under jsdom, so
+  // that form throws `ReferenceError` on the ids it exists to handle.
   const id = el.getAttribute('id');
   const explicit = id !== null && id !== ''
-    ? el.ownerDocument.querySelector(`label[for="${CSS.escape(id)}"]`)
+    ? Array.from(el.ownerDocument.querySelectorAll('label[for]'))
+      .find((label) => label.getAttribute('for') === id) ?? null
     : null;
   const wrapping = el.closest('label');
   const text = (explicit ?? wrapping)?.textContent?.trim() ?? '';
@@ -82,15 +90,17 @@ function nativeLabel(el: HTMLElement): string | null {
 export function accessibleName(el: HTMLElement): string | null {
   const labelledby = attr(el, 'aria-labelledby');
   if (labelledby !== null) {
-    // Every id in the list, in order, skipping the ones that resolve to nothing
-    // — which is what makes a wholly dangling reference come back unnamed rather
-    // than named by the empty string.
+    // Every id in the list, in order, skipping the ones that resolve to nothing.
     const text = labelledby
       .split(/\s+/)
       .map((id) => el.ownerDocument.getElementById(id)?.textContent?.trim() ?? '')
       .filter((part) => part !== '')
       .join(' ');
-    return text !== '' ? text : null;
+    // A step that produced nothing does not end the computation — fall through
+    // to `aria-label`, which is what a browser announces here. See the docblock.
+    if (text !== '') {
+      return text;
+    }
   }
 
   return attr(el, 'aria-label') ?? nativeLabel(el);

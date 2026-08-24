@@ -39,7 +39,7 @@ class WrappedHostComponent {
   selector: 'tn-standalone-list-host',
   standalone: true,
   imports: [TnSelectionListComponent, TnListOptionComponent],
-  template: `<tn-selection-list [ariaLabel]="label()">
+  template: `<tn-selection-list [aria-label]="label()">
     <tn-list-option value="inbox">Inbox</tn-list-option></tn-selection-list>`
 })
 class StandaloneHostComponent {
@@ -98,6 +98,29 @@ describe('tn-selection-list accessible name (#235)', () => {
 
       expect(violated).toEqual([]);
       expect(evaluated).toContain('aria-input-field-name');
+    });
+
+    /**
+     * A blank `aria-label` must not take the field's label away with it.
+     * `injectTnFormFieldAria` suppresses the field whenever the explicit name is
+     * TRUTHY, and `'   '` is truthy — so a list handing it the raw input ends up
+     * with no `aria-label` (blank, dropped) and no `aria-labelledby`
+     * (suppressed), which is worse than either half alone.
+     */
+    it('still takes the field label when the explicit one is blank', () => {
+      @Component({
+        selector: 'tn-blank-in-field-list-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSelectionListComponent, TnListOptionComponent],
+        template: `<tn-form-field label="Mailboxes"><tn-selection-list aria-label="   ">
+          <tn-list-option value="inbox">Inbox</tn-list-option></tn-selection-list></tn-form-field>`
+      })
+      class BlankInFieldHostComponent {}
+
+      const blank = TestBed.createComponent(BlankInFieldHostComponent);
+      blank.detectChanges();
+
+      expect(accessibleName(list(blank))).toBe('Mailboxes');
     });
   });
 
@@ -177,7 +200,7 @@ describe('tn-selection-list accessible name (#235)', () => {
         standalone: true,
         imports: [TnSelectionListComponent, TnListOptionComponent],
         template: `<h2 id="mailboxes-heading">Mailboxes</h2><tn-selection-list
-          ariaLabel="Folders" ariaLabelledby="mailboxes-heading"><tn-list-option
+          aria-label="Folders" aria-labelledby="mailboxes-heading"><tn-list-option
           value="inbox">Inbox</tn-list-option></tn-selection-list>`
       })
       class BothNamesHostComponent {}
@@ -194,7 +217,7 @@ describe('tn-selection-list accessible name (#235)', () => {
         selector: 'tn-dangling-name-host',
         standalone: true,
         imports: [TnSelectionListComponent, TnListOptionComponent],
-        template: `<tn-selection-list ariaLabel="Folders" ariaLabelledby="not-here">
+        template: `<tn-selection-list aria-label="Folders" aria-labelledby="not-here">
           <tn-list-option value="inbox">Inbox</tn-list-option></tn-selection-list>`
       })
       class DanglingNameHostComponent {}
@@ -202,20 +225,23 @@ describe('tn-selection-list accessible name (#235)', () => {
       const fixture = TestBed.createComponent(DanglingNameHostComponent);
       fixture.detectChanges();
 
-      // `accessibleName` resolves the reference and finds nothing, so it reports
-      // the element as unnamed by that route; a real screen reader falls through
-      // to the `aria-label` that is still on the element, which is why emitting
-      // both is what keeps this markup usable rather than silent.
-      expect(list(fixture).getAttribute('aria-label')).toBe('Folders');
+      // The point of emitting both: a reference that resolves to nothing does
+      // not end the name computation, so the `aria-label` still on the element
+      // is what gets announced. Suppressing it beside a typo'd IDREF would
+      // leave the list silent in exactly the case where a name was supplied.
+      expect(accessibleName(list(fixture))).toBe('Folders');
     });
   });
 
   /**
-   * `ariaLabel="…"` as a static attribute, which is how a consumer names a list
-   * in a template and how `list.stories.ts` writes it. Unlike the slider's, this
-   * input is not aliased to an ARIA attribute name, so the leftover attribute
-   * Angular puts on the host is the inert `arialabel` rather than a second
-   * `aria-label` on an element with no role to carry it.
+   * `aria-label="…"` as a static attribute, which is how a consumer names a list
+   * in a template and how `list.stories.ts` writes it.
+   *
+   * This is the case the alias on the input exists for, and it is a REGRESSION
+   * test as much as a new one: the `role="listbox"` is on the host, so this
+   * markup named the list before the input existed, and the host binding added
+   * here rewrites that attribute on every pass. Without the alias the binding
+   * finds the input unset and strips the name.
    */
   describe('named by a static attribute, as a consumer writes it', () => {
     it('names the listbox and leaves nothing for axe', async () => {
@@ -223,7 +249,7 @@ describe('tn-selection-list accessible name (#235)', () => {
         selector: 'tn-static-label-list-host',
         standalone: true,
         imports: [TnSelectionListComponent, TnListOptionComponent],
-        template: `<tn-selection-list ariaLabel="Mailboxes">
+        template: `<tn-selection-list aria-label="Mailboxes">
           <tn-list-option value="inbox">Inbox</tn-list-option></tn-selection-list>`
       })
       class StaticLabelHostComponent {}

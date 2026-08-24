@@ -106,6 +106,29 @@ describe('tn-slider accessible name (#235)', () => {
       expect(violated).toEqual([]);
       expect(evaluated).toContain('label');
     });
+
+    /**
+     * A blank `aria-label` must not take the field's label away with it.
+     * `injectTnFormFieldAria` suppresses the field whenever the explicit name is
+     * TRUTHY, and `'   '` is truthy — so a slider handing it the raw input ends
+     * up with no `aria-label` (blank, dropped) and no `aria-labelledby`
+     * (suppressed), which is worse than either half alone.
+     */
+    it('still takes the field label when the explicit one is blank', () => {
+      @Component({
+        selector: 'tn-blank-in-field-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSliderComponent, TnSliderThumbDirective],
+        template: `<tn-form-field label="Speed Control"><tn-slider aria-label="   ">
+          <input tnSliderThumb value="50"></tn-slider></tn-form-field>`
+      })
+      class BlankInFieldHostComponent {}
+
+      const blank = TestBed.createComponent(BlankInFieldHostComponent);
+      blank.detectChanges();
+
+      expect(accessibleName(thumb(blank))).toBe('Speed Control');
+    });
   });
 
   describe('standalone', () => {

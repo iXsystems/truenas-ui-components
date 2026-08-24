@@ -69,11 +69,38 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * Explicit accessible name for the listbox. Inside a `tn-form-field` with a
    * label this is unnecessary — the field names the list automatically — but a
    * list with neither is announced as an unlabelled listbox.
+   *
+   * ALIASED to the attribute name, unlike the plain `ariaLabel` most controls in
+   * this library take, and the divergence is forced rather than chosen: this
+   * component's `role="listbox"` is on the HOST, so `<tn-selection-list
+   * aria-label="Mailboxes">` is valid markup that named the list before this
+   * input existed. The host binding below rewrites that attribute on every
+   * change-detection pass, so an unaliased input would silently STRIP a name
+   * that used to work. The alias makes the same markup set the input instead,
+   * and the binding writes it straight back.
    */
-  ariaLabel = input<string | undefined>(undefined);
+  ariaLabel = input<string | undefined>(undefined, { alias: 'aria-label' });
 
   /** Id of visible text naming the listbox. Wins over `ariaLabel` where it resolves. */
-  ariaLabelledby = input<string | undefined>(undefined);
+  ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
+
+  /**
+   * The `ariaLabel` input with a blank one normalised away.
+   *
+   * Blank is not a name: `aria-label=""` names the listbox as emptily as no
+   * attribute at all, while satisfying axe's `aria-input-field-name` rule — a
+   * green check on a control a screen reader announces as "listbox".
+   *
+   * `injectTnFormFieldAria` reads THIS rather than the raw input, and that is
+   * load-bearing: it suppresses the field's label whenever the explicit one is
+   * truthy, and `'   '` is truthy — so passing the raw input would leave a
+   * whitespace-only `aria-label` inside a labelled field with no name from
+   * either side. Declared before `fieldAria` because that call captures it.
+   */
+  private readonly explicitAriaLabel = computed(() => {
+    const label = this.ariaLabel();
+    return label !== undefined && label.trim() !== '' ? label : undefined;
+  });
 
   /**
    * ARIA wiring from an enclosing `tn-form-field`. Only `labelledby` is read:
@@ -81,20 +108,10 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * `describedby`/`invalid`/`required` are a separate question this list has
    * never answered either way.
    */
-  private readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+  private readonly fieldAria = injectTnFormFieldAria(this.explicitAriaLabel);
 
-  /**
-   * The `aria-label` to render, or `null` for none.
-   *
-   * Blank is `null` rather than passed through: `aria-label=""` names the
-   * listbox as emptily as no attribute at all, while satisfying axe's
-   * `aria-input-field-name` rule — a green check on a control a screen reader
-   * announces as "listbox".
-   */
-  protected readonly resolvedAriaLabel = computed(() => {
-    const label = this.ariaLabel();
-    return label !== undefined && label.trim() !== '' ? label : null;
-  });
+  /** The `aria-label` to render, or `null` for none. */
+  protected readonly resolvedAriaLabel = computed(() => this.explicitAriaLabel() ?? null);
 
   /**
    * The `aria-labelledby` to render, or `null` for none.

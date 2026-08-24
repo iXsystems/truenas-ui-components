@@ -75,25 +75,34 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
   ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
 
   /**
+   * The `ariaLabel` input with a blank one normalised away.
+   *
+   * Blank is not a name: `aria-label=""` names the input as emptily as no
+   * attribute at all, while satisfying axe's `label` rule — a green check on a
+   * control a screen reader announces as "slider" (#235). Same reasoning as
+   * `a11y/accessible-name.ts`, which the three progressbars share.
+   *
+   * `injectTnFormFieldAria` reads THIS rather than the raw input, and that is
+   * load-bearing: it suppresses the field's label whenever the explicit one is
+   * truthy, and `'   '` is truthy — so passing the raw input would leave a
+   * whitespace-only `aria-label` inside a labelled field with no name from
+   * either side. Declared before `fieldAria` because that call captures it.
+   */
+  private readonly explicitAriaLabel = computed(() => {
+    const label = this.ariaLabel();
+    return label !== undefined && label.trim() !== '' ? label : undefined;
+  });
+
+  /**
    * ARIA wiring from an enclosing `tn-form-field`. Only `labelledby` is read:
    * #235 is about the range input having no accessible name, and the field's
    * `describedby`/`invalid`/`required` are a separate question this slider has
    * never answered either way.
    */
-  private readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+  private readonly fieldAria = injectTnFormFieldAria(this.explicitAriaLabel);
 
-  /**
-   * The `aria-label` the thumb should render, or `null` for none.
-   *
-   * Blank is `null` rather than passed through: `aria-label=""` names the input
-   * as emptily as no attribute at all, while satisfying axe's `label` rule — a
-   * green check on a control a screen reader announces as "slider" (#235). Same
-   * reasoning as `a11y/accessible-name.ts`, which the three progressbars share.
-   */
-  readonly resolvedAriaLabel = computed(() => {
-    const label = this.ariaLabel();
-    return label !== undefined && label.trim() !== '' ? label : null;
-  });
+  /** The `aria-label` the thumb should render, or `null` for none. */
+  readonly resolvedAriaLabel = computed(() => this.explicitAriaLabel() ?? null);
 
   /**
    * The `aria-labelledby` the thumb should render, or `null` for none.
