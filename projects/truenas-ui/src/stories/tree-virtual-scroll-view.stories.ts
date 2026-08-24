@@ -179,7 +179,7 @@ export const StickyHeader: Story = {
     },
     template: `
       <div style="height: 420px; border: 1px solid var(--tn-lines); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column;">
-        <div style="overflow: hidden; border-bottom: 1px solid var(--tn-lines); background: var(--tn-alt-bg);">
+        <div style="overflow: hidden; border-bottom: 1px solid var(--tn-lines); background: var(--tn-alt-bg1);">
           <div
             style="display: flex; gap: 24px; padding: 8px 16px; width: 900px; font-weight: 600;"
             [style.transform]="'translateX(' + (-headerScrollLeft) + 'px)'"

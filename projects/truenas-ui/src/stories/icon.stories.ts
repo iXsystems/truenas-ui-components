@@ -390,9 +390,9 @@ export const SizesAndColors: Story = {
         <h4>Colors</h4>
         <div style="display: flex; align-items: center; gap: 16px;">
           <tn-icon name="server" library="mdi" size="lg" color="var(--tn-primary, #007acc)"></tn-icon>
-          <tn-icon name="server" library="mdi" size="lg" color="var(--success, #28a745)"></tn-icon>
-          <tn-icon name="server" library="mdi" size="lg" color="var(--warning, #ffc107)"></tn-icon>
-          <tn-icon name="server" library="mdi" size="lg" color="var(--danger, #dc3545)"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--tn-success, var(--tn-green, #416f26))"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--tn-warning, var(--tn-orange, #955313))"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--tn-error, var(--tn-red, #bd2626))"></tn-icon>
           <tn-icon name="server" library="mdi" size="lg" color="#9c27b0"></tn-icon>
         </div>
       </div>

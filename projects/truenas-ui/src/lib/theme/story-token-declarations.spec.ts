@@ -20,13 +20,14 @@ import { join, relative } from 'path';
  * mechanism, and after the first fix nothing stopped the second — which is what
  * this spec is for.
  *
- * KNOWN_PHANTOM_TOKENS records the ones still outstanding. It is deliberately
- * not an ignore list: every entry is asserted to still be referenced, so an
- * entry cannot outlive the defect it excuses — fixing a token turns this spec
- * red until its entry goes too. It does not stop the list GROWING: a new
- * phantom token added with a matching entry in the same commit passes here.
- * What it removes is doing that silently, since the entry is an edit to this
- * file and reads as what it is. The sweep that empties it is proposed on #268.
+ * KNOWN_PHANTOM_TOKENS records the ones still outstanding, and is now empty:
+ * #279 swept the ten it was seeded with. It is deliberately not an ignore
+ * list: every entry is asserted to still be referenced, so an entry cannot
+ * outlive the defect it excuses — fixing a token turns this spec red until its
+ * entry goes too. It does not stop the list GROWING: a new phantom token added
+ * with a matching entry in the same commit passes here. What it removes is
+ * doing that silently, since the entry is an edit to this file and reads as
+ * what it is.
  *
  * SCOPE. This reads `src/stories/` only — the demo markup, where a token is
  * typed into an inline `style` attribute with no stylesheet to check it
@@ -49,26 +50,22 @@ const THEMES_CSS = join(__dirname, '../../styles/themes.css');
  * with the count of references behind each. Every one renders its hardcoded
  * fallback in all nine palettes.
  *
- * These are #268's scope boundary: that ticket covers `--border-color` in
- * `icon.stories.ts`, and these are what the same scan turned up elsewhere.
- * Each wants a token chosen per site rather than a global rename —
- * `--success`/`--warning`/`--danger` are semantic status colours with
- * `--tn-green`/`--tn-yellow`/`--tn-red` and the `--tn-*-bg` pairs as
- * candidates, and `--fg1`/`--fg2`/`--lines`/`--tn-alt-bg` look like `--tn-`
- * prefixes dropped by hand. Proposed as a sweep on #268.
+ * Empty, and meant to stay that way. #268 seeded it with the ten the scan
+ * turned up outside that ticket's own `--border-color`, and #279 swept all
+ * ten: `--fg1`, `--fg2` and `--lines` were `--tn-` prefixes dropped by hand;
+ * `--tn-alt-bg` resolved to `--tn-alt-bg1`; `--success`, `--warning` and
+ * `--danger` to the semantic status tokens; and the two status callouts'
+ * surfaces, `--warning-bg` and `--success-bg`, to `--tn-alt-bg1`, which is
+ * what `tn-banner` paints behind a status heading and one of the three
+ * surfaces the status tokens are measured on — no palette declares a
+ * status-tinted background of its own. `--warning-fg`, the text of the
+ * callout `--warning-bg` filled, became `--tn-warning` alongside it, matching
+ * what `--success` already did in the other one.
+ *
+ * An addition here is a new phantom token being recorded rather than fixed,
+ * which is a decision to argue for in review, not a formality.
  */
-const KNOWN_PHANTOM_TOKENS: Record<string, number> = {
-  '--danger': 1,
-  '--fg1': 4,
-  '--fg2': 3,
-  '--lines': 1,
-  '--success': 4,
-  '--success-bg': 1,
-  '--tn-alt-bg': 1,
-  '--warning': 1,
-  '--warning-bg': 1,
-  '--warning-fg': 1,
-};
+const KNOWN_PHANTOM_TOKENS: Record<string, number> = {};
 
 interface Reference {
   property: string;

@@ -3,13 +3,13 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, linkedSignal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { formatSize, parseSize, type SizeStandard } from './size-conversion';
 import { InputType } from '../enums/input-type.enum';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { tnIconMarker } from '../icon/icon-marker';
 import type { IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
-import { formatSize, parseSize, type SizeStandard } from './size-conversion';
 
 // Module-level counter for deterministic, unique instance ids (matches the
 // tn-autocomplete convention). Deterministic ids are SSR/hydration-safe and

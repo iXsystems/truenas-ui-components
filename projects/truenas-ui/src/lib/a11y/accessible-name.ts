@@ -47,6 +47,33 @@ import type { Signal } from '@angular/core';
  * Not exported from `public-api.ts`, and must not be — the same rule as
  * `live-region.ts`. It is how this library's own components agree with each
  * other; a consumer naming its own element has `aria-label`.
+ *
+ * WHAT THE SECOND BRANCH DEPENDS ON, AND THE ONE CALLER THAT CANNOT HAVE IT
+ * -------------------------------------------------------------------------
+ * "Unnamed at least still fails loudly" is not a property of being unnamed. It
+ * is a property of every caller here, and of two different mechanisms. An
+ * unnamed `role="progressbar"` fails axe's `aria-progressbar-name` and an
+ * unnamed `over` drawer fails `aria-dialog-name`; a `side` drawer is a
+ * `role="navigation"` landmark that axe reports only once there are two of them,
+ * and rests instead on the dev-mode warning below. That is why the rule and the
+ * warning are one function: taking the branch without one of the two leaves the
+ * loudness the branch assumes.
+ *
+ * `tn-table-pager` (#249) is the caller that can have neither. It is
+ * `role="navigation"`, so no axe rule names it — `landmark-unique` compares
+ * landmarks against EACH OTHER, and one unnamed landmark violates nothing. And
+ * its fallback is a DESIGNED name the consumer configures through
+ * `TN_TABLE_PAGER_LABELS` rather than a last resort for a name someone forgot,
+ * so the warning would fire on the ordinary case and teach readers to ignore it
+ * where it means something. Withholding there would turn a typo'd
+ * `ariaLabelledby` into a pager that announces nothing and reports nothing —
+ * the failure #249 opened on, made worse. So the pager names itself
+ * unconditionally and does not call this function; the reasoning is written out
+ * at `resolvedTablePaginationLabel` in `table-pager.component.ts`.
+ *
+ * That is an exception with a reason rather than an invitation. A caller
+ * reaching for this function should be able to say which of the two — an axe
+ * name rule, or the warning below — catches it when it ends up unnamed.
  */
 
 /** What a component needs to tell this function about itself. */
