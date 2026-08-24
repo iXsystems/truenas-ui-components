@@ -1,4 +1,4 @@
-import { ElementRef, inject, signal } from '@angular/core';
+import { ElementRef, afterEveryRender, inject, signal } from '@angular/core';
 import type { Signal } from '@angular/core';
 
 /**
@@ -153,12 +153,10 @@ export function prescribesItsChildren(ownerRole: string | null): boolean {
  * across both passes.
  *
  * The cost of that is one change-detection cycle of lag: an element projected
- * into its owner during a pass is re-read on the NEXT one. A running
- * application runs that next one on its own — measured, and asserted in
- * `list/list-a11y.spec.ts` on a fixture attached to `ApplicationRef` the way a
- * bootstrapped app is, where the role corrects itself with no interaction. A
- * test that drives `detectChanges()` by hand is the case that has to ask,
- * because nothing else will.
+ * into its owner during a pass renders once with the old role and is corrected
+ * on the next. A running application takes that next pass on its own — see
+ * `ariaOwner` below for what makes it, and `list/list-a11y.spec.ts` for the
+ * assertion. A test driving `detectChanges()` by hand has to ask for it.
  */
 export class AriaOwner {
   private readonly owner = signal<string | null>(null);
@@ -181,7 +179,33 @@ export class AriaOwner {
   }
 }
 
-/** `AriaOwner` for the host element of the component being constructed. */
+/**
+ * `AriaOwner` for the host element of the component being constructed, re-read
+ * after every render.
+ *
+ * WHY `ngDoCheck` ALONE IS NOT ENOUGH
+ * -----------------------------------
+ * `ngDoCheck` runs when the view that DECLARES the element is checked, and an
+ * `OnPush` view that nothing has dirtied is not checked at all. So the case
+ * this whole class exists for — an element that arrives in its owner late —
+ * lands exactly where the correction cannot reach it: the projection happens in
+ * someone else's view, which dirties nothing here, and the wrong role stands
+ * for as long as the page does. Measured, with `OnPush` on the declaring views:
+ * `role="separator"` inside a `role="list"`, in a running application, after it
+ * had settled.
+ *
+ * `afterEveryRender` does not care whose view is dirty — it runs when the
+ * application has finished rendering, by which point the element is wherever it
+ * ended up. Writing the signal from there marks THIS component dirty, `OnPush`
+ * or not, which is what gets the new role rendered.
+ *
+ * It costs nothing while the answer holds: a signal set to the value it already
+ * has notifies nobody and schedules no pass. And `ngDoCheck` stays, because it
+ * is what gets the ordinary case — a divider written directly in a list — right
+ * in the first pass, rather than rendering once and correcting.
+ */
 export function ariaOwner(): AriaOwner {
-  return new AriaOwner(inject(ElementRef).nativeElement as Element);
+  const owner = new AriaOwner(inject(ElementRef).nativeElement as Element);
+  afterEveryRender(() => owner.check());
+  return owner;
 }

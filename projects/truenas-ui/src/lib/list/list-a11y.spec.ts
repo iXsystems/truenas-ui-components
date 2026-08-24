@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -126,15 +126,21 @@ class ProjectingListComponent {}
 class ProjectedHostComponent {}
 
 /**
- * The harder projection: the `<ng-content>` sits inside an `@if`, so the
- * divider is projected during the PANEL's view refresh — after the hooks of the
- * consumer's view, where the divider is declared and initialised. Whatever
- * decides its role has to be able to change its mind.
+ * The hardest projection, and the reason the owner is re-read rather than taken
+ * once. The `<ng-content>` sits inside an `@if`, so the divider is projected
+ * during the PANEL's view refresh — after the hooks of the consumer's view,
+ * where the divider is declared and initialised.
+ *
+ * Both views are `OnPush`, which is what this library asks of a component and
+ * what makes the case unrecoverable by hooks alone: the projection dirties
+ * nothing here, so the view holding the divider is never checked again and
+ * `ngDoCheck` never runs a second time.
  */
 @Component({
   selector: 'tn-gated-panel',
   standalone: true,
   imports: [TnListComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: '@if (open()) { <tn-list><ng-content /></tn-list> }',
 })
 class GatedPanelComponent {
@@ -145,6 +151,7 @@ class GatedPanelComponent {
   selector: 'tn-gated-a11y-host',
   standalone: true,
   imports: [GatedPanelComponent, TnListItemComponent, TnDividerComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-gated-panel>
@@ -381,42 +388,32 @@ describe('tn-list section accessibility', () => {
   describe('a divider projected into a list behind control flow', () => {
     let gated: ComponentFixture<GatedHostComponent>;
 
-    beforeEach(async () => { gated = await createHost(GatedHostComponent); });
+    /**
+     * Attached to `ApplicationRef` and driven by the scheduler, which is how a
+     * bootstrapped application runs and the only way this case can be asked
+     * about honestly: the correction arrives after a render, and a fixture
+     * driven by hand renders only when the test says so.
+     */
+    beforeEach(async () => {
+      await TestBed.configureTestingModule({ imports: [GatedHostComponent] })
+        .compileComponents();
+      gated = TestBed.createComponent(GatedHostComponent);
+      gated.autoDetectChanges();
+      await gated.whenStable();
+    });
 
-    it('is decorative from the pass after the one that projected it', async () => {
+    it('is decorative once the application has settled', async () => {
       const divider = gated.nativeElement.querySelector('tn-divider') as HTMLElement;
 
-      // The lag is real and is the price of not throwing
-      // ExpressionChangedAfterItHasBeenChecked on correct markup — see
-      // `AriaOwner`. Measured, not assumed: `createHost` has run one pass, and
-      // the divider is already inside the list by the end of it.
       expect(divider.parentElement?.tagName).toBe('TN-LIST');
-      expect(divider.getAttribute('role')).toBe('separator');
-
-      gated.detectChanges();
-
       expect(divider.getAttribute('role')).toBe('presentation');
+
       const { violated } = await axeResult(
         gated.nativeElement,
         [gated.nativeElement.querySelector('tn-list') as HTMLElement],
         ['aria-required-children']
       );
       expect(violated).toEqual([]);
-    });
-
-    it('takes that pass on its own in a running application', async () => {
-      // The one above drives change detection by hand and so has to ask for the
-      // second pass. This one attaches the fixture to `ApplicationRef` and lets
-      // the scheduler drive it, which is how a bootstrapped app runs — and the
-      // role is correct with no interaction of any kind. That is the difference
-      // between one cycle of lag and a role that is wrong until someone clicks
-      // something.
-      const running = TestBed.createComponent(GatedHostComponent);
-      running.autoDetectChanges();
-      await running.whenStable();
-
-      const divider = running.nativeElement.querySelector('tn-divider') as HTMLElement;
-      expect(divider.getAttribute('role')).toBe('presentation');
     });
   });
 

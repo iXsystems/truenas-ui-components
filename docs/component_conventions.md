@@ -448,9 +448,10 @@ measured rather than argued:
 - **The answer cannot be taken once, in `ngOnInit`.** An `<ng-content>` inside
   an `@if` projects during the panel's own view refresh, which is after the
   hooks of the content it projects — so an element can be initialised outside
-  its owner and end up inside it. `AriaOwner` re-reads on the change detection
-  after any reparenting, and skips the DOM read while the parent is unchanged.
-  Reading the DOM in the binding instead throws
+  its owner and end up inside it. `ariaOwner()` re-reads after every render as
+  well as from `ngDoCheck`, because `ngDoCheck` does not run for an `OnPush`
+  view that nothing dirtied, which is exactly the case: the projection dirties
+  another view, not this one. Reading the DOM in the binding instead throws
   `ExpressionChangedAfterItHasBeenChecked` on markup that is correct.
 
 **Move a required role rather than dropping it.** Inside a list the subheader's
