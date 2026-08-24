@@ -316,8 +316,9 @@
   --tn-fg1: #eceff4;
   --tn-fg2: #e5e9f0;
   /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240).
-     --tn-fg4 was #7b8394 and read 2.64:1 on --tn-bg2, the darker of the two
-     surfaces to clear here; it steps toward this theme's own --tn-fg2 by the
+     --tn-fg4 was #7b8394 and read 2.64:1 on --tn-bg2 — #3b4252, the lighter of
+     the two surfaces and so the harder for a light foreground to clear on a
+     dark theme; it steps toward this theme's own --tn-fg2 by the
      smallest amount that gets there with room to spare. */
   --tn-fg3: #a0a8b4; /* 5.21:1 on --tn-bg1, 4.19:1 on --tn-bg2 */
   --tn-fg4: #8b92a2; /* 4.00:1 on --tn-bg1, 3.23:1 on --tn-bg2 */

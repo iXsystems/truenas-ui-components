@@ -70,15 +70,6 @@ const SURFACES: Readonly<Record<string, string>> = {
 };
 
 /**
- * Declared by each theme itself, not inherited from `:root`. Both tokens are
- * tuned against a particular theme's backgrounds, so a theme falling back to
- * `:root`'s value is reporting a colour chosen for different surfaces —
- * `declares` sees that, where `color` would resolve it and quietly report a
- * number.
- */
-const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...MUTED_TOKENS];
-
-/**
  * The text foregrounds. No case here holds them to a threshold — #240 is about
  * the two tokens that are NOT text — but they are what the retune moved five
  * palettes' worth of values up toward, and a token guaranteed only 3:1 reading
@@ -91,23 +82,46 @@ const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...MUTED_TOKENS];
  */
 const TEXT_TOKENS = ['--tn-fg1', '--tn-fg2'];
 
-const RANK_REQUIRED = [...Object.keys(SURFACES), ...TEXT_TOKENS, ...MUTED_TOKENS];
+/**
+ * Declared by each theme itself, not inherited from `:root`. Every token here is
+ * tuned against a particular theme's backgrounds, so a theme falling back to
+ * `:root`'s value is reporting a colour chosen for different surfaces —
+ * `declares` sees that, where `color` would resolve it and quietly report a
+ * number.
+ *
+ * ONE list, asserted and filtered on. Every case below measures the palettes
+ * that declare all of these, so a palette dropping out of a case is always
+ * accompanied by a failing declaration case. A filter with a wider token set
+ * than the assertion — which the out-read cases used to have, requiring the text
+ * tokens while only the muted ones were asserted — lets a palette leave those
+ * cases with nothing red anywhere: exactly the silent coverage loss
+ * `expectedSelectors` exists to prevent, one layer down.
+ */
+const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...TEXT_TOKENS, ...MUTED_TOKENS];
 
 /**
- * Palettes where a muted token does out-read a text one, and why.
- * `.tn-solarized-dark`'s `--tn-fg1` measures 2.79:1 on `--tn-bg1` and 2.42:1 on
- * `--tn-bg2` — beneath the 3:1 floor `--tn-fg3` and `--tn-fg4` are now held to —
- * so both necessarily clear it. No value that clears 3:1 can sit under 2.79:1,
- * so this is not something the retune could have avoided by choosing different
- * colours: it is `--tn-fg1` that is wrong, tracked as #265.
+ * Muted-over-text inversions that are real, recorded as the PAIR that inverts
+ * and why. `.tn-solarized-dark`'s `--tn-fg1` measures 2.79:1 on `--tn-bg1` and
+ * 2.42:1 on `--tn-bg2` — beneath the 3:1 floor `--tn-fg3` and `--tn-fg4` are now
+ * held to — so both necessarily clear it. No value that clears 3:1 can sit under
+ * 2.79:1, so this is not something the retune could have avoided by choosing
+ * different colours: it is `--tn-fg1` that is wrong, tracked as #265.
+ *
+ * By the pair rather than by the palette, because recording the palette
+ * suppressed every comparison in it. `--tn-fg3` against Solarized Dark's
+ * `--tn-fg2` (4.32:1 on `--tn-bg2`) is a live claim with nothing to do with
+ * #265, and a `--tn-fg3` of #c0d0d5 — well past that `--tn-fg2` — shipped green
+ * while the entry was keyed on the theme.
  *
  * Asserted to STILL BE TRUE rather than merely skipped, so #265 retuning
- * `--tn-fg1` breaks this suite and takes the exception out with it, instead of
+ * `--tn-fg1` breaks this suite and takes the entry out with it, instead of
  * leaving a note here that has quietly stopped describing the palette.
  */
-const OUTREADS_TEXT: Readonly<Record<string, string>> = {
-  '.tn-solarized-dark':
-    '--tn-fg1 is 2.79:1 on --tn-bg1 and 2.42:1 on --tn-bg2, below the 3:1 these two now clear (#265)',
+const OUTREADS_TEXT: Readonly<Record<string, { pairs: string[]; why: string }>> = {
+  '.tn-solarized-dark': {
+    pairs: ['--tn-fg3/--tn-fg1', '--tn-fg4/--tn-fg1'],
+    why: '--tn-fg1 is 2.79:1 on --tn-bg1 and 2.42:1 on --tn-bg2, below the 3:1 these two now clear (#265)',
+  },
 };
 
 interface ThemeCase {
@@ -141,8 +155,10 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
     missing: REQUIRED_TOKENS.filter((token) => !palette.declares(token)),
   }));
 
+  // Titled from the list rather than spelling it out, so a token added to
+  // REQUIRED_TOKENS cannot leave the case name describing the old set.
   it.each(declarations)(
-    '$selector declares --tn-bg1, --tn-bg2, --tn-fg3 and --tn-fg4 itself',
+    `$selector declares ${REQUIRED_TOKENS.join(', ')} itself`,
     ({ missing }) => {
       expect(missing).toEqual([]);
     }
@@ -206,46 +222,60 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
   // it says nothing about either landing on top of a token that carries actual
   // text, which is what raising a 3:1 token risks.
   const ranked = palettes
-    .filter((palette) => RANK_REQUIRED.every((token) => palette.declares(token)))
+    .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
     .flatMap((palette) => Object.keys(SURFACES).map((surface) => {
       const ratio = (token: string) => palette.contrast(token, surface);
+      const recordedPairs = OUTREADS_TEXT[palette.selector]?.pairs ?? [];
+      // `>=` rather than `>`: a muted token that measures exactly what a text
+      // token does is that text token under another name. Carries its pair key
+      // as well as its numbers, so a recorded inversion suppresses only itself
+      // and a failure still prints which two met and at what.
+      const outreading = MUTED_TOKENS.flatMap((muted) => TEXT_TOKENS
+        .filter((text) => ratio(muted) >= ratio(text))
+        .map((text) => ({
+          pair: `${muted}/${text}`,
+          measured:
+            `${muted} ${formatRatio(ratio(muted))} over ${text} ${formatRatio(ratio(text))}`,
+        })));
       return {
         selector: palette.selector,
         surface,
         ratios: [...TEXT_TOKENS, ...MUTED_TOKENS]
           .map((token) => `${token.slice(5)} ${formatRatio(ratio(token))}`)
           .join(', '),
-        // `>=` rather than `>`: a muted token that measures exactly what a text
-        // token does is that text token under another name. Listed in pairs so a
-        // failure prints which two met and at what numbers.
-        outreading: MUTED_TOKENS.flatMap((muted) => TEXT_TOKENS
-          .filter((text) => ratio(muted) >= ratio(text))
-          .map((text) =>
-            `${muted} ${formatRatio(ratio(muted))} over ${text} ${formatRatio(ratio(text))}`)),
+        unrecorded: outreading
+          .filter(({ pair }) => !recordedPairs.includes(pair))
+          .map(({ measured }) => measured),
+        // Recorded pairs that have STOPPED inverting. #265 retuning --tn-fg1
+        // fills this, which is what fails the case below and forces the entry
+        // out; a pair recorded under a name nothing measures fills it too.
+        resolved: recordedPairs
+          .filter((pair) => !outreading.some((found) => found.pair === pair)),
+        records: recordedPairs.length > 0,
       };
     }));
 
-  it.each(ranked.filter(({ selector }) => !OUTREADS_TEXT[selector]))(
-    '$selector on $surface: neither muted token out-reads a text one — $ratios',
-    ({ outreading }) => {
-      expect(outreading).toEqual([]);
+  it.each(ranked)(
+    '$selector on $surface: no muted token out-reads a text one unrecorded — $ratios',
+    ({ unrecorded }) => {
+      expect(unrecorded).toEqual([]);
     }
   );
 
-  // Registered only when something is recorded. `it.each` treats an empty table
+  // Registered only where something is recorded. `it.each` treats an empty table
   // as an error — deliberately, for the case list above, where nothing left to
   // measure means the suite has stopped measuring — but emptying OUTREADS_TEXT
   // is the documented cleanup once #265 lands, and that must be able to leave
   // the suite green rather than failing on the shape of the array. Nothing goes
-  // unmeasured either way: a palette dropped from here moves into the case
-  // above, which is where it belongs once its --tn-fg1 is fixed.
-  const recorded = ranked.filter(({ selector }) => OUTREADS_TEXT[selector]);
+  // unmeasured either way: every palette is in the case above whether or not it
+  // records a pair, and only the exact pairs named here are exempt there.
+  const recorded = ranked.filter(({ records }) => records);
 
   if (recorded.length > 0) {
     it.each(recorded)(
-      '$selector on $surface: the recorded #265 inversion is still there — $ratios',
-      ({ outreading }) => {
-        expect(outreading).not.toEqual([]);
+      '$selector on $surface: every recorded #265 inversion is still there — $ratios',
+      ({ resolved }) => {
+        expect(resolved).toEqual([]);
       }
     );
   }
