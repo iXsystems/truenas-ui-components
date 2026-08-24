@@ -495,11 +495,14 @@
      --tn-alt-bg1 base1 read 3.79:1, and that fill is where tn-stepper draws its
      step indicator, as well as the banner and the hovered table row (#283).
 
-     SOLARIZED HAS NO TONE THAT FITS, so the muted role leaves the palette here —
-     the thing #265's comment on this token was explicitly against. base1 is the
-     lightest of Solarized's base ramp below base2 (#eee8d5), and base2 is
-     already this theme's --tn-alt-fg2, so staying in the palette means either
-     the value that fails or the one the token above it already has. This is the
+     SOLARIZED HAS NO TONE LEFT TO TAKE, so the muted role leaves the palette
+     here — the thing #265's comment on this token was explicitly against.
+     base1 is the last of Solarized's base ramp before base2 (#eee8d5) and base3
+     (#fdf6e3), and both of those clear 4.5:1 on --tn-alt-bg1 — but this theme
+     has already spent them: base2 is --tn-alt-fg2 and base3 is --tn-fg1. So
+     staying in the palette means either the value that fails or a muted token
+     that is another role's token under a second name, which is the distinctness
+     the muted step exists for. This is the
      smallest lift of base1 that clears 4.5:1 on --tn-alt-bg1 by more than a
      rounding, with the hue held at 180 degrees (G and B equal, as base1 has
      them) and the saturation within an 8-bit step of base1's 6.9%. Measured
