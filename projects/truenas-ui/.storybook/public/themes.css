@@ -409,41 +409,65 @@
    Solarized Dark - Solarized dark color scheme
    ================================ */
 .tn-solarized-dark {
-  --tn-primary: var(--tn-fg1);
+  /* The literal #586e75 rather than var(--tn-fg1), which is what this read
+     until #265. --tn-primary is a fill colour tuned toward the 3:1 non-text
+     minimum and labelled with --tn-primary-txt (white, 5.38:1 on it); --tn-fg1
+     is body text on a dark page and has to clear 4.5:1 there. On Solarized's
+     backgrounds no single value does both jobs — #586e75 is 2.79:1 as text on
+     --tn-bg1, and anything clearing that as text is too light to carry white.
+     So the two separate, and pinning the literal keeps every fill, border and
+     focus ring rendering the colour it already did. --tn-topbar below is the
+     same value for the same reason: --tn-topbar-txt (#cdcdcd) is chosen
+     against it, and a lighter bar would take that pairing down with it. */
+  --tn-primary: #586e75;
   --tn-primary-txt: #ffffff;
   /* >=4.5:1 against both --tn-bg1 (5.34:1) and --tn-bg2 (4.62:1); --tn-primary
-     itself is 2.79:1 on --tn-bg1, the worst of the nine, because it resolves to
-     --tn-fg1 (#586e75) rather than to a blue. */
+     itself is 2.79:1 on --tn-bg1, the worst of the nine, because it is a muted
+     Solarized base tone rather than a blue. */
   --tn-primary-text: #879ea5;
   --tn-btn-default-bg: #0b4f60;
+  /* 5.32:1 on --tn-btn-default-bg, up from 3.03:1 before #265 retuned
+     --tn-fg2 — this is the only theme declaring both halves of this pair. */
   --tn-btn-default-txt: var(--tn-fg2);
-  --tn-topbar: var(--tn-fg1);
+  --tn-topbar: #586e75;
   --tn-topbar-txt: #cdcdcd;
   --tn-accent: var(--tn-cyan);
   --tn-accent-txt: #002b36; /* 4.75:1 on --tn-accent */
   --tn-bg1: #002b36;
   --tn-bg2: #073642;
   --tn-bg3: #0a4050;
-  --tn-fg1: #586e75;
-  --tn-fg2: #7f99a2;
+  /* TEXT, 4.5:1 on --tn-bg1/--tn-bg2, retuned in #265. They were #586e75
+     (base01), #7f99a2 and #839496 (base0), and measured 2.79/2.42, 4.99/4.32
+     and 4.75/4.11 — the one palette of nine whose text tokens did not clear the
+     text minimum on both page surfaces. Solarized's base00-base01 tones are
+     designed to sit close to base03, which is what makes them comment colours
+     there and unusable as body text here, so the ramp had to move up into the
+     base1-base3 range rather than nudge: nothing under roughly base1's
+     luminance clears 4.5:1 on --tn-bg2 at all. base3 and base1 are Solarized's
+     own tones and --tn-fg2 is a hue-preserving lift of base1 toward base2,
+     placed to keep three distinguishable steps instead of three values crowded
+     into the 4.50-4.86 band just above the minimum. The order is also righted:
+     --tn-fg1 was the LEAST legible of the three, which is how the primary text
+     role came to be the failing one. text-fg-contrast.spec.ts holds all nine
+     palettes to both the threshold and that order. */
+  --tn-fg1: #fdf6e3; /* base3 — 13.92:1 on --tn-bg1, 12.05:1 on --tn-bg2 */
+  --tn-fg2: #b8c9c9; /* 8.75:1 on --tn-bg1, 7.57:1 on --tn-bg2 */
   /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). The
      largest move of the nine, and the only one that changes a theme's look
      rather than nudging it: #4a5e65 read 1.91:1 on --tn-bg2 and #3a4d53
      1.46:1, the worst pair in the palette, because Solarized's base01/base02
      sit deliberately close to its own background. Two steps that both clear
-     3:1 do not fit between those and this theme's --tn-fg2, so both move up to
-     where they do. Nothing reads either token, so nothing regresses.
-     They land above this theme's own --tn-fg1 (2.79:1 on --tn-bg1, 2.42:1 on
-     --tn-bg2) — the one palette of nine where a non-text token out-reads a text
-     one. Nothing clearing 3:1 could sit under 2.79:1, so that is --tn-fg1's
-     defect (#265) rather than this one's. Recorded as OUTREADS_TEXT in
-     muted-fg-contrast.spec.ts, and asserted to still be true there, so retuning
-     --tn-fg1 takes the exception with it. */
+     3:1 do not fit between those and this theme's --tn-fg2 as it then was, so
+     both move up to where they do. Nothing reads either token, so nothing
+     regresses. */
   --tn-fg3: #779099; /* 4.46:1 on --tn-bg1, 3.86:1 on --tn-bg2 */
   --tn-fg4: #6e868e; /* 3.91:1 on --tn-bg1, 3.38:1 on --tn-bg2 */
   --tn-alt-bg1: #0e4853;
   --tn-alt-bg2: #155a68;
-  --tn-alt-fg1: #839496;
+  /* base1 — 5.61:1 on --tn-bg1, 4.86:1 on --tn-bg2. The dimmest Solarized tone
+     that clears 4.5:1 on both, which is what muted text wants: the step below
+     --tn-fg2 rather than a fourth value alongside it. #265. */
+  --tn-alt-fg1: #93a1a1;
   /* Was #282a36 — near-black, copied from a light theme, and painted on this
      theme's own --tn-alt-bg1 (1.40:1) and --tn-alt-bg2 (1.83:1), the only two
      surfaces this token is ever drawn on. Solarized's base2 instead (#238). */
