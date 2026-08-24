@@ -416,9 +416,11 @@
      backgrounds no single value does both jobs — #586e75 is 2.79:1 as text on
      --tn-bg1, and anything clearing that as text is too light to carry white.
      So the two separate, and pinning the literal keeps every fill, border and
-     focus ring rendering the colour it already did. --tn-topbar below is the
-     same value for the same reason: --tn-topbar-txt (#cdcdcd) is chosen
-     against it, and a lighter bar would take that pairing down with it. */
+     focus ring rendering the colour it already did. --tn-topbar below is
+     pinned to the same literal so that the bar does not move either: its
+     label, --tn-topbar-txt (#cdcdcd), measures 3.39:1 on it — a pairing that
+     no spec covers and that this change neither improves nor worsens, but one
+     a lighter bar would take further down. */
   --tn-primary: #586e75;
   --tn-primary-txt: #ffffff;
   /* >=4.5:1 against both --tn-bg1 (5.34:1) and --tn-bg2 (4.62:1); --tn-primary
