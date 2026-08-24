@@ -232,12 +232,23 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
     }
   );
 
-  it.each(ranked.filter(({ selector }) => OUTREADS_TEXT[selector]))(
-    '$selector on $surface: the recorded #265 inversion is still there — $ratios',
-    ({ outreading }) => {
-      expect(outreading).not.toEqual([]);
-    }
-  );
+  // Registered only when something is recorded. `it.each` treats an empty table
+  // as an error — deliberately, for the case list above, where nothing left to
+  // measure means the suite has stopped measuring — but emptying OUTREADS_TEXT
+  // is the documented cleanup once #265 lands, and that must be able to leave
+  // the suite green rather than failing on the shape of the array. Nothing goes
+  // unmeasured either way: a palette dropped from here moves into the case
+  // above, which is where it belongs once its --tn-fg1 is fixed.
+  const recorded = ranked.filter(({ selector }) => OUTREADS_TEXT[selector]);
+
+  if (recorded.length > 0) {
+    it.each(recorded)(
+      '$selector on $surface: the recorded #265 inversion is still there — $ratios',
+      ({ outreading }) => {
+        expect(outreading).not.toEqual([]);
+      }
+    );
+  }
 
   it('every palette recorded in OUTREADS_TEXT was measured', () => {
     const measured = ranked.map(({ selector }) => selector);
