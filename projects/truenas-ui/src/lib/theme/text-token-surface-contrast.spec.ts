@@ -206,27 +206,21 @@ interface KnownGap {
  * its own. That is the assertion that turned four `.tn-solarized-dark` entries
  * in `inline-code-contrast.spec.ts` red when #265 fixed them, instead of leaving
  * them describing a defect that no longer existed.
+ *
+ * EMPTY, AND THAT IS THE CURRENT STATE RATHER THAN A DISABLED RECORD. The last
+ * entry was `.tn-solarized-dark` drawing `--tn-alt-fg1` at 3.79:1 on
+ * `--tn-alt-bg1`, where `tn-stepper` puts its step indicator; #283 lifted that
+ * token off Solarized's base1 to #a5b0b0 (4.56:1) and the entry came out with
+ * it. The three before it were `.tn-midnight`'s `--tn-fg1` on its three fills,
+ * which #282 fixed the same way.
+ *
+ * The record stays because the reason those entries existed has not gone away:
+ * a pairing can fail because the palette was never tuned for that surface, and
+ * whether to move the token or the fill is a decision about how a theme looks
+ * rather than something this file settles. What both tickets showed is that the
+ * decision is usually available, not that it is never needed.
  */
-const KNOWN_GAPS: readonly KnownGap[] = [
-  // The pairing #277 was filed for. --tn-alt-fg1 is Solarized's base1, picked by
-  // #265 as the dimmest of that palette's own tones clearing 4.5:1 on --tn-bg1
-  // (5.61:1) and --tn-bg2 (4.86:1) — the step below --tn-fg2 rather than a
-  // fourth value alongside it. --tn-alt-bg1 is lighter than either page surface,
-  // so the same tone has less to work with there.
-  //
-  // Not fixed here: clearing 4.5:1 on #0e4853 needs a tone lighter than base1,
-  // which means either leaving Solarized's palette for the muted role — the
-  // thing #265's comment on this token is explicitly about — or darkening
-  // --tn-alt-bg1, which is the banner, the hovered row and the stepper indicator
-  // in one move. Both are decisions about how this theme looks.
-  {
-    selector: '.tn-solarized-dark',
-    token: '--tn-alt-fg1',
-    surface: '--tn-alt-bg1',
-    why: '#93a1a1 (base1) on #0e4853 — 3.79:1, where the stepper draws its step indicator. '
-      + 'Clears 4.5:1 on both page surfaces (5.61:1, 4.86:1), which is all --tn-alt-fg1 claims',
-  },
-];
+const KNOWN_GAPS: readonly KnownGap[] = [];
 
 /** How a gap and a measured case are matched up. */
 function pairingKey(selector: string, token: string, surface: string): string {

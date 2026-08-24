@@ -488,10 +488,36 @@
   --tn-fg4: #6e868e; /* 3.91:1 on --tn-bg1, 3.38:1 on --tn-bg2 */
   --tn-alt-bg1: #0e4853;
   --tn-alt-bg2: #155a68;
-  /* base1 — 5.61:1 on --tn-bg1, 4.86:1 on --tn-bg2. The dimmest Solarized tone
-     that clears 4.5:1 on both, which is what muted text wants: the step below
-     --tn-fg2 rather than a fourth value alongside it. #265. */
-  --tn-alt-fg1: #93a1a1;
+  /* Was #93a1a1, Solarized's base1 — the dimmest of that palette's own tones
+     clearing 4.5:1 on --tn-bg1 (5.61:1) and --tn-bg2 (4.86:1), which #265 picked
+     because muted text wants the step below --tn-fg2 rather than a fourth value
+     alongside it. That is all the text tokens claim, and it was true. On
+     --tn-alt-bg1 base1 read 3.79:1, and that fill is where tn-stepper draws its
+     step indicator, as well as the banner and the hovered table row (#283).
+
+     SOLARIZED HAS NO TONE THAT FITS, so the muted role leaves the palette here —
+     the thing #265's comment on this token was explicitly against. base1 is the
+     lightest of Solarized's base ramp below base2 (#eee8d5), and base2 is
+     already this theme's --tn-alt-fg2, so staying in the palette means either
+     the value that fails or the one the token above it already has. This is the
+     smallest lift of base1 that clears 4.5:1 on --tn-alt-bg1 by more than a
+     rounding, with the hue held at 180 degrees (G and B equal, as base1 has
+     them) and the saturation within an 8-bit step of base1's 6.9%. Measured
+     unrounded, as the specs compare them: #a3afaf is 4.4956 and FORMATS as
+     "4.50", and #a4afaf clears by 0.006, which any later nudge to the fill would
+     spend.
+
+     THE FILL COULD NOT MOVE INSTEAD. base1 clears 4.5:1 only on a surface of
+     luminance 0.0373 or below; --tn-bg2 is already at 0.0308 and --tn-bg3 at
+     0.0431. --tn-alt-bg1 would have had to darken past --tn-bg3 into the narrow
+     band just above the card surface, inverting the elevation it exists to show
+     and taking the banner and the hovered row down with it.
+
+     Still a step below --tn-fg2 (#b8c9c9), which is what the muted role is for:
+     1.30:1 apart on --tn-alt-bg1, where the other eight palettes ship 1.11:1 to
+     3.01:1. */
+  --tn-alt-fg1: #a5b0b0; /* 6.75:1 on --tn-bg1, 5.84:1 on --tn-bg2, 4.56:1 on
+                            --tn-alt-bg1 (the stepper step indicator) */
   /* Was #282a36 — near-black, copied from a light theme, and painted on this
      theme's own --tn-alt-bg1 (1.40:1) and --tn-alt-bg2 (1.83:1), the only two
      surfaces this token is ever drawn on. Solarized's base2 instead (#238). */
