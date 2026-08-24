@@ -665,6 +665,22 @@ export class TnTableComponent<T = unknown> implements OnInit {
     return count > 0 && !this.isAllSelected();
   });
 
+  /**
+   * Whether the select-all control has anything to act on.
+   *
+   * Disabling it on an empty table is a correctness guard, not a nicety. Since #236
+   * the checkbox is a real control the user can click, and its `checked` binding is
+   * one-way: the DOM follows `isAllSelected()`, and Angular only writes the attribute
+   * back when that value CHANGES. With no rows, `isAllSelected()` is pinned false —
+   * selecting nothing leaves the count at zero — so a click would flip the input in
+   * the DOM, change no bound value, and leave a checked-looking box over an empty
+   * selection until something else re-rendered it.
+   *
+   * The hit area around the checkbox stands down for the same reason, so the two
+   * cannot disagree about whether the control is live.
+   */
+  canSelectAll = computed(() => this.data().length > 0);
+
   trackByFn = computed(() => {
     const custom = this.trackBy();
     if (custom) { return custom; }
@@ -983,6 +999,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * @param event The originating click.
    */
   onSelectAllHitAreaClick(event: Event): void {
+    if (!this.canSelectAll()) { return; }
     if (this.isSelectionCheckboxTarget(event)) { return; }
     this.toggleSelectAll();
   }
@@ -1000,6 +1017,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
   onSelectAllEnter(event: Event): void {
     // Enter inside a form submits it, and this control is often inside one.
     event.preventDefault();
+    if (!this.canSelectAll()) { return; }
     this.toggleSelectAll();
   }
 

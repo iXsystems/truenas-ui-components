@@ -294,18 +294,65 @@ describe('tn-table selection accessibility', () => {
       ).checked).toBe(true);
     });
 
-    it('toggles select-all on Space from the checkbox', () => {
-      // Space on a focused checkbox is a native activation: the browser turns it
-      // into a click on the input, which is what this stands in for. jsdom does
-      // not implement that translation, so the click is dispatched directly.
+    it('leaves Space to the checkbox itself', () => {
+      // Space on a focused checkbox is a NATIVE activation — the browser turns the
+      // keypress into a click on the input — and jsdom implements neither half, so
+      // there is no way to assert the toggle here. What is assertable is the part
+      // that was a real hazard: the `<th>` this replaced bound `keydown.space` and
+      // called `preventDefault()` on it, which is exactly how a wrapper cancels the
+      // activation of the control it wraps. Nothing may intercept the key now.
+      // The toggle it produces is covered by the click test above, which is what
+      // the browser dispatches.
+      const input = el<HTMLInputElement>(
+        '.tn-table__header-row .tn-table__select-cell input[type="checkbox"]'
+      );
+      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+
+      input.dispatchEvent(event);
+      fixture.detectChanges();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(host.selectionEvents).toBe(0);
+    });
+  });
+
+  describe('with no rows', () => {
+    beforeEach(() => {
+      host.rows.set([]);
+      fixture.detectChanges();
+      host.selectionEvents = 0;
+    });
+
+    // Selecting all of nothing cannot change `isAllSelected()`, and the checkbox's
+    // `checked` is bound one way — so a click that the model does not follow would
+    // leave the box drawn checked over an empty selection.
+    it('disables the select-all checkbox', () => {
+      expect(el<HTMLInputElement>(
+        '.tn-table__header-row .tn-table__select-cell input[type="checkbox"]'
+      ).disabled).toBe(true);
+    });
+
+    it('does not toggle from the header cell padding', () => {
+      clickOn(el('.tn-table__header-row .tn-table__select-cell'));
+
+      expect(host.selectionEvents).toBe(0);
+      expect(el<HTMLInputElement>(
+        '.tn-table__header-row .tn-table__select-cell input[type="checkbox"]'
+      ).checked).toBe(false);
+    });
+
+    it('does not toggle on Enter', () => {
       const input = el<HTMLInputElement>(
         '.tn-table__header-row .tn-table__select-cell input[type="checkbox"]'
       );
 
-      input.click();
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+      );
       fixture.detectChanges();
 
-      expect(host.selectionEvents).toBe(1);
+      expect(host.selectionEvents).toBe(0);
+      expect(input.checked).toBe(false);
     });
   });
 

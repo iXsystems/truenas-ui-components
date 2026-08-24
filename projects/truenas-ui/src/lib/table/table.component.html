@@ -35,6 +35,7 @@
           <tn-checkbox
             class="tn-table__checkbox"
             label="Select all"
+            [disabled]="!canSelectAll()"
             [checked]="isAllSelected()"
             [indeterminate]="isIndeterminate()"
             (change)="toggleSelectAll()" />
@@ -289,6 +290,8 @@
 
               Enter is bound because the removed <th> handled it and a native checkbox
               does not; Space needs no binding, being the checkbox's own key.
+
+              `disabled` on an empty table is not decoration — see `canSelectAll`.
             -->
             <th class="tn-table__header-cell tn-table__select-cell"
               (click)="onSelectAllHitAreaClick($event)">
@@ -296,6 +299,7 @@
                 class="tn-table__checkbox"
                 label="Select all rows"
                 [hideLabel]="true"
+                [disabled]="!canSelectAll()"
                 [checked]="isAllSelected()"
                 [indeterminate]="isIndeterminate()"
                 (change)="toggleSelectAll()"
