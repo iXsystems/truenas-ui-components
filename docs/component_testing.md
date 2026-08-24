@@ -332,10 +332,16 @@ each wrote a throwaway probe spec inside `src/` because this section did not exi
 |---|---|---|
 | "What does axe say about this component?" | `axeScan(fixture)` | everything, with nothing named in advance |
 | "Does this fix stay fixed?" | `axeResult(root, targets, rules)` | whether *these* rules object to *these* elements |
+| "What would a screen reader announce this AS?" | `accessibleName(el)` | the resolved name string, or `null` for none |
 
 Start with `axeScan` to find out what is wrong. Write the regression test with
 `axeResult`, which pins a named rule to a named element and is what belongs in a
 spec long-term. `component_conventions.md` has the rules for that half.
+
+`accessibleName` lives in `lib/a11y/accessible-name-testing.ts` and belongs
+alongside `axeResult` in any spec about naming: axe's naming rules only ask
+whether an element is named, so `aria-label="_"` passes them all. See
+`component_conventions.md`, "Asserting an accessible name in a spec".
 
 ### Scanning a component: `axeScan`
 

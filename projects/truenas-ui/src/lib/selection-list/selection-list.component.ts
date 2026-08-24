@@ -1,9 +1,13 @@
 
-import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
+import { Component, ElementRef, input, output, contentChildren, signal, computed, forwardRef, effect, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnListOptionComponent } from '../list-option/list-option.component';
 import { TnTestIdDirective } from '../test-id';
+
+/** The attributes that can name the listbox host. */
+const NAME_ATTRIBUTES = ['aria-label', 'aria-labelledby'];
 
 export interface TnSelectionChange {
   source: TnSelectionListComponent;
@@ -29,6 +33,13 @@ export interface TnSelectionChange {
     '[class.tn-selection-list--dense]': 'dense()',
     '[class.tn-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
+    // A `role="listbox"` is an ARIA input field, and one with no accessible name
+    // is announced as bare "listbox" — the options say what is IN the list,
+    // never what it is FOR (#235). What these two resolve to, and why they are
+    // methods rather than signals, is on `hostAriaLabel` / `hostAriaLabelledby`.
+    '[attr.aria-label]': 'hostAriaLabel()',
+    '[attr.aria-labelledby]': 'hostAriaLabelledby()',
+    //
     // The listbox states its own disabled-ness rather than leaving assistive
     // technology to infer it from its children (#225). Inferring is not the same
     // claim and is wrong in two ordinary cases: an empty disabled list has no
@@ -54,6 +65,73 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   disabled = input<boolean>(false);
   multiple = input<boolean>(true);
   color = input<'primary' | 'accent' | 'warn'>('primary');
+
+  /**
+   * Explicit accessible name for the listbox. Inside a `tn-form-field` with a
+   * label this is unnecessary — the field names the list automatically — but a
+   * list with neither is announced as an unlabelled listbox.
+   *
+   * ALIASED to the attribute name, unlike the plain `ariaLabel` most controls in
+   * this library take, and the divergence is forced rather than chosen: this
+   * component's `role="listbox"` is on the HOST, so `<tn-selection-list
+   * aria-label="Mailboxes">` is valid markup that named the list before this
+   * input existed. The host binding below rewrites that attribute on every
+   * change-detection pass, so an unaliased input would silently STRIP a name
+   * that used to work. The alias makes the same markup set the input instead,
+   * and the binding writes it straight back.
+   */
+  ariaLabel = input<string | undefined>(undefined, { alias: 'aria-label' });
+
+  /** Id of visible text naming the listbox. Wins over `ariaLabel` where it resolves. */
+  ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field`, read for `labelledby` alone:
+   * #235 is about the listbox having no accessible name, and the field's
+   * `describedby`/`invalid`/`required` are a separate question this list has
+   * never answered either way.
+   *
+   * Called with NO argument, so it reports the field's label id unconditioned.
+   * Handing it the `ariaLabel` input would have it suppress the field itself —
+   * on truthiness, so a whitespace-only label would cancel the field while being
+   * dropped as no name, leaving nothing — and it would only do so while this
+   * field is initialised after the one it reads, since a signal captured before
+   * its own initialiser runs arrives as `undefined` and is swallowed by an
+   * optional call. The suppression is applied below instead, where the rest of
+   * the precedence is.
+   */
+  private readonly fieldAria = injectTnFormFieldAria();
+
+  /**
+   * The `aria-label` this component supplies, or `null` when it supplies none.
+   *
+   * Blank is not a name: `aria-label=""` names the listbox as emptily as no
+   * attribute at all, while satisfying axe's `aria-input-field-name` rule — a
+   * green check on a control a screen reader announces as "listbox".
+   */
+  private readonly resolvedAriaLabel = computed(() => {
+    const label = this.ariaLabel();
+    return label !== undefined && label.trim() !== '' ? label : null;
+  });
+
+  /**
+   * The explicit `ariaLabelledby` input, blank normalised away, or `null`.
+   *
+   * Kept apart from the field's label because the two rank differently against
+   * a name the consumer wrote on the host — see {@link hostAriaLabelledby}.
+   */
+  private readonly explicitAriaLabelledby = computed(() => {
+    const labelledby = this.ariaLabelledby();
+    return labelledby !== undefined && labelledby.trim() !== '' ? labelledby : null;
+  });
+
+  private readonly hostElement = inject(ElementRef<HTMLElement>).nativeElement;
+
+  /**
+   * The value this component last wrote for each naming attribute, so that it
+   * can tell its own from the consumer's. See {@link claim}.
+   */
+  private readonly written = new Map<string, string>();
 
   selectionChange = output<TnSelectionChange>();
 
@@ -309,6 +387,90 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     if (from !== null && from.isConnected) {
       this.focusedOptionElement = null;
     }
+  }
+
+  /**
+   * The `aria-label` the host should carry.
+   *
+   * A METHOD rather than a signal, and that is the load-bearing part of this
+   * whole arrangement: a host binding re-evaluates on every change-detection
+   * pass, while a `computed` re-runs only when a signal it read has changed.
+   * These two answers depend on the host's CURRENT attributes, which are not
+   * signals — a consumer's `[attr.aria-label]` bound in the parent template
+   * never reaches an input and never notifies anything. Asked once per pass,
+   * the answer stays true; asked from a `computed`, it goes stale the moment
+   * the consumer's binding changes, and the list is left announcing the wrong
+   * name or no name at all.
+   */
+  protected hostAriaLabel(): string | null {
+    return this.claim('aria-label', this.resolvedAriaLabel());
+  }
+
+  /**
+   * The `aria-labelledby` the host should carry — and the one place the naming
+   * precedence is decided.
+   *
+   * Most specific first: the `ariaLabelledby` input, then any name the consumer
+   * put on the host by another route, then the enclosing `tn-form-field`'s
+   * label. The field comes last because it is chrome the consumer did not write
+   * on this element, and it is WITHHELD rather than rendered alongside: ARIA
+   * prefers `aria-labelledby` wherever it resolves, so a field reference emitted
+   * beside a consumer's `aria-label` does not merely coexist with it — it
+   * outranks it, and the list announces the field's label instead.
+   *
+   * With none of the three, a list stays unnamed — deliberately: a generic
+   * fallback ("List") would satisfy axe while announcing nothing the user can
+   * act on, and only the consumer knows what this list holds.
+   */
+  protected hostAriaLabelledby(): string | null {
+    const explicit = this.explicitAriaLabelledby();
+    if (explicit !== null) {
+      return this.claim('aria-labelledby', explicit);
+    }
+    const named = this.resolvedAriaLabel() !== null || this.namedByConsumer();
+    return this.claim('aria-labelledby', named ? null : this.fieldAria.labelledby());
+  }
+
+  /** Whether the host already carries a non-blank name this component did not write. */
+  private namedByConsumer(): boolean {
+    return NAME_ATTRIBUTES.some((attribute) => {
+      const current = this.hostElement.getAttribute(attribute);
+      return current !== null && current.trim() !== '' && current !== this.written.get(attribute);
+    });
+  }
+
+  /**
+   * What to bind `attribute` to: this component's own `value` where it has one,
+   * and otherwise whatever is already on the host — so that a name the consumer
+   * set is preserved rather than overwritten by the `null` that means "nothing
+   * to say".
+   *
+   * That distinction is the reason this exists. `[attr.x]="null"` REMOVES the
+   * attribute, and the role is on the HOST here, so `<tn-selection-list
+   * aria-label="…">` and `[attr.aria-labelledby]="…"` are valid markup that
+   * named this list before it had any naming input at all. Measured on Angular
+   * 21, a plain host binding of these attributes ran after the parent's and left
+   * the element with NEITHER — named to unnamed, silently, with the parent's
+   * value reappearing only on a later pass and only for the one whose bound
+   * value had changed.
+   *
+   * Ownership is tracked by value rather than by a flag, so it also lapses
+   * correctly: an attribute this component wrote and something else has since
+   * changed is no longer this component's to rewrite or take away.
+   */
+  private claim(attribute: string, value: string | null): string | null {
+    const current = this.hostElement.getAttribute(attribute);
+    const ours = this.written.get(attribute);
+    if (value !== null) {
+      this.written.set(attribute, value);
+      return value;
+    }
+    // Nothing of this component's to say. Anything there is the consumer's.
+    if (current !== null && current !== ours) {
+      return current;
+    }
+    this.written.delete(attribute);
+    return null;
   }
 
   // ControlValueAccessor implementation
