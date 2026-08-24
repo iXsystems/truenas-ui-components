@@ -660,8 +660,7 @@ export const ColumnWidths: Story = {
           <ng-template tnHeaderCellDef>Email</ng-template>
           <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
         </ng-container>
-        <ng-container tnColumnDef="actions" width="48px">
-          <ng-template tnHeaderCellDef></ng-template>
+        <ng-container tnColumnDef="actions" width="48px" label="Actions" [hideLabel]="true">
           <ng-template let-user tnCellDef>⋮</ng-template>
         </ng-container>
       </tn-table>
@@ -761,18 +760,24 @@ export const ExpandOnRowClick: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const rows = canvas.getAllByRole('row').filter((row) => row.classList.contains('tn-table__row'));
+    const chevron = (row: HTMLElement): HTMLElement =>
+      row.querySelector('.tn-table__expand-button') as HTMLElement;
 
-    // The row is the expand control here, so it must say so — a screen-reader user activating it
-    // otherwise gets no announcement that anything opened.
-    await expect(rows[0]).toHaveAttribute('aria-expanded', 'false');
+    // The state is announced by the chevron, not by the row: `aria-expanded` is a treegrid-row
+    // attribute, so on this plain table the row could not publish it to anyone (#246).
+    await expect(rows[0]).not.toHaveAttribute('aria-expanded');
+    await expect(chevron(rows[0])).toHaveAttribute('aria-expanded', 'false');
 
     await userEvent.click(rows[0]);
-    await expect(rows[0]).toHaveAttribute('aria-expanded', 'true');
+    await expect(chevron(rows[0])).toHaveAttribute('aria-expanded', 'true');
+    // The row keeps the half of the association its role does allow.
+    await expect(rows[0]).toHaveAttribute('aria-controls');
 
     // singleExpand: opening the second row closes the first.
     await userEvent.click(rows[1]);
-    await expect(rows[1]).toHaveAttribute('aria-expanded', 'true');
-    await expect(rows[0]).toHaveAttribute('aria-expanded', 'false');
+    await expect(chevron(rows[1])).toHaveAttribute('aria-expanded', 'true');
+    await expect(chevron(rows[0])).toHaveAttribute('aria-expanded', 'false');
+    await expect(rows[0]).not.toHaveAttribute('aria-controls');
   },
 };
 

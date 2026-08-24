@@ -326,13 +326,30 @@
               (keydown.enter)="onSortHeaderKeydown(column, $event)"
               (keydown.space)="onSortHeaderKeydown(column, $event)">
               <span class="tn-table__sort-container">
-                <span class="tn-table__header-text">
-                  @if (getColumnDef(column)?.headerTemplate(); as tmpl) {
-                    <ng-container [ngTemplateOutlet]="tmpl" />
-                  } @else {
+                @if (getColumnDef(column)?.hideLabel()) {
+                  <!--
+                    A deliberately blank header still has to be announced: a <th>
+                    with no text fails axe `empty-table-header`, and the column
+                    goes unnamed for anyone reading the header row (#246). The
+                    hidden span is the same pattern the built-in `__expand` and
+                    row-actions headers use, and it lives here rather than in a
+                    consumer's `tnHeaderCellDef` because `.cdk-visually-hidden`
+                    is defined in this component's own stylesheet — projected
+                    markup carries the host's encapsulation attribute and would
+                    render the label visibly.
+                  -->
+                  <span class="cdk-visually-hidden">
                     {{ getColumnDef(column)?.label() ?? column }}
-                  }
-                </span>
+                  </span>
+                } @else {
+                  <span class="tn-table__header-text">
+                    @if (getColumnDef(column)?.headerTemplate(); as tmpl) {
+                      <ng-container [ngTemplateOutlet]="tmpl" />
+                    } @else {
+                      {{ getColumnDef(column)?.label() ?? column }}
+                    }
+                  </span>
+                }
                 @if (getColumnDef(column)?.sortable()) {
                   <!--
                     aria-hidden: the <th> has no aria-label, so its accessible name is
@@ -364,6 +381,16 @@
 
     <!-- Data Rows -->
     <tbody class="tn-table__body">
+      <!--
+        No `aria-expanded` here, unlike the card. `row` supports it only inside a
+        `treegrid`; on a plain `table` it is ignored, so the state it appeared to
+        publish reached nobody, while reading as though the work were done (axe
+        `aria-conditional-attr`, #246). The chevron in the `__expand` cell is the
+        control that carries it — a `button`, where the attribute is valid and
+        where a screen-reader user lands by tabbing. `aria-controls` is global
+        rather than role-conditional, so the row keeps pointing at the panel it
+        opens; that is the half of the association a row CAN hold.
+      -->
       @for (row of data(); track trackByFn()($index, row); let rowIdx = $index) {
         <tr
           class="tn-table__row"
@@ -374,7 +401,9 @@
           [class.tn-table__row--clickable]="clickable()"
           [attr.tabindex]="clickable() ? 0 : null"
           [attr.aria-selected]="clickable() ? isRowActive(row) : null"
-          [attr.aria-expanded]="isRowExpandTrigger(row) ? isRowExpanded(row) : null"
+          [attr.aria-controls]="isRowExpandTrigger(row) && isRowExpanded(row) && detailRowDef()
+            ? detailPanelId(rowIdx)
+            : null"
           (click)="onRowClick(row, $event)"
           (dblclick)="onRowDoubleClick(row, $event)"
           (keydown)="onRowKeydown($event, row)">
@@ -397,6 +426,7 @@
                     type="button"
                     class="tn-table__expand-button"
                     [attr.aria-expanded]="isRowExpanded(row)"
+                    [attr.aria-controls]="isRowExpanded(row) ? detailPanelId(rowIdx) : null"
                     [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
                     (click)="toggleRowExpansion(row)">
                     <tn-icon
@@ -440,6 +470,7 @@
           <tr class="tn-table__detail-row" [@detailExpand]="'expanded'">
             <td
               class="tn-table__detail-cell"
+              [attr.id]="detailPanelId(rowIdx)"
               [attr.colspan]="totalColumnCount()">
               <ng-container
                 [ngTemplateOutlet]="detailRowDef()!.template"

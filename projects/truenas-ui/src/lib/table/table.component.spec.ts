@@ -715,28 +715,33 @@ describe('TnTableComponent', () => {
         expect(component.isRowExpanded(testData[0])).toBe(false);
       });
 
-      describe('row aria-expanded', () => {
+      // This fixture is a bare `tn-table` with no `tnDetailRowDef`, so it renders no
+      // `__expand` column and no detail panel — there is nothing for the row to point
+      // at. The chevron and `aria-controls` are asserted in `table-expand-a11y.spec.ts`,
+      // whose host supplies a detail template.
+      describe('the expanded state on a row', () => {
         const firstRow = (): HTMLElement =>
           fixture.nativeElement.querySelector('.tn-table__row') as HTMLElement;
 
-        it('announces the row as a collapsed expander, since the row is the control here', () => {
-          // Without this a screen-reader user who focuses the row and presses Enter hears nothing
-          // change: the state lives only on the chevron they never touched.
-          expect(firstRow().getAttribute('aria-expanded')).toBe('false');
-        });
+        it('never puts aria-expanded on the row, expanded or not', () => {
+          // The row used to carry it while `expandOnRowClick` was set. `aria-expanded`
+          // is supported on a `treegrid` row and ignored on a `table` row, so what
+          // looked like the state being announced reached nobody (#246, axe
+          // `aria-conditional-attr`). The chevron carries it instead.
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
 
-        it('flips to true once the row is expanded', () => {
           component.onRowClick(testData[0]);
           fixture.detectChanges();
 
-          expect(firstRow().getAttribute('aria-expanded')).toBe('true');
+          expect(component.isRowExpanded(testData[0])).toBe(true);
+          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
         });
 
-        it('stays off the row when only the chevron expands, which carries its own state', () => {
-          fixture.componentRef.setInput('expandOnRowClick', false);
+        it('leaves aria-controls off while there is no detail panel to point at', () => {
+          component.onRowClick(testData[0]);
           fixture.detectChanges();
 
-          expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+          expect(firstRow().getAttribute('aria-controls')).toBeNull();
         });
 
         it('stays off a row that is not activatable, since Enter never toggles it', () => {
@@ -744,6 +749,7 @@ describe('TnTableComponent', () => {
           fixture.detectChanges();
 
           expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+          expect(firstRow().getAttribute('aria-controls')).toBeNull();
         });
 
         it('stays off a row the predicate rejects, which never expands', () => {
@@ -751,6 +757,7 @@ describe('TnTableComponent', () => {
           fixture.detectChanges();
 
           expect(firstRow().getAttribute('aria-expanded')).toBeNull();
+          expect(firstRow().getAttribute('aria-controls')).toBeNull();
         });
       });
     });

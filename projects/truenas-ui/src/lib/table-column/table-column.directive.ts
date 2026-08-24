@@ -36,6 +36,27 @@ export class TnTableColumnDirective {
   label = input<string | undefined>(undefined);
 
   /**
+   * Renders the header label for screen readers only, leaving the header cell
+   * visually blank. For a column whose purpose is obvious from its contents and
+   * whose heading would only add noise — a row-actions or icon column.
+   *
+   * A blank header is not the same thing as an unlabelled one: `<th>` with no
+   * text at all fails axe's `empty-table-header`, and a screen-reader user
+   * moving across the header row hears nothing where a column exists (#246). So
+   * the label is still rendered, inside the table's own `.cdk-visually-hidden`
+   * — the same treatment the built-in `__expand` and row-actions headers get.
+   *
+   * The text is `label`, falling back to the column `name`. A `tnHeaderCellDef`
+   * template is NOT rendered when this is set: the point is that nothing shows,
+   * and the class that hides it is scoped to the table's own view, so a
+   * consumer's projected markup could not use it anyway.
+   *
+   * Header-only. Card mode has no header row; use `cardHidden` to keep a column
+   * off the card.
+   */
+  hideLabel = input<boolean>(false);
+
+  /**
    * Relative importance of this column in card mode (see `mobileLayout` on
    * `tn-table`). Higher numbers render first; fields ranked beyond
    * `cardPrimaryCount` fold under a "More fields" disclosure. Defaults to `0`,

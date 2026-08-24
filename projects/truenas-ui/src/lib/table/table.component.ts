@@ -251,6 +251,10 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * rows the `isRowExpandable` predicate rejects are unaffected, since `toggleRowExpansion` gates
    * on it. `rowClick` still emits, so a consumer can both expand and react to the click.
    *
+   * In table mode the expanded state is announced by the chevron, not by the row: `aria-expanded`
+   * is a `treegrid`-row attribute and a plain `table` row cannot hold it (#246). The row points at
+   * the open panel with `aria-controls`, which every role permits.
+   *
    * Applies in card mode too, where activating the card toggles its detail section. Both controls
    * report the state: the card carries `aria-expanded` while it is the trigger (`listitem` does
    * permit it, unlike `aria-selected`), and the "Details" button carries it unconditionally,
@@ -772,11 +776,17 @@ export class TnTableComponent<T = unknown> implements OnInit {
   }
 
   /**
-   * Whether the row element itself acts as the expand/collapse control, which is what makes an
-   * `aria-expanded` on it meaningful: a screen-reader user who focuses the row and presses Enter
-   * otherwise gets no announcement that anything expanded, since only the chevron carries the
-   * state. Also requires `clickable` — without it the row isn't activatable and
-   * {@link onRowClick} returns before toggling anything.
+   * Whether the row element itself acts as the expand/collapse control. Requires `clickable` —
+   * without it the row isn't activatable and {@link onRowClick} returns before toggling anything.
+   *
+   * A table row does NOT get `aria-expanded` from this. That attribute is only supported on a
+   * `treegrid` row; on a plain `table` it is ignored, so the state it seemed to publish reached
+   * nobody (#246). The chevron in the `__expand` cell carries it instead, on a `button`, where it
+   * is valid and where a screen-reader user lands by tabbing. What the row does take from this is
+   * `aria-controls`, which is global rather than role-conditional.
+   *
+   * Card mode is the case where the trigger element CAN hold the state — see
+   * {@link isCardExpandTrigger}.
    */
   isRowExpandTrigger(row: T): boolean {
     return this.expandOnRowClick() && this.clickable() && this.canExpandRow(row);
@@ -787,8 +797,8 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * template. Card mode renders no expansion affordance at all without one, so `aria-expanded`
    * on the card would advertise a state change that produces nothing.
    *
-   * Table mode deliberately keeps the looser check: its rows are asserted to carry
-   * `aria-expanded` from `expandOnRowClick` alone, and that predates this layout.
+   * `listitem` permits `aria-expanded`, which is what lets the card hold the state its table-row
+   * equivalent cannot.
    */
   isCardExpandTrigger(row: T): boolean {
     return this.isRowExpandTrigger(row) && !!this.detailRowDef();
