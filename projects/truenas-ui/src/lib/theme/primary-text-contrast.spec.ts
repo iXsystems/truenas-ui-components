@@ -65,6 +65,14 @@ const FALLBACK_LITERAL = '#0074a7';
  * `--tn-primary-text`.
  */
 const KEEPS_PRIMARY: Readonly<Record<string, { count: number; why: string }>> = {
+  'chip/chip.component.scss': {
+    count: 1,
+    why: 'the × on a hovered close button, which is text but paints on --tn-primary-txt — '
+      + 'the primary chip\'s own label colour, filling the circle — and not on --tn-bg1/--tn-bg2. '
+      + '--tn-primary-text is tuned for the page background and would be the wrong colour on a '
+      + 'fill; this pair is the primary chip\'s label pair reversed, and chip-contrast.spec.ts '
+      + 'measures it at 4.5:1 in all nine palettes (#261)',
+  },
   'expansion-panel/expansion-panel.component.scss': { count: 1, why: 'the <svg> chevron' },
   'file-picker/file-picker-popup.component.scss': {
     count: 3,
