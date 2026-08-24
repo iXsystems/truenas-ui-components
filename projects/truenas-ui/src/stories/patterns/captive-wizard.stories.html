@@ -86,7 +86,7 @@
             <div>
                 <tn-checkbox label="Enable deduplication" [(ngModel)]="config.storage.enableDeduplication" />
                 @if (config.storage.enableDeduplication) {
-                <div style="margin-top: 8px; padding: 8px; background: var(--warning-bg); border-radius: 4px; font-size: 14px; color: var(--warning-fg);">
+                <div style="margin-top: 8px; padding: 8px; background: var(--tn-alt-bg1); border-radius: 4px; font-size: 14px; color: var(--tn-warning, var(--tn-orange, #955313));">
                 <strong>Warning:</strong> Deduplication requires significant RAM (5GB+ recommended per TB of storage).
                 </div>
                 }
@@ -299,9 +299,9 @@
             </div>
         </div>
         
-        <div style="padding: 16px; background: var(--success-bg); border-radius: 8px; border: 1px solid var(--success);">
-            <h4 style="margin: 0 0 8px 0; color: var(--success);">Ready to Complete Setup</h4>
-            <p style="margin: 0; font-size: 14px; color: var(--success);">
+        <div style="padding: 16px; background: var(--tn-alt-bg1); border-radius: 8px; border: 1px solid var(--tn-success, var(--tn-green, #416f26));">
+            <h4 style="margin: 0 0 8px 0; color: var(--tn-success, var(--tn-green, #416f26));">Ready to Complete Setup</h4>
+            <p style="margin: 0; font-size: 14px; color: var(--tn-success, var(--tn-green, #416f26));">
             Your TrueNAS system is configured and ready to be initialized. Click "Complete Setup" to apply all settings and start your system.
             </p>
         </div>
