@@ -6,77 +6,151 @@
    in Storybook development environment.
 
    DO NOT import this file in production builds.
-   It is imported only in .storybook/preview.ts
+   `.storybook/preview-head.html` links it as `./themes.css`'s neighbour out of
+   `.storybook/public/`, which `yarn copy-themes` regenerates from this file —
+   edit this one, and `themes-css-copy.spec.ts` fails if the two drift.
+
+   WHAT THIS FILE IS FOR, AND WHAT IT IS NO LONGER FOR (#293)
+   ----------------------------------------------------------
+   Docs pages are themed by `parameters.docs.theme` in `preview.ts`, which is
+   the same `truenasTheme` object `manager.ts` gives the manager UI. That
+   parameter did not exist until #293, and its absence is not the no-op it
+   sounds like: `DocsContainer` calls `ensure(theme)`, and `ensure(undefined)`
+   returns `convert(themes.light)` — Storybook's DEFAULT LIGHT theme. So every
+   docs page rendered light-theme ink on the TrueNAS dark palette, and this
+   file had grown a list of tag selectors forcing back the elements someone
+   had noticed. `code`, `h5` and the syntax highlighter's spans were never in
+   that list: 442 failing text nodes on the Dialog docs page alone, the worst
+   at 1.16:1 against a 4.5:1 requirement.
+
+   THE RULE THAT REPLACED THE LIST
+   -------------------------------
+   Docs-page CHROME is Storybook's, and is themed through `truenasTheme`. It
+   does not follow the theme switcher, for the same reason the manager UI does
+   not — the switcher themes the COMPONENT. The only thing this file paints
+   from `--tn-*` tokens is the surface a story is rendered on.
+
+   That is not a tidiness argument. A rule setting only a `color:` from a
+   `--tn-*` token was the original bug wearing the other mask: three shipped
+   palettes are LIGHT — `.tn-blue`, `.tn-paper`, `.tn-high-contrast` — so
+   `--tn-fg2` is a dark ink, and after #293 it would have been painted on
+   chrome that is always `#282828`. Every such rule is gone. What remains sets
+   a foreground and its own background together, from the same palette, so it
+   stays self-consistent on all nine.
+
+   WHY THE OVERRIDES AT THE BOTTOM ARE A CLOSED LIST
+   -------------------------------------------------
+   `convert()` in `storybook/theming` builds `theme.color` from
+   `createColors()`, and only FOUR of those roles come from the theme object:
+   `primary`, `secondary`, `defaultText` and `inverseText`. Every other role —
+   and `red2` in both of the syntax palettes — is a constant shared by the
+   light and dark bases, so no docs theme can reach it. The overrides below are
+   derived from that function rather than noticed one at a time, which is the
+   whole difference between this list and the one it replaces.
+
+   Storybook paints docs TEXT with these unreachable roles. Measured against
+   `appContentBg` (#282828), the surface `DocsWrapper` and the syntax
+   highlighter's own wrapper both paint:
+
+     role                      value     ratio   painted on            here?
+     color.dark                #5C6570   2.49:1  h6, blockquote        yes
+     code red2 (.token.deleted) #9a050f  1.69:1  diff syntax           yes
+     color.darkest             #2E3338   1.16:1  span.frame caption    no (1)
+     color.negative            #FF4400   4.27:1  required-arg marker   no (2)
+     color.orange              #FC521F   4.47:1  story-mount error     no (2)
+     transparentize(.6, text)  ~#717171  3.02:1  argstable section     no (2,3)
+                                                 header, Typeset label
+
+   (1) reachable, but nothing here emits `span.frame` markup — a dead selector
+       would be worse than a documented omission.
+   (2) styled by emotion with a generated class and no stable hook. A selector
+       for these would be a hash that a Storybook patch release changes
+       silently, which is a worse failure than the one it fixes.
+   (3) neither renders on any docs page in this repository today: no story
+       declares `argTypes[…].table.category`, and no MDX uses `Typeset`. Both
+       are one edit away, so they are recorded rather than dismissed.
+
+   `docs-theme-contrast.spec.ts` measures every colour written in this file and
+   in `truenasTheme.js`, and fails if a rule outside the canvas selectors below
+   starts painting chrome text from a `--tn-*` token again.
    ================================ */
 
 /* ================================
-   Let's apply these variables to
-   the preview and story book docs elements
+   THE COMPONENT'S CANVAS
+   The only rules here that follow the theme switcher, because the surface a
+   story renders on is the component's and not Storybook's. Each sets its
+   foreground and its background from the same palette.
    ================================ */
 
-html, body, #storybook-docs > .sbdocs-wrapper {
+/* The preview iframe's own page. This is the story canvas outside docs; on a
+   docs page `DocsWrapper` covers it, painting `theme.background.content` at
+   `min-height: 100vh`.
+
+   `!important` predates #293 and is kept: Storybook's preview injects base
+   styles onto the document it owns, and which of the two lands last is not
+   something a static stylesheet can decide. #293 is about the docs CHROME
+   painting the wrong ink, and this rule is not that — dropping the flag here
+   would be an unrelated change to how stories render. */
+html, body {
   font-family: var(--tn-font-family-body);
   color: var(--tn-fg2) !important;
   background-color: var(--tn-bg1) !important;
 }
 
-h1, h2, h3,h4,
-.sbdocs-title h1, .sbdocs-title h2, .sbdocs-title h3,.sbdocs-title h4 {
-  font-family: var(--tn-font-family-header);
-  color: var(--tn-fg1) !important;
-}
-
-p, li, td {
-  color: var(--tn-fg2) !important;
-}
-
+/* `!important` because addon-docs paints both of these itself —
+   `getBlockBackgroundStyle(theme)` on `.sbdocs-preview`, from the docs theme —
+   and the component's surface is what should show through. */
 .docs-story,
-.sb-bar,
-.sbdocs-wrapper td,
 .sbdocs-preview {
   background-color: var(--tn-bg2) !important;
   color: var(--tn-fg2) !important;
-}
-
-thead, th {
-  background-color: var(--tn-topbar);
-  color: var(--tn-topbar-txt) !important;
-}
-
-/* Form field styles */
-input:not([role="switch"]),
-.sbdocs-wrapper select,
-.sbdocs-wrapper textarea {
-  background-color: var(--tn-bg1) !important;
-  color: var(--tn-fg2) !important;
-}
-
-.docblock-code-toggle {
-  background-color: var(--tn-btn-default-bg) !important;
-  color: var(--tn-btn-default-txt) !important;
-}
-
-.docblock-argstable-body span {
-  color: var(--tn-fg1);
-  background-color: unset;
-  border: unset;
 }
 
 .docs-story > div {
   background-color: unset;
 }
 
-.docblock-source > div {
-  background: #000000 !important;
-  color: #dedede;
-  border: unset;
+/* ================================
+   TYPEFACE
+   `create()` accepts `fontBase` and `fontCode` and has no third slot, so the
+   header face is the one typographic choice the docs theme cannot carry.
+   Colour is deliberately absent: these headings take `theme.color.defaultText`
+   (#dedede, 10.96:1 on #282828) like the rest of the docs chrome.
+   ================================ */
+h1, h2, h3, h4,
+.sbdocs-title h1, .sbdocs-title h2, .sbdocs-title h3, .sbdocs-title h4 {
+  font-family: var(--tn-font-family-header);
 }
 
-.docblock-source button {
-  background: var(--tn-bg2) !important;
-  color: var(--tn-fg2);
+/* ================================
+   THE ROLES `truenasTheme` CANNOT REACH
+   See the table in the header for the full set and why these two are the ones
+   with rules. Both values are the smallest hue-preserving lightness step off
+   Storybook's own that clears 4.5:1 on BOTH docs surfaces — the method
+   themes.css documents for `--tn-primary-text`. Ratios are against
+   `appContentBg` #282828 then `appBg` #1e1e1e.
+   ================================ */
+
+/* `theme.color.dark`, #5C6570 at 2.49:1. Scoped to the docs content and out of
+   `.sb-unstyled`, which is the class addon-docs uses to keep its own
+   typography off a rendered story — an `h6` inside a component must keep the
+   component's colour. `:where()` contributes no specificity, so this is 0,2,0
+   against the 0,1,0 of addon-docs' own `:where(h6:not(…))` rule. */
+.sbdocs-content :where(h6, blockquote):not(.sb-unstyled *) {
+  color: #86909b; /* 4.55:1, 5.14:1 */
 }
 
-.docblock-source {
-  border: solid 1px var(--tn-alt-bg2) !important;
+/* The syntax highlighter's `deleted` token. `red2` is #9a050f in BOTH of
+   Storybook's syntax palettes — the one entry the dark palette did not
+   retune — so it is 1.69:1 wherever a diff is highlighted, on the light theme
+   and on the dark one alike.
+
+   `!important` rather than more selectors: emotion styles this from the
+   highlighter's wrapper at the same specificity this rule can reach, and the
+   order its <style> is injected in relative to a static stylesheet is not
+   something to depend on. Nothing in this repository renders a diff sample
+   today; the rule is here because the palette ships broken, not because a page
+   was seen failing. */
+.sbdocs .token.deleted {
+  color: #f9535e !important; /* 4.51:1, 5.10:1 */
 }
