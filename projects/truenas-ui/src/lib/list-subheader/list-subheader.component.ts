@@ -1,7 +1,7 @@
 
-import { Component, ElementRef, inject, input, signal } from '@angular/core';
-import type { OnInit } from '@angular/core';
-import { ariaOwnerRole } from '../a11y/aria-owner';
+import { Component, computed, input } from '@angular/core';
+import type { DoCheck } from '@angular/core';
+import { ariaOwner } from '../a11y/aria-owner';
 
 /**
  * A section heading inside a list.
@@ -32,14 +32,20 @@ import { ariaOwnerRole } from '../a11y/aria-owner';
     '[attr.aria-level]': 'inList() ? null : "3"'
   }
 })
-export class TnListSubheaderComponent implements OnInit {
+export class TnListSubheaderComponent implements DoCheck {
   inset = input<boolean>(false);
 
-  private readonly host = inject(ElementRef).nativeElement as HTMLElement;
+  private readonly owner = ariaOwner();
 
-  protected readonly inList = signal(false);
+  /**
+   * `list` and nothing else, unlike the divider's wider test: becoming a
+   * `listitem` is the LIST's answer to the ownership rule. A `listbox` owns
+   * `option` and `group`, so a section there is a `group` with an accessible
+   * name — different markup, and not this ticket's.
+   */
+  protected readonly inList = computed(() => this.owner.role() === 'list');
 
-  ngOnInit(): void {
-    this.inList.set(ariaOwnerRole(this.host) === 'list');
+  ngDoCheck(): void {
+    this.owner.check();
   }
 }

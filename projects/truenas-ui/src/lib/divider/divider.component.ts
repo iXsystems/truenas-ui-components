@@ -1,16 +1,17 @@
 
-import { Component, ElementRef, inject, input, signal } from '@angular/core';
-import type { OnInit } from '@angular/core';
-import { ariaOwnerRole } from '../a11y/aria-owner';
+import { Component, computed, input } from '@angular/core';
+import type { DoCheck } from '@angular/core';
+import { ariaOwner, prescribesItsChildren } from '../a11y/aria-owner';
 
 /**
  * A rule between things.
  *
- * `role="separator"`, except where the element that owns it is a `role="list"`:
- * a list owns only `listitem`, so a separator between two rows invalidates the
- * list it sits in (#237). Owned by a ROW of that list — a divider inside a
- * `tn-list-item` — it is a separator like anywhere else. See `ariaOwnerRole`
- * for why the DOM decides that rather than DI.
+ * `role="separator"`, except where the element that owns it is a container
+ * whose children are prescribed — a `role="list"` owns only `listitem`, so a
+ * separator between two rows invalidates the list it sits in (#237). Owned by a
+ * ROW of that list — a divider inside a `tn-list-item` — it is a separator like
+ * anywhere else. See `ariaOwnerRole` for what "owns" means and why the DOM
+ * decides it rather than DI.
  */
 @Component({
   selector: 'tn-divider',
@@ -29,22 +30,22 @@ import { ariaOwnerRole } from '../a11y/aria-owner';
     '[attr.aria-orientation]': 'role() === "separator" ? (vertical() ? "vertical" : "horizontal") : null'
   }
 })
-export class TnDividerComponent implements OnInit {
+export class TnDividerComponent implements DoCheck {
   vertical = input<boolean>(false);
   inset = input<boolean>(false);
 
-  private readonly host = inject(ElementRef).nativeElement as HTMLElement;
+  private readonly owner = ariaOwner();
 
   /**
    * `presentation` rather than no role at all: both are invisible to assistive
-   * technology and satisfy the list, and this one says in the DOM that the rule
-   * is decoration on purpose.
+   * technology and satisfy the container, and this one says in the DOM that the
+   * rule is decoration on purpose.
    */
-  protected readonly role = signal<'separator' | 'presentation'>('separator');
+  protected readonly role = computed(
+    () => prescribesItsChildren(this.owner.role()) ? 'presentation' : 'separator'
+  );
 
-  ngOnInit(): void {
-    if (ariaOwnerRole(this.host) === 'list') {
-      this.role.set('presentation');
-    }
+  ngDoCheck(): void {
+    this.owner.check();
   }
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -7,7 +7,9 @@ import { axeResult, axeScan } from '../a11y/axe-testing';
 import { TnDividerComponent } from '../divider/divider.component';
 import { TnDividerDirective, TnListItemTitleDirective } from '../list-directives/list-directives';
 import { TnListItemComponent } from '../list-item/list-item.component';
+import { TnListOptionComponent } from '../list-option/list-option.component';
 import { TnListSubheaderComponent } from '../list-subheader/list-subheader.component';
+import { TnSelectionListComponent } from '../selection-list/selection-list.component';
 
 /**
  * Guards the structure fixed for #237: `tn-list` declares `role="list"`, which
@@ -122,6 +124,51 @@ class ProjectingListComponent {}
   `,
 })
 class ProjectedHostComponent {}
+
+/**
+ * The harder projection: the `<ng-content>` sits inside an `@if`, so the
+ * divider is projected during the PANEL's view refresh — after the hooks of the
+ * consumer's view, where the divider is declared and initialised. Whatever
+ * decides its role has to be able to change its mind.
+ */
+@Component({
+  selector: 'tn-gated-panel',
+  standalone: true,
+  imports: [TnListComponent],
+  template: '@if (open()) { <tn-list><ng-content /></tn-list> }',
+})
+class GatedPanelComponent {
+  open = signal(true);
+}
+
+@Component({
+  selector: 'tn-gated-a11y-host',
+  standalone: true,
+  imports: [GatedPanelComponent, TnListItemComponent, TnDividerComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-gated-panel>
+      <tn-list-item>tank</tn-list-item>
+      <tn-divider />
+    </tn-gated-panel>
+  `,
+})
+class GatedHostComponent {}
+
+/** A container that is a `listbox` rather than a `list`, and forbids as much. */
+@Component({
+  selector: 'tn-listbox-a11y-host',
+  standalone: true,
+  imports: [TnSelectionListComponent, TnListOptionComponent, TnDividerComponent],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-selection-list aria-label="Mailboxes">
+      <tn-list-option [value]="'inbox'">Inbox</tn-list-option>
+      <tn-divider />
+    </tn-selection-list>
+  `,
+})
+class ListboxHostComponent {}
 
 /** The same three components, with nothing around them. */
 @Component({
@@ -328,6 +375,53 @@ describe('tn-list section accessibility', () => {
         ['aria-required-children']
       );
       expect(violated).toEqual([]);
+    });
+  });
+
+  describe('a divider projected into a list behind control flow', () => {
+    let gated: ComponentFixture<GatedHostComponent>;
+
+    beforeEach(async () => { gated = await createHost(GatedHostComponent); });
+
+    it('is decorative from the pass after the one that projected it', async () => {
+      const divider = gated.nativeElement.querySelector('tn-divider') as HTMLElement;
+
+      // The lag is real and is the price of not throwing
+      // ExpressionChangedAfterItHasBeenChecked on correct markup — see
+      // `AriaOwnerDirective`. Measured, not assumed: `createHost` has run one
+      // pass, and the divider is already inside the list by now.
+      expect(divider.parentElement?.tagName).toBe('TN-LIST');
+      expect(divider.getAttribute('role')).toBe('separator');
+
+      gated.detectChanges();
+
+      expect(divider.getAttribute('role')).toBe('presentation');
+      const { violated } = await axeResult(
+        gated.nativeElement,
+        [gated.nativeElement.querySelector('tn-list') as HTMLElement],
+        ['aria-required-children']
+      );
+      expect(violated).toEqual([]);
+    });
+  });
+
+  describe('a divider inside a listbox', () => {
+    let listbox: ComponentFixture<ListboxHostComponent>;
+
+    beforeEach(async () => { listbox = await createHost(ListboxHostComponent); });
+
+    it('is decorative there too, because a listbox owns only option and group', async () => {
+      const divider = listbox.nativeElement.querySelector('tn-divider') as HTMLElement;
+
+      expect(divider.getAttribute('role')).toBe('presentation');
+
+      const { violated, evaluated } = await axeResult(
+        listbox.nativeElement,
+        [listbox.nativeElement.querySelector('tn-selection-list') as HTMLElement],
+        ['aria-required-children']
+      );
+      expect(violated).toEqual([]);
+      expect(evaluated).toContain('aria-required-children');
     });
   });
 

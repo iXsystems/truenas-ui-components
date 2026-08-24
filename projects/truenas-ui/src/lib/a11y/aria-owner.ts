@@ -1,3 +1,6 @@
+import { ElementRef, inject, signal } from '@angular/core';
+import type { Signal } from '@angular/core';
+
 /**
  * The role of the element that OWNS `host` in the accessibility tree, or `null`
  * where nothing above it carries a role.
@@ -65,11 +68,9 @@
  * component that needs any of those should say so rather than widening this
  * quietly.
  *
- * Call it once, from `ngOnInit`: by then the host is attached to its parent
- * (projection included) and host bindings have not run yet, so a signal set
- * there is read in the same change-detection pass. Nothing re-evaluates it —
- * components are not moved between parents in practice, and a role that
- * flickers is worse than one decided once.
+ * Prefer `AriaOwner` below to calling this directly: an element can be projected
+ * into its owner AFTER its own hooks have run, so the answer is not safe to take
+ * once.
  */
 export function ariaOwnerRole(host: Element): string | null {
   // From the parent, not the host: `closest` matches the element it starts on,
@@ -87,4 +88,103 @@ export function ariaOwnerRole(host: Element): string | null {
     candidate = candidate.parentElement?.closest('[role]') ?? null;
   }
   return null;
+}
+
+/**
+ * Whether a container with this role prescribes what its children may be, so
+ * that a decorative element inside it must carry no role of its own.
+ *
+ * These are the containers THIS LIBRARY declares — `tn-list` and
+ * `tn-selection-list` — rather than a reimplementation of ARIA's ownership
+ * table, which is long, versioned, and already implemented by the tool that
+ * checks it. Adding `tablist` or `tree` when a component grows one is a line
+ * here; guessing at all of them now would be a table nobody maintains.
+ *
+ * `menu` and `menubar` are deliberately absent: they DO allow `separator`
+ * among their children, so a rule inside a menu keeps its role.
+ */
+export function prescribesItsChildren(ownerRole: string | null): boolean {
+  return ownerRole === 'list' || ownerRole === 'listbox';
+}
+
+/**
+ * Tracks `ariaOwnerRole` for one host element, as a signal.
+ *
+ * Build it with `ariaOwner()` in an injection context, drive it from
+ * `ngDoCheck`, and read `role()` from a `computed`:
+ *
+ * ```ts
+ * export class TnDividerComponent implements DoCheck {
+ *   private readonly owner = ariaOwner();
+ *   protected readonly role = computed(() => this.owner.role() === 'list' ? … );
+ *   ngDoCheck(): void { this.owner.check(); }
+ * }
+ * ```
+ *
+ * A host directive would spare each caller those two lines, and cannot be used:
+ * ng-packagr refuses a `hostDirectives` entry that is not exported from the
+ * public API (NG3001), and nothing in `lib/a11y/` is — these are this library's
+ * own scaffolding, not surface for consumers.
+ *
+ * WHY NOT `ngOnInit`, WHICH IS SIMPLER
+ * ------------------------------------
+ * Because an element can arrive in its owner after its own hooks have run.
+ * Measured on this library: a component whose `<ng-content>` sits inside an
+ * `@if` projects during the panel's view refresh, which is AFTER the hooks of
+ * the projected content, since that content is declared in — and initialised
+ * with — the consumer's view.
+ *
+ * ```html
+ * <!-- gated-panel.component.html -->
+ * @if (open()) { <tn-list><ng-content /></tn-list> }
+ * ```
+ *
+ * A divider passed to that panel ran `ngOnInit` with no parent at all and kept
+ * `role="separator"` forever, inside a list, which is the defect the role is
+ * varying to avoid.
+ *
+ * WHY `ngDoCheck` AND NOT A PLAIN DOM READ IN THE BINDING
+ * ------------------------------------------------------
+ * A binding that walks the DOM itself would be evaluated in the same pass that
+ * projection happens in, and then AGAIN by `checkNoChanges` in development —
+ * once before the move and once after — which is
+ * `ExpressionChangedAfterItHasBeenChecked`, thrown, on markup that is correct.
+ * `checkNoChanges` does not run hooks, so a signal written here is stable
+ * across both passes.
+ *
+ * The cost of that is one change-detection cycle of lag: an element projected
+ * into its owner during a pass is re-read on the NEXT one. A one-frame-stale
+ * decorative role is the acceptable end of this trade; the permanent one was
+ * not.
+ *
+ * The DOM read is skipped entirely while the host's parent is unchanged, which
+ * is every cycle but the first and any that moves it — so the steady-state cost
+ * is one property read per cycle.
+ */
+export class AriaOwner {
+  private checkedParent: Element | null = null;
+  private readonly owner = signal<string | null>(null);
+
+  constructor(private readonly host: Element) {}
+
+  /** The role that owns this element, or `null` while nothing above it has one. */
+  readonly role: Signal<string | null> = this.owner.asReadonly();
+
+  /** Re-reads the owner if the host has been reparented. Call from `ngDoCheck`. */
+  check(): void {
+    const parent = this.host.parentElement;
+    // `null` is also the signal's initial value, so a host that starts with no
+    // parent needs no write to be correct — and gets one as soon as it is
+    // attached, because the parent will then differ.
+    if (parent === this.checkedParent) {
+      return;
+    }
+    this.checkedParent = parent;
+    this.owner.set(ariaOwnerRole(this.host));
+  }
+}
+
+/** `AriaOwner` for the host element of the component being constructed. */
+export function ariaOwner(): AriaOwner {
+  return new AriaOwner(inject(ElementRef).nativeElement as Element);
 }

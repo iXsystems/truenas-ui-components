@@ -420,22 +420,38 @@ defect fixed in #237. The same shape recurs: `listbox` owns `option` and `group`
 
 **Neither side can be fixed by deleting a role.** The subheader and the divider
 are correct on their own; it is the pairing that is not. So a component whose
-role is only valid in some containers decides at `ngOnInit` and binds it:
+role is only valid in some containers takes `ariaOwner()` from
+`lib/a11y/aria-owner.ts` and binds a `computed`:
 
 ```ts
-'[attr.role]': 'role()'    // 'separator', or 'presentation' inside a list
+@Component({ host: { '[attr.role]': 'role()' } })
+export class TnDividerComponent implements DoCheck {
+  private readonly owner = ariaOwner();
+  protected readonly role = computed(
+    () => prescribesItsChildren(this.owner.role()) ? 'presentation' : 'separator'
+  );
+  ngDoCheck(): void { this.owner.check(); }
+}
 ```
 
-**Ask `ariaOwnerRole()` in `lib/a11y/aria-owner.ts`, not the injector.** Its
-docblock has the reasoning; the two things it is easy to get wrong are:
+Its docblock has the reasoning. The three things it is easy to get wrong, each
+measured rather than argued:
 
 - **The owner is the nearest ancestor with a role, not the nearest list.** A
   divider inside a `tn-list-item` is owned by the row, where a separator is
-  legal. "Is there a list above me" demotes it for nothing.
+  legal. "Is there a list above me" demotes it for nothing. `presentation` and
+  `none` are transparent, like no role at all.
 - **An element injector walks the template that *declared* the element**, which
   content projection makes diverge from where it renders, while the
   accessibility tree is built from the DOM. `inject(TnListComponent, { optional: true })`
   therefore gets `<some-panel><tn-divider /></some-panel>` wrong.
+- **The answer cannot be taken once, in `ngOnInit`.** An `<ng-content>` inside
+  an `@if` projects during the panel's own view refresh, which is after the
+  hooks of the content it projects — so an element can be initialised outside
+  its owner and end up inside it. `AriaOwner` re-reads on the change detection
+  after any reparenting, and skips the DOM read while the parent is unchanged.
+  Reading the DOM in the binding instead throws
+  `ExpressionChangedAfterItHasBeenChecked` on markup that is correct.
 
 **Move a required role rather than dropping it.** Inside a list the subheader's
 host becomes the `listitem` the list requires and the heading moves to the

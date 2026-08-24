@@ -1,6 +1,6 @@
-import { Directive, ElementRef, inject, signal } from '@angular/core';
-import type { OnInit } from '@angular/core';
-import { ariaOwnerRole } from '../a11y/aria-owner';
+import { Directive, computed } from '@angular/core';
+import type { DoCheck } from '@angular/core';
+import { ariaOwner, prescribesItsChildren } from '../a11y/aria-owner';
 
 /*
  * Content directives for `tn-list-item` / `tn-list-option`.
@@ -134,14 +134,14 @@ export class TnListItemTrailingDirective {}
     '[attr.role]': 'role()'
   }
 })
-export class TnDividerDirective implements OnInit {
-  private readonly host = inject(ElementRef).nativeElement as HTMLElement;
+export class TnDividerDirective implements DoCheck {
+  private readonly owner = ariaOwner();
 
-  protected readonly role = signal<'separator' | 'presentation'>('separator');
+  protected readonly role = computed(
+    () => prescribesItsChildren(this.owner.role()) ? 'presentation' : 'separator'
+  );
 
-  ngOnInit(): void {
-    if (ariaOwnerRole(this.host) === 'list') {
-      this.role.set('presentation');
-    }
+  ngDoCheck(): void {
+    this.owner.check();
   }
 }
