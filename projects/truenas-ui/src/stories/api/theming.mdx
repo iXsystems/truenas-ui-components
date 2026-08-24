@@ -144,7 +144,19 @@ Each theme defines the following CSS custom properties:
 - `--tn-alt-fg1`: Muted text (placeholders, group labels, breadcrumb separators)
 - `--tn-alt-fg2`: Alternative text color 2
 
-`--tn-fg1`, `--tn-fg2` and `--tn-alt-fg1` each clear the 4.5:1 text minimum (WCAG 1.4.3) against `--tn-bg1` and `--tn-bg2` in every theme, and `--tn-fg1` reads at least as well as `--tn-fg2` except in `.tn-midnight`, where `--tn-fg2` is the emphasis colour and both clear the minimum. That is the whole of the guarantee: it says nothing about `--tn-bg3` or either `--tn-alt-bg`, and text drawn on one of those — `tn-stepper` draws `--tn-alt-fg1` on `--tn-alt-bg1` — has to be measured against that surface rather than assumed from this one. `--tn-alt-fg2` is not covered either; it is drawn on the `--tn-alt-bg` surfaces rather than on the page. `text-fg-contrast.spec.ts` holds all nine palettes to what is claimed here.
+`--tn-fg1`, `--tn-fg2` and `--tn-alt-fg1` each clear the 4.5:1 text minimum (WCAG 1.4.3) against `--tn-bg1` and `--tn-bg2` in every theme, and `--tn-fg1` reads at least as well as `--tn-fg2` except in `.tn-midnight`, where `--tn-fg2` is the emphasis colour and both clear the minimum. That is the whole of the token-level guarantee: it says nothing about `--tn-bg3`, either `--tn-alt-bg`, or `--tn-topbar`. `--tn-alt-fg2` has no page-surface guarantee at all; it is drawn on the `--tn-alt-bg` surfaces rather than on the page. `text-fg-contrast.spec.ts` holds all nine palettes to what is claimed here.
+
+#### Which surfaces the text guarantee covers
+
+| surface | covered by the token guarantee | measured where |
+|---|---|---|
+| `--tn-bg1`, `--tn-bg2` | yes, for `--tn-fg1`, `--tn-fg2` and `--tn-alt-fg1` in all nine palettes | `text-fg-contrast.spec.ts` |
+| `--tn-bg3`, `--tn-alt-bg1`, `--tn-alt-bg2` | **no** — a token that clears 4.5:1 on the page is not promised on a fill above it | `text-token-surface-contrast.spec.ts`, per pairing |
+| `--tn-topbar` | **no** — the bar has its own label token, `--tn-topbar-txt`, which is guaranteed 4.5:1 on it in every palette | `text-token-surface-contrast.spec.ts` |
+
+The distinction is between a *token* and a *pairing*. No text token is promised on the three fills above the page, so a component that starts drawing one there is making a claim nothing has tuned for. What is checked instead is every pairing this library actually paints: `text-token-surface-contrast.spec.ts` lists them with their call sites, measures each in all nine palettes, and fails when a stylesheet grows a new fill or a new text colour without the list being updated. Two pairings are recorded there as known gaps rather than fixed, both because the fix is a change to how a theme looks: `.tn-midnight` draws `--tn-fg1` at 3.19–3.91:1 on its three fills (its `--tn-fg2` clears all three, and that palette inverts its ramp deliberately), and `.tn-solarized-dark` draws `--tn-alt-fg1` at 3.79:1 on `--tn-alt-bg1`, where `tn-stepper` puts its step indicator.
+
+**Writing a component:** text on `--tn-bg1` or `--tn-bg2` can read the text tokens freely. Text on any other surface has to be measured against that surface — add the pairing to `text-token-surface-contrast.spec.ts`, which is what turns "measure it there" into something that runs.
 
 ### Non-Text Foregrounds
 - `--tn-fg3`: De-emphasized non-text foreground (icon and glyph strokes, decorative marks)

@@ -195,7 +195,13 @@ tn-table {
   th,
   .tn-table__header-cell {
     font-weight: 600;
-    color: var(--tn-fg1);
+    // No `color` here. These cells sit on tn-table's `__header`, which fills
+    // --tn-topbar and labels it --tn-topbar-txt — the one token tuned for that
+    // bar. Overriding it with --tn-fg1, the page's body colour, measured 1.32:1
+    // in .tn-high-contrast, 1.35:1 in .tn-paper, 1.55:1 in .tn-blue, 2.16:1 in
+    // .tn-midnight and 4.09:1 in .tn-dracula (#277). Inheriting is also what
+    // keeps the sortable-hover fill, which is derived from those two tokens,
+    // meaning what it says.
     padding: 12px 16px;
     border-bottom: 2px solid var(--tn-lines);
   }
