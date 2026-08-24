@@ -127,10 +127,10 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   private readonly hostElement = inject(ElementRef<HTMLElement>).nativeElement;
 
   /**
-   * The naming attributes this component has written to the host, so that it
-   * only ever removes its own. See {@link applyName}.
+   * The value this component last wrote for each naming attribute, so that it
+   * only ever rewrites or removes its own. See {@link applyName}.
    */
-  private readonly written = new Set<string>();
+  private readonly written = new Map<string, string>();
 
   selectionChange = output<TnSelectionChange>();
 
@@ -425,18 +425,31 @@ export class TnSelectionListComponent implements ControlValueAccessor {
    * Write one naming attribute to the host, or take back one this component
    * previously wrote — and never touch one it did not.
    *
-   * The `written` guard is the whole point: without it, `value === null` means
-   * "remove", which removes a name the consumer put on the element directly.
-   * With it, `null` means "this component has nothing to say about this
-   * attribute", and whatever is there stays there. See the constructor.
+   * The guard covers WRITING as much as removing, and the write half is the
+   * easier one to get wrong: a list inside a `<tn-form-field label="…">` has a
+   * name to write on the very first pass, so guarding only the removal would
+   * still overwrite a `[attr.aria-labelledby]` the consumer bound in the parent
+   * template — the exact clobbering this method exists to stop, arriving from
+   * the other direction.
+   *
+   * Ownership is checked against the value on the element rather than a flag,
+   * so it also lapses correctly: an attribute this component wrote and someone
+   * else has since changed is no longer its to rewrite or remove.
    */
   private applyName(attribute: string, value: string | null): void {
-    if (value !== null) {
-      this.hostElement.setAttribute(attribute, value);
-      this.written.add(attribute);
+    const current = this.hostElement.getAttribute(attribute);
+    const ours = this.written.get(attribute);
+    // Something is there that this component did not put there, or did not put
+    // there last. Whatever it names, it is the consumer's to manage.
+    if (current !== null && current !== ours) {
       return;
     }
-    if (this.written.has(attribute)) {
+    if (value !== null) {
+      this.hostElement.setAttribute(attribute, value);
+      this.written.set(attribute, value);
+      return;
+    }
+    if (ours !== undefined) {
       this.hostElement.removeAttribute(attribute);
       this.written.delete(attribute);
     }

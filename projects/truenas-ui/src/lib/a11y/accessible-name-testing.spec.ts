@@ -121,6 +121,25 @@ describe('accessibleName', () => {
     });
 
     /**
+     * A `<label for="…">` names the element `for` points at, even when it wraps
+     * a different one — so this input is unnamed, and saying otherwise would let
+     * a spec claim a name for markup a browser leaves silent.
+     */
+    it('names nothing when it wraps a control but points at another', () => {
+      const el = mount(
+        '<input id="other"><label for="other">Volume<input id="subject" type="range"></label>'
+      );
+
+      expect(accessibleName(el)).toBeNull();
+    });
+
+    it('still names the control it wraps when its for points back at it', () => {
+      const el = mount('<label for="subject">Volume<input id="subject" type="range"></label>');
+
+      expect(accessibleName(el)).toBe('Volume');
+    });
+
+    /**
      * A `<label>` names only a labelable element. Wrapping a `div` in one names
      * nothing, and reporting a name there would let a spec claim an accessible
      * name for markup a browser leaves unnamed.

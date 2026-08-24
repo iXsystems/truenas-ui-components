@@ -321,6 +321,29 @@ describe('tn-selection-list accessible name (#235)', () => {
     });
 
     /**
+     * The write half of the ownership rule, which is the easier one to get
+     * wrong: inside a labelled field this component has a name to write on the
+     * very first pass, so a guard that covered only removal would overwrite the
+     * consumer's reference with the field's.
+     */
+    it('survives an enclosing form field having a label of its own', () => {
+      @Component({
+        selector: 'tn-attr-bound-in-field-host',
+        standalone: true,
+        imports: [TnFormFieldComponent, TnSelectionListComponent, TnListOptionComponent],
+        template: `<span id="own-heading">Datasets</span><tn-form-field label="Mailboxes">
+          <tn-selection-list [attr.aria-labelledby]="'own-heading'"><tn-list-option
+          value="inbox">Inbox</tn-list-option></tn-selection-list></tn-form-field>`
+      })
+      class AttrBoundInFieldHostComponent {}
+
+      const fixture = TestBed.createComponent(AttrBoundInFieldHostComponent);
+      fixture.detectChanges();
+
+      expect(accessibleName(list(fixture))).toBe('Datasets');
+    });
+
+    /**
      * The other side of the ownership rule: a name this component DID write is
      * still its to take back when the input that produced it goes away.
      */

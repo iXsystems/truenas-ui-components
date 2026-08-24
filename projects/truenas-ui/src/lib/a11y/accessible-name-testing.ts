@@ -74,8 +74,16 @@ function nativeLabel(el: HTMLElement): string | null {
     ? Array.from(el.ownerDocument.querySelectorAll('label[for]'))
       .find((label) => label.getAttribute('for') === id) ?? null
     : null;
+  // A wrapping `<label for="…">` names the element that `for` points at, not the
+  // one it happens to contain — so a label pointing elsewhere names this control
+  // no more than a label somewhere else on the page does. Without the check, the
+  // `<label for="other">Volume<input></label>` shape reports a name for a
+  // control a browser leaves unnamed, which is the direction that makes a
+  // naming spec pass on markup that is broken.
   const wrapping = el.closest('label');
-  const text = (explicit ?? wrapping)?.textContent?.trim() ?? '';
+  const wraps = wrapping !== null
+    && (!wrapping.hasAttribute('for') || wrapping.getAttribute('for') === id);
+  const text = (explicit ?? (wraps ? wrapping : null))?.textContent?.trim() ?? '';
   return text !== '' ? text : null;
 }
 
