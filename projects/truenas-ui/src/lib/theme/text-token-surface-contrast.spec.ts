@@ -3,18 +3,17 @@ import { join } from 'path';
 import { TN_THEME_DEFINITIONS } from './theme.constants';
 import {
   AA_MINIMUM,
-  compositeColor,
   contrastRatio,
   formatRatio,
   meetsAa,
-  mixColors,
   themePalettes,
 } from '../a11y/contrast-testing';
 
 /**
  * The text tokens, measured on the surfaces `text-fg-contrast.spec.ts`
- * deliberately does not cover — `--tn-bg3`, `--tn-alt-bg1`, `--tn-alt-bg2` and
- * `--tn-topbar` — for every pairing something in `src/lib` actually paints.
+ * deliberately does not cover — `--tn-bg3`, `--tn-alt-bg1`, `--tn-alt-bg2`,
+ * `--tn-topbar` and `--tn-topbar-hover` — for every pairing something in
+ * `src/lib` actually paints.
  *
  * WHY THIS EXISTS. Every contrast spec in this directory measured against
  * `--tn-bg1` and `--tn-bg2` only, and each said so deliberately: the claim is
@@ -57,6 +56,7 @@ const SURFACES: Readonly<Record<string, string>> = {
   '--tn-alt-bg1': 'the first alternate fill — banners, row hover, the stepper indicator',
   '--tn-alt-bg2': 'the second alternate fill — menu and option hover, chip hover',
   '--tn-topbar': 'the table header bar',
+  '--tn-topbar-hover': 'the table header bar under the pointer, on a sortable header',
 };
 
 /** The text tokens `theming.mdx` documents, and the role it gives each. */
@@ -117,8 +117,11 @@ interface Pairing {
  *   re-points to `--tn-primary` on the very hover that paints `--tn-bg3`, so
  *   the pairing does not arise there at all.
  *
- * The sortable table header's hover fill is not left out. It is a `color-mix`
- * rather than a token, so it is measured separately below.
+ * The sortable table header's hover fill is here rather than left out, and it
+ * is an ordinary pairing now: it was a `color-mix` of the bar with its own
+ * label until #284 gave every palette a `--tn-topbar-hover`. What is still
+ * measured separately below is that the table paints THAT token, and that the
+ * fill is far enough off the bar to be an affordance at all.
  *
  * Keyed by the pairing rather than by the call site: what fails is a palette
  * declaring two colours that do not go together, and every component putting
@@ -185,6 +188,12 @@ const PAIRINGS: readonly Pairing[] = [
     surface: '--tn-topbar',
     where: 'the table header (table.component.scss:212-213)',
   },
+  {
+    token: '--tn-topbar-txt',
+    surface: '--tn-topbar-hover',
+    where: 'the hovered sortable table header — the same label, on the fill the header '
+      + 'hovers to (table.component.scss:245)',
+  },
 ];
 
 /** A (palette, token, surface) that does not clear AA, for a reason of its own. */
@@ -231,61 +240,30 @@ function pairingKey(selector: string, token: string, surface: string): string {
  * The declaration the sortable table header hovers to, read out of the
  * stylesheet rather than copied here.
  *
- * Copying it would leave these cases measuring a fill the table has stopped
- * painting — including one changed to fix what they record.
+ * `--tn-topbar-hover` is a plain token now, so the ratio itself is measured by
+ * the `PAIRINGS` cases above like any other pairing. What is left for the
+ * stylesheet to answer is which token the table actually paints: a hover
+ * re-pointed at some other fill would leave that pairing measuring a colour
+ * nothing renders, and every palette's recorded ratio describing a state the
+ * table had stopped entering.
  */
 const HOVER_FILL_SCSS = join(LIB_DIR, 'table/table.component.scss');
-const HOVER_FILL = /background-color:\s*(color-mix\([^;]*\));/;
+const HOVER_FILL = /&:hover\s*{\s*background-color:\s*var\(\s*(--[\w-]+)\s*\)\s*;/;
 
 /**
- * The percentage of `--tn-topbar` in the mix, read off the declaration rather
- * than assumed, so a percentage change fails rather than being measured wrong.
+ * The floor the hover fill has to clear against the resting bar, so that the
+ * affordance is still visible.
+ *
+ * READ OFF THE DERIVATION IT REPLACES rather than invented. The
+ * `color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt))` this fill
+ * used to be moved the bar by between 1.28:1 (`.tn-blue`) and 1.42:1
+ * (`.tn-nord`, `:root`), so a floor of 1.30 sits inside the band the shipped
+ * design already produced and above its weakest palette. It is deliberately not
+ * a WCAG number: 1.4.11's 3:1 is about telling a control from its background,
+ * and this is one state of one surface against another state of the same
+ * surface, which nothing in WCAG puts a figure on.
  */
-const MIX_PERCENT = /var\(--tn-topbar\)\s*(\d+)%/;
-
-/**
- * The space the mix is interpolated in, read off the declaration for the same
- * reason as the percentage — and it is not a formality.
- *
- * `mixColors` computes `color-mix(in srgb, …)`, weighting the sRGB channels
- * directly. `color-mix(in oklab, …)` of the same two colours at the same
- * percentage is a DIFFERENT colour, and a perceptual space is exactly what
- * someone reaching for a better-looking hover would switch to. Nothing else
- * here would notice: the tokens and the percentage would still match, and every
- * case below would go on reporting ratios for a fill the table had stopped
- * painting.
- */
-const MIX_SPACE = /color-mix\(\s*in\s+([\w-]+)/;
-
-/**
- * Palettes whose sortable header hover fill does not clear AA, with the ratio.
- *
- * The same shape and the same rule as `KNOWN_GAPS`: asserted to still be
- * failing, so a fix takes the entry out rather than leaving it here excusing
- * nothing. These four are the palettes with mid-tone bars, where the resting
- * pairing already has little headroom and mixing the label into the bar spends
- * what is left.
- *
- * Not fixed here for the reason `table.component.scss` gives at the
- * declaration: there is no single direction to move a bar in that suits both a
- * near-black one, where only lightening is visible at all, and a mid-tone one,
- * where lightening is exactly what breaks it. That wants a hover colour of its
- * own in each palette, which is a token added to nine of them rather than
- * something a survey settles.
- *
- * The five that are not here all clear, and how narrowly says the same thing
- * about how little room the derivation leaves: `.tn-nord` by 0.02 (4.52:1) and
- * `.tn-paper` by 0.14 (4.64:1). The other three have near-black bars —
- * `.tn-high-contrast` at 12.00:1, `:root` and `.tn-dark` at 10.08:1 — which is
- * the far end of the same problem, and why lightening cannot be the fix
- * everywhere.
- */
-const HOVER_GAPS: Readonly<Record<string, string>> = {
-  '.tn-blue': '#ffffff on the mix of #007db3 — 3.59:1, resting 4.58:1',
-  '.tn-dracula': '#ffffff on the mix of #6272a4 — 3.54:1, resting 4.71:1',
-  '.tn-solarized-dark': '#ffffff on the mix of #586e75 — 3.92:1, resting 5.38:1',
-  '.tn-midnight': '#ffffff on the mix of #1274b5 — 3.83:1, resting 5.01:1',
-};
+const HOVER_AFFORDANCE_MINIMUM = 1.3;
 
 /**
  * A `background`/`background-color` declaration filling one of the untuned
@@ -448,7 +426,7 @@ const PAINTS_UNTUNED: Readonly<Record<string, { fills: number; text: number; why
       + 'expanded and detail rows fill --tn-alt-bg1 and active rows --tn-bg3, under the cell\'s '
       + '--tn-fg1; an active CARD fills --tn-bg3 too, under both --tn-fg1 and the --tn-fg2 of '
       + 'its field labels; the hovered card sort direction fills --tn-alt-bg1 under --tn-fg2; '
-      + 'the sortable header hover is a color-mix, measured separately',
+      + 'a hovered sortable header fills --tn-topbar-hover under the same --tn-topbar-txt',
   },
   'tabs/tabs.component.scss': {
     fills: 1,
@@ -657,132 +635,79 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
     });
   });
 
-  describe('the sortable header hover fill, which is a color-mix rather than a token', () => {
+  describe('the sortable header hover fill, which is --tn-topbar-hover (#284)', () => {
     // Comments stripped first, and for a sharper reason than the file scan's:
-    // the comment sitting immediately above this very declaration explains what
-    // the fill used to claim, and a `color-mix` quoted in prose — here or in a
-    // commented-out declaration above the live one — would be matched instead
-    // and point every case below at a fill nothing paints.
+    // the comment sitting immediately above this very declaration names the
+    // `color-mix` the fill used to be, and a declaration quoted in prose — or
+    // commented out above the live one — would be matched instead and point
+    // the case below at a fill nothing paints.
     const scss = withoutComments(readFileSync(HOVER_FILL_SCSS, 'utf8'));
     const declaration = HOVER_FILL.exec(scss)?.[1];
 
-    it('tn-table still hovers its sortable headers to a color-mix', () => {
-      // If this fails the fill has been changed or removed, and every case below
-      // is measuring something the table no longer paints. A fill that is a
-      // plain token belongs in PAIRINGS instead.
-      expect(declaration).toBeDefined();
+    it('tn-table still hovers its sortable headers to --tn-topbar-hover', () => {
+      // What ties the `--tn-topbar-txt` on `--tn-topbar-hover` pairing above to
+      // something the table actually paints. Re-point this hover at another
+      // fill and that pairing goes on measuring a colour nothing renders, with
+      // nine recorded ratios describing a state the table has stopped entering.
+      //
+      // It was a `color-mix` of --tn-topbar with --tn-topbar-txt until #284,
+      // which is why it was measured in this block rather than as a pairing:
+      // mixing the label into the bar moves the surface toward the text, so the
+      // label's ratio could only fall, and on the four mid-tone bars it fell
+      // under 4.5:1 — .tn-blue 3.59:1, .tn-dracula 3.54:1, .tn-solarized-dark
+      // 3.92:1, .tn-midnight 3.83:1. A plain token belongs in PAIRINGS, and
+      // that is where it now is.
+      expect(declaration).toBe('--tn-topbar-hover');
     });
-
-    const percent = declaration === undefined ? undefined : MIX_PERCENT.exec(declaration)?.[1];
-    const space = declaration === undefined ? undefined : MIX_SPACE.exec(declaration)?.[1];
-
-    it('it is an sRGB mix of --tn-topbar with --tn-topbar-txt, by a percentage this can read', () => {
-      // The two tokens, the space and the number are what the arithmetic below
-      // depends on. A mix toward some third colour is a different claim and
-      // would be measured wrong rather than not at all — and so is the same mix
-      // in a different space, since `mixColors` weights sRGB channels and is the
-      // only thing this file can compute the fill with.
-      expect(declaration).toContain('var(--tn-topbar-txt)');
-      expect(space).toBe('srgb');
-      expect(percent).toMatch(/^\d+$/);
-    });
-
-    const barShare = percent === undefined ? 85 : Number(percent);
 
     /**
-     * Each palette's hovered header: the label on the fill it renders on. All
-     * nine, with nothing set aside as unmeasurable.
+     * Each palette's hover fill against its own resting bar.
      *
-     * A TRANSLUCENT LABEL IS NOT A REASON TO SET ONE ASIDE, though it read as
-     * one until the review of #281 said otherwise. CSS does mix a translucent
-     * colour with
-     * premultiplied alpha and hand back a translucent fill — but the mix is
-     * painted on the `<th>`, over the `<thead>`, and `table.component.scss:211`
-     * fills `.tn-table__header` with `--tn-topbar`, opaque in all nine palettes.
-     * Nothing in that file is ever vertically sticky either: its three
-     * `position: sticky` rules pin columns horizontally, and the pinned-header
-     * rule hands the pinned cell back to the same `--tn-topbar` fill. So no row
-     * ever scrolls behind this, and the backdrop is known.
+     * A SEPARATE CLAIM FROM THE PAIRING ABOVE, and neither implies the other.
+     * `PAIRINGS` asks whether the label is legible once the header is hovered;
+     * this asks whether anything happened when it was. A hover equal to the bar
+     * would pass every contrast case in this file — the label would read
+     * exactly as well as it does at rest — and paint no affordance at all,
+     * which is the failure mode a per-palette token introduces and the
+     * derivation it replaced could not have.
      *
-     * Which makes the whole thing measurable with the two functions already
-     * here. Compositing the label onto the bar BEFORE the mix gives exactly what
-     * CSS's premultiplied mix composites to over that same bar: for a label
-     * (L, a) mixed at share k over a bar B, both routes come to
-     * `B(1 - ka) + kaL`. Working `:root` through — bar `#111111`, label
-     * `rgba(255,255,255,0.85)` — the premultiplied mix is
-     * `rgba(48.04, 48.04, 48.04, 0.9775)`, over `#111111` that renders as
-     * `rgb(47.345)`, and compositing first gives `rgb(219.3)` mixed to the same
-     * `rgb(47.345)`. An opaque label passes through `compositeColor` unchanged,
-     * so the five palettes measured before this are measured identically.
-     *
-     * A translucent BAR would be the case with no answer — what is behind the
-     * header would decide its colour, and nothing here can see that. There is no
-     * bucket for it, because it cannot get this far: `--tn-topbar` is a surface
-     * in `PAIRINGS`, so `contrastRatio` refuses it while the pairing cases above
-     * are being built, and the whole file fails to collect with an error naming
-     * the token. That is better cover than an exemption here would be, and an
-     * exemption written for it would be unreachable code — checked by making
-     * `:root`'s bar `rgba(17, 17, 17, 0.9)`, which stops the suite at the
-     * `--tn-topbar-txt` on `--tn-topbar` pairing and never reaches this block.
+     * Both colours are opaque in all nine palettes, so there is no compositing
+     * to do: `--tn-topbar` is a surface in `PAIRINGS` and `--tn-topbar-hover`
+     * is one too, and `contrastRatio` refuses a translucent surface while those
+     * cases are being built — the file fails to collect, naming the token,
+     * before it reaches this block.
      */
-    const hovers = measured.map((palette) => {
-      const label = palette.color('--tn-topbar-txt');
+    const affordances = measured.map((palette) => {
       const bar = palette.color('--tn-topbar');
-      const fill = mixColors(bar, compositeColor(label, bar), barShare);
-      const ratio = contrastRatio(label, fill);
+      const fill = palette.color('--tn-topbar-hover');
+      const ratio = contrastRatio(fill, bar);
       return {
         selector: palette.selector,
-        label,
         bar,
-        resting: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar')),
-        recorded: HOVER_GAPS[palette.selector],
         fill,
+        label: palette.color('--tn-topbar-txt'),
+        onFill: formatRatio(palette.contrast('--tn-topbar-txt', '--tn-topbar-hover')),
         ratio,
         ratioLabel: formatRatio(ratio),
       };
     });
 
     it('there are hovered headers to measure', () => {
-      expect(hovers.length).toBeGreaterThan(0);
+      expect(affordances.length).toBeGreaterThan(0);
     });
 
-    // Registered only when there is something in it, because `it.each` treats
-    // an empty table as an error rather than as no cases. Empty here means
-    // every palette is a recorded gap — a real state, and one the "still a gap"
-    // cases below cover in full, so it must not be the thing that turns the
-    // suite red.
-    const clearing = hovers.filter((one) => one.recorded === undefined);
+    it.each(affordances)(
+      '$selector: the hover ($fill) is $ratioLabel against the bar ($bar), with $label at $onFill on it',
+      ({ ratio }) => {
+        expect(ratio).toBeGreaterThanOrEqual(HOVER_AFFORDANCE_MINIMUM);
+      }
+    );
 
-    if (clearing.length > 0) {
-      it.each(clearing)(
-        '$selector: $label on the hovered header ($fill, mixed from $bar) is $ratioLabel, resting $resting',
-        ({ ratio }) => {
-          expect(meetsAa(ratio, 'normal')).toBe(true);
-        }
-      );
-    }
-
-    const recorded = hovers.filter((one) => one.recorded !== undefined);
-
-    // On `recorded`, not on `HOVER_GAPS` — an entry naming a palette that has
-    // stopped being measured leaves the table empty while the object is not,
-    // and the case below is what should report that rather than a collection
-    // error with no palette in it.
-    if (recorded.length > 0) {
-      it.each(recorded)(
-        '$selector: its recorded hover gap is still a gap — $ratioLabel, resting $resting',
-        ({ ratio }) => {
-          expect(meetsAa(ratio, 'normal')).toBe(false);
-        }
-      );
-    }
-
-    it('every HOVER_GAPS entry is about a palette that was measured', () => {
-      // An entry naming a selector no palette has — a typo, or a theme that has
-      // been renamed or removed — otherwise sits here excusing nothing, and
-      // reads to the next person as a live decision about a real palette.
-      const selectors = hovers.map(({ selector }) => selector);
-      expect(Object.keys(HOVER_GAPS).filter((one) => !selectors.includes(one))).toEqual([]);
+    it('the affordance floor is the one the replaced color-mix already produced', () => {
+      // The same guard as the AA_MINIMUM case at the end of this file: the
+      // number appears above only through the constant, and a floor that moved
+      // would otherwise re-title every case above and still pass.
+      expect(HOVER_AFFORDANCE_MINIMUM).toBe(1.3);
     });
   });
 
