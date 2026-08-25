@@ -4,6 +4,7 @@ import { Component, contentChild, input, forwardRef, signal, computed, viewChild
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnSliderThumbDirective } from './slider-thumb.directive';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export type LabelType = 'none' | 'handle' | 'track' | 'both';
@@ -23,7 +24,20 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
   styleUrl: './slider.component.scss',
   host: {
     'class': 'tn-slider',
-    '[attr.aria-disabled]': 'isDisabled()'
+    '[attr.aria-disabled]': 'isDisabled()',
+    // Both naming inputs are ALIASED to the attribute names, so a consumer
+    // writes `<tn-slider aria-label="Volume">` — a static attribute, which
+    // Angular reads into the input AND leaves on the host. The host has no
+    // role, where axe reports `aria-prohibited-attr`: "aria-label attribute is
+    // not well supported on a tn-slider with no valid role attribute" (#235).
+    // The name belongs on the projected range input, which is the focusable
+    // element and the one a screen reader announces, so it is forwarded there
+    // and removed from here. Binding `null` is what removes it: a host binding
+    // runs after the static attribute is written, and `null` means "no
+    // attribute". A `[aria-label]` property binding never leaves one behind and
+    // is unaffected.
+    '[attr.aria-label]': 'null',
+    '[attr.aria-labelledby]': 'null'
   }
 })
 /**
@@ -52,13 +66,73 @@ export class TnSliderComponent implements ControlValueAccessor, OnDestroy, After
   /**
    * Accessible name forwarded to the inner range input — the focusable element
    * screen readers actually announce. Set this (or `aria-labelledby`) when the
-   * slider isn't already labelled by a `tn-form-field`/`<label>`, otherwise a
+   * slider isn't already inside a labelled `tn-form-field`, otherwise a
    * standalone `<tn-slider><input tnSliderThumb></tn-slider>` announces only
-   * "slider". A label set directly on the `input[tnSliderThumb]` is used as a
-   * fallback when neither is provided here.
+   * "slider".
+   *
+   * Precedence is per attribute: each of `aria-label` and `aria-labelledby` is
+   * taken from the matching input here, else from one written directly on the
+   * `input[tnSliderThumb]`. Between the two attributes, ARIA's own rule decides
+   * — `aria-labelledby` wins wherever it resolves.
+   *
+   * An enclosing `tn-form-field`'s label comes after all of those, and only when
+   * nothing above has named the control: it is chrome the consumer did not write
+   * on the control. See `TnSliderThumbDirective.ariaLabelledby`, where the
+   * ordering is applied.
    */
   ariaLabel = input<string | undefined>(undefined, { alias: 'aria-label' });
   ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field`, read for `labelledby` alone:
+   * #235 is about the range input having no accessible name, and the field's
+   * `describedby`/`invalid`/`required` are a separate question this slider has
+   * never answered either way.
+   *
+   * Called with NO argument, so it reports the field's label id unconditioned.
+   * Handing it the `ariaLabel` input would have it suppress the field itself —
+   * on truthiness, so a whitespace-only label would cancel the field while being
+   * dropped as no name, leaving nothing — and it would only do so while this
+   * field is initialised after the one it reads, since a signal captured before
+   * its own initialiser runs arrives as `undefined` and is swallowed by an
+   * optional call. The suppression is the thumb's, where the rest of the
+   * precedence already lives and where it is visible.
+   */
+  private readonly fieldAria = injectTnFormFieldAria();
+
+  /**
+   * The `aria-label` the thumb should render, or `null` for none.
+   *
+   * Blank is not a name: `aria-label=""` names the input as emptily as no
+   * attribute at all, while satisfying axe's `label` rule — a green check on a
+   * control a screen reader announces as "slider" (#235). Same reasoning as
+   * `a11y/accessible-name.ts`, which the three progressbars share.
+   */
+  readonly resolvedAriaLabel = computed(() => {
+    const label = this.ariaLabel();
+    return label !== undefined && label.trim() !== '' ? label : null;
+  });
+
+  /**
+   * The `ariaLabelledby` INPUT, blank normalised away, or `null` when unset.
+   *
+   * Kept separate from {@link fieldAriaLabelledby} rather than folded into one
+   * resolved value, because the two rank differently against a label written on
+   * the projected input — see `TnSliderThumbDirective.ariaLabelledby`.
+   */
+  readonly explicitAriaLabelledby = computed(() => {
+    const labelledby = this.ariaLabelledby();
+    return labelledby !== undefined && labelledby.trim() !== '' ? labelledby : null;
+  });
+
+  /**
+   * The enclosing `tn-form-field`'s label id, or `null` outside one.
+   *
+   * With no field and no input, a slider stays unnamed — deliberately: a
+   * generic fallback ("Slider") would satisfy axe while announcing nothing the
+   * user can act on, and only the consumer knows what this slider controls.
+   */
+  readonly fieldAriaLabelledby = computed(() => this.fieldAria.labelledby());
 
   thumbDirective = contentChild.required(TnSliderThumbDirective);
   sliderContainer = viewChild.required<ElementRef<HTMLDivElement>>('sliderContainer');

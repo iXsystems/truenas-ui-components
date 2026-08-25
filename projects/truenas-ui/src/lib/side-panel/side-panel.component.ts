@@ -9,9 +9,63 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { mdiClose } from '@mdi/js';
 import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
+import { tnAccessibleName } from '../a11y/accessible-name';
+import { tnFocusOnOpen } from '../a11y/initial-focus';
+import { TN_SCROLLABLE_REGION_TOLERANCE_PX, tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
+
+/**
+ * The accessible name an open panel falls back to when it has no `title` and the
+ * caller named neither `ariaLabel` nor `ariaLabelledby` (#214).
+ *
+ * `title` defaults to `''`, so the DEFAULT rendering of this component was a
+ * `role="dialog"` with `aria-labelledby` pointing at an empty `<h2>` — measured
+ * as an `aria-dialog-name` violation, alongside `empty-heading`. A dialog with no
+ * name is announced as "dialog" and nothing else, which is the whole of what a
+ * screen-reader user gets told about a surface that just covered the page.
+ *
+ * Withholding `role="dialog"` until there is a name would be the other way to
+ * clear the rule, and it is worse: the panel traps focus either way, so a
+ * listener would be moved into a region with no announcement that anything had
+ * opened. A generic name is still a poor one, so it is paired with the dev-mode
+ * warning `tnAccessibleName` raises.
+ *
+ * Exported so specs assert against it by name rather than by a copied literal.
+ */
+export const TN_SIDE_PANEL_DEFAULT_LABEL = 'Side panel';
+
+/**
+ * The name given to the scrolling content region once it becomes focusable
+ * (#248).
+ *
+ * A focusable element with no accessible name is announced as a bare "group",
+ * which tells a listener that something has been reached and nothing about what
+ * it is. It names the region rather than repeating the panel's own title: the
+ * dialog announces that on entry, so a second copy of it here would say the
+ * same words twice and still not distinguish the part that scrolls.
+ *
+ * Overridable through `contentAriaLabel`, on the same reasoning as
+ * `closeButtonAriaLabel` — a string this library renders into a consumer's UI
+ * has to be translatable. Exported so specs assert against it by name rather
+ * than by a copied literal.
+ */
+export const TN_SIDE_PANEL_CONTENT_LABEL = 'Panel content';
+
+/**
+ * How far the content has to exceed the region before the region counts as
+ * scrolling (#248).
+ *
+ * **This is now `TN_SCROLLABLE_REGION_TOLERANCE_PX`**, which is axe's own 13px
+ * buffer and lives with the measurement it belongs to (#270). The alias stays
+ * because it is what `side-panel-scrollable-content.spec.ts` pins against axe
+ * from both sides, and that spec is a guard on this component rather than on
+ * the helper — see `../a11y/scrollable-region.ts` for what the number is and
+ * why it is copied from the rule at all.
+ */
+export const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = TN_SCROLLABLE_REGION_TOLERANCE_PX;
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -46,6 +100,23 @@ export class TnSidePanelActionDirective {}
 })
 export class TnSidePanelHeaderActionDirective {}
 
+/**
+ * A modal side panel: `role="dialog"` with `aria-modal="true"`, focus trapped
+ * while it is open and restored to the opener when it closes.
+ *
+ * FOCUS ON OPEN
+ * -------------
+ * Opening moves focus to the panel container, whatever you projected into it,
+ * so that a screen reader announces the dialog it has just entered before any
+ * control in it. The first Tab then reaches the close button.
+ *
+ * **`[cdkFocusInitial]` is not honoured** (#227). It used to be, through the
+ * CDK auto-capture this replaced, and `cdkTrapFocus` is still on the panel — so
+ * the marker looks like it should work and does not. To focus a control of your
+ * own, focus it yourself once the panel is open; the component leaves focus
+ * alone as soon as it is inside the panel. `lib/a11y/initial-focus.ts` holds
+ * the reasoning for capturing the container rather than a control.
+ */
 @Component({
   selector: 'tn-side-panel',
   standalone: true,
@@ -63,7 +134,30 @@ export class TnSidePanelComponent implements OnDestroy {
   private destroyRef = inject(DestroyRef);
 
   private overlayRef = viewChild.required<ElementRef>('overlay');
+  private panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
+  private contentRef = viewChild.required<ElementRef<HTMLElement>>('content');
   protected initialized = signal(false);
+
+  /**
+   * Whether the content region carries the tab stop, its role and its name
+   * (#248) — which is NOT the same question as whether it currently overflows.
+   *
+   * The measurement, the two observers that keep it current and the focus rule
+   * that decides when the attributes may be taken off again are all
+   * `tnScrollableRegion`'s (#270); this component decides only what to put on
+   * the element, which is the part that differs between the five regions in
+   * this library that scroll. `../a11y/scrollable-region.ts` sets out why the
+   * answer is held true while the region has focus, and why `role` and
+   * `aria-label` are gated on the same signal as `tabindex` rather than left on.
+   *
+   * Read in `afterNextRender`, which is where the helper takes its first
+   * measurement — before the overlay is portaled to `<body>` below, which does
+   * not affect it: `.tn-side-panel__overlay` is `position: fixed; inset: 0`, so
+   * its size comes from the viewport rather than from its parent.
+   */
+  protected contentKeyboardReachable = tnScrollableRegion(
+    () => this.contentRef().nativeElement
+  );
 
   // Two-way bindable via [(open)]
   open = model<boolean>(false);
@@ -99,8 +193,51 @@ export class TnSidePanelComponent implements OnDestroy {
    */
   closeButtonAriaLabel = input<string>('Dismiss');
 
-  // Outputs
+  /**
+   * Accessible name for the scrolling content region, which is named only while
+   * it is focusable — see `TN_SIDE_PANEL_CONTENT_LABEL`. Override it to
+   * translate it, or to say what the region holds ("Dataset properties").
+   */
+  contentAriaLabel = input<string>(TN_SIDE_PANEL_CONTENT_LABEL);
+
+  /**
+   * Accessible name for the panel itself, for a panel that renders no `title`.
+   *
+   * A `title` outranks it: the heading is what the user can see, and
+   * `aria-labelledby` wins the ARIA name calculation while it resolves. The
+   * attribute is still rendered beside the heading rather than suppressed — see
+   * `tnAccessibleName`, which owns that rule for every component in this
+   * library, and the reason it is safer than the alternative.
+   */
+  ariaLabel = input<string | null>(null);
+
+  /**
+   * IDREF naming the panel from text elsewhere on the page, for a panel that
+   * renders no `title`. Same precedence: a `title` wins, because it is the
+   * visible heading.
+   */
+  ariaLabelledby = input<string | null>(null);
+
+  /**
+   * Fires once the panel has finished opening.
+   *
+   * "Finished" means the open transition ended, OR that it was going to take
+   * longer than `TN_TRANSITION_FALLBACK_MS` to say so — which is what a user
+   * with `prefers-reduced-motion: reduce` gets, since this component's own
+   * stylesheet zeroes the duration for them and a transition that does not run
+   * fires no `transitionend` (#218). A consumer may assume the panel has
+   * reached its open state and that `open()` is true; it may NOT assume the
+   * animation is visually complete, because for that user there was none.
+   */
   opened = output<void>();
+
+  /**
+   * Fires once the panel has finished closing. Same guarantee as `opened`, and
+   * the same caveat: it reports the state, not the animation.
+   *
+   * Focus restoration does NOT hang off this — it happens as soon as the panel
+   * closes (#214). See the effect in the constructor.
+   */
   closed = output<void>();
 
   // Content projection queries
@@ -111,15 +248,79 @@ export class TnSidePanelComponent implements OnDestroy {
   readonly panelId = `tn-side-panel-${Math.random().toString(36).substring(2, 9)}`;
   readonly titleId = `${this.panelId}-title`;
 
+  /**
+   * Whether there is a heading to render, and to name the dialog from.
+   *
+   * Trimmed, because a whitespace-only title renders a heading that looks empty
+   * to a sighted user and names the dialog with nothing — which is the state
+   * that failed `aria-dialog-name` before #214, arriving by a second route.
+   */
+  protected hasTitle = computed(() => this.title().trim() !== '');
+
+  /**
+   * What the dialog is named by, in the order ARIA resolves: the visible heading
+   * when there is one, the caller's IDREF otherwise.
+   */
+  protected resolvedAriaLabelledby = computed(
+    () => (this.hasTitle() ? this.titleId : this.ariaLabelledby())
+  );
+
+  /**
+   * The name to render as `aria-label`, or `null` to render none — and the
+   * dev-mode warning when the panel has no name from any route.
+   *
+   * Both halves live in `../a11y/accessible-name`, shared with the three
+   * progressbars, where the reasoning for each branch is set out. `title` reaches
+   * it as the `ariaLabelledby` above, so a titled panel is named, takes no
+   * fallback and raises no warning.
+   */
+  protected resolvedAriaLabel = tnAccessibleName({
+    selector: 'tn-side-panel',
+    fallback: TN_SIDE_PANEL_DEFAULT_LABEL,
+    activity: 'open',
+    hint: 'On this component the usual route is title, which is also the visible heading.',
+    ariaLabel: this.ariaLabel,
+    ariaLabelledby: this.resolvedAriaLabelledby,
+  });
+
   // Focus restoration
   private previouslyFocusedElement: HTMLElement | null = null;
+
+  /**
+   * Decides when an open or a close counts as finished, so that the outputs
+   * above fire exactly once per change whether or not a transition ran. A field
+   * initializer rather than the constructor, because it registers an `effect`
+   * and so needs an injection context.
+   */
+  private lifecycle = tnTransitionLifecycle(
+    this.open,
+    (open) => (open ? this.opened.emit() : this.closed.emit())
+  );
 
   constructor() {
     this.registerMdiIcons();
 
+    // Moves focus onto the panel when it opens (#227) — the other half of the
+    // focus contract `aria-modal="true"` declares, and the half
+    // `[cdkTrapFocusAutoCapture]` only kept when the panel happened to contain a
+    // tabbable element, which the default panel, whose only control is its own ×
+    // button, did not. `../a11y/initial-focus.ts` holds the reasoning and the
+    // timing; `restoreFocus` below is the return leg.
+    tnFocusOnOpen(this.open, () => this.panelRef().nativeElement);
+
     effect(() => {
       if (this.open()) {
         this.previouslyFocusedElement = this.document.activeElement as HTMLElement;
+      } else {
+        // Restored HERE rather than on `transitionend` (#214). The overlay
+        // becomes `inert` the moment it closes, so the browser blurs whatever
+        // inside it had focus and moves it to `<body>` immediately — and
+        // `transitionend` is not guaranteed to arrive to put it back. This
+        // component's own stylesheet sets `transition-duration: 0ms` under
+        // `prefers-reduced-motion`, and a zero-duration transition runs no
+        // transition and fires no event, so a user with that preference would
+        // have been left on `<body>` every time a panel closed.
+        this.restoreFocus();
       }
     });
 
@@ -130,7 +331,26 @@ export class TnSidePanelComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.overlayRef().nativeElement.remove();
+    const overlay = this.overlayRef().nativeElement as HTMLElement;
+
+    // A panel destroyed WHILE OPEN never runs the close branch of the effect
+    // above, so the restore has to happen here as well — removing the overlay
+    // drops focus onto `<body>`, and `CdkTrapFocus.ngOnDestroy` used to cover
+    // that off the back of the auto-capture #227 replaced.
+    //
+    // Only when this panel is what focus is being taken FROM, and read before
+    // the removal, which is the thing that takes it. Restoring unconditionally
+    // moves focus for a user who is somewhere else entirely: a panel with
+    // `hasBackdrop=false` does not stop them clicking into the page behind it,
+    // and destroying it would then yank them out of whatever they were typing
+    // in and back to a trigger they left minutes ago. A no-op after an
+    // ordinary close either way, which clears `previouslyFocusedElement`.
+    const heldFocus = overlay.contains(this.document.activeElement);
+    overlay.remove();
+
+    if (heldFocus) {
+      this.restoreFocus();
+    }
   }
 
   protected dismiss(): void {
@@ -167,12 +387,11 @@ export class TnSidePanelComponent implements OnDestroy {
       return;
     }
 
-    if (this.open()) {
-      this.opened.emit();
-    } else {
-      this.closed.emit();
-      this.restoreFocus();
-    }
+    // Which output to emit is `lifecycle`'s to decide, from the state the change
+    // it is tracking settled into — NOT from `open()` read here. The two differ
+    // exactly when this event is late: a panel reopened while the close was
+    // still animating reads `open() === true` on the stale close's event.
+    this.lifecycle.transitionEnded();
   }
 
   private restoreFocus(): void {

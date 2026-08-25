@@ -1,21 +1,58 @@
 import type { OnInit, OnDestroy, AfterViewInit} from '@angular/core';
 import { ElementRef, Component, input, ViewEncapsulation, ChangeDetectionStrategy, inject } from '@angular/core';
+import { tnAccessibleName } from '../a11y/accessible-name';
+
+/**
+ * The name this spinner falls back to when the caller names neither `ariaLabel`
+ * nor `ariaLabelledby`. Same reasoning as `TN_SPINNER_DEFAULT_LABEL` and
+ * `TN_PROGRESS_BAR_DEFAULT_LABEL`.
+ *
+ * It differs from `TN_SPINNER_DEFAULT_LABEL` — `"Loading..."` against
+ * `"Loading"` — only because this is the string the component already rendered,
+ * inline in its host binding, before #206 gave it the shared resolver. Aligning
+ * the two would change what a screen reader announces for every unnamed branded
+ * spinner already in the wild, which is a louder change than the consistency
+ * fix it would be part of. Exported so specs assert against it by name rather
+ * than by a copied string literal.
+ */
+export const TN_BRANDED_SPINNER_DEFAULT_LABEL = 'Loading...';
 
 @Component({
   selector: 'tn-branded-spinner',
   standalone: true,
   templateUrl: './branded-spinner.component.html',
-  styleUrls: ['./branded-spinner.component.scss'],  
+  styleUrls: ['./branded-spinner.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   host: {
     'class': 'tn-branded-spinner',
     'role': 'progressbar',
-    '[attr.aria-label]': 'ariaLabel() || "Loading..."'
+    '[attr.aria-label]': 'resolvedAriaLabel()',
+    '[attr.aria-labelledby]': 'ariaLabelledby() || null'
   }
 })
 export class TnBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewInit {
   ariaLabel = input<string | null>(null);
+  ariaLabelledby = input<string | null>(null);
+
+  /**
+   * The name to render, or `null` to render no `aria-label` attribute — and the
+   * dev-mode warning when the caller named neither input.
+   *
+   * This component is why `../a11y/accessible-name` exists (#206). It carried a
+   * fallback inline in its host binding, so it never failed
+   * `aria-progressbar-name` and the two fixes that gave the other progressbars
+   * an `ariaLabelledby` input and a warning both passed it by. Routing it
+   * through the shared resolver is what makes it named by the same rule rather
+   * than by a third one nobody chose.
+   */
+  resolvedAriaLabel = tnAccessibleName({
+    selector: 'tn-branded-spinner',
+    fallback: TN_BRANDED_SPINNER_DEFAULT_LABEL,
+    activity: 'loading',
+    ariaLabel: this.ariaLabel,
+    ariaLabelledby: this.ariaLabelledby
+  });
 
   private paths: SVGPathElement[] = [];
   private animationId: number | null = null;

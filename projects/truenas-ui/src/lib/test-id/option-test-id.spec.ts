@@ -2,23 +2,52 @@ import { composeTestId } from './compose-test-id';
 import { optionTestId } from './option-test-id';
 
 describe('optionTestId', () => {
-  it('uses a primitive value as the discriminator', () => {
+  it('uses the label as the discriminator', () => {
     expect(optionTestId('country', { label: 'United States', value: 'US' }))
-      .toEqual(['country', 'US']);
-    expect(optionTestId('port', { label: 'SSH', value: 22 }))
-      .toEqual(['port', 22]);
+      .toEqual(['country', 'United States']);
   });
 
-  it('falls back to the label for object values', () => {
+  it('prefers the label over a primitive value, so opaque values never reach the id', () => {
+    expect(optionTestId('mode', { label: 'SSH Keyscan', value: 0 }))
+      .toEqual(['mode', 'SSH Keyscan']);
+    expect(optionTestId('encryption', { label: 'Plain (No Encryption)', value: 'PLAIN' }))
+      .toEqual(['encryption', 'Plain (No Encryption)']);
+  });
+
+  it('uses the label for object values', () => {
     expect(optionTestId('city', { label: 'Lisbon', value: { id: 'lis' } }))
       .toEqual(['city', 'Lisbon']);
   });
 
-  it('falls back to the label when there is no value', () => {
+  it('uses the label when there is no value', () => {
     expect(optionTestId('city', { label: 'Porto' })).toEqual(['city', 'Porto']);
   });
 
-  it('prefers the extractor over value and label', () => {
+  it('falls back to a primitive value when the label is empty', () => {
+    expect(optionTestId('city', { label: '', value: 'porto' })).toEqual(['city', 'porto']);
+  });
+
+  it('falls back to a primitive value when the label normalizes away', () => {
+    // Truthy labels that `kebabTestSegment` strips to nothing would otherwise
+    // collapse every such option onto the bare base.
+    expect(optionTestId('lang', { label: '日本語', value: 'ja' })).toEqual(['lang', 'ja']);
+    expect(optionTestId('lang', { label: '--', value: 'none' })).toEqual(['lang', 'none']);
+  });
+
+  it('keeps such options distinct once composed', () => {
+    const ids = [
+      { label: '日本語', value: 'ja' },
+      { label: '한국어', value: 'ko' },
+    ].map((option) => composeTestId('option', optionTestId('lang', option)));
+    expect(ids).toEqual(['option-lang-ja', 'option-lang-ko']);
+  });
+
+  it('yields no discriminator when neither half is usable', () => {
+    expect(composeTestId('option', optionTestId('city', { label: '', value: { id: 'lis' } }))).toBe('option-city');
+    expect(composeTestId('option', optionTestId('city', { label: '***', value: { id: 'lis' } }))).toBe('option-city');
+  });
+
+  it('prefers the extractor over label and value', () => {
     const option = { label: 'Lisbon', value: { id: 'lis' } };
     expect(optionTestId('city', option, (o) => o.value.id)).toEqual(['city', 'lis']);
   });

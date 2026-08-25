@@ -28,6 +28,28 @@
 .storybook-button {
   @include label-markup.inline-code;
 
+  // The mixin paints <code> on --tn-bg2 and leaves the colour inherited. For
+  // most of the ten components that include it that is right: their labels
+  // already sit on --tn-bg1 or --tn-bg2, so the wash is a near-neutral step off
+  // a surface the colour was chosen for. A button label is not one of those. Every
+  // variant below either fills its own background or deliberately shows the page
+  // through a transparent one, and each pairs its `color` with that — so a code
+  // span painting --tn-bg2 swaps the background out from under a colour chosen
+  // for something else: --tn-primary-txt is white on --tn-primary in TN Light,
+  // and white on #FFFFFF once the span repaints it, at 1:1.
+  //
+  // So <code> keeps the button's own surface, whatever that variant paints, and
+  // the monospace font and the border do the distinguishing instead. That is the
+  // fix #238 made for .tn-chip__label, for the same reason — the mixin is not
+  // the defect and nine of its call sites want it unchanged (#262).
+  //
+  // currentColor for the border because --tn-lines is a colour for the page, and
+  // on a filled button it can vanish.
+  ::ng-deep code {
+    background: transparent;
+    border-color: currentColor;
+  }
+
   display: inline-block;
   cursor: pointer;
   // Transparent border (not none) so solid and outline variants have the same
@@ -78,7 +100,7 @@ a.storybook-button {
 .button-outline-primary {
   background-color: transparent;
   border: 1px solid var(--tn-primary);
-  color: var(--tn-primary);
+  color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .button-outline-primary:hover {
@@ -104,8 +126,11 @@ a.storybook-button {
 }
 .button-outline-warn {
   background-color: transparent;
+  // The border keeps --tn-red, which is tuned for the 3:1 non-text minimum; the
+  // label is text and needs 4.5:1, which --tn-red misses in seven of the nine
+  // palettes (#234). Same split as .button-outline-primary above.
   border: 1px solid var(--tn-red);
-  color: var(--tn-red);
+  color: var(--tn-error-text, var(--tn-red, #b91c1c));
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 .button-outline-warn:hover {

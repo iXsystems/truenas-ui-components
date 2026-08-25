@@ -222,8 +222,10 @@ export class TnTableHarness extends ComponentHarness {
   // selected", so these resolve the right selectors themselves.
   //
   // The click target is the WRAPPER in both layouts (the `<td>`, or the card's
-  // `<div>`): `.tn-table__checkbox` is `pointer-events: none`, so clicking the
-  // checkbox itself exercises a path no user can take.
+  // `<div>`) — the cell's padding, which is the larger part of the hit area. Since
+  // #236 the checkbox is clickable too, and both paths toggle exactly once; clicking
+  // the wrapper is simply the one that does not depend on where inside the cell a
+  // pointer lands.
 
   /** True when the container is narrow enough that card mode is rendered. */
   private async isCards(): Promise<boolean> {

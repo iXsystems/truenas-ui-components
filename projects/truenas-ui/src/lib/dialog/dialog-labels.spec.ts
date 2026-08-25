@@ -18,7 +18,8 @@ describe('TnDialogShellComponent labels', () => {
     TestBed.configureTestingModule({
       imports: [TnDialogShellComponent],
       providers: [
-        { provide: DialogRef, useValue: { close: () => {} } },
+        // `config` must be present: the component reads `ref.config.ariaLabel` unguarded.
+        { provide: DialogRef, useValue: { close: () => {}, config: {} } },
         { provide: DIALOG_DATA, useValue: {} },
         ...(labels ? [{ provide: TN_DIALOG_LABELS, useValue: labels }] : []),
       ],

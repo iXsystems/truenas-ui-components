@@ -64,6 +64,14 @@ const meta: Meta<TnCardComponent> = {
         'Accessible name for the title help button. Defaults to "More information"; pass an '
         + 'already-translated string from an app with an i18n layer.',
     },
+    tooltipSticky: {
+      control: 'boolean',
+      description:
+        'Whether a tooltip message holding a link may be pinned open by clicking its host — the '
+        + 'title help button and the footer actions. On by default, and only ever applies to such '
+        + 'messages: plain card help and action hints keep hovering. The kebab-menu trigger is out '
+        + 'of scope, since its click already opens the menu.',
+    },
     headerStatus: {
       control: 'object',
       description: 'Status badge configuration (label, type)',
@@ -179,6 +187,47 @@ export const TitleRouterLinkAndTooltip: Story = {
     // is its description), not folded into the title text.
     await expect(canvas.getByRole('button', { name: 'More information' })).toBeInTheDocument();
   },
+};
+
+/**
+ * A tooltip message holding a link is opened by clicking its host rather than on hover, so the
+ * link can be reached. On the title help button that click does nothing else; on a footer action
+ * it is additive — the action's own `handler()` still runs alongside the pin, so an action that
+ * navigates away or closes the card wants `[tooltipSticky]="false"`. Setting it to `false` puts
+ * every card tooltip back on hover, with links out of reach; it cannot work the other way round,
+ * as plain text is never pinnable.
+ */
+export const WithPinnableTooltip: Story = {
+  args: {
+    title: 'Snapshots',
+    titleTooltip: 'Snapshots are read-only. <a href="https://www.truenas.com/docs/" target="_blank" rel="noopener">Read the docs</a>',
+    titleTooltipAriaLabel: 'More information',
+    tooltipSticky: true,
+    elevation: 'medium',
+    padding: 'medium',
+    padContent: true,
+    primaryAction: {
+      label: 'Create',
+      handler: () => {},
+      tooltip: 'Naming rules apply. <a href="https://www.truenas.com/docs/" target="_blank" rel="noopener">Read the docs</a>',
+    },
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-card
+        [title]="title"
+        [titleTooltip]="titleTooltip"
+        [titleTooltipAriaLabel]="titleTooltipAriaLabel"
+        [tooltipSticky]="tooltipSticky"
+        [elevation]="elevation"
+        [padding]="padding"
+        [padContent]="padContent"
+        [primaryAction]="primaryAction">
+        <p>Click the help button next to the title, or the Create action, to pin the message open.</p>
+      </tn-card>
+    `,
+  }),
 };
 
 export const WithoutTitle: Story = {
@@ -661,9 +710,9 @@ export const WithProjectedHeader: Story = {
         [bordered]="bordered"
         [background]="background">
         <div tnCardHeader style="display: flex; align-items: center; gap: 12px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--tn-green);"></span>
           <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">Custom Header Content</h3>
-          <span style="font-size: 0.75rem; color: #6b7280;">— with icon and subtitle</span>
+          <span style="font-size: 0.75rem; color: var(--tn-alt-fg1);">— with icon and subtitle</span>
         </div>
         <p>This card uses projected header content instead of a simple title string.</p>
         <p>You can put any content in the header using the <code>tnCardHeader</code> attribute.</p>

@@ -27,7 +27,12 @@ export class TnDialogHarness extends ComponentHarness {
    */
   static hostSelector = 'tn-dialog-shell';
 
-  private _title = this.locatorFor('.tn-dialog__title');
+  // Optional, because since #219 a dialog with no title renders no heading at
+  // all rather than an empty one. `locatorFor` would REJECT there, and it is
+  // reached from `with({title})` — so one untitled dialog anywhere in the
+  // document would have made every title-filtered lookup throw instead of
+  // simply not matching.
+  private _title = this.locatorForOptional('.tn-dialog__title');
   private _closeButton = this.locatorFor('.tn-dialog__close');
   private _fullscreenButton = this.locatorForOptional('.tn-dialog__fullscreen');
   private _content = this.locatorFor('.tn-dialog__content');
@@ -59,7 +64,9 @@ export class TnDialogHarness extends ComponentHarness {
   }
 
   /**
-   * Gets the dialog's title text.
+   * Gets the dialog's title text, or `''` for a dialog opened with no title —
+   * which renders no heading at all (#219), and is named by `ariaLabel` or
+   * `ariaLabelledby` instead.
    *
    * @returns Promise resolving to the dialog title.
    *
@@ -71,7 +78,7 @@ export class TnDialogHarness extends ComponentHarness {
    */
   async getTitle(): Promise<string> {
     const title = await this._title();
-    return (await title.text()).trim();
+    return title ? (await title.text()).trim() : '';
   }
 
   /**

@@ -5,15 +5,25 @@ import { TnProgressBarComponent } from './progress-bar.component';
 describe('TnProgressBarComponent', () => {
   let component: TnProgressBarComponent;
   let fixture: ComponentFixture<TnProgressBarComponent>;
+  let warn: jest.SpyInstance;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TnProgressBarComponent]
     }).compileComponents();
 
+    // Almost every fixture here is unnamed, and #202 makes an unnamed bar warn
+    // in dev mode — which Jest is. Silenced so this suite's output stays
+    // readable; the warning itself is asserted in `progress-bar-a11y.spec.ts`.
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     fixture = TestBed.createComponent(TnProgressBarComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
   });
 
   it('should create', () => {

@@ -3,20 +3,27 @@
 .tn-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+
+  // Padding and the gap to the close button both live on .tn-chip__body, not
+  // here. The body button is what emits onClick now, so any space owned by this
+  // wrapper is space that looks like the chip but does not activate it. Keeping
+  // the geometry identical to the pre-#188 chip is handled by __body's padding.
+  gap: 0;
+  padding: 0;
   border-radius: 16px;
   font-family: var(--tn-font-family-body);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.2;
-  cursor: pointer;
   transition: all 0.2s ease-in-out;
   border: 1px solid transparent;
-  outline: none;
   user-select: none;
 
-  &:focus-visible {
+  // The wrapper is no longer focusable — the body button inside it is — so the
+  // ring is drawn here from the button's state, keeping it around the whole
+  // chip as before. :focus-within would be wrong: it would also fire for the
+  // close button, which draws its own ring.
+  &:has(> .tn-chip__body:focus-visible) {
     outline: 2px solid var(--tn-primary);
     outline-offset: 2px;
   }
@@ -26,14 +33,38 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
+  // Every variant below pairs its `color` with the token it paints as
+  // `background-color`, in the resting state and on hover alike. That pairing
+  // is the whole of #238: the label used to be chosen independently of the
+  // surface, so a theme was free to move one and not the other, and TN Dark
+  // did — --tn-accent resolves to yellow there while the label stayed --tn-fg1,
+  // at 1.20:1. chip-contrast.spec.ts measures each pair below in all nine
+  // palettes and is the reason a new surface here cannot repeat it.
+
   &--primary {
     background-color: var(--tn-primary);
     color: var(--tn-primary-txt);
     border-color: var(--tn-primary);
 
-    &:hover:not(.tn-chip--disabled) {
-      background-color: var(--tn-blue);
-      border-color: var(--tn-blue);
+    // No hover background. It used to swap to --tn-blue, which is a raw hue
+    // token rather than a themed surface and so has no companion foreground.
+    // In seven of the nine palettes --tn-primary already resolves to the same
+    // colour as --tn-blue, so the swap did nothing at all — which is how it
+    // survived. The two where it did anything are the two it broke: Nord, at
+    // 3.14:1, and Solarized Dark, at 3.68:1. .button-primary, the filled
+    // button, likewise changes no colour on hover; the lift and shadow on
+    // .tn-chip:hover above are the affordance every variant shares.
+
+    // The close circle's own hover, which the chip's lack of one does not
+    // cover: it is a second control and needs to say when it is the target.
+    // This variant repaints nothing on hover, so the circle inverts against
+    // --tn-primary in both states.
+    .tn-chip__close:hover:not(:disabled) {
+      background-color: var(--tn-primary-txt);
+      color: var(--tn-primary);
+      // The focus ring is drawn outside the circle, on the chip, so it stays
+      // the label colour while `color` goes to the background. See __close.
+      outline-color: var(--tn-primary-txt);
     }
   }
 
@@ -46,16 +77,41 @@
       background-color: var(--tn-alt-bg2);
       border-color: var(--tn-accent);
     }
+
+    // Not nested inside the rule above, and it does not need to be: the close
+    // button cannot be hovered without the chip being hovered, so the surface
+    // this inverts against is always --tn-alt-bg2 and its companion is always
+    // --tn-alt-fg2. Nesting it would only lengthen the selector.
+    .tn-chip__close:hover:not(:disabled) {
+      background-color: var(--tn-alt-fg2);
+      color: var(--tn-alt-bg2);
+      // See __close: the ring is outside the circle, so it keeps the label
+      // colour while `color` goes to the background.
+      outline-color: var(--tn-alt-fg2);
+    }
   }
 
   &--accent {
     background-color: var(--tn-accent);
-    color: var(--tn-fg1);
+    color: var(--tn-accent-txt);
     border-color: var(--tn-accent);
 
     &:hover:not(.tn-chip--disabled) {
       background-color: var(--tn-alt-bg2);
+      // --tn-alt-bg2, not --tn-accent, is what this paints, so the label takes
+      // that surface's companion — the same pair --secondary:hover uses.
+      // Keeping --tn-accent-txt here would carry a colour tuned for the accent
+      // fill onto a grey one, which is 1.93:1 in Solarized Dark.
+      color: var(--tn-alt-fg2);
       border-color: var(--tn-alt-bg2);
+    }
+
+    // Hover moves this variant onto the same surface --secondary:hover uses, so
+    // the circle inverts against the same pair. See the note there.
+    .tn-chip__close:hover:not(:disabled) {
+      background-color: var(--tn-alt-fg2);
+      color: var(--tn-alt-bg2);
+      outline-color: var(--tn-alt-fg2);
     }
   }
 
@@ -65,8 +121,45 @@
     pointer-events: none;
   }
 
+  // The one piece of padding left on the wrapper, and so the one strip of a
+  // chip that does not emit onClick. It is the inset that keeps the close
+  // circle off the chip's border, and it sits BEYOND that circle, so no
+  // element can own it without changing what a click there means: give it to
+  // the body and the chip activates from outside the close button; give it to
+  // the close button and a click at the chip's edge deletes the chip. Dead is
+  // the safest of the three next to a destructive control. Asserted, with this
+  // reasoning, in chip-a11y.spec.ts.
   &--closable {
     padding-right: 8px;
+  }
+
+  // Reset to a plain span-like box: the wrapper owns the chip's background,
+  // border and focus ring, while this button owns the padding. The padding is
+  // here rather than on the wrapper so the whole padded area is part of the
+  // control that emits onClick — on the wrapper it would be a band that looks
+  // like the chip but activates nothing.
+  &__body {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 6px 12px;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+    outline: none;
+
+    // Closable: the 6px that used to be the wrapper's flex gap becomes this
+    // button's right padding, so that strip still activates the chip. Total
+    // geometry is unchanged — 12px left, 6px to the close button, and the
+    // wrapper's 8px beyond it.
+    .tn-chip--closable & {
+      padding-right: 6px;
+    }
   }
 
   &__icon {
@@ -81,32 +174,88 @@
   &__label {
     @include label-markup.inline-code;
 
+    // The mixin paints <code> on --tn-bg2 and leaves the colour inherited. For
+    // most of the ten components that include it that is fine: their labels
+    // already sit on --tn-bg1 or --tn-bg2, so the wash is a near-neutral step
+    // off a surface the colour was chosen for. A chip label sits on a FILLED
+    // variant surface, so a <code> span in one swaps the background out from
+    // under a colour paired with --tn-primary or --tn-accent — in TN Dark that
+    // is #1E1E1E on #282828, 1.13:1.
+    //
+    // So <code> keeps the chip's own surface, which is the one every pair
+    // above measures, and the monospace font and the border do the
+    // distinguishing instead. currentColor for the border because --tn-lines
+    // is a colour for the page, and on a filled chip it can vanish.
+    //
+    // The chip is not the only filled label in the library — .button-primary
+    // and .button-warn include the same mixin over their own fills, and have
+    // the same problem. Fixing them is not this ticket; #238 is the chip, and
+    // the mixin is right where it is used on the page's own surfaces. Filed as
+    // a proposed ticket on #238.
+    ::ng-deep code {
+      background: transparent;
+      border-color: currentColor;
+    }
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 200px;
   }
 
+  // A RING, NOT A WASH (#261). This used to paint rgba(255, 255, 255, 0.2) over
+  // whatever the chip already paints, while the × inside took `color: inherit`
+  // — the chip's label colour, which every variant above chooses for its own
+  // UNWASHED surface. The wash lightens the circle by a fixed 20% towards white
+  // in every theme, so a light label loses contrast against it: white on
+  // --tn-primary is 4.58:1 on the chip and 3.31:1 on the circle, and eight of
+  // the 27 variant/palette combinations landed between 3:1 and 4.5:1. The × is
+  // a visible text node in a button carrying its own aria-label, so axe reads it
+  // as text and 4.5:1 is the threshold; hiding it from the accessibility tree
+  // would clear the rule without changing anything a sighted user sees, and is
+  // not a fix.
+  //
+  // Painting nothing puts the glyph back on the chip's own surface — the one
+  // pair chip-contrast.spec.ts already asserts clears 4.5:1 in all nine
+  // palettes — so the circle stops having a contrast question of its own, and
+  // the border does the distinguishing instead. currentColor for the ring
+  // because it is the label colour, already measured against this surface;
+  // --tn-lines is a colour for the page and can vanish on a filled chip, the
+  // same reason __label's <code> border uses currentColor.
   &__close {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
     width: 20px;
     height: 20px;
     padding: 0;
     margin: 0;
-    border: none;
+    border: 1px solid currentColor;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
     color: inherit;
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
     outline: none;
 
-    &:hover:not(:disabled) {
-      background-color: rgba(255, 255, 255, 0.3);
-    }
+    // Hover is per variant, not here: it fills the circle with the chip's own
+    // label colour and paints the × in the chip's background, which is the
+    // label pair reversed. Contrast is symmetric, so every one of those is a
+    // ratio chip-contrast.spec.ts already measures — a hover state that cannot
+    // fail AA without the resting label failing first. It cannot be written
+    // once at this level, because `currentColor` would give the fill but there
+    // is no keyword for "the background behind me" to give the glyph.
 
+    // `currentColor` is right here and ONLY here. The outline is drawn outside
+    // the circle, on the chip's own background, so it has to be the chip's
+    // label colour — which is what `color` holds while the circle is at rest.
+    // It is not what `color` holds once the circle is hovered: the invert puts
+    // the chip's BACKGROUND there, and an outline in the background colour
+    // drawn on the background is 1:1 and gone. Each variant's hover rule
+    // therefore restates `outline-color` as its label token, and
+    // chip-contrast.spec.ts asserts that it equals the fill so the two cannot
+    // drift apart.
     &:focus-visible {
       outline: 1px solid currentColor;
       outline-offset: 1px;
@@ -125,24 +274,19 @@
   }
 }
 
-// Dark theme adjustments
-.tn-dark .tn-chip {
-  &--secondary {
-    .tn-chip__close {
-      background-color: rgba(0, 0, 0, 0.2);
-      
-      &:hover:not(:disabled) {
-        background-color: rgba(0, 0, 0, 0.3);
-      }
-    }
-  }
-}
+// No dark theme adjustment for the close circle any more (#261). It used to
+// wash rgba(0, 0, 0, 0.2) instead of the white one, for TN Dark's --secondary
+// only — a light wash on that variant's grey would have disappeared. It was a
+// per-theme patch on a per-theme problem, and it covered exactly one of the
+// eight palettes the white wash actually broke: Nord's --secondary measured
+// 3.70:1 and Midnight's 3.97:1 with no override of their own. Painting nothing
+// removes the question in all nine at once, so there is nothing left to patch.
 
 // High contrast theme adjustments
 .high-contrast .tn-chip {
   border-width: 2px;
-  
-  &:focus-visible {
+
+  &:has(> .tn-chip__body:focus-visible) {
     outline-width: 3px;
   }
 }

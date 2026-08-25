@@ -33,17 +33,31 @@
      overflow/clipping. Attach/detach (driven by open()/close()) controls
      visibility; the input keeps DOM focus throughout. -->
 <ng-template #dropdownTemplate>
+  <!-- The max-height is declared here, and inherits: it bounds the panel as a
+       whole AND the listbox inside it, which are two elements now. -->
   <div
     class="tn-autocomplete__dropdown"
-    [style.--tn-autocomplete-panel-max-height]="panelMaxHeightValue()"
-    (scroll)="onPanelScroll($event)">
+    [style.--tn-autocomplete-panel-max-height]="panelMaxHeightValue()">
 
     <!-- Per ARIA, a listbox may only contain option/group children, so the
          loading and no-results rows live OUTSIDE it as live-region siblings.
          The listbox itself stays rendered (possibly empty) the whole time the
          panel is open, so the input's aria-controls always points at a real
-         element — including the loading-with-no-results-yet state. -->
-    <div role="listbox" [attr.id]="uid + '-dropdown'" [attr.aria-busy]="loading() ? true : null">
+         element — including the loading-with-no-results-yet state.
+
+         The listbox is also the scrollport, and has to be (#292): axe's
+         `scrollable-region-focusable` exempts a combobox popup, but it tests
+         the scroll container's OWN role, so the role-less wrapper that used to
+         carry the overflow was reported even though every option inside is
+         `tabindex="-1"` on purpose. The paging handler moves with the
+         overflow — a scroll event fires on the element that scrolls — and the
+         status row below stays outside the scrolling area. -->
+    <div
+      class="tn-autocomplete__listbox"
+      role="listbox"
+      [attr.id]="uid + '-dropdown'"
+      [attr.aria-busy]="loading() ? true : null"
+      (scroll)="onPanelScroll($event)">
       @if (hasResults()) {
         @for (option of filteredOptions(); track $index) {
           <div

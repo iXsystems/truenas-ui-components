@@ -45,7 +45,7 @@
   .breadcrumb-segment {
     background: transparent;
     border: none;
-    color: var(--tn-primary);
+    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
     cursor: pointer;
     padding: 4px 2px;
     border-radius: 4px;
@@ -140,7 +140,7 @@
     min-width: 0;
 
     &.error {
-      border-color: var(--tn-error, #d32f2f);
+      border-color: var(--tn-error, var(--tn-red, #bd2626));
     }
 
     &:disabled {
@@ -150,6 +150,7 @@
     }
   }
 
+  // An icon, not text — 3:1 applies, which --tn-primary is tuned for.
   .creation-loading-icon {
     animation: spin 1s linear infinite;
     color: var(--tn-primary);
@@ -163,11 +164,11 @@
   gap: 6px;
   margin-top: 4px;
   padding: 4px 8px;
-  background: color-mix(in srgb, var(--tn-error, #d32f2f) 10%, transparent);
-  border-left: 3px solid var(--tn-error, #d32f2f);
+  background: color-mix(in srgb, var(--tn-error, var(--tn-red, #bd2626)) 10%, transparent);
+  border-left: 3px solid var(--tn-error, var(--tn-red, #bd2626));
   border-radius: 3px;
   font-size: 1rem;
-  color: var(--tn-error, #d32f2f);
+  color: var(--tn-error, var(--tn-red, #bd2626));
 
   .error-icon {
     flex-shrink: 0;
@@ -194,7 +195,21 @@ tn-table {
   th,
   .tn-table__header-cell {
     font-weight: 600;
-    color: var(--tn-fg1);
+    // A `color: var(--tn-fg1)` sat here and is gone (#277). It never rendered:
+    // this component uses emulated encapsulation, so the rule compiles to
+    // `.tn-table__header-cell[_ngcontent-popup]`, and the <th> it names belongs
+    // to tn-table's own template and carries tn-table's attribute instead.
+    // Removing it changes nothing on the page and takes away a declaration that
+    // read as the header's colour to everyone who opened this file — had it
+    // applied it would have put --tn-fg1, the page's body colour, on a bar
+    // filled with --tn-topbar, which measures 1.32:1 in .tn-high-contrast and
+    // 1.55:1 in .tn-blue. The header's colour is tn-table's --tn-topbar-txt.
+    //
+    // The rest of this rule, and the `td, .tn-table__cell` one below it, are
+    // inert for the identical reason. They are left alone: #277 is about text
+    // on untuned surfaces, and only the `color` was that. Removing the whole
+    // block is a real cleanup and wants its own change, where "these override
+    // nothing" can be the claim under review rather than a side effect.
     padding: 12px 16px;
     border-bottom: 2px solid var(--tn-lines);
   }
@@ -252,7 +267,7 @@ tn-table {
   flex-shrink: 0;
   line-height: 1;
 
-  // Folder color
+  // Folder color. An icon, not text — 3:1 applies.
   &.file-icon-folder {
     color: var(--tn-primary);
   }
@@ -332,6 +347,7 @@ tn-table {
   &:hover,
   &:focus-visible {
     background: var(--tn-bg3);
+    // The chevron is an icon, not text — 3:1 applies.
     color: var(--tn-primary);
   }
 }

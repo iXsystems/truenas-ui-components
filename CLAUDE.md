@@ -33,8 +33,8 @@ This file helps coding agents quickly find the right documentation for working o
 | `component_creation_checklist.md` | Step-by-step component creation workflow | Creating any new component | ~200 lines |
 | `component_templates.md` | Copy-paste boilerplate code for all file types | Need template code for .ts/.html/.scss/.spec/.stories files | ~740 lines |
 | `component_styling.md` | CSS patterns, theme variables, responsive design | Working on styles or appearance | ~480 lines |
-| `component_testing.md` | Testing patterns, Jest examples, mocking | Writing or debugging tests | ~740 lines |
-| `component_conventions.md` | Naming rules, architecture decisions, patterns | Understanding project structure or design choices | ~510 lines |
+| `component_testing.md` | Testing patterns, Jest examples, accessibility scans, mocking | Writing or debugging tests | ~800 lines |
+| `component_conventions.md` | Naming rules, architecture decisions, patterns | Understanding project structure or design choices | ~610 lines |
 | `harness_documentation.md` | Auto-generating harness API docs in Storybook | Creating harness documentation or integrating into stories | ~570 lines |
 
 ## Common Usage Patterns
@@ -142,6 +142,43 @@ Look at these story files for reference:
 - `projects/truenas-ui/src/stories/button.stories.ts`
 - `projects/truenas-ui/src/stories/card.stories.ts`
 - `projects/truenas-ui/src/stories/menu.stories.ts`
+
+## Opening a pull request: do NOT invent a Jira ticket
+
+`CONTRIBUTE.md` requires every PR title to start `NAS-<number> / ` and CI
+rejects titles without one. **You cannot mint that number and you must not
+copy one.**
+
+**What actually happens:** open the PR with a title that has *no* `NAS-`
+prefix — just `type(scope): description` — then apply the **`jira`** label.
+bugclerk files a fresh Jira issue and rewrites the PR title with its key,
+usually within seconds, and comments the Jira URL. `check-ticket` goes green
+on the rename.
+
+```
+./scripts/forge.py developer POST /issues/<pr>/labels '{"labels":["jira","no-time-tracked"]}'
+```
+
+**Why this is written down.** Every cycle that learned the title format by
+reading a recent merged PR copied the key along with the shape — because what
+is on `main` is the *post-rename* title. Six agent pull requests ended up
+attached to two Jira issues instead of six: NAS-142299 collected three, and
+NAS-142319 collected three more. Each cycle reasoned carefully and reached the
+wrong answer, because the only evidence available said the key belongs in the
+title.
+
+**Do not invent one either.** One cycle cut a branch on `NAS-142300`, thought
+better of it, and backed out; the next free id bugclerk assigned was 142316,
+so 142300 was someone else's ticket. An invented number maps to nothing or to
+a stranger's work, and bugclerk links it either way.
+
+**Branch names need no Jira key at all** — `<issue>-<slug>` is the convention
+here, e.g. `204-stepper-aria-structure`.
+
+**The one exception:** carry an existing `NAS-` key only when the work truly
+belongs to that Jira issue — a follow-up commit to a PR that already has one.
+Not "a related ticket", not "the same component". If you are choosing a key
+rather than continuing one, leave it out.
 
 ## Important Notes for Agents
 

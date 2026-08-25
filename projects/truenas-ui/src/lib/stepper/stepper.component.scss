@@ -10,6 +10,20 @@
   --v-indicator: 32px;
   --v-gap: 12px;
 
+  // The header is an <ol> (see the template — it is how the step count and each step's
+  // position reach a screen reader). Strip the list's own presentation once, here, so both
+  // orientations start from the same box as the <div> it replaced.
+  //
+  // `list-style: none` is what makes Safari drop the list role from the accessibility tree —
+  // which would take the count and position with it, on the one browser whose screen reader
+  // this change is most for. The explicit `role="list"` in the template is what holds it; do
+  // not remove one without the other.
+  .tn-stepper__header {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
   &--horizontal {
     flex-direction: column;
 
@@ -18,6 +32,25 @@
       justify-content: center;
       margin-bottom: 32px;
       padding: 0 16px;
+    }
+
+    // The connector used to be a sibling of the headers in this flex row and absorbed the
+    // free space itself. It now sits inside the list item, so the ITEM is what grows.
+    //
+    // Nothing is said here about how the header itself flexes: as a flex child it defaults to
+    // `0 1 auto`, which is exactly what it had as a direct child of the row — free to shrink
+    // so a long label wraps rather than overflowing, and not free to grow.
+    .tn-stepper__step {
+      display: flex;
+
+      // `1 1 auto`, not the `flex: 1` shorthand — that resolves to a basis of 0, which sizes
+      // every item to an equal share of the ROW. Each item is a header plus a connector, so
+      // equal items mean connectors as unequal as the labels are, and a long label squeezed
+      // to fit its share. With `auto` the item starts at its content width and only the free
+      // space is split evenly, which is what the connectors used to split between them.
+      &:not(.tn-stepper__step--last) {
+        flex: 1 1 auto;
+      }
     }
 
     .tn-stepper__step-header {
@@ -170,7 +203,9 @@
 .tn-stepper__step-error-message {
   display: block;
   font-size: 12px;
-  color: var(--tn-red, #dc3545);
+  // Text, so it needs 4.5:1 — --tn-red is tuned for the 3:1 border/icon
+  // minimum. The step's error icon below keeps --tn-red (#234).
+  color: var(--tn-error-text, var(--tn-red, #b91c1c));
   margin-top: 2px;
 }
 
@@ -246,6 +281,22 @@
   border: 1px solid var(--tn-lines, #e5e7eb);
 }
 
+
+// Screen-reader-only text. `.cdk-visually-hidden` comes from the CDK's global a11y stylesheet,
+// which this library does not ship; without a local definition the per-step "Completed" /
+// "Error" text renders as visible text beside the label. Same local copy the table and calendar
+// components keep.
+.cdk-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
 
 // Focus styles for accessibility
 .tn-stepper__step-header {

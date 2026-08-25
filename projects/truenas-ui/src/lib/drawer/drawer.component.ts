@@ -1,8 +1,10 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import type { ElementRef, OnDestroy } from '@angular/core';
+import type { OnDestroy } from '@angular/core';
 import {
   Component,
+  ElementRef,
+  Injector,
   computed,
   effect,
   inject,
@@ -13,11 +15,55 @@ import {
   viewChild,
   afterNextRender,
 } from '@angular/core';
+import { tnAccessibleName } from '../a11y/accessible-name';
+import { tnFocusOnOpen } from '../a11y/initial-focus';
+import { tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
 
 export type TnDrawerMode = 'side' | 'over';
 export type TnDrawerPosition = 'start' | 'end';
 
+/**
+ * The accessible name a drawer falls back to when the caller names neither
+ * `ariaLabel` nor `ariaLabelledby` (#214).
+ *
+ * `ariaLabel` defaults to `undefined`, so the DEFAULT rendering in `over` mode
+ * was a `role="dialog"` with `aria-modal="true"` and no name — measured as an
+ * `aria-dialog-name` violation. In `side` mode the same omission leaves a
+ * `role="navigation"` landmark unnamed, which axe does not report while there is
+ * only one of them on the page, and which stops telling them apart the moment
+ * there are two.
+ *
+ * One fallback for both modes rather than one per mode: the drawer is the same
+ * surface either way, the name answers the same question ("what is this?"), and
+ * a rule that changes with the mode is one more thing for a caller to be wrong
+ * about. A generic name is still a poor one, so it is paired with the dev-mode
+ * warning `tnAccessibleName` raises.
+ *
+ * Exported so specs assert against it by name rather than by a copied literal.
+ */
+export const TN_DRAWER_DEFAULT_LABEL = 'Drawer';
+
+/**
+ * A drawer, which is two different things by `mode`: in `side` it is
+ * persistent navigation beside the page's content, and in `over` it is a modal
+ * dialog with focus trapped in it.
+ *
+ * FOCUS ON OPEN, IN `over` MODE ONLY
+ * ----------------------------------
+ * An `over` drawer moves focus to the panel container when it opens, whatever
+ * you projected into it, so that a screen reader announces the dialog it has
+ * just entered before any control in it. A `side` drawer does not: navigation
+ * that appears beside the content must not take focus from the page.
+ *
+ * **`[cdkFocusInitial]` is not honoured** (#227). It used to be, through the
+ * CDK auto-capture this replaced, and `cdkTrapFocus` is still on the panel — so
+ * the marker looks like it should work and does not. To focus a control of your
+ * own, focus it yourself once the drawer is open; the component leaves focus
+ * alone as soon as it is inside the panel. `lib/a11y/initial-focus.ts` holds
+ * the reasoning for capturing the container rather than a control.
+ */
 @Component({
   selector: 'tn-drawer',
   standalone: true,
@@ -34,6 +80,16 @@ export type TnDrawerPosition = 'start' | 'end';
 })
 export class TnDrawerComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
+
+  /**
+   * The host, which contains the `side`-mode panel. The `over`-mode one is
+   * portaled out to `document.body`, so "does this drawer hold focus" is a
+   * question about both this and `overlayRef`.
+   */
+  private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** For the `afterNextRender` an effect below schedules, outside injection context. */
+  private readonly injector = inject(Injector);
 
   /** Whether the drawer sits alongside content ('side') or overlays it ('over') */
   mode = input<TnDrawerMode>('side');
@@ -53,16 +109,36 @@ export class TnDrawerComponent implements OnDestroy {
   /** Accessible label for the drawer panel */
   ariaLabel = input<string | undefined>(undefined);
 
+  /** IDREF naming the drawer panel from visible text elsewhere on the page */
+  ariaLabelledby = input<string | null>(null);
+
   /**
    * Test-id applied to the drawer panel. Rendered under whichever attribute name is
    * configured via `TN_TEST_ATTR` (default `data-testid`).
    */
   testId = input<TnTestIdValue>(undefined);
 
-  /** Fires after the open transition completes */
+  /**
+   * Fires once the drawer has finished opening.
+   *
+   * "Finished" means the open transition ended, OR that it was going to take
+   * longer than `TN_TRANSITION_FALLBACK_MS` to say so — which is what a user
+   * with `prefers-reduced-motion: reduce` gets, since this component's own
+   * stylesheet removes the transition for them and one that does not run fires
+   * no `transitionend` (#218). A consumer may assume the drawer has reached its
+   * open state and that `opened()` is true; it may NOT assume the animation is
+   * visually complete, because for that user there was none.
+   */
   openedComplete = output<void>();
 
-  /** Fires after the close transition completes */
+  /**
+   * Fires once the drawer has finished closing. Same guarantee as
+   * `openedComplete`, and the same caveat: it reports the state, not the
+   * animation.
+   *
+   * Focus restoration does NOT hang off this — it happens as soon as the drawer
+   * closes (#214). See the effect in the constructor.
+   */
   closed = output<void>();
 
   /** Whether the component has rendered (prevents transition flash on load) */
@@ -71,11 +147,68 @@ export class TnDrawerComponent implements OnDestroy {
   /** Reference to the overlay element (portaled to body in over mode) */
   protected overlayRef = viewChild<ElementRef>('overlay');
 
+  /**
+   * The `over`-mode panel, which is what focus moves to when a modal drawer
+   * opens. Optional rather than required: it lives inside an `@if` on the mode,
+   * so a `side` drawer never renders it.
+   */
+  private overPanelRef = viewChild<ElementRef<HTMLElement>>('overPanel');
+
+  /**
+   * Whichever panel is currently rendered — the `side` one or the `over` one.
+   *
+   * Both template branches carry `#panel` and the `@if` on `mode` renders
+   * exactly one, so this is "the drawer's panel" without the caller having to
+   * ask which mode it is in. A drawer whose `mode` changes at runtime destroys
+   * one element and builds the other, and this query re-answers with it.
+   */
+  private panelRef = viewChild<ElementRef<HTMLElement>>('panel');
+
+  /**
+   * Whether the panel carries a real tab stop rather than its resting `-1`
+   * (#270).
+   *
+   * `.tn-drawer__panel` is the element with `overflow-y: auto`, so a drawer
+   * whose projected content is taller than it is scrolls here — and until this
+   * ticket nothing about it was reachable from a keyboard unless the caller
+   * happened to project a tabbable control. The measurement, the observers that
+   * keep it current and the rule that decides when the tab stop may be given
+   * back are `tnScrollableRegion`'s; see `../a11y/scrollable-region.ts`, which
+   * is also where the reasoning for holding it on while the panel has focus is
+   * set out.
+   *
+   * A field initializer rather than the constructor, because it registers an
+   * `effect` and so needs an injection context.
+   */
+  protected panelKeyboardReachable = tnScrollableRegion(
+    () => this.panelRef()?.nativeElement
+  );
+
   /** Focus trap should be active only in 'over' mode when open */
   protected trapFocus = computed(() => this.mode() === 'over' && this.opened());
 
   /** Role depends on mode: navigation for side, dialog for over */
   protected panelRole = computed(() => this.mode() === 'over' ? 'dialog' : 'navigation');
+
+  /**
+   * The name to render as `aria-label`, or `null` to render none — and the
+   * dev-mode warning when the caller named neither input.
+   *
+   * Both halves live in `../a11y/accessible-name`, shared with `tn-side-panel`
+   * and the three progressbars, where the reasoning for each branch is set out:
+   * why an explicit `ariaLabel` always survives, and why the generic fallback is
+   * withheld beside an `ariaLabelledby`.
+   *
+   * A field initializer rather than the constructor, because it registers an
+   * `effect` and so needs an injection context.
+   */
+  protected resolvedAriaLabel = tnAccessibleName({
+    selector: 'tn-drawer',
+    fallback: TN_DRAWER_DEFAULT_LABEL,
+    activity: 'open',
+    ariaLabel: computed(() => this.ariaLabel() ?? null),
+    ariaLabelledby: this.ariaLabelledby,
+  });
 
   /** Whether to show the backdrop */
   protected showBackdrop = computed(() => this.mode() === 'over');
@@ -93,12 +226,93 @@ export class TnDrawerComponent implements OnDestroy {
   /** Previous focus element for restoration (only captured in over mode) */
   private previousFocus: HTMLElement | null = null;
 
+  /**
+   * Decides when an open or a close counts as finished, so that the outputs
+   * above fire exactly once per change whether or not a transition ran. A field
+   * initializer rather than the constructor, because it registers an `effect`
+   * and so needs an injection context.
+   */
+  private lifecycle = tnTransitionLifecycle(
+    this.opened,
+    (opened) => (opened ? this.openedComplete.emit() : this.closed.emit())
+  );
+
   constructor() {
-    // Capture focus before opening in over mode for later restoration
+    // Moves focus onto the panel when a MODAL drawer opens (#227) — `trapFocus`
+    // rather than `opened`, because a `side` drawer is navigation the page keeps
+    // beside its content and must not steal focus when it appears. This is the
+    // half `[cdkTrapFocusAutoCapture]` only kept when the drawer happened to
+    // hold a tabbable element; `../a11y/initial-focus.ts` holds the reasoning
+    // and the timing, and `restoreFocus` below is the return leg.
+    tnFocusOnOpen(this.trapFocus, () => this.overPanelRef()?.nativeElement);
+
+    // Capture focus before opening in over mode, and restore it on close
     effect(() => {
-      if (this.mode() === 'over' && this.opened()) {
+      const opened = this.opened();
+
+      if (opened && this.mode() === 'over') {
         this.previousFocus = this.document.activeElement as HTMLElement;
+      } else if (!opened) {
+        // Restored HERE rather than on `transitionend` (#214). The panel becomes
+        // `inert` the moment it closes, so the browser blurs whatever inside it
+        // had focus and moves it to `<body>` immediately — and `transitionend`
+        // is not guaranteed to arrive to put it back. This component's own
+        // stylesheet sets `transition: none` on an initialized panel under
+        // `prefers-reduced-motion`, so for a user with that preference the event
+        // never fires at all and focus would be left on `<body>` every time.
+        //
+        // A no-op in side mode, where `previousFocus` is never captured.
+        //
+        // Gated on `!opened` rather than on the negation of the branch above,
+        // because those are not the same condition: a drawer that switches from
+        // `over` to `side` WHILE OPEN — a responsive layout crossing its
+        // breakpoint — fails the first test without having closed, and would
+        // otherwise have focus yanked out of it and back to whatever opened it.
+        // That switch owes a restore only in the one case where the teardown
+        // orphaned focus, which is the effect below, not this branch.
+        this.restoreFocus();
       }
+    });
+
+    // A drawer that stops being MODAL while staying open owes the same restore
+    // a close owes, and by the same mechanism: `@if (mode() === 'over')` in the
+    // template destroys the panel that holds focus, which drops it on `<body>`.
+    // Until #227 `CdkTrapFocus.ngOnDestroy` covered this, off the back of the
+    // auto-capture that replaced — the trap was on the destroyed panel, so its
+    // teardown restored. Nothing else does: the close branch above is gated on
+    // `!opened` and the drawer has not closed, and `tnFocusOnOpen` only acts on
+    // an edge INTO modality.
+    //
+    // Read after the render rather than in the effect, because the teardown is
+    // what leaves the evidence, and only when focus was orphaned: `<body>` is
+    // what the browser falls back to when the focused element goes away, and a
+    // user who is somewhere else on the page is not to be moved.
+    let wasModal = false;
+    effect(() => {
+      const modal = this.trapFocus();
+      const lost = wasModal && !modal && this.opened();
+      wasModal = modal;
+      if (!lost) {
+        return;
+      }
+
+      afterNextRender(
+        () => {
+          const active = this.document.activeElement;
+          if (active && active !== this.document.body) {
+            return;
+          }
+
+          // Focused WITHOUT spending the saved element, which is why this is
+          // not `restoreFocus()`. `CdkTrapFocus` held a capture of its own, so
+          // before #227 this switch restored focus AND left the close's restore
+          // owed — two records, one each. There is one now, and both halves
+          // still have to come out of it. `drawer-a11y.spec.ts` asserts the
+          // second half.
+          this.previousFocus?.focus();
+        },
+        { injector: this.injector }
+      );
     });
 
     // Portal overlay to document.body in over mode to avoid clipping
@@ -112,7 +326,28 @@ export class TnDrawerComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.overlayRef()?.nativeElement?.remove();
+    const overlay = this.overlayRef()?.nativeElement as HTMLElement | undefined;
+
+    // A drawer destroyed WHILE OPEN never runs the close branch of the effect
+    // above, so the restore has to happen here as well — removing the overlay
+    // drops focus onto `<body>`, and `CdkTrapFocus.ngOnDestroy` used to cover
+    // that off the back of the auto-capture #227 replaced.
+    //
+    // Only when this drawer is what focus is being taken FROM, and read before
+    // the removal, which is the thing that takes it. Both places are asked,
+    // because the `over` panel is portaled out to `<body>` while the `side` one
+    // is inline in the host. Restoring unconditionally moves focus for a user
+    // who is somewhere else entirely — and this component has a standing way to
+    // reach that state: an `over` open captures `previousFocus`, a breakpoint
+    // switches the drawer to `side` without closing it, and the capture is
+    // still unspent however long the user then spends elsewhere on the page.
+    const active = this.document.activeElement;
+    const heldFocus = this.hostRef.nativeElement.contains(active) || !!overlay?.contains(active);
+    overlay?.remove();
+
+    if (heldFocus) {
+      this.restoreFocus();
+    }
   }
 
   /** Open the drawer */
@@ -156,17 +391,23 @@ export class TnDrawerComponent implements OnDestroy {
     }
   }
 
-  /** Handle transition end — emit events and restore focus after animation completes */
+  /**
+   * Handle transition end — report the open/close early, since the animation is
+   * demonstrably over. Focus restoration is NOT here; it happens as soon as the
+   * drawer closes, because this event does not fire under
+   * `prefers-reduced-motion` — and neither, for the same reason, does the
+   * emission depend on it any more (#218).
+   *
+   * Which output to emit is `lifecycle`'s to decide, from the state the change
+   * it is tracking settled into — NOT from `opened()` read here. The two differ
+   * exactly when this event is late: a drawer reopened while the close was still
+   * animating reads `opened() === true` on the stale close's event.
+   */
   protected onTransitionEnd(event: TransitionEvent): void {
     if (event.propertyName !== 'transform' || event.target !== event.currentTarget) {
       return;
     }
-    if (this.opened()) {
-      this.openedComplete.emit();
-    } else {
-      this.closed.emit();
-      this.restoreFocus();
-    }
+    this.lifecycle.transitionEnded();
   }
 
   private restoreFocus(): void {

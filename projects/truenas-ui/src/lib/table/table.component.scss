@@ -230,11 +230,18 @@
       cursor: pointer;
       user-select: none;
 
-      // Derive hover from the topbar itself so contrast with --tn-topbar-txt is
-      // preserved across all themes (including blue/paper/high-contrast where
-      // --tn-alt-bg1 is near-white and would clash with light topbar text).
+      // The bar's own hover token, declared by every palette. It was derived —
+      // `color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt))` — and
+      // that could not work: every palette's label is lighter than its bar, so
+      // mixing 15% of the label into the bar moved the surface toward the text
+      // and the label's ratio could only fall. On the four mid-tone bars it
+      // fell below 4.5:1 (#284). No single direction fixes that either, which
+      // is why the value is per-palette rather than a different mix: a
+      // near-black bar can only lighten, and lightening is exactly what breaks
+      // a mid-tone one. themes.css records both ratios on each value and
+      // text-token-surface-contrast.spec.ts holds all nine to them.
       &:hover {
-        background-color: color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt));
+        background-color: var(--tn-topbar-hover);
       }
     }
   }
@@ -372,10 +379,6 @@
     width: var(--tn-table-select-width);
     padding: 0 8px 0 16px;
     cursor: pointer;
-  }
-
-  &__checkbox {
-    pointer-events: none;
   }
 
   // Deliberately not pinned. Pinning select + first data + actions already consumes most of a

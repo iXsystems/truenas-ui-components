@@ -551,7 +551,7 @@ export const TabsComponentHarness: Story = {
 };
 
 /**
- * **Test IDs (default).** `tn-tabs` emits `tabs-<base>` on the tablist, each
+ * **Test IDs (default).** `tn-tabs` emits `tabs-<base>` on its root element, each
  * `tn-tab` emits `tab-<base>` on its header button, and each `tn-tab-panel`
  * emits `tab-panel-<base>`, under `data-testid` (default) / `data-test`.
  */

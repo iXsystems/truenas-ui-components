@@ -40,6 +40,14 @@ var(--tn-orange)    // Alert, attention needed
 var(--tn-blue)      // Info, neutral information
 ```
 
+**`--tn-red` is tuned toward the 3:1 UI-component/border minimum (WCAG 1.4.11) in most themes but not all — `.tn-high-contrast`'s `--tn-red` measures 2.94:1 against `--tn-bg1` — and it is not tuned for the 4.5:1 text minimum (WCAG 1.4.3). The other status colors are not tuned toward either threshold.** In several themes `--tn-red` on `--tn-bg1` clears 3:1 but not 4.5:1. For text — validation messages, inline errors — use the text-safe counterpart instead:
+
+```scss
+var(--tn-error-text)  // Error/validation text, 4.5:1 against --tn-bg1 in every theme
+```
+
+Defined per theme in `themes.css`, alongside the status colors it pairs with. Where `--tn-green`/`--tn-yellow`/etc. get a text use, give them the same `-text` counterpart rather than reusing the raw status color for text.
+
 ### Icon Sizes
 
 ```scss
@@ -429,6 +437,37 @@ Components automatically work with all themes via CSS variables:
 - `tn-high-contrast` - High contrast theme
 
 **No theme-specific code needed in components.** Just use CSS variables.
+
+### Storybook docs pages are NOT themed by these variables
+
+A docs page has two parts and they are themed by different mechanisms:
+
+| Part | Themed by | Follows the theme switcher? |
+|---|---|---|
+| The story canvas — the box a component renders in | `--tn-*`, via a canvas rule in `themes-storybook.css` | **Yes** |
+| Everything else on the page — headings, prose, tables, code samples, the argstable | `parameters.docs.theme` in `.storybook/preview.ts` | **No** |
+
+Docs-page chrome is Storybook's own UI, so it takes the `truenasTheme` object
+that `manager.ts` also gives the manager, and it looks the same whichever
+palette the switcher is on. The switcher themes the **component**.
+
+**If a docs page renders unreadable text, do not add a tag to
+`themes-storybook.css`.** That file used to be a list of selectors forcing
+individual elements back to a dark colour, and the list is what #293 removed:
+`parameters.docs.theme` had never been set, so `ensure(undefined)` handed every
+docs page Storybook's *light* theme, and `code`, `h5` and the syntax
+highlighter's spans were simply never noticed. 442 failing text nodes on one
+page, the worst at 1.16:1.
+
+A `color:` set from a `--tn-*` token on anything but the canvas is the same bug
+with the colours swapped — three shipped palettes are light, so `--tn-fg2` is a
+dark ink, and the chrome behind it is always `#282828`.
+
+The header of `projects/truenas-ui/src/styles/themes-storybook.css` lists the
+handful of roles no docs theme can reach, with what each measures and why it
+does or does not have a rule. `docs-theme-contrast.spec.ts` measures the theme
+keys Storybook draws as docs text and the literal colours that file ships, and
+fails if a new selector starts painting chrome.
 
 ## Animation & Transitions
 

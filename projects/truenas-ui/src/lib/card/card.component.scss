@@ -142,7 +142,7 @@
   transition: color 0.2s ease;
 
   &:hover {
-    color: var(--tn-primary, #2563eb);
+    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   }
 }
 
@@ -181,22 +181,22 @@
 
   &--success {
     background-color: rgba(16, 185, 129, 0.1);
-    color: var(--tn-success, #10b981);
+    color: var(--tn-success, var(--tn-green, #416f26));
   }
 
   &--warning {
     background-color: rgba(245, 158, 11, 0.1);
-    color: var(--tn-warning, #f59e0b);
+    color: var(--tn-warning, var(--tn-orange, #955313));
   }
 
   &--error {
     background-color: rgba(239, 68, 68, 0.1);
-    color: var(--tn-error, #ef4444);
+    color: var(--tn-error, var(--tn-red, #bd2626));
   }
 
   &--info {
     background-color: rgba(59, 130, 246, 0.1);
-    color: var(--tn-info, #3b82f6);
+    color: var(--tn-info, var(--tn-blue, #006997));
   }
 
   &--neutral {
@@ -247,7 +247,7 @@
 .tn-card__footer-link {
   border: none;
   background: transparent;
-  color: var(--tn-primary, #2563eb);
+  color: var(--tn-primary-text, var(--tn-primary, #0074a7));
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;

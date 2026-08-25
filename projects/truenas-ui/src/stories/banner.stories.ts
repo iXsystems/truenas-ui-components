@@ -11,8 +11,12 @@ tnIconMarker('alert', 'mdi');
 tnIconMarker('alert-circle', 'mdi');
 tnIconMarker('check-circle', 'mdi');
 
-// Load harness documentation
-const harnessDoc = loadHarnessDoc('banner');
+// Load harness documentation. `getActions()` hands back TnBannerActionHarness
+// instances, so that harness's own table is appended rather than left in a
+// section this component's docs never link to.
+const harnessDoc = [loadHarnessDoc('banner'), loadHarnessDoc('banner-action')]
+  .filter(Boolean)
+  .join('\n\n---\n\n');
 
 const meta: Meta<TnBannerComponent> = {
   title: 'Components/Banner',
@@ -125,7 +129,7 @@ export const WithActionLink: Story = {
         heading="Learn More About Storage"
         message="Explore our documentation for best practices."
         type="info">
-        <a tnBannerAction href="#" style="color: var(--tn-info, #3b82f6); text-decoration: underline;">
+        <a tnBannerAction href="#" style="color: var(--tn-info, var(--tn-blue, #006997)); text-decoration: underline;">
           View Documentation
         </a>
       </tn-banner>

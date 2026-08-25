@@ -1,14 +1,54 @@
+<!--
+  WHICH OF THESE TWO ELEMENTS IS THE TAB STOP (#270)
+  --------------------------------------------------
+  Exactly one of them, and which one depends on whether the content scrolls.
+
+  The ARIA tabs pattern makes a tabpanel focusable so that a panel holding no
+  control of its own can still be reached — which is what `tabindex="0"` below
+  was for. But `.tn-tab-panel__content` is the element with `overflow: auto`,
+  and it is a CHILD of the panel: focus on the panel scrolls the page rather
+  than the region, because a browser scrolls the nearest scrollable ANCESTOR of
+  what has focus. So a panel taller than its box left the part below the fold
+  unreachable from a keyboard, and axe reported it as
+  `scrollable-region-focusable`.
+
+  Marking both would satisfy the rule and put two stops in a row on every
+  scrolling panel — "tab panel", then "group" — for one region. Instead the
+  stop moves to whichever element is the useful one to stand on: the scroll
+  container while there is something to scroll, the panel otherwise. The panel
+  keeps `tabindex="-1"` in that case, so it stays a focus target for anything
+  that moves focus to it programmatically and stays what its tab's
+  `aria-controls` points at.
+
+  `contentKeyboardReachable` is `tnScrollableRegion`'s, shared with
+  `tn-side-panel` and three others; `../a11y/scrollable-region.ts` says what it
+  measures and why it is held true while the region has focus.
+-->
 <div
   role="tabpanel"
   tnTestIdType="tab-panel"
   [ngClass]="classes()"
   [tnTestId]="testId()"
+  [attr.id]="panelId()"
   [attr.aria-hidden]="!isActive()"
-  [attr.aria-labelledby]="'tab-' + index()"
-  [attr.tabindex]="isActive() ? 0 : -1"
+  [attr.aria-labelledby]="hasTab() ? tabId() : null"
+  [attr.tabindex]="isActive() && !contentKeyboardReachable() ? 0 : -1"
 >
   @if (shouldRender()) {
-    <div class="tn-tab-panel__content">
+    <!--
+      `role="group"` and a name arrive with the tab stop and leave with it, for
+      the reason the side panel's region gives: a focusable element with no
+      accessible name is announced as a bare "group". The name is the tab's own
+      label where there is one — the panel is named that way too, and a listener
+      who has just moved off the tab hears the same words for the region it
+      opened.
+    -->
+    <div
+      #contentRegion
+      class="tn-tab-panel__content"
+      [attr.tabindex]="contentKeyboardReachable() ? '0' : null"
+      [attr.role]="contentKeyboardReachable() ? 'group' : null"
+      [attr.aria-label]="contentKeyboardReachable() ? contentLabel() : null">
       <ng-content />
     </div>
   }

@@ -20,6 +20,7 @@ import {
   signal,
 } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
+import { tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnEmptyComponent } from '../empty/empty.component';
 import { TnIconComponent } from '../icon/icon.component';
@@ -37,6 +38,26 @@ import { TnTestIdDirective } from '../test-id';
 // from template literals or marker calls; a name returned from a component
 // getter is invisible to it, so the icons would be dropped from the generated
 // sprite and render as nothing. Keep the literals in the template.
+
+/**
+ * The name the table's scroll region falls back to when the consumer has not
+ * said what the table holds (#270).
+ *
+ * A focusable element with no accessible name is announced as a bare "group",
+ * which tells a listener that something has been reached and nothing about what
+ * it is. "Table" is a poor name and is deliberately the fallback rather than
+ * the expectation — `scrollRegionAriaLabel` is how a consumer says something
+ * useful, and it is the one input on this component whose default is worth
+ * overriding on sight.
+ *
+ * No dev-mode warning goes with it, unlike `tnAccessibleName`'s fallbacks: this
+ * name is rendered only on a table that is WIDER THAN ITS CONTAINER, which
+ * depends on the consumer's layout rather than on their markup, so the warning
+ * would fire on a viewport rather than on a mistake.
+ *
+ * Exported so specs assert against it by name rather than by a copied literal.
+ */
+export const TN_TABLE_SCROLL_REGION_LABEL = 'Table';
 
 export interface TnTableDataSource<T = unknown> {
   data?: T[];
@@ -165,6 +186,12 @@ export const TN_TABLE_LABELS = new InjectionToken<TnTableLabels | Signal<TnTable
     '[class.tn-table--scroll]': 'isScrollMode()',
     '[style.--tn-table-active-bg]': 'activeBg()',
     '[style.--tn-table-active-indicator]': 'activeIndicator()',
+    // The host is the element that scrolls (see `overflow-x` in the stylesheet
+    // and `scrollKeyboardReachable` below), so it is the element that has to be
+    // reachable when it does. All three arrive and leave together.
+    '[attr.tabindex]': 'scrollKeyboardReachable() ? "0" : null',
+    '[attr.role]': 'scrollKeyboardReachable() ? "group" : null',
+    '[attr.aria-label]': 'scrollKeyboardReachable() ? resolvedScrollRegionLabel() : null',
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
@@ -191,6 +218,45 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   private focusBeforeLoading: HTMLElement | null = null;
 
+  /**
+   * Whether the host carries a tab stop, `role="group"` and a name because it
+   * is currently scrolling (#270).
+   *
+   * `:host` is `overflow-x: auto` — the stylesheet says why the scrollport is
+   * the host and not `.tn-table__table` — so a table wider than its container
+   * scrolls HERE, and axe's `scrollable-region-focusable` reports a scroll
+   * container that is neither in the tab order nor holds anything that is.
+   *
+   * Which this table is depends entirely on how it was configured: sortable
+   * headers and clickable rows are `tabindex="0"`, so a table with either
+   * satisfies the rule through its content, and a plain read-only one — the
+   * default of every input on this component — satisfies nothing and leaves its
+   * trailing columns unreachable from a keyboard.
+   *
+   * Gated on the measurement rather than on `isScrollMode()`: that class says
+   * which LAYOUT the container's width selected, and this asks whether the
+   * content actually exceeds the box, which is a different question and the one
+   * axe asks. The measurement, the observers behind it and the rule that holds
+   * the answer true while the host has focus are `tnScrollableRegion`'s.
+   *
+   * A field initializer rather than the constructor, because it registers an
+   * `effect` and so needs an injection context.
+   */
+  protected scrollKeyboardReachable = tnScrollableRegion(
+    () => this.elementRef.nativeElement as HTMLElement
+  );
+
+  /**
+   * The scroll region's name, falling back when a consumer passes whitespace.
+   *
+   * Blank is not a name: an `aria-label=" "` names the group as emptily as no
+   * label at all, and axe agrees — the same rule `tnAccessibleName` applies to
+   * every other name in this library.
+   */
+  protected resolvedScrollRegionLabel = computed(
+    () => this.scrollRegionAriaLabel().trim() || TN_TABLE_SCROLL_REGION_LABEL
+  );
+
   // --- Core inputs ---
   dataSource = input<TnTableDataSource<T> | T[]>([]);
   displayedColumns = input<string[]>([]);
@@ -206,6 +272,18 @@ export class TnTableComponent<T = unknown> implements OnInit {
   emptyDescription = input<string>('');
 
   emptyIcon = input<string>('');
+
+  /**
+   * Accessible name for the table's own scroll region, used only while the host
+   * actually scrolls — see `scrollKeyboardReachable` and
+   * `TN_TABLE_SCROLL_REGION_LABEL`.
+   *
+   * Set it to say what the table holds ("Storage pools"). It names the SCROLL
+   * REGION rather than the table: a table's own structure is announced from its
+   * rows and headers, and this is the box around it that a keyboard user stands
+   * on to scroll sideways.
+   */
+  scrollRegionAriaLabel = input<string>(TN_TABLE_SCROLL_REGION_LABEL);
 
   // --- Feature inputs (all opt-in) ---
   selectable = input<boolean>(false);
@@ -302,6 +380,10 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * chevron. Requires `clickable` — that is what makes rows activatable at all — and `expandable`;
    * rows the `isRowExpandable` predicate rejects are unaffected, since `toggleRowExpansion` gates
    * on it. `rowClick` still emits, so a consumer can both expand and react to the click.
+   *
+   * In table mode the expanded state is announced by the chevron, not by the row: `aria-expanded`
+   * is a `treegrid`-row attribute and a plain `table` row cannot hold it (#246). The row points at
+   * the open panel with `aria-controls`, which every role permits.
    *
    * Applies in card mode too, where activating the card toggles its detail section. Both controls
    * report the state: the card carries `aria-expanded` while it is the trigger (`listitem` does
@@ -706,9 +788,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
     () => this.effectiveDisplayedColumns().length + (this.rowActionsDef() ? 1 : 0)
   );
 
+  /**
+   * How many rows a select-all can actually select.
+   *
+   * `SelectionModel` stores selections in a `Set`, so `selection.selected.length`
+   * counts DISTINCT rows while `data().length` counts array entries. A `dataSource`
+   * holding the same row reference twice makes the two disagree, and every comparison
+   * of a selection count against a row count has to use this one to stay honest —
+   * see {@link isAllSelected}.
+   */
+  private distinctRowCount = computed(() => new Set(this.data()).size);
+
   isAllSelected = computed(() => {
     const numSelected = this.selectionCount();
-    const numRows = this.data().length;
+    const numRows = this.distinctRowCount();
     return numRows > 0 && numSelected === numRows;
   });
 
@@ -716,6 +809,26 @@ export class TnTableComponent<T = unknown> implements OnInit {
     const count = this.selectionCount();
     return count > 0 && !this.isAllSelected();
   });
+
+  /**
+   * Whether the select-all control has anything to act on.
+   *
+   * Disabling it on an empty table is a correctness guard, not a nicety. Since #236
+   * the checkbox is a real control the user can click, and its `checked` binding is
+   * one-way: the DOM follows `isAllSelected()`, and Angular only writes the attribute
+   * back when that value CHANGES. With no rows, `isAllSelected()` is pinned false —
+   * selecting nothing leaves the count at zero — so a click would flip the input in
+   * the DOM, change no bound value, and leave a checked-looking box over an empty
+   * selection until something else re-rendered it.
+   *
+   * The hit area around the checkbox stands down for the same reason, so the two
+   * cannot disagree about whether the control is live.
+   *
+   * An empty table is the only case that has to be disabled rather than fixed: a
+   * repeated row reference produces the same DOM-versus-model divergence, and
+   * {@link distinctRowCount} resolves that one by making the control work.
+   */
+  canSelectAll = computed(() => this.distinctRowCount() > 0);
 
   trackByFn = computed(() => {
     const custom = this.trackBy();
@@ -793,11 +906,17 @@ export class TnTableComponent<T = unknown> implements OnInit {
   }
 
   /**
-   * Whether the row element itself acts as the expand/collapse control, which is what makes an
-   * `aria-expanded` on it meaningful: a screen-reader user who focuses the row and presses Enter
-   * otherwise gets no announcement that anything expanded, since only the chevron carries the
-   * state. Also requires `clickable` — without it the row isn't activatable and
-   * {@link onRowClick} returns before toggling anything.
+   * Whether the row element itself acts as the expand/collapse control. Requires `clickable` —
+   * without it the row isn't activatable and {@link onRowClick} returns before toggling anything.
+   *
+   * A table row does NOT get `aria-expanded` from this. That attribute is only supported on a
+   * `treegrid` row; on a plain `table` it is ignored, so the state it seemed to publish reached
+   * nobody (#246). The chevron in the `__expand` cell carries it instead, on a `button`, where it
+   * is valid and where a screen-reader user lands by tabbing. What the row does take from this is
+   * `aria-controls`, which is global rather than role-conditional.
+   *
+   * Card mode is the case where the trigger element CAN hold the state — see
+   * {@link isCardExpandTrigger}.
    */
   isRowExpandTrigger(row: T): boolean {
     return this.expandOnRowClick() && this.clickable() && this.canExpandRow(row);
@@ -808,8 +927,8 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * template. Card mode renders no expansion affordance at all without one, so `aria-expanded`
    * on the card would advertise a state change that produces nothing.
    *
-   * Table mode deliberately keeps the looser check: its rows are asserted to carry
-   * `aria-expanded` from `expandOnRowClick` alone, and that predates this layout.
+   * `listitem` permits `aria-expanded`, which is what lets the card hold the state its table-row
+   * equivalent cannot.
    */
   isCardExpandTrigger(row: T): boolean {
     return this.isRowExpandTrigger(row) && !!this.detailRowDef();
@@ -998,6 +1117,79 @@ export class TnTableComponent<T = unknown> implements OnInit {
   }
 
   // --- Selection methods ---
+  //
+  // Every selection surface — the header cell, a row cell, and card mode's toolbar
+  // and card wrappers — is a checkbox with a hit area around it. The checkbox is the
+  // widget: it is the only tab stop, it activates itself, and it reports through
+  // `(change)`. The wrapper exists so that clicking the cell's padding works too, and
+  // it stands down for any click that started inside the checkbox.
+  //
+  // Before #236 it was the other way round: `.tn-table__checkbox` was
+  // `pointer-events: none`, so the wrapper caught every click and the checkbox caught
+  // none. That is why the header <th> had to be `role="checkbox" tabindex="0"` — the
+  // only focusable, activatable thing in the cell was the cell — and why axe reported
+  // a widget nested in a widget.
+
+  /**
+   * Whether an event started inside a selection checkbox rather than on the hit area
+   * around it.
+   *
+   * Matched on the component's host class rather than through
+   * {@link isControlTarget}, because the element clicked is usually neither the input
+   * nor the host: `tn-checkbox` renders a `<label>` wrapping the input and its
+   * checkmark, and a click on the checkmark activates the input as the label's default
+   * action. `closest('input')` says no to that click, and the toggle would then happen
+   * twice — once here, once from the label's own activation.
+   *
+   * @param event The DOM event; its `currentTarget` is the hit area.
+   */
+  private isSelectionCheckboxTarget(event: Event): boolean {
+    const target = event.target as HTMLElement | null;
+    return !!target?.closest('.tn-table__checkbox');
+  }
+
+  /**
+   * Click on the hit area around a select-all checkbox, in either layout.
+   *
+   * @param event The originating click.
+   */
+  onSelectAllHitAreaClick(event: Event): void {
+    if (!this.canSelectAll()) { return; }
+    if (this.isSelectionCheckboxTarget(event)) { return; }
+    this.toggleSelectAll();
+  }
+
+  /**
+   * Enter on the select-all checkbox.
+   *
+   * A native checkbox answers to Space and not to Enter, and the `<th>` this replaced
+   * handled both. Bound on the header's checkbox only, which is where that behaviour
+   * existed — card mode's select-all never had it.
+   *
+   * @param event The originating keydown; typed as `Event` because Angular types
+   *   `$event` that way for the `keydown.enter` pseudo-event.
+   */
+  onSelectAllEnter(event: Event): void {
+    // Enter inside a form submits it, and this control is often inside one.
+    event.preventDefault();
+    if (!this.canSelectAll()) { return; }
+    this.toggleSelectAll();
+  }
+
+  /**
+   * Click on the hit area around a row's selection checkbox, in either layout.
+   *
+   * Propagation stops whichever path activates the checkbox: a row is clickable and a
+   * card is activatable, and selecting is not activating.
+   *
+   * @param event The originating click.
+   * @param row The row the cell or card belongs to.
+   */
+  onRowSelectHitAreaClick(event: Event, row: T): void {
+    event.stopPropagation();
+    if (this.isSelectionCheckboxTarget(event)) { return; }
+    this.toggleRowSelection(row);
+  }
 
   toggleSelectAll(): void {
     if (this.isAllSelected()) {

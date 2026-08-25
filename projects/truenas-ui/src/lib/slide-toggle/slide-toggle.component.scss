@@ -177,6 +177,10 @@
       border-color: var(--tn-primary);
     }
 
+    // Stays on --tn-primary: this is an <svg> tick, non-text content under the
+    // 3:1 minimum --tn-primary is tuned for, and the --accent/--warn variants
+    // below re-point --tn-primary to follow the toggle's colour. Reading
+    // --tn-primary-text here would make the tick ignore them.
     .tn-slide-toggle__check-icon {
       color: var(--tn-primary);
     }

@@ -321,6 +321,116 @@ export const Primary: Story = {
 };
 ```
 
+## Accessibility Tests
+
+**Do not write your own axe wrapper.** `lib/a11y/axe-testing.ts` exports two, and
+between them they cover what an accessibility ticket needs. Four cycles in one day
+each wrote a throwaway probe spec inside `src/` because this section did not exist
+(#252).
+
+| You want | Use | It answers |
+|---|---|---|
+| "What does axe say about this component?" | `axeScan(fixture)` | everything, with nothing named in advance |
+| "Does this fix stay fixed?" | `axeResult(root, targets, rules)` | whether *these* rules object to *these* elements |
+| "What would a screen reader announce this AS?" | `accessibleName(el)` | the resolved name string, or `null` for none |
+
+Start with `axeScan` to find out what is wrong. Write the regression test with
+`axeResult`, which pins a named rule to a named element and is what belongs in a
+spec long-term. `component_conventions.md` has the rules for that half.
+
+`accessibleName` lives in `lib/a11y/accessible-name-testing.ts` and belongs
+alongside `axeResult` in any spec about naming: axe's naming rules only ask
+whether an element is named, so `aria-label="_"` passes them all. See
+`component_conventions.md`, "Asserting an accessible name in a spec".
+
+### Scanning a component: `axeScan`
+
+```typescript
+import { axeScan } from '../a11y/axe-testing';
+
+it('has nothing for axe to report', async () => {
+  // A fixture or an element — axeScan takes either.
+  const { violations, incomplete, passed } = await axeScan(fixture);
+
+  expect(violations).toEqual([]);
+  expect(incomplete).toEqual([]);
+  // Name a rule YOUR component exercises — `button-name` for something that
+  // renders a button, `aria-valid-attr-value` for something with ARIA
+  // references. Print `passed` once to see what is available; copying a rule
+  // your markup never triggers just fails for a reason that is not about
+  // accessibility.
+  expect(passed).toContain('button-name');
+});
+```
+
+See `lib/chip/chip-a11y.spec.ts` for the whole call on a real fixture, across four
+component states — it names `nested-interactive`, the rule the chip's own fix was
+about.
+
+**Never assert on `violations` alone.** It is only what axe is *sure* about.
+A rule it looked at and could not decide lands in `incomplete`, and the gap
+between the two is where real defects sit: a `<button aria-labelledby="nope">`
+whose referenced id does not exist has no accessible name at all, and axe returns
+**zero violations** for it — the finding is `aria-valid-attr-value`, impact
+`critical`, in `incomplete`. So `expect(violations).toEqual([])` passes on it.
+Assert on both, every time.
+
+The other two fields exist so that nothing is silently missing:
+
+- **`passed`** — rule ids that matched a node and passed. An empty `violations`
+  means nothing without it, which is why the snippet above asserts on it. A scan
+  that matched no rule at all returns `violations: []` too, and `passed` is the
+  only field that tells the two apart.
+- **`notRun`** — rules `axeScan` declined, with the reason. Always
+  `color-contrast`: jsdom has no layout engine, so axe can return no verdict on
+  it. **Measure colour with `lib/a11y/contrast-testing.ts` instead** — see
+  `lib/theme/error-text-contrast.spec.ts`.
+
+A fifth field, `undecided`, collects any rule axe could not decide *and* could not
+point at a node for. It is empty on everything measured so far; it exists so such
+a rule is reported rather than dropped.
+
+### An empty scan is a real answer for a presentational component
+
+If your component renders only `<div>`s, text and classes, expect **every bucket
+empty, `passed` included** — no rule in the ruleset matches that markup once
+`color-contrast` is declined. That is not a broken fixture and `axeScan` returns
+it normally. It does mean the snippet's `expect(passed).toContain(...)` has no
+rule to name, so drop that line rather than inventing one: there is nothing here
+for axe to check, and the accessibility question for such a component is answered
+by the component that consumes it.
+
+### The fixture must be in the document
+
+axe treats a detached tree as hidden and exempts every node in it, so a scan of
+one comes back clean whatever the markup says. `TestBed.createComponent` attaches
+the fixture for you, which is why the examples above just work — but `axeScan` and
+`axeResult` both check, and throw rather than let it pass.
+
+`axeScan` also throws on a root with no children and no text, which is what a host
+whose `detectChanges()` never ran looks like. That is asked of the tree rather
+than of axe's output, precisely so that the empty-but-rendered case above stays an
+ordinary result.
+
+### A component that is its own host: `{ hostOnly: true }`
+
+`tn-divider` has a 0-byte template and declares `role="separator"` and
+`aria-orientation` in `host: {}`, so it renders childless and textless having done
+exactly what it was asked to — and it is worth scanning, since the rules that
+match are the ones about those attributes. Say so:
+
+```typescript
+const scan = await axeScan(fixture, { hostOnly: true });
+```
+
+The flag is required rather than inferred from the host's `role`, because a
+component whose whole template sits inside an `@if` that has not run yet looks
+identical: Angular applies a static host `role` at `createComponent`, before any
+change detection. Inferring the escape would report that one as a near-clean scan
+of a component that rendered none of itself. `hostOnly` relaxes the guard, it does
+not switch it off — a root with nothing inside it and no `role` or `aria-*` on it
+is still rejected.
+
 ## Edge Cases to Test
 
 ### Null/Undefined Values

@@ -39,11 +39,17 @@ describe('TnDrawerHarness', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
   let loader: HarnessLoader;
+  let warn: jest.SpyInstance;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
     }).compileComponents();
+
+    // Every fixture here is unlabelled, and #214 makes an unnamed drawer warn in
+    // dev mode — which Jest is. Silenced so this suite's output stays readable;
+    // the warning itself is asserted in `drawer-a11y.spec.ts`.
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     fixture = TestBed.createComponent(TestHostComponent);
     host = fixture.componentInstance;
@@ -51,6 +57,7 @@ describe('TnDrawerHarness', () => {
   });
 
   afterEach(() => {
+    warn.mockRestore();
     document.body.querySelectorAll('.tn-drawer__panel--over').forEach((el) => el.remove());
     document.body.querySelectorAll('.tn-drawer__backdrop').forEach((el) => el.remove());
   });

@@ -15,6 +15,29 @@ import { TnCheckboxComponent } from '../checkbox/checkbox.component';
     '[class.tn-list-option--selected]': 'effectiveSelected()',
     '[class.tn-list-option--disabled]': 'effectiveDisabled()',
     'role': 'option',
+    // The option is the control, so it has to be the tab stop. Before #213 the
+    // only focusable thing in here was the nested checkbox's native <input>,
+    // and reaching it did nothing useful: the checkbox swallowed the click, so
+    // Space flipped the input and left the option's own selection where it was.
+    // Making the checkbox presentational removes that tab stop, and the
+    // keydown.space / keydown.enter handlers below have always needed one —
+    // the host was never focusable, so they could not fire. This is what makes
+    // them reachable, and it keeps the count the same: one tab stop per option,
+    // now on the element that acts on it.
+    //
+    // Inside a tn-selection-list that is no longer true: the listbox owns a
+    // single roving tabindex across its options (#216) and hands each one the
+    // value it should carry, so the list costs one Tab press however long it
+    // is. What is below is the STANDALONE behaviour — tn-list-option is
+    // exported on its own, and an option with no parent list has to stay the
+    // plain tab stop #213 made it rather than fall out of the tab order.
+    //
+    // Standalone, a disabled option is left out of the tab order, matching the
+    // `pointer-events: none` the disabled modifier already sets — every other
+    // route into toggle() is closed for it, so offering focus would only be a
+    // stop where nothing happens. Under a roving tabindex that trade is
+    // different and the listbox decides it differently; see effectiveTabindex.
+    '[attr.tabindex]': 'effectiveTabindex()',
     '[attr.aria-selected]': 'effectiveSelected()',
     '[attr.aria-disabled]': 'effectiveDisabled()'
   }
@@ -45,7 +68,42 @@ export class TnListOptionComponent implements AfterContentInit {
     return internal !== null ? internal : this.selected();
   });
 
+  /**
+   * Whether the parent `tn-selection-list` is disabled as a whole, pushed down
+   * by the listbox (#221). `false` when there is no parent.
+   *
+   * Kept apart from `internalDisabled` rather than written into it, because the
+   * two answer different questions and a single slot cannot hold both. The list
+   * disabling itself must not erase an option the consumer disabled on its own,
+   * and re-enabling the list is exactly where a shared slot loses that: the
+   * parent has no record of what the option's own state was before it wrote
+   * over it, so `[disabled]="true"` on the option never comes back. That is not
+   * hypothetical — it is what `setDisabledState()` did to a per-option
+   * `[disabled]` on every `control.enable()` before this signal existed.
+   *
+   * A plain boolean rather than the nullable this sits beside: absent and
+   * not-disabled are the same thing for a parent's opinion, whereas
+   * `internalDisabled` needs `null` to mean "the input still speaks".
+   */
+  listDisabled = signal<boolean>(false);
+
+  /**
+   * Disabled if EITHER source says so — the list as a whole, or this option.
+   *
+   * Not a precedence: a disabled list cannot be overridden by an enabled
+   * option, and a list that is enabled has nothing to say about an option that
+   * disabled itself. Only the second half is a fallback chain, and it is the
+   * one that already existed: `internalDisabled` outranks the input when it has
+   * been written. Nothing in the library writes it any more — `setDisabledState()`
+   * was its only writer and now stops at `listDisabled` — so it is kept for the
+   * public surface it has always been part of, alongside `internalSelected` and
+   * `internalColor`, rather than because a path in here still uses it.
+   */
   effectiveDisabled = computed(() => {
+    if (this.listDisabled()) {
+      return true;
+    }
+
     const internal = this.internalDisabled();
     return internal !== null ? internal : this.disabled();
   });
@@ -53,6 +111,35 @@ export class TnListOptionComponent implements AfterContentInit {
   effectiveColor = computed(() => {
     const internal = this.internalColor();
     return internal !== null ? internal : this.color();
+  });
+
+  /**
+   * The tabindex a parent `tn-selection-list` has assigned, or `null` when this
+   * option is standalone.
+   *
+   * Set by the listbox's roving tabindex (#216): 0 on the one option that is
+   * the list's single tab stop, -1 on the rest. `null` is not "no tab stop" but
+   * "no parent" — it is what keeps a `tn-list-option` used on its own behaving
+   * as #213 left it, and it is why this is a nullable number rather than a
+   * number defaulting to -1.
+   */
+  rovingTabindex = signal<number | null>(null);
+
+  /**
+   * -1 rather than a removed attribute for a disabled option under a roving
+   * tabindex, which is the one place these two paths disagree. An element with
+   * no `tabindex` cannot be focused programmatically either, so dropping the
+   * attribute would leave the listbox's arrow keys with nothing to move focus
+   * to — and the listbox deliberately visits disabled options, so that they can
+   * be perceived rather than silently skipped. Standalone, where every stop
+   * costs a Tab press, the disabled option is still left out entirely.
+   */
+  effectiveTabindex = computed(() => {
+    const roving = this.rovingTabindex();
+    if (roving !== null) {
+      return roving;
+    }
+    return this.effectiveDisabled() ? null : 0;
   });
 
   protected hasLeadingContent = signal<boolean>(false);
@@ -85,6 +172,19 @@ export class TnListOptionComponent implements AfterContentInit {
     ));
   }
 
+  /**
+   * Move real DOM focus to this option.
+   *
+   * Called by the parent listbox as the arrow keys move (#216). Focus lands on
+   * the host, which is both the element carrying the roving tabindex and the
+   * element `:host(:focus-visible)` draws the #215 focus ring on — the two
+   * reasons the listbox moves focus rather than pointing at the option with
+   * `aria-activedescendant`.
+   */
+  focus(): void {
+    (this.elementRef.nativeElement as HTMLElement).focus();
+  }
+
   @HostListener('click', ['$event'])
   onClick(_event: Event): void {
     if (this.effectiveDisabled()) {
@@ -94,14 +194,39 @@ export class TnListOptionComponent implements AfterContentInit {
     this.toggle();
   }
 
+  /**
+   * The key is swallowed BEFORE the disabled guard, not after it.
+   *
+   * Declining to toggle is not the same as declining the key. Space scrolls the
+   * page on any element that is neither a form control nor a scroller, and the
+   * option host is neither — so bailing out first hands the browser a Space
+   * with its default action intact, on an element the user deliberately focused
+   * and got nothing from. Nothing upstream saves it either: the listbox's own
+   * handler falls through for Space on purpose, so that the key reaches here.
+   *
+   * Only reachable under a parent `tn-selection-list` (#216), whose roving
+   * tabindex is what makes a disabled option focusable — standalone it carries
+   * no `tabindex`, so it cannot hold focus and this never fires on it.
+   *
+   * Which is safe only because the key has to have been pressed on the host
+   * itself. A host listener hears whatever bubbles out of projected content, so
+   * a consumer's `<input>` inside an option would otherwise have its Space
+   * swallowed by the `preventDefault()` above — and, on an enabled option,
+   * toggle the option as well as typing.
+   */
   @HostListener('keydown.space', ['$event'])
   @HostListener('keydown.enter', ['$event'])
   onKeydown(event: Event): void {
-    if (this.effectiveDisabled()) {
+    if (event.target !== this.elementRef.nativeElement) {
       return;
     }
 
     event.preventDefault();
+
+    if (this.effectiveDisabled()) {
+      return;
+    }
+
     this.toggle();
   }
 

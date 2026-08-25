@@ -1,5 +1,13 @@
 <header class="tn-dialog__header">
-  <h2 class="tn-dialog__title" [id]="titleId">{{ title() }}</h2>
+  <!--
+    No heading element at all when there is no title, rather than an empty one:
+    an `<h2>` with no text is an `empty-heading` violation, and it puts a level-2
+    heading with nothing in it into the document outline (#219). The dialog is
+    then named by `ariaLabel`/`ariaLabelledby` instead — see the component.
+  -->
+  @if (hasTitle()) {
+    <h2 class="tn-dialog__title" [id]="titleId">{{ title() }}</h2>
+  }
   @if (showFullscreenButton()) {
     <button
       type="button"

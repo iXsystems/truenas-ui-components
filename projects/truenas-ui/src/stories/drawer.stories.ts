@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expectOpeningMovesFocusInside } from './focus-capture';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
@@ -49,6 +50,13 @@ const meta: Meta<TnDrawerComponent> = {
       control: 'boolean',
       description: 'Prevent closing via backdrop click',
     },
+    ariaLabel: {
+      control: 'text',
+      description:
+        'Accessible name for the drawer panel. In `over` mode the panel is a modal dialog and '
+        + 'must have one; in `side` mode it is a navigation landmark, which wants one as soon as '
+        + 'a page has more than one. Falls back to "Drawer" with a dev-mode warning (#214).',
+    },
   },
 };
 
@@ -98,7 +106,7 @@ export const SideMode: Story = {
     },
     template: `
       <tn-drawer-container style="height: 400px; border: 1px solid var(--tn-lines);">
-        <tn-drawer [mode]="'side'" [(opened)]="opened" [position]="position" width="240px">
+        <tn-drawer ariaLabel="Navigation" [mode]="'side'" [(opened)]="opened" [position]="position" width="240px">
           ${navTemplate}
         </tn-drawer>
         <tn-drawer-content>
@@ -129,7 +137,7 @@ export const OverMode: Story = {
     },
     template: `
       <tn-drawer-container style="height: 400px; border: 1px solid var(--tn-lines);">
-        <tn-drawer [mode]="'over'" [(opened)]="isOpen" width="280px">
+        <tn-drawer ariaLabel="Navigation" [mode]="'over'" [(opened)]="isOpen" width="280px">
           ${navTemplate}
         </tn-drawer>
         <tn-drawer-content>
@@ -145,6 +153,21 @@ export const OverMode: Story = {
       imports: sharedImports,
     },
   }),
+
+  /**
+   * An `over` drawer is a modal dialog, so opening one must put focus inside it
+   * (#227) — and this is the shape with nothing tabbable in it at all: the nav
+   * entries are `<a>` elements with no `href`. It failed in CI against the
+   * first version of the fix. `focus-capture.ts` holds the assertion, shared
+   * with `tn-side-panel`, whose bug this component has now repeated for the
+   * third time.
+   *
+   * Unlike the side panel, `role="dialog"` and `aria-modal` sit on the PANEL
+   * here rather than on a wrapping overlay, so the panel is the dialog.
+   */
+  play: async ({ canvasElement }) => {
+    await expectOpeningMovesFocusInside(canvasElement, 'Open Drawer', '.tn-drawer__panel--over');
+  },
 };
 
 export const EndPosition: Story = {
@@ -162,7 +185,7 @@ export const EndPosition: Story = {
             <tn-button label="Toggle Drawer" (onClick)="opened = !opened" />
           </div>
         </tn-drawer-content>
-        <tn-drawer [mode]="'side'" [position]="'end'" [(opened)]="opened" width="240px">
+        <tn-drawer ariaLabel="Details" [mode]="'side'" [position]="'end'" [(opened)]="opened" width="240px">
           <div style="padding: 16px; color: var(--tn-fg1);">
             <p style="font-weight: 600; margin-bottom: 12px;">Details Panel</p>
             <tn-divider />
@@ -193,7 +216,7 @@ export const Responsive: Story = {
         Current mode: <strong style="color: var(--tn-fg1);">{{ mode }}</strong>
       </div>
       <tn-drawer-container style="height: 360px;">
-        <tn-drawer [mode]="mode" [(opened)]="isOpen" width="240px">
+        <tn-drawer ariaLabel="Navigation" [mode]="mode" [(opened)]="isOpen" width="240px">
           ${navTemplate}
         </tn-drawer>
         <tn-drawer-content>
@@ -249,7 +272,7 @@ export const TestIds: Story = {
     template: `
       <tn-testid-inspector>
         <tn-drawer-container style="height: 200px; border: 1px solid var(--tn-lines);">
-          <tn-drawer mode="side" [opened]="true" testId="nav" width="220px">
+          <tn-drawer mode="side" ariaLabel="Navigation" [opened]="true" testId="nav" width="220px">
             <p style="padding:12px;">Drawer content</p>
           </tn-drawer>
           <tn-drawer-content><p style="padding:12px;">Main content</p></tn-drawer-content>
@@ -269,7 +292,7 @@ export const ScopedTestIds: Story = {
     template: `
       <tn-testid-inspector>
         <tn-drawer-container style="height: 200px; border: 1px solid var(--tn-lines);">
-          <tn-drawer mode="side" [opened]="true" [testId]="['settings','nav']" width="220px">
+          <tn-drawer mode="side" ariaLabel="Navigation" [opened]="true" [testId]="['settings','nav']" width="220px">
             <p style="padding:12px;">Drawer content</p>
           </tn-drawer>
           <tn-drawer-content><p style="padding:12px;">Main content</p></tn-drawer-content>

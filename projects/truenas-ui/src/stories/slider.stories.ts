@@ -117,7 +117,7 @@ export const ReactiveForm: Story = {
     return {
       props: { control },
       template: `
-        <tn-slider [min]="0" [max]="100" [step]="5" labelType="both" labelSuffix="%">
+        <tn-slider aria-label="Volume" [min]="0" [max]="100" [step]="5" labelType="both" labelSuffix="%">
           <input tnSliderThumb [formControl]="control">
         </tn-slider>
         <p>Value: {{ control.value }}</p>
@@ -140,7 +140,7 @@ export const TestIds: Story = {
     props: args,
     template: `
       <tn-testid-inspector>
-        <tn-slider [min]="0" [max]="100" [testId]="testId">
+        <tn-slider aria-label="Volume" [min]="0" [max]="100" [testId]="testId">
           <input tnSliderThumb value="50">
         </tn-slider>
       </tn-testid-inspector>
@@ -159,7 +159,7 @@ export const ScopedTestIds: Story = {
     props: args,
     template: `
       <tn-testid-inspector>
-        <tn-slider [min]="0" [max]="100" [testId]="testId">
+        <tn-slider aria-label="Volume" [min]="0" [max]="100" [testId]="testId">
           <input tnSliderThumb value="50">
         </tn-slider>
       </tn-testid-inspector>

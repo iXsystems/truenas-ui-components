@@ -1,9 +1,13 @@
 
-import { Component, input, output, contentChildren, signal, computed, forwardRef, effect } from '@angular/core';
+import { Component, ElementRef, input, output, contentChildren, signal, computed, forwardRef, effect, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnListOptionComponent } from '../list-option/list-option.component';
 import { TnTestIdDirective } from '../test-id';
+
+/** The attributes that can name the listbox host. */
+const NAME_ATTRIBUTES = ['aria-label', 'aria-labelledby'];
 
 export interface TnSelectionChange {
   source: TnSelectionListComponent;
@@ -29,7 +33,31 @@ export interface TnSelectionChange {
     '[class.tn-selection-list--dense]': 'dense()',
     '[class.tn-selection-list--disabled]': 'isDisabled()',
     'role': 'listbox',
-    '[attr.aria-multiselectable]': 'multiple()'
+    // A `role="listbox"` is an ARIA input field, and one with no accessible name
+    // is announced as bare "listbox" — the options say what is IN the list,
+    // never what it is FOR (#235). What these two resolve to, and why they are
+    // methods rather than signals, is on `hostAriaLabel` / `hostAriaLabelledby`.
+    '[attr.aria-label]': 'hostAriaLabel()',
+    '[attr.aria-labelledby]': 'hostAriaLabelledby()',
+    //
+    // The listbox states its own disabled-ness rather than leaving assistive
+    // technology to infer it from its children (#225). Inferring is not the same
+    // claim and is wrong in two ordinary cases: an empty disabled list has no
+    // children to read it off, and a consumer who disables every option
+    // individually has not disabled the LIST. `isDisabled()` and not the
+    // `disabled` input, so the plain input and `setDisabledState()` reach it by
+    // the same route the options do — see the effect in the constructor.
+    '[attr.aria-disabled]': 'isDisabled()',
+    '[attr.aria-multiselectable]': 'multiple()',
+    // Both listeners are on the host and rely on bubbling from the options,
+    // rather than being bound per option: contentChildren gives components, not
+    // template bindings, so there is nowhere to attach a per-option listener
+    // without the option knowing about its parent. Keydown bubbles from the
+    // focused option to here, which is also what lets tn-list-option keep its
+    // own Space/Enter handlers untouched — see onKeydown.
+    '(keydown)': 'onKeydown($event)',
+    '(focusin)': 'onFocusIn($event)',
+    '(focusout)': 'onFocusOut($event)'
   }
 })
 export class TnSelectionListComponent implements ControlValueAccessor {
@@ -37,6 +65,73 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   disabled = input<boolean>(false);
   multiple = input<boolean>(true);
   color = input<'primary' | 'accent' | 'warn'>('primary');
+
+  /**
+   * Explicit accessible name for the listbox. Inside a `tn-form-field` with a
+   * label this is unnecessary — the field names the list automatically — but a
+   * list with neither is announced as an unlabelled listbox.
+   *
+   * ALIASED to the attribute name, unlike the plain `ariaLabel` most controls in
+   * this library take, and the divergence is forced rather than chosen: this
+   * component's `role="listbox"` is on the HOST, so `<tn-selection-list
+   * aria-label="Mailboxes">` is valid markup that named the list before this
+   * input existed. The host binding below rewrites that attribute on every
+   * change-detection pass, so an unaliased input would silently STRIP a name
+   * that used to work. The alias makes the same markup set the input instead,
+   * and the binding writes it straight back.
+   */
+  ariaLabel = input<string | undefined>(undefined, { alias: 'aria-label' });
+
+  /** Id of visible text naming the listbox. Wins over `ariaLabel` where it resolves. */
+  ariaLabelledby = input<string | undefined>(undefined, { alias: 'aria-labelledby' });
+
+  /**
+   * ARIA wiring from an enclosing `tn-form-field`, read for `labelledby` alone:
+   * #235 is about the listbox having no accessible name, and the field's
+   * `describedby`/`invalid`/`required` are a separate question this list has
+   * never answered either way.
+   *
+   * Called with NO argument, so it reports the field's label id unconditioned.
+   * Handing it the `ariaLabel` input would have it suppress the field itself —
+   * on truthiness, so a whitespace-only label would cancel the field while being
+   * dropped as no name, leaving nothing — and it would only do so while this
+   * field is initialised after the one it reads, since a signal captured before
+   * its own initialiser runs arrives as `undefined` and is swallowed by an
+   * optional call. The suppression is applied below instead, where the rest of
+   * the precedence is.
+   */
+  private readonly fieldAria = injectTnFormFieldAria();
+
+  /**
+   * The `aria-label` this component supplies, or `null` when it supplies none.
+   *
+   * Blank is not a name: `aria-label=""` names the listbox as emptily as no
+   * attribute at all, while satisfying axe's `aria-input-field-name` rule — a
+   * green check on a control a screen reader announces as "listbox".
+   */
+  private readonly resolvedAriaLabel = computed(() => {
+    const label = this.ariaLabel();
+    return label !== undefined && label.trim() !== '' ? label : null;
+  });
+
+  /**
+   * The explicit `ariaLabelledby` input, blank normalised away, or `null`.
+   *
+   * Kept apart from the field's label because the two rank differently against
+   * a name the consumer wrote on the host — see {@link hostAriaLabelledby}.
+   */
+  private readonly explicitAriaLabelledby = computed(() => {
+    const labelledby = this.ariaLabelledby();
+    return labelledby !== undefined && labelledby.trim() !== '' ? labelledby : null;
+  });
+
+  private readonly hostElement = inject(ElementRef<HTMLElement>).nativeElement;
+
+  /**
+   * The value this component last wrote for each naming attribute, so that it
+   * can tell its own from the consumer's. See {@link claim}.
+   */
+  private readonly written = new Map<string, string>();
 
   selectionChange = output<TnSelectionChange>();
 
@@ -47,19 +142,335 @@ export class TnSelectionListComponent implements ControlValueAccessor {
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
+  /**
+   * The option the user has moved to, and the slot it occupied at the time —
+   * or `null` while they have not moved yet.
+   *
+   * Kept separate from `activeIndex` rather than seeded with a starting value,
+   * because "where the user last was" and "where a user who has not arrived yet
+   * would land" are different questions and only the second one should follow
+   * the selection around. See `activeIndex`.
+   *
+   * The OPTION and not merely its index, because the options are content
+   * children and the caller can add or remove them ABOVE the one the user is
+   * standing on. An index survives that edit while quietly changing meaning —
+   * it names whichever option shifted into the slot — so the tab stop and the
+   * arrow keys' starting point both come away from the option holding focus,
+   * and one ArrowDown lands two options from where the user is. A reference
+   * cannot drift that way. The index rides along only as the fallback for the
+   * one case a reference cannot answer: the option itself being removed.
+   */
+  private visited = signal<{ option: TnListOptionComponent; index: number } | null>(null);
+
+  /**
+   * Which option carries the listbox's single tab stop.
+   *
+   * Before the user has touched the list this tracks the first selected option,
+   * which is what APG asks for — tabbing into a list that already has a
+   * selection should land where the user left off rather than at the top. Once
+   * they have moved, `visited` pins it and the selection no longer drags the
+   * tab stop around underneath them.
+   *
+   * Resolved against the current options on every read rather than stored, so
+   * that a list edited underneath the user still points at the option they were
+   * on. Only once that option has left the list is there nothing to resolve,
+   * and the remembered slot is the best answer left — clamped, because an index
+   * held across a removal otherwise reads past the end of the array.
+   */
+  private activeIndex = computed(() => {
+    const opts = this.options();
+    if (opts.length === 0) {
+      return -1;
+    }
+
+    const visited = this.visited();
+    if (visited !== null) {
+      const current = opts.indexOf(visited.option);
+      return current === -1 ? Math.min(visited.index, opts.length - 1) : current;
+    }
+
+    const firstSelected = opts.findIndex(option => option.effectiveSelected());
+    return firstSelected === -1 ? 0 : firstSelected;
+  });
+
+  /**
+   * The option host that currently holds DOM focus, or `null`.
+   *
+   * Held as an element rather than an index, because the whole point of it is
+   * to outlive the option: an index still resolves after a removal, to whatever
+   * option moved into that slot.
+   */
+  private focusedOptionElement: HTMLElement | null = null;
+
   private onChange = (_: unknown[]) => {};
   private onTouched = () => {};
 
   constructor() {
-    // Effect to update options when they change
+    // Push what the list decides for all of its options down onto each of them,
+    // re-running both when the decision changes and when the set of options
+    // does — an option added after the list was rendered has to arrive carrying
+    // the list's current state rather than its own defaults.
+    //
+    // `isDisabled()` and not the `disabled` input, so that the plain input and
+    // `setDisabledState()` reach the options by the same route and cannot come
+    // apart again (#221). It lands on `option.listDisabled`, a signal of the
+    // option's own that is ORed with its `[disabled]` input rather than
+    // overwriting it — see TnListOptionComponent.effectiveDisabled.
     effect(() => {
       const opts = this.options();
       const currentColor = this.color();
+      const disabled = this.isDisabled();
       opts.forEach(option => {
         option.selectionList = this;
         option.internalColor.set(currentColor);
+        option.listDisabled.set(disabled);
       });
     });
+
+    // The roving tabindex itself: one stop for the whole listbox, moved rather
+    // than added to. Written from an effect because it has to re-run both when
+    // the active option changes and when the set of options does — an option
+    // added after the list was rendered would otherwise arrive with no tabindex
+    // assigned and fall back to its standalone value, putting a second stop in
+    // the tab order.
+    effect(() => {
+      const opts = this.options();
+      const active = this.activeIndex();
+      opts.forEach((option, index) => {
+        option.rovingTabindex.set(index === active ? 0 : -1);
+      });
+
+      // Moving the tab STOP is not enough when the option that held focus is
+      // the one that went away: the browser drops focus to <body>, so a
+      // keyboard user who filtered the list from inside it finds their next Tab
+      // starting at the top of the document. Put focus on whichever option the
+      // stop landed on, which is where they were.
+      //
+      // Both halves of the test carry weight. `isConnected` distinguishes an
+      // option that was REMOVED from one the user merely left, and
+      // `document.body` says nothing else has claimed focus since — without it
+      // an unrelated re-render could pull focus away from elsewhere on the page.
+      const lost = this.focusedOptionElement;
+      if (lost !== null && !lost.isConnected) {
+        this.focusedOptionElement = null;
+        if (active !== -1 && document.activeElement === document.body) {
+          opts[active].focus();
+        }
+      }
+    });
+  }
+
+  /**
+   * ArrowUp / ArrowDown / Home / End — unmodified, and pressed on an option
+   * host — and deliberately nothing else.
+   *
+   * Space and Enter are absent because `tn-list-option` has handled them since
+   * before this component had any keyboard handling at all, and its keydown
+   * bubbles up to here. Toggling from both places would toggle twice — select
+   * then immediately deselect — which reads as the key doing nothing rather
+   * than as a bug, so it is worth stating why it is missing rather than leaving
+   * a later reader to add it.
+   *
+   * Every other key is left alone, Tab included: `preventDefault()` on an
+   * unrecognised key is how a widget traps a keyboard user inside it.
+   *
+   * Navigation is not gated on `isDisabled()`, because moving focus selects
+   * nothing: a disabled list a user can still read through is the same
+   * reasoning that has the arrow keys visit disabled options at all.
+   *
+   * That is a statement about NAVIGATION only, and deliberately not the wider
+   * claim that a disabled list can be toggled. It cannot: `isDisabled()` is
+   * pushed onto every option's `listDisabled` by the effect in the constructor
+   * (#221), so the option's own guard refuses the toggle whichever route asked
+   * for it — mouse, Space, Enter or a reactive form. What a disabled list still
+   * allows is moving through it, which selects nothing.
+   *
+   * Only keys pressed ON an option host are the listbox's. The handler is on
+   * the host and hears everything that bubbles through it, so without that test
+   * a consumer who projects a focusable control into an option — a text input,
+   * a slider — would have Home and End taken off its caret and the arrows taken
+   * off its value, and get a `preventDefault()` for it. Nothing in this library
+   * projects such a control today, which is why this is a target check rather
+   * than a redesign.
+   */
+  onKeydown(event: KeyboardEvent): void {
+    const opts = this.options();
+    const count = opts.length;
+    if (count === 0) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (!opts.some(option => option.elementRef.nativeElement === target)) {
+      return;
+    }
+
+    // A MODIFIED navigation key belongs to someone else. Ctrl/Cmd+Home and
+    // Ctrl/Cmd+End are the browser's jump to the top and bottom of the
+    // document, and Shift+ArrowDown is APG's extend-the-selection, which this
+    // listbox does not implement — claiming any of them swallows a shortcut and
+    // gives nothing back. Tested inline rather than through
+    // `@angular/cdk/keycodes`, matching `select.component.ts`.
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+
+    const current = this.activeIndex();
+    let next: number;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        next = (current + 1) % count;
+        break;
+      case 'ArrowUp':
+        next = (current - 1 + count) % count;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = count - 1;
+        break;
+      default:
+        return;
+    }
+
+    // After the switch, so it happens only for the keys actually handled — and
+    // only once the list is known to be non-empty, so a swallowed key always
+    // has an option to land on. It may land on the one already focused: End at
+    // the last option, Home at the first, either arrow on a one-option list.
+    // Consuming those is still right — the key IS the listbox's and its default
+    // action is scrolling the page out from under a user who asked to move
+    // within the list.
+    event.preventDefault();
+    this.visited.set({ option: opts[next], index: next });
+    opts[next].focus();
+  }
+
+  /**
+   * Keep the tab stop under whichever option actually holds focus.
+   *
+   * Covers the routes into the list that are not the arrow keys — a click, and
+   * a Tab that lands here — so that leaving the list and coming back returns to
+   * the option the user was last on, rather than to the one the arrow keys
+   * happened to leave the index at.
+   *
+   * `contains` rather than an identity check on the target, because focus can
+   * land on something projected into the option rather than on the option host.
+   */
+  onFocusIn(event: FocusEvent): void {
+    const target = event.target as Node | null;
+    if (target === null) {
+      return;
+    }
+
+    const opts = this.options();
+    const index = opts
+      .findIndex(option => (option.elementRef.nativeElement as HTMLElement).contains(target));
+
+    if (index !== -1) {
+      this.visited.set({ option: opts[index], index });
+      this.focusedOptionElement = opts[index].elementRef.nativeElement as HTMLElement;
+    }
+  }
+
+  /**
+   * Forget the focused option once focus leaves it under its own steam.
+   *
+   * Guarded on the option still being in the document, because a `focusout`
+   * fired BY a removal — Firefox fires one, Chrome does not — is exactly the
+   * case the restore in the constructor exists for, and clearing on it would
+   * defeat that restore in one browser and not the other.
+   */
+  onFocusOut(event: FocusEvent): void {
+    const from = event.target as HTMLElement | null;
+    if (from !== null && from.isConnected) {
+      this.focusedOptionElement = null;
+    }
+  }
+
+  /**
+   * The `aria-label` the host should carry.
+   *
+   * A METHOD rather than a signal, and that is the load-bearing part of this
+   * whole arrangement: a host binding re-evaluates on every change-detection
+   * pass, while a `computed` re-runs only when a signal it read has changed.
+   * These two answers depend on the host's CURRENT attributes, which are not
+   * signals — a consumer's `[attr.aria-label]` bound in the parent template
+   * never reaches an input and never notifies anything. Asked once per pass,
+   * the answer stays true; asked from a `computed`, it goes stale the moment
+   * the consumer's binding changes, and the list is left announcing the wrong
+   * name or no name at all.
+   */
+  protected hostAriaLabel(): string | null {
+    return this.claim('aria-label', this.resolvedAriaLabel());
+  }
+
+  /**
+   * The `aria-labelledby` the host should carry — and the one place the naming
+   * precedence is decided.
+   *
+   * Most specific first: the `ariaLabelledby` input, then any name the consumer
+   * put on the host by another route, then the enclosing `tn-form-field`'s
+   * label. The field comes last because it is chrome the consumer did not write
+   * on this element, and it is WITHHELD rather than rendered alongside: ARIA
+   * prefers `aria-labelledby` wherever it resolves, so a field reference emitted
+   * beside a consumer's `aria-label` does not merely coexist with it — it
+   * outranks it, and the list announces the field's label instead.
+   *
+   * With none of the three, a list stays unnamed — deliberately: a generic
+   * fallback ("List") would satisfy axe while announcing nothing the user can
+   * act on, and only the consumer knows what this list holds.
+   */
+  protected hostAriaLabelledby(): string | null {
+    const explicit = this.explicitAriaLabelledby();
+    if (explicit !== null) {
+      return this.claim('aria-labelledby', explicit);
+    }
+    const named = this.resolvedAriaLabel() !== null || this.namedByConsumer();
+    return this.claim('aria-labelledby', named ? null : this.fieldAria.labelledby());
+  }
+
+  /** Whether the host already carries a non-blank name this component did not write. */
+  private namedByConsumer(): boolean {
+    return NAME_ATTRIBUTES.some((attribute) => {
+      const current = this.hostElement.getAttribute(attribute);
+      return current !== null && current.trim() !== '' && current !== this.written.get(attribute);
+    });
+  }
+
+  /**
+   * What to bind `attribute` to: this component's own `value` where it has one,
+   * and otherwise whatever is already on the host — so that a name the consumer
+   * set is preserved rather than overwritten by the `null` that means "nothing
+   * to say".
+   *
+   * That distinction is the reason this exists. `[attr.x]="null"` REMOVES the
+   * attribute, and the role is on the HOST here, so `<tn-selection-list
+   * aria-label="…">` and `[attr.aria-labelledby]="…"` are valid markup that
+   * named this list before it had any naming input at all. Measured on Angular
+   * 21, a plain host binding of these attributes ran after the parent's and left
+   * the element with NEITHER — named to unnamed, silently, with the parent's
+   * value reappearing only on a later pass and only for the one whose bound
+   * value had changed.
+   *
+   * Ownership is tracked by value rather than by a flag, so it also lapses
+   * correctly: an attribute this component wrote and something else has since
+   * changed is no longer this component's to rewrite or take away.
+   */
+  private claim(attribute: string, value: string | null): string | null {
+    const current = this.hostElement.getAttribute(attribute);
+    const ours = this.written.get(attribute);
+    if (value !== null) {
+      this.written.set(attribute, value);
+      return value;
+    }
+    // Nothing of this component's to say. Anything there is the consumer's.
+    if (current !== null && current !== ours) {
+      return current;
+    }
+    this.written.delete(attribute);
+    return null;
   }
 
   // ControlValueAccessor implementation
@@ -80,12 +491,20 @@ export class TnSelectionListComponent implements ControlValueAccessor {
     this.onTouched = fn;
   }
 
+  /**
+   * Records the form's state and stops there — the effect in the constructor is
+   * what reaches the options, via `isDisabled()`.
+   *
+   * It used to also write each `option.internalDisabled` directly, which is the
+   * only reason this route enforced anything while `[disabled]` enforced
+   * nothing. Two problems, both fixed by routing it through the same signal the
+   * input uses: the two paths could disagree, and `internalDisabled` is the
+   * slot an option's own `[disabled]` input falls back to — so `control.enable()`
+   * wrote `false` over an option the consumer had disabled independently, and
+   * never gave it back.
+   */
   setDisabledState(isDisabled: boolean): void {
     this.formDisabled.set(isDisabled);
-    const opts = this.options();
-    opts.forEach(option => {
-      option.internalDisabled.set(isDisabled);
-    });
   }
 
   onOptionSelectionChange(): void {

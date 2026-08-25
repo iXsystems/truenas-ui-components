@@ -180,9 +180,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   protected resolvedTestId = controlTestId(this.testId);
 
   /**
-   * Optional extractor for the per-option test-id discriminator. Defaults to
-   * the option's `value` (when a string/number) or its `label`. Provide this
-   * when option values are objects, or to pick a more stable/unique key —
+   * Optional extractor for the per-option test-id discriminator. Defaults to the
+   * option's `label`, the text actually on screen — provide this to key off a
+   * locale-independent field instead, or where an id per record is wanted —
    * mirrors `tn-select`'s input of the same name.
    *
    * @example
@@ -563,8 +563,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // (effect timing vs. embedded-view refresh) — render them first so the
     // measurement below never sees a stale, shorter panel.
     this.panelViewRef?.detectChanges();
+    // The listbox rather than the panel wrapper: the wrapper does not scroll
+    // (#292), so its scrollHeight always equals its clientHeight and this
+    // check would read every panel as underfilled.
     const panel = this.overlayRef?.overlayElement
-      ?.querySelector<HTMLElement>('.tn-autocomplete__dropdown');
+      ?.querySelector<HTMLElement>('.tn-autocomplete__listbox');
     if (panel && panel.scrollHeight <= panel.clientHeight) {
       this.loadMorePending = true;
       this.loadMore.emit();

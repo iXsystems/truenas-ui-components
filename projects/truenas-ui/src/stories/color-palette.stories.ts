@@ -18,9 +18,25 @@ export default meta;
 type Story = StoryObj;
 
 const fgVars = ['--tn-fg1', '--tn-fg2', '--tn-fg3', '--tn-fg4', '--tn-alt-fg1', '--tn-alt-fg2'];
+
+/**
+ * What each foreground is for, under each swatch. `--tn-fg3` and `--tn-fg4` are
+ * NOT text: they are tuned to the 3:1 non-text minimum against --tn-bg1 and
+ * --tn-bg2, and neither is guaranteed as text in any theme — --tn-fg4 reaches
+ * the 4.5:1 text minimum in none of the nine and --tn-fg3 in only four (#240).
+ * Labelling every
+ * row "Text" is what this story used to do, and it is the same claim theming.mdx
+ * was making — so a reader who scanned the grid instead of the prose still came
+ * away with it.
+ */
+const fgRoles: Record<string, string> = {
+  '--tn-fg3': 'Non-text (3:1)',
+  '--tn-fg4': 'Non-text (3:1)',
+};
 const bgVars = ['--tn-bg1', '--tn-bg2', '--tn-bg3', '--tn-alt-bg1', '--tn-alt-bg2'];
-const uiVars = ['--tn-primary', '--tn-primary-txt', '--tn-accent', '--tn-topbar', '--tn-topbar-txt', '--tn-lines'];
+const uiVars = ['--tn-primary', '--tn-primary-txt', '--tn-accent', '--tn-accent-txt', '--tn-topbar', '--tn-topbar-txt', '--tn-lines'];
 const statusVars = ['--tn-red', '--tn-green', '--tn-yellow', '--tn-orange', '--tn-blue', '--tn-cyan', '--tn-magenta', '--tn-violet'];
+const statusTextVars = ['--tn-error-text'];
 
 function swatchRow(varName: string, type: 'bg' | 'fg'): string {
   if (type === 'bg') {
@@ -29,7 +45,7 @@ function swatchRow(varName: string, type: 'bg' | 'fg'): string {
         <div style="width:48px; height:48px; border-radius:8px; border:1px solid var(--tn-lines); background:var(${varName});"></div>
         <div>
           <div style="font-weight:600; font-size:14px; color:var(--tn-fg1);">${varName}</div>
-          <div style="font-size:12px; color:var(--tn-fg3);">Background</div>
+          <div style="font-size:12px; color:var(--tn-fg2);">Background</div>
         </div>
       </div>`;
   }
@@ -40,7 +56,7 @@ function swatchRow(varName: string, type: 'bg' | 'fg'): string {
       </div>
       <div>
         <div style="font-weight:600; font-size:14px; color:var(--tn-fg1);">${varName}</div>
-        <div style="font-size:12px; color:var(--tn-fg3);">Text</div>
+        <div style="font-size:12px; color:var(--tn-fg2);">${fgRoles[varName] ?? 'Text'}</div>
       </div>
     </div>`;
 }
@@ -56,7 +72,7 @@ function section(title: string, vars: string[], type: 'bg' | 'fg'): string {
 }
 
 function comboGrid(): string {
-  const headers = bgVars.map(bg => `<th style="padding:8px; font-size:11px; color:var(--tn-fg3); font-weight:600;">${bg.replace('--tn-', '')}</th>`).join('');
+  const headers = bgVars.map(bg => `<th style="padding:8px; font-size:11px; color:var(--tn-fg2); font-weight:600;">${bg.replace('--tn-', '')}</th>`).join('');
   const rows = fgVars.map(fg => {
     const cells = bgVars.map(bg => `
       <td style="padding:4px;">
@@ -65,7 +81,7 @@ function comboGrid(): string {
         </div>
       </td>`).join('');
     return `<tr>
-      <td style="padding:8px; font-size:11px; color:var(--tn-fg3); font-weight:600;">${fg.replace('--tn-', '')}</td>
+      <td style="padding:8px; font-size:11px; color:var(--tn-fg2); font-weight:600;">${fg.replace('--tn-', '')}</td>
       ${cells}
     </tr>`;
   }).join('');
@@ -73,6 +89,7 @@ function comboGrid(): string {
   return `
     <div style="margin-bottom:32px;">
       <h3 style="font-size:16px; font-weight:700; color:var(--tn-fg1); margin-bottom:12px; border-bottom:1px solid var(--tn-lines); padding-bottom:8px;">Foreground × Background Combinations</h3>
+      <p style="font-size:12px; color:var(--tn-fg2); margin:0 0 12px;">Every cell renders "Aa" as a color sample, not as a recommendation: the <code>fg3</code> and <code>fg4</code> rows are non-text foregrounds, and neither is guaranteed as text in any theme (<code>fg4</code> reaches the 4.5:1 text minimum in none of the nine, <code>fg3</code> in only four). Only the <code>bg1</code> and <code>bg2</code> columns of those two rows carry a guarantee at all — the 3:1 non-text minimum.</p>
       <div style="overflow-x:auto;">
         <table style="border-collapse:collapse; width:100%;">
           <thead><tr><th></th>${headers}</tr></thead>
@@ -103,7 +120,11 @@ export const UIColors: Story = {
 
 export const StatusColors: Story = {
   render: () => ({
-    template: section('Status Colors', statusVars, 'bg'),
+    // --tn-error-text is only guaranteed as a text color against --tn-bg1/--tn-bg2
+    // (see component_styling.md), not as the 3:1 border/component color the other
+    // status vars are for — rendered as a text swatch rather than a bg swatch so
+    // the story doesn't imply it's interchangeable with them.
+    template: section('Status Colors', statusVars, 'bg') + section('Status Text Colors', statusTextVars, 'fg'),
   }),
 };
 

@@ -6,12 +6,13 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TnFormSectionComponent } from './form-section.component';
 import { TnFormSectionHarness } from './form-section.harness';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 @Component({
   standalone: true,
   imports: [TnFormSectionComponent],
   template: `
-    <tn-form-section [heading]="heading" [tooltip]="tooltip">
+    <tn-form-section [heading]="heading" [tooltip]="tooltip" [tooltipSticky]="tooltipSticky">
       <p class="projected">Projected field content</p>
     </tn-form-section>
   `,
@@ -19,6 +20,7 @@ import { TnFormSectionHarness } from './form-section.harness';
 class HostComponent {
   heading = 'Network Settings';
   tooltip = '';
+  tooltipSticky = true;
 }
 
 describe('TnFormSectionComponent', () => {
@@ -105,6 +107,32 @@ describe('TnFormSectionComponent', () => {
     const tooltip = fixture.debugElement.query(By.css('.tn-form-section__tooltip'));
     expect(tooltip).toBeTruthy();
     expect(tooltip.nativeElement.getAttribute('aria-label')).toBe(host.tooltip);
+  });
+
+  // Section help is plain text and never pinnable, so the flag is only observable through a
+  // message that holds a link — but it still has to reach the directive to be settable at all.
+  it('forwards tooltipSticky to the help button', () => {
+    host.tooltip = 'Read the <a href="#docs">docs</a>';
+    fixture.detectChanges();
+
+    const button = fixture.debugElement.query(By.css('.tn-form-section__tooltip'));
+    const tooltip = button.injector.get(TnTooltipDirective);
+    expect(tooltip.stickyEnabled()).toBe(true);
+
+    host.tooltipSticky = false;
+    fixture.detectChanges();
+    expect(tooltip.stickyEnabled()).toBe(false);
+  });
+
+  // The help button is icon-only, so the message is its accessible name - and a message holding a
+  // link is exactly what this feature makes normal to pass. Announced raw it would be read out as
+  // literal tags.
+  it('names the help button with the message as text, not as markup', () => {
+    host.tooltip = 'Read the <a href="#docs">docs</a>';
+    fixture.detectChanges();
+
+    const button = fixture.debugElement.query(By.css('.tn-form-section__tooltip'));
+    expect(button.nativeElement.getAttribute('aria-label')).toBe('Read the docs');
   });
 
   describe('harness', () => {

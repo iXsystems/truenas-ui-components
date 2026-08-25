@@ -129,6 +129,53 @@ describe('TnIconButtonComponent', () => {
     expect(tooltip.message()).toBe('Click me');
   });
 
+  // The flag is only worth re-exporting if it reaches the directive, and only observable through
+  // a message that could be pinned in the first place - a plain label never is.
+  describe('tooltipSticky', () => {
+    const LINK_MESSAGE = 'Read the <a href="#docs">docs</a>';
+    const button = () => fixture.nativeElement.querySelector('button') as HTMLElement;
+    const panel = () => document.querySelector('.tn-tooltip');
+    const closeButton = () => document.querySelector('.tn-tooltip__close');
+
+    function settle(): void {
+      jest.advanceTimersByTime(1);
+      fixture.detectChanges();
+    }
+
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => {
+      fixture.destroy();
+      jest.useRealTimers();
+    });
+
+    it('pins on click by default, so the link can be reached', () => {
+      fixture.componentRef.setInput('tooltip', LINK_MESSAGE);
+      fixture.detectChanges();
+
+      button().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      settle();
+
+      expect(panel()).not.toBeNull();
+      expect(closeButton()).not.toBeNull();
+    });
+
+    it('forwards false, putting the same message back on hover', () => {
+      fixture.componentRef.setInput('tooltip', LINK_MESSAGE);
+      fixture.componentRef.setInput('tooltipSticky', false);
+      fixture.detectChanges();
+
+      button().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      settle();
+      expect(closeButton()).toBeNull();
+
+      button().dispatchEvent(new MouseEvent('mouseenter'));
+      settle();
+
+      expect(panel()).not.toBeNull();
+      expect(closeButton()).toBeNull();
+    });
+  });
+
   it('only sets aria-describedby when a tooltip is present', () => {
     const button = fixture.nativeElement.querySelector('button');
     // No tooltip → no dangling reference to an unrendered tooltip element.

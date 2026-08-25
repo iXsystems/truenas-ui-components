@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TnAutocompleteComponent, type TnAutocompleteOption } from './autocomplete.component';
+import { scrollingTo } from '../a11y/scrollable-region-testing';
 
 interface Country {
   code: string;
@@ -747,27 +748,7 @@ describe('TnAutocompleteComponent', () => {
       expect(getTInput().getAttribute('data-testid')).toBe('autocomplete-country');
     });
 
-    it('scopes each option with the base: option-<base>-<value>', () => {
-      expect(openAndGetOptionTestIds()).toEqual([
-        'option-country-us',
-        'option-country-ca',
-        'option-country-mx',
-        'option-country-gb',
-        'option-country-de',
-      ]);
-    });
-
-    it('falls back to option-<value> when there is no base', () => {
-      tHost.testId.set('');
-      tFixture.detectChanges();
-      expect(openAndGetOptionTestIds()).toEqual([
-        'option-us', 'option-ca', 'option-mx', 'option-gb', 'option-de',
-      ]);
-    });
-
-    it('uses optionTestIdKey to pick the discriminator (e.g. label over value)', () => {
-      tHost.keyFn.set((o) => o.label);
-      tFixture.detectChanges();
+    it('scopes each option with the base: option-<base>-<label>', () => {
       expect(openAndGetOptionTestIds()).toEqual([
         'option-country-united-states',
         'option-country-canada',
@@ -777,7 +758,27 @@ describe('TnAutocompleteComponent', () => {
       ]);
     });
 
-    it('falls back to the label for object-valued options', () => {
+    it('falls back to option-<label> when there is no base', () => {
+      tHost.testId.set('');
+      tFixture.detectChanges();
+      expect(openAndGetOptionTestIds()).toEqual([
+        'option-united-states', 'option-canada', 'option-mexico', 'option-united-kingdom', 'option-germany',
+      ]);
+    });
+
+    it('uses optionTestIdKey to pick the discriminator (e.g. the value over the label)', () => {
+      tHost.keyFn.set((o) => o.value);
+      tFixture.detectChanges();
+      expect(openAndGetOptionTestIds()).toEqual([
+        'option-country-us',
+        'option-country-ca',
+        'option-country-mx',
+        'option-country-gb',
+        'option-country-de',
+      ]);
+    });
+
+    it('uses the label for object-valued options too', () => {
       const oFixture = TestBed.createComponent(ObjectValueHostComponent);
       oFixture.detectChanges();
       const input = oFixture.nativeElement.querySelector('.tn-autocomplete__input') as HTMLInputElement;
@@ -821,7 +822,7 @@ describe('TnAutocompleteComponent', () => {
       input.dispatchEvent(new Event('focus'));
       cFixture.detectChanges();
       const first = overlayEl.querySelector('.tn-autocomplete__option');
-      expect(first?.getAttribute('data-testid')).toBe('option-country-us');
+      expect(first?.getAttribute('data-testid')).toBe('option-country-united-states');
     });
   });
 
@@ -887,17 +888,54 @@ describe('TnAutocompleteComponent', () => {
 
     it('emits loadMore once per options page when scrolled to the bottom', () => {
       typeAsync('a');
-      const dropdown = overlayEl.querySelector('.tn-autocomplete__dropdown');
-      expect(dropdown).toBeTruthy();
+      // The listbox is the scrollport (#292), and a `scroll` event does not
+      // bubble — so the handler has to be bound to this element, not the panel
+      // wrapper around it, for a real scroll to reach it at all.
+      const listbox = overlayEl.querySelector('.tn-autocomplete__listbox');
+      expect(listbox).toBeTruthy();
+      expect(listbox?.getAttribute('role')).toBe('listbox');
 
-      dropdown?.dispatchEvent(new Event('scroll'));
-      dropdown?.dispatchEvent(new Event('scroll'));
+      listbox?.dispatchEvent(new Event('scroll'));
+      listbox?.dispatchEvent(new Event('scroll'));
       expect(asyncHost.loadMoreCount).toBe(1);
 
       // Appending the next page re-arms the emitter.
       asyncHost.options.set([...asyncHost.options(), { label: 'delta', value: 'delta' }]);
       asyncFixture.detectChanges();
-      dropdown?.dispatchEvent(new Event('scroll'));
+      listbox?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(2);
+    });
+
+    it('pages from a scroll of the listbox once the panel is full', () => {
+      // The specs above run with jsdom's 0-sized panel, where the underfill
+      // check emits on every page and would account for the count on its own.
+      // Making the LISTBOX overflow silences that check — so the only thing
+      // that can move the count here is the scroll handler, and only if it is
+      // bound to the element that scrolls.
+      typeAsync('a');
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      const listbox = overlayEl
+        .querySelector<HTMLElement>('.tn-autocomplete__listbox') as HTMLElement;
+      scrollingTo(listbox, 400, 350);
+      // ...and scrolled to its end, which is the condition the handler pages
+      // on. jsdom keeps `scrollTop` at 0 whatever is assigned to it, having no
+      // layout to scroll.
+      Object.defineProperty(listbox, 'scrollTop', { value: 50, configurable: true });
+
+      // Re-arms the emitter, and proves the underfill check measures the
+      // listbox: against the wrapper it would still read 0 <= 0 and page.
+      asyncHost.options.set([...asyncHost.options(), { label: 'delta', value: 'delta' }]);
+      asyncFixture.detectChanges();
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      // A scroll of the wrapper is not a scroll of the scrollport, and a
+      // `scroll` event does not bubble — the browser never fires one there.
+      overlayEl.querySelector('.tn-autocomplete__dropdown')
+        ?.dispatchEvent(new Event('scroll'));
+      expect(asyncHost.loadMoreCount).toBe(1);
+
+      listbox.dispatchEvent(new Event('scroll'));
       expect(asyncHost.loadMoreCount).toBe(2);
     });
 
@@ -980,8 +1018,8 @@ describe('TnAutocompleteComponent', () => {
       asyncHost.options.set([...asyncHost.options(), { label: 'delta', value: 'delta' }]);
       asyncFixture.detectChanges();
 
-      const dropdown = overlayEl.querySelector('.tn-autocomplete__dropdown');
-      dropdown?.dispatchEvent(new Event('scroll'));
+      overlayEl.querySelector('.tn-autocomplete__listbox')
+        ?.dispatchEvent(new Event('scroll'));
       expect(asyncHost.loadMoreCount).toBe(1);
     });
 

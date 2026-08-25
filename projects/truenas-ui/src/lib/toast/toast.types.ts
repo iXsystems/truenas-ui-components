@@ -11,7 +11,11 @@ export enum TnToastPosition {
 }
 
 export interface TnToastConfig {
-  /** Auto-dismiss duration in milliseconds. Default: 4000. Set to 0 to disable. */
+  /**
+   * How long the toast stays on screen, in milliseconds, counted from when it
+   * appears rather than from the `open()` call. Default: 4000. Set to 0 to
+   * disable auto-dismissal.
+   */
   duration?: number;
   /** Visual style of the toast. Default: TnToastType.Info. */
   type?: TnToastType;

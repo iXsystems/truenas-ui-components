@@ -1,0 +1,109 @@
+# GitHub renders the issue title as a built-in field that takes no per-field
+# description, so the rule about titles is the first thing in the form body
+# instead. There is no top-level `title:` either: it only pre-fills the box, and
+# anything pre-filled here would be a prefix of exactly the kind the rule warns off.
+#
+# No `labels:` key on purpose. Labels here are routing state applied during
+# triage from board-wide context (priority, bug, blocked, ...); a form that
+# stamped them would be deciding routing from inside a single ticket. The form
+# shapes the body, not the labels.
+name: Bug report
+description: Something the library does today is wrong, and you can make it happen.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### The title names the defect — no `type(scope):` prefix
+
+        Write what is broken, in plain words: *"[disabled] on tn-selection-list does not
+        disable its options"*. Not `fix(selection-list): ...`, and not `a11y(...)`.
+
+        A ticket title gets copied into the pull request that fixes it, and pull requests
+        here are squash-merged — so the PR title becomes the commit subject that
+        `.releaserc.json` reads. Only `feat`, `fix`, `perf`, `refactor` and a revert cut a
+        release; `docs`, `style`, `test`, `build`, `ci` and `chore` merge, cut no version
+        and appear in no changelog — and an unrecognised type is worse still: it fails the
+        PR title check outright and blocks the fix from merging at all. A prefix in a
+        ticket title is how that silent no-op gets started. Choosing the commit type is the
+        job of whoever writes the fix, not of whoever reports it.
+
+  - type: textarea
+    id: what_you_ran
+    attributes:
+      label: What you ran
+      description: >-
+        The smallest thing that shows the defect — a spec, a story, a template snippet, or
+        the steps you clicked through. Include the markup or component inputs involved.
+      placeholder: |
+        <tn-selection-list [disabled]="true">
+          <tn-list-option value="a">A</tn-list-option>
+        </tn-selection-list>
+
+        …rendered in Storybook and tabbed into.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What the library should have done, and where that expectation comes from if it is not obvious.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: >-
+        What you actually observed. Paste the failure output, the rendered DOM, or the
+        violation the tool reported — not a summary of it.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: found_with
+    attributes:
+      label: How you found it
+      description: >-
+        The instrument matters. A jsdom test and a real browser disagree about what they
+        can see — layout, focus and computed accessibility all differ — so a fix aimed at
+        the wrong one passes the wrong check.
+      options:
+        - Jest unit test (jsdom)
+        - axe scan in a Jest test (jsdom)
+        - Storybook interaction test (real browser)
+        - Manually in Storybook
+        - Manually in a consuming application
+        - Screen reader or other assistive technology
+        - Reading the code
+        - Other — described above
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: >-
+        What must be true for this to be closed, as things that can be checked. Whoever
+        fixes this writes a failing test first, so say what that test should assert.
+      placeholder: |
+        - [ ] A disabled tn-selection-list renders aria-disabled="true" on its options
+        - [ ] A disabled option is not reachable by keyboard
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: The `tn-` selector, if the defect belongs to one.
+      placeholder: tn-selection-list
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The `truenas-ui` version you saw it in, or the commit on `main`.
+      placeholder: 27.0.0-BETA.1

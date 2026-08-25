@@ -22,13 +22,43 @@
     }
   </div>
 
-  <!-- Checkbox on the right -->
-  <div class="tn-list-option__checkbox">
+  <!-- Checkbox on the right: a PICTURE of the option's selection, not a second
+       control. The host carries role="option" and binds aria-selected, which is
+       how a listbox option is supposed to report selection, so a real checkbox
+       in here says the same thing twice and offers a control that is not the
+       listener's to operate. axe scores that `nested-interactive` (#213).
+
+       `inert` rather than aria-hidden, and rather than the tabindex="-1" this
+       used to carry. The tabindex was on the <tn-checkbox> ELEMENT, not on the
+       native <input> inside it, so the control stayed focusable and axe kept
+       reporting — and even on the input it would only have left the tab order,
+       which axe explicitly treats as an unreliable way to hide a widget.
+       aria-hidden="true" fixes the other half only: the input stays focusable,
+       so nested-interactive still reports and aria-hidden-focus joins it.
+       `inert` removes the subtree from the accessibility tree AND the focus
+       order in one attribute — the same reasoning already written into
+       expansion-panel.component.html.
+
+       The mouse is the stylesheet's job, not `inert`'s. An inert subtree does
+       not RECEIVE targeted mouse events, which is not the same as passing them
+       on, so `pointer-events: none` in `&__checkbox` is what actually puts the
+       click on the row — see the comment there. That is what replaces the
+       `$event.stopPropagation()` this element used to carry: the handler kept a
+       checkbox click from reaching the host's toggle, leaving the native input
+       to flip itself while the option's own selection did not move. The click
+       now toggles the option once, as a click anywhere else on the row did.
+
+       `select.component.html` makes the same nested checkbox presentational a
+       different way, with `[disabled]="true"`. That also stops axe reporting,
+       because axe treats a disabled native control as unfocusable, but it
+       greys the checkbox through `tn-checkbox--disabled` and it is not
+       available here: this option binds `[disabled]` to its OWN disabled
+       state, which has to keep meaning what it says. -->
+
+  <div class="tn-list-option__checkbox" inert>
     <tn-checkbox
-      tabindex="-1"
       [checked]="effectiveSelected()"
       [disabled]="effectiveDisabled()"
-      [hideLabel]="true"
-      (click)="$event.stopPropagation()" />
+      [hideLabel]="true" />
   </div>
 </div>

@@ -1,7 +1,23 @@
 
 import { Component, input, ChangeDetectionStrategy, ViewEncapsulation, computed } from '@angular/core';
+import { tnAccessibleName } from '../a11y/accessible-name';
 
 export type SpinnerMode = 'determinate' | 'indeterminate';
+
+/**
+ * The accessible name a spinner falls back to when the caller names neither
+ * `ariaLabel` nor `ariaLabelledby` (#202). Same reasoning as
+ * `TN_PROGRESS_BAR_DEFAULT_LABEL`, and the case is sharper here: the spinner
+ * defaults to indeterminate mode, so its unnamed default rendering reached
+ * assistive technology as a progressbar with neither a name nor a value.
+ *
+ * `branded-spinner.component.ts` in this folder already fell back this way —
+ * `ariaLabel() || "Loading..."` inline — so a fallback is the shape this
+ * library had already settled on; what it lacked was the warning. It has both
+ * since #206, through the same `tnAccessibleName` this component uses, which is
+ * why the two constants sit side by side and differ.
+ */
+export const TN_SPINNER_DEFAULT_LABEL = 'Loading';
 
 @Component({
   selector: 'tn-spinner',
@@ -19,7 +35,7 @@ export type SpinnerMode = 'determinate' | 'indeterminate';
     '[attr.aria-valuemin]': 'mode() === "determinate" ? 0 : null',
     '[attr.aria-valuemax]': 'mode() === "determinate" ? 100 : null',
     'role': 'progressbar',
-    '[attr.aria-label]': 'ariaLabel() || null',
+    '[attr.aria-label]': 'resolvedAriaLabel()',
     '[attr.aria-labelledby]': 'ariaLabelledby() || null'
   }
 })
@@ -30,6 +46,25 @@ export class TnSpinnerComponent {
   strokeWidth = input<number>(4);
   ariaLabel = input<string | null>(null);
   ariaLabelledby = input<string | null>(null);
+
+  /**
+   * The name to render, or `null` to render no `aria-label` attribute — and the
+   * dev-mode warning when the caller named neither input.
+   *
+   * Both halves live in `../a11y/accessible-name`, shared with `tn-progress-bar`
+   * and `tn-branded-spinner` (#206), where the reasoning for each is set out:
+   * an explicit `ariaLabel` always survives, because `aria-labelledby` only wins
+   * the name calculation while its IDREF resolves; the generic fallback is
+   * withheld beside one, because there it would mask a dangling IDREF with a
+   * name that says nothing.
+   */
+  resolvedAriaLabel = tnAccessibleName({
+    selector: 'tn-spinner',
+    fallback: TN_SPINNER_DEFAULT_LABEL,
+    activity: 'loading',
+    ariaLabel: this.ariaLabel,
+    ariaLabelledby: this.ariaLabelledby
+  });
 
   radius = computed(() => {
     return (this.diameter() - this.strokeWidth()) / 2;

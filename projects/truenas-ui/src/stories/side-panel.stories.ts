@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expectOpeningMovesFocusInside } from './focus-capture';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
@@ -14,6 +15,13 @@ const labelStyle = 'display: block; font-weight: 600; margin-bottom: 6px; color:
 const sectionStyle = 'padding: 16px; background: var(--tn-bg1); border-radius: 6px; border: 1px solid var(--tn-lines);';
 const rowStyle = 'display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: 1px solid var(--tn-lines); border-radius: 6px;';
 const textareaStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--tn-lines); border-radius: 4px; background: var(--tn-bg1); color: var(--tn-fg1); box-sizing: border-box; font-size: 1rem; font-family: inherit; resize: vertical; min-height: 80px;';
+
+/**
+ * `role="dialog"` and `aria-modal` are on the OVERLAY in this component, not on
+ * the panel — so the overlay is what focus has to end up inside. The panel is a
+ * child of it. `focus-capture.ts` holds the assertion, shared with `tn-drawer`.
+ */
+const SIDE_PANEL_DIALOG = '.tn-side-panel__overlay';
 
 const meta: Meta<TnSidePanelComponent> = {
   title: 'Components/Side Panel',
@@ -149,7 +157,7 @@ export const Default: Story = {
 
         <div style="display: flex; flex-direction: column; gap: 24px;">
           <div>
-            <h4 style="margin: 0 0 12px 0; color: var(--tn-fg1);">Dataset: tank/media</h4>
+            <h3 style="margin: 0 0 12px 0; color: var(--tn-fg1);">Dataset: tank/media</h3>
             <p style="color: var(--tn-fg2); font-size: 1rem; margin: 0;">
               This dataset stores media files including photos, videos, and music. It uses LZ4 compression and has snapshots enabled.
             </p>
@@ -226,6 +234,13 @@ export const Default: Story = {
       </tn-side-panel>
     `,
   }),
+
+  // The story the defect was reported against: the only tabbable inside this
+  // panel is its own × button, which is the shape the capture failed for — in
+  // the original report, and again in CI against the first version of the fix.
+  play: async ({ canvasElement }) => {
+    await expectOpeningMovesFocusInside(canvasElement, 'View Dataset Details', SIDE_PANEL_DIALOG);
+  },
 };
 
 export const WithActions: Story = {
@@ -253,24 +268,24 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">Full Name</label>
-            <input type="text" placeholder="e.g. John Doe" style="${inputStyle}" />
+            <label for="add-user-full-name" style="${labelStyle}">Full Name</label>
+            <input id="add-user-full-name" type="text" placeholder="e.g. John Doe" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Username</label>
-            <input type="text" placeholder="e.g. jdoe" style="${inputStyle}" />
+            <label for="add-user-username" style="${labelStyle}">Username</label>
+            <input id="add-user-username" type="text" placeholder="e.g. jdoe" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Email</label>
-            <input type="email" placeholder="e.g. john@example.com" style="${inputStyle}" />
+            <label for="add-user-email" style="${labelStyle}">Email</label>
+            <input id="add-user-email" type="email" placeholder="e.g. john@example.com" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Password</label>
-            <input type="password" placeholder="Enter password" style="${inputStyle}" />
+            <label for="add-user-password" style="${labelStyle}">Password</label>
+            <input id="add-user-password" type="password" placeholder="Enter password" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Confirm Password</label>
-            <input type="password" placeholder="Confirm password" style="${inputStyle}" />
+            <label for="add-user-confirm-password" style="${labelStyle}">Confirm Password</label>
+            <input id="add-user-confirm-password" type="password" placeholder="Confirm password" style="${inputStyle}" />
           </div>
 
           <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -279,16 +294,16 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">User ID</label>
-            <input type="number" value="1001" style="${inputStyle}" />
+            <label for="add-user-uid" style="${labelStyle}">User ID</label>
+            <input id="add-user-uid" type="number" value="1001" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Primary Group</label>
-            <input type="text" value="users" style="${inputStyle}" />
+            <label for="add-user-primary-group" style="${labelStyle}">Primary Group</label>
+            <input id="add-user-primary-group" type="text" value="users" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Auxiliary Groups</label>
-            <input type="text" placeholder="e.g. wheel, ftp, samba" style="${inputStyle}" />
+            <label for="add-user-aux-groups" style="${labelStyle}">Auxiliary Groups</label>
+            <input id="add-user-aux-groups" type="text" placeholder="e.g. wheel, ftp, samba" style="${inputStyle}" />
           </div>
 
           <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -297,12 +312,12 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">Home Directory</label>
-            <input type="text" value="/nonexistent" style="${inputStyle}" />
+            <label for="add-user-home-directory" style="${labelStyle}">Home Directory</label>
+            <input id="add-user-home-directory" type="text" value="/nonexistent" style="${inputStyle}" />
           </div>
           <div>
-            <label style="${labelStyle}">Shell</label>
-            <input type="text" value="/usr/bin/zsh" style="${inputStyle}" />
+            <label for="add-user-shell" style="${labelStyle}">Shell</label>
+            <input id="add-user-shell" type="text" value="/usr/bin/zsh" style="${inputStyle}" />
           </div>
 
           <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -311,8 +326,8 @@ export const WithActions: Story = {
           </div>
 
           <div>
-            <label style="${labelStyle}">SSH Public Key</label>
-            <textarea placeholder="Paste public key here..." style="${textareaStyle}"></textarea>
+            <label for="add-user-ssh-key" style="${labelStyle}">SSH Public Key</label>
+            <textarea id="add-user-ssh-key" placeholder="Paste public key here..." style="${textareaStyle}"></textarea>
           </div>
         </div>
 
@@ -321,6 +336,14 @@ export const WithActions: Story = {
       </tn-side-panel>
     `,
   }),
+
+  // The other shape from the report — a panel with a form in it, which captured
+  // focus both before the fix and under the first version of it. Kept as the
+  // control: it says the change did not trade one shape's behaviour for the
+  // other's, and it is the reason the two are known to differ at all.
+  play: async ({ canvasElement }) => {
+    await expectOpeningMovesFocusInside(canvasElement, 'Add User', SIDE_PANEL_DIALOG);
+  },
 };
 
 export const NestedPanels: Story = {
@@ -398,20 +421,20 @@ export const NestedPanels: Story = {
             </div>
 
             <div>
-              <label style="${labelStyle}">Share Name</label>
-              <input type="text" value="media" style="${inputStyle}" />
+              <label for="edit-share-name" style="${labelStyle}">Share Name</label>
+              <input id="edit-share-name" type="text" value="media" style="${inputStyle}" />
             </div>
             <div>
-              <label style="${labelStyle}">Path</label>
-              <input type="text" value="/mnt/tank/media" style="${inputStyle}" />
+              <label for="edit-share-path" style="${labelStyle}">Path</label>
+              <input id="edit-share-path" type="text" value="/mnt/tank/media" style="${inputStyle}" />
             </div>
             <div>
-              <label style="${labelStyle}">Description</label>
-              <input type="text" value="Media files share" style="${inputStyle}" />
+              <label for="edit-share-description" style="${labelStyle}">Description</label>
+              <input id="edit-share-description" type="text" value="Media files share" style="${inputStyle}" />
             </div>
             <div>
-              <label style="${labelStyle}">Purpose</label>
-              <input type="text" value="Default share parameters" style="${inputStyle}" />
+              <label for="edit-share-purpose" style="${labelStyle}">Purpose</label>
+              <input id="edit-share-purpose" type="text" value="Default share parameters" style="${inputStyle}" />
             </div>
 
             <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -420,12 +443,12 @@ export const NestedPanels: Story = {
             </div>
 
             <div>
-              <label style="${labelStyle}">Allowed Hosts</label>
-              <textarea placeholder="One host per line..." style="${textareaStyle}"></textarea>
+              <label for="edit-share-allowed-hosts" style="${labelStyle}">Allowed Hosts</label>
+              <textarea id="edit-share-allowed-hosts" placeholder="One host per line..." style="${textareaStyle}"></textarea>
             </div>
             <div>
-              <label style="${labelStyle}">Denied Hosts</label>
-              <textarea placeholder="One host per line..." style="${textareaStyle}"></textarea>
+              <label for="edit-share-denied-hosts" style="${labelStyle}">Denied Hosts</label>
+              <textarea id="edit-share-denied-hosts" placeholder="One host per line..." style="${textareaStyle}"></textarea>
             </div>
 
             <div style="padding-bottom: 16px; border-bottom: 1px solid var(--tn-lines); padding-top: 8px;">
@@ -434,8 +457,8 @@ export const NestedPanels: Story = {
             </div>
 
             <div>
-              <label style="${labelStyle}">Auxiliary Parameters</label>
-              <textarea placeholder="smb.conf parameters..." style="${textareaStyle}"></textarea>
+              <label for="edit-share-aux-params" style="${labelStyle}">Auxiliary Parameters</label>
+              <textarea id="edit-share-aux-params" placeholder="smb.conf parameters..." style="${textareaStyle}"></textarea>
             </div>
           </div>
 
@@ -581,7 +604,7 @@ export const WidePanel: Story = {
 
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
             <div style="${sectionStyle} text-align: center;">
-              <div style="font-size: 2rem; font-weight: 700; color: var(--tn-primary);">24.10</div>
+              <div style="font-size: 2rem; font-weight: 700; color: var(--tn-primary-text);">24.10</div>
               <div style="font-size: 0.8125rem; color: var(--tn-fg2); margin-top: 4px;">TrueNAS Version</div>
             </div>
             <div style="${sectionStyle} text-align: center;">

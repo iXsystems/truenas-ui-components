@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { TnFormFieldComponent } from './form-field.component';
 import { TN_FORM_FIELD_ERRORS } from './form-field.errors';
 import type { TnFormFieldErrorMessages, TnFormFieldErrorResolver } from './form-field.errors';
@@ -12,6 +13,7 @@ import { TnFormFieldHarness } from './form-field.harness';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnIconTesting } from '../icon/icon-testing';
 import { TnInputComponent } from '../input/input.component';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 @Component({
   selector: 'tn-test-host',
@@ -603,5 +605,64 @@ describe('TnFormField global error resolver', () => {
       TnFormFieldHarness.with({ testId: 'form-field-overridden' })
     );
     expect(await field.getErrorMessage()).toBe('Field-level wins');
+  });
+});
+
+@Component({
+  selector: 'tn-sticky-host',
+  standalone: true,
+  imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
+  template: `
+    <tn-form-field label="Dataset" [tooltip]="tooltip" [tooltipSticky]="tooltipSticky">
+      <tn-input [formControl]="control" />
+    </tn-form-field>
+  `
+})
+class StickyHostComponent {
+  control = new FormControl('');
+  // Field help is plain text and never pinnable, so the flag is only observable through a message
+  // that holds a link - but it still has to reach the directive to be settable at all.
+  tooltip = 'Read the <a href="#docs">docs</a>';
+  tooltipSticky = true;
+}
+
+describe('TnFormFieldComponent tooltipSticky', () => {
+  it('forwards the flag to the help button', async () => {
+    await TestBed.configureTestingModule({
+      imports: [StickyHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(StickyHostComponent);
+    fixture.detectChanges();
+
+    const tooltip = fixture.debugElement
+      .query(By.css('.tn-form-field-tooltip'))
+      .injector.get(TnTooltipDirective);
+    expect(tooltip.stickyEnabled()).toBe(true);
+
+    fixture.componentInstance.tooltipSticky = false;
+    fixture.detectChanges();
+    expect(tooltip.stickyEnabled()).toBe(false);
+  });
+
+  // The help button is icon-only, so the message is its accessible name - and a message holding a
+  // link is exactly what this feature makes normal to pass. Announced raw it would be read out as
+  // literal tags.
+  it('names the help button with the message as text, not as markup', async () => {
+    await TestBed.configureTestingModule({
+      imports: [StickyHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(StickyHostComponent);
+    fixture.detectChanges();
+
+    const button = fixture.debugElement.query(By.css('.tn-form-field-tooltip')).nativeElement;
+    expect(button.getAttribute('aria-label')).toBe('Read the docs');
+
+    fixture.componentInstance.tooltip = 'Plain help text';
+    fixture.detectChanges();
+    expect(button.getAttribute('aria-label')).toBe('Plain help text');
   });
 });

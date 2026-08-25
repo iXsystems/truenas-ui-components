@@ -10,7 +10,83 @@ import {
   viewChild,
   ChangeDetectionStrategy
 } from '@angular/core';
+import { tnAccessibleName } from '../a11y/accessible-name';
 
+/**
+ * The accessible name this bar falls back to when the caller names neither
+ * `ariaLabel` nor `ariaLabelledby` (#209).
+ *
+ * The same string and the same reasoning as `TN_PROGRESS_BAR_DEFAULT_LABEL`
+ * next door, and deliberately a separate constant rather than an import of it:
+ * `tnAccessibleName` takes a fallback PER COMPONENT because the least-bad
+ * generic name differs by what the component is ("Progress" for a bar,
+ * "Loading" for a spinner), and sharing the binding would make a future
+ * divergence in one a silent change to the other. Exported so specs assert
+ * against it by name rather than by a copied string literal.
+ */
+export const TN_PARTICLE_PROGRESS_BAR_DEFAULT_LABEL = 'Progress';
+
+/**
+ * The gap in px between the edge of the SVG and each end of the track, on both
+ * sides — the `x` the two rects are drawn at, and half of what is subtracted
+ * from `width` to size the background.
+ *
+ * Named rather than left as the literal `50`/`100` it was, because `fill` is
+ * measured in these same px and the ARIA value is `fill` as a proportion of the
+ * track. Drawing and announcing now read the one number: an edit to the inset
+ * that missed the other would leave a bar that says "60%" while showing
+ * something else, which is the class of defect this ticket is about.
+ */
+const TRACK_INSET = 50;
+
+/**
+ * THE DECISION #209 ASKED FOR: THIS IS A PROGRESSBAR, NOT DECORATION
+ * ------------------------------------------------------------------
+ * Both readings were open. Before the change the host carried a class and
+ * nothing else — no role, no name, no value — and because it never claimed
+ * `role="progressbar"` it could not fail `aria-progressbar-name` either, so
+ * every axe-based check in this library was silent on it by construction.
+ * Measured on the unchanged component under jsdom, sweeping `svg-img-alt` and
+ * the four rules `particle-progress-bar-a11y.spec.ts` keeps: 0 violations, 0
+ * passes, 0 incomplete, on every one of them. Not clean — unexamined. That
+ * spec keeps the measurement as its first test.
+ *
+ * It is a progressbar because it is a WHOLE indicator rather than an overlay on
+ * someone else's. The SVG draws its own background track and its own fill rect,
+ * and `fill` sizes the second against the first; that is a determinate progress
+ * value, whatever the particles on top of it are doing. The alternative reading
+ * — an ambient flourish shown BESIDE a real indicator, where a role would be
+ * the redundant second announcement #203 was about — needs the real indicator
+ * to exist, and nothing here provides one.
+ *
+ * The usage evidence points the same way, weakly but only in one direction. Its
+ * only consumer in this repository is its own Storybook story: it has never
+ * been placed next to a `tn-progress-bar`, so the redundancy risk is
+ * hypothetical. It IS exported from `public-api.ts`, so consumers outside this
+ * repository may already be showing it as the only progress on a screen — and
+ * that asymmetry is what settles it. Choosing `aria-hidden` would assert a
+ * usage constraint the library cannot enforce, and when that assertion is wrong
+ * a screen-reader user gets nothing at all where a sighted user sees a bar
+ * filling — strictly worse than the unnamed progressbars #202/#205/#206 fixed.
+ * Choosing the role when the component really is ambient costs a redundant
+ * announcement a consumer can silence with `aria-hidden` on its own wrapper.
+ * The two errors are not the same size.
+ *
+ * The canvas IS decoration, and that is a separate question from what the host
+ * is. It draws particles and carries no information the fill rect does not, so
+ * the whole drawing is hidden and the ARIA value is what conveys the progress —
+ * see the `aria-hidden` on the `<svg>` in the template.
+ *
+ * WHY THE VALUE IS A PERCENTAGE AND `fill` IS NOT
+ * ----------------------------------------------
+ * `fill` is a px length along the track, not a percentage — the story's control
+ * runs it 0–600 while `width` runs 200–800, so the same `fill` means different
+ * progress at different widths. `aria-valuenow` is reported on 0–100 instead,
+ * matching `tn-progress-bar`, so that two bars from one library do not announce
+ * on two different scales and no layout px reaches the accessibility tree.
+ * Assistive technology derives the percentage from the range either way; what
+ * this fixes is which range a consumer reads in the DOM.
+ */
 @Component({
   selector: 'tn-particle-progress-bar',
   standalone: true,
@@ -18,7 +94,13 @@ import {
   styleUrls: ['./particle-progress-bar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    'class': 'tn-particle-progress-bar'
+    'class': 'tn-particle-progress-bar',
+    'role': 'progressbar',
+    '[attr.aria-valuenow]': 'valuePercent()',
+    '[attr.aria-valuemin]': 'valuePercent() === null ? null : 0',
+    '[attr.aria-valuemax]': 'valuePercent() === null ? null : 100',
+    '[attr.aria-label]': 'resolvedAriaLabel()',
+    '[attr.aria-labelledby]': 'ariaLabelledby() || null'
   }
 })
 export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy {
@@ -27,8 +109,63 @@ export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy 
   height = input<number>(40);
   width = input<number>(600);
   fill = input<number>(300);
+  ariaLabel = input<string | null>(null);
+  ariaLabelledby = input<string | null>(null);
 
   canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+
+  /** Exposed to the template so the rects and the ARIA value share one inset. */
+  readonly trackInset = TRACK_INSET;
+
+  /**
+   * The name to render, or `null` to render no `aria-label` at all — and the
+   * dev-mode warning when the caller named neither input.
+   *
+   * Both halves live in `../a11y/accessible-name`, shared with the other three
+   * progressbars in this library (#206), where the reasoning for each is set
+   * out: why an explicit `ariaLabel` always survives, and why the generic
+   * fallback is withheld beside an `ariaLabelledby`. Routed through that helper
+   * rather than given a rule of its own, which is what #209 asked for — a
+   * fourth naming rule is how `tn-branded-spinner` ended up divergent.
+   *
+   * A field initializer rather than the constructor, because it registers an
+   * `effect` and so needs an injection context; this is one, and it keeps the
+   * signal beside the inputs it reads.
+   */
+  resolvedAriaLabel = tnAccessibleName({
+    selector: 'tn-particle-progress-bar',
+    fallback: TN_PARTICLE_PROGRESS_BAR_DEFAULT_LABEL,
+    activity: 'progressing',
+    ariaLabel: this.ariaLabel,
+    ariaLabelledby: this.ariaLabelledby
+  });
+
+  /** The drawable length of the track: the SVG width less the inset at each end. */
+  trackLength = computed(() => this.width() - TRACK_INSET * 2);
+
+  /**
+   * `fill` as a percentage of the track, or `null` when there is no track to
+   * measure against.
+   *
+   * Clamped, because `fill` is not: the story alone can drive it to 600 against
+   * a 500px track, where the fill rect simply overflows. `aria-valuenow` may not
+   * exceed `aria-valuemax`, and 100 is also what such a bar visually reads as —
+   * a track filled end to end. The clamp is on the announcement only; nothing
+   * here changes what is drawn.
+   *
+   * `null` on a non-positive track — `width` at or below twice the inset — is
+   * what makes the host announce as an INDETERMINATE progressbar rather than
+   * carrying a value derived from a division by zero or a negative range. The
+   * role stays either way, because "something is in progress" is true even when
+   * how far is not answerable.
+   */
+  valuePercent = computed<number | null>(() => {
+    const track = this.trackLength();
+    if (track <= 0) {
+      return null;
+    }
+    return Math.max(0, Math.min(100, (this.fill() / track) * 100));
+  });
 
   private ctx!: CanvasRenderingContext2D;
   private particles: Array<{
@@ -112,7 +249,7 @@ export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy 
       p.x += p.speed;
       p.opacity -= this.speedConfig().fadeRate;
 
-      if (p.x > 50 + this.fill() - 12 || p.opacity <= 0) {
+      if (p.x > TRACK_INSET + this.fill() - 12 || p.opacity <= 0) {
         this.particles.splice(i, 1);
         i--;
       }
@@ -130,7 +267,7 @@ export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy 
     const color = this.shades[Math.floor(Math.random() * this.shades.length)];
     const speed = speedMin + Math.random() * (speedMax - speedMin);
     this.particles.push({
-      x: 50,
+      x: TRACK_INSET,
       y: this.height() / 2 + (Math.random() * (this.height() / 2) - this.height() / 4),
       radius: Math.random() * 2 + 1,
       speed,

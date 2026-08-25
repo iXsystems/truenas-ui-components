@@ -1,5 +1,10 @@
+<!--
+  `ariaRole()` is the only thing declaring how urgently the banner announces:
+  it implies the politeness, and an explicit `aria-live` here would override it
+  — which is what the static `aria-live="polite"` used to do, downgrading the
+  two types deliberately made assertive. See `../a11y/live-region.ts`.
+-->
 <div
-  aria-live="polite"
   [ngClass]="classes()"
   [attr.role]="ariaRole()"
 >
