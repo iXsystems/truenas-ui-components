@@ -88,9 +88,18 @@
        declares `argTypes[…].table.category`, and no MDX uses `Typeset`. Both
        are one edit away, so they are recorded rather than dismissed.
 
-   `docs-theme-contrast.spec.ts` measures every colour written in this file and
-   in `truenasTheme.js`, and fails if a rule outside the canvas selectors below
-   starts painting chrome text from a `--tn-*` token again.
+   ONE SURFACE BELONGS IN THAT TABLE FROM THE OTHER SIDE. `color.darker`
+   (#454C54) is a constant too, and addon-docs fills every even `tr` of a docs
+   markdown table with it. Body text reads 6.46:1 there, but `colorSecondary`
+   reads 2.72:1 — so a LINK in a table row would be below AA. No cell in
+   `theming.mdx` or `icon-system.mdx` holds one today; it is here rather than
+   dismissed, by footnote (4)'s standard.
+
+   `docs-theme-contrast.spec.ts` measures the two theme keys Storybook draws as
+   docs text and the literal colour below, and fails if a rule outside the
+   canvas selectors starts painting chrome text from a `--tn-*` token again. It
+   does NOT measure every colour in `truenasTheme.js` — most of those paint the
+   manager UI, which is `manager.ts`'s half of that object.
    ================================ */
 
 /* ================================
@@ -115,9 +124,13 @@ html, body {
   background-color: var(--tn-bg1) !important;
 }
 
-/* `!important` because addon-docs paints both of these itself —
-   `getBlockBackgroundStyle(theme)` on `.sbdocs-preview`, from the docs theme —
-   and the component's surface is what should show through. */
+/* `!important` for `.sbdocs-preview`, which addon-docs paints itself through
+   `getBlockBackgroundStyle(theme)` from the docs theme — the component's
+   surface is what should show through. `.docs-story` gets no background from
+   addon-docs at all (`StyledPreview` gives it only padding), so the flag is
+   carried rather than needed on that half; the two are one rule because they
+   are one surface, and splitting them to drop a redundant flag would say the
+   two are different things. */
 .docs-story,
 .sbdocs-preview {
   background-color: var(--tn-bg2) !important;

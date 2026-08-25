@@ -35,12 +35,20 @@ import { AA_MINIMUM, contrastRatio, formatRatio } from '../a11y/contrast-testing
  *   the same claim in the same shape as `muted-fg-contrast.spec.ts` and its
  *   three siblings, one stylesheet over.
  *
- * WHAT IT CANNOT SEE, stated so the green is not read as more than it is. It
- * does not render anything, so it cannot catch a selector that stops matching —
- * a Storybook release renaming `.sbdocs-content`, say. It measures colours and
- * the wiring that chooses them. The roles Storybook paints from constants no
- * theme can reach are enumerated in `themes-storybook.css`'s header, with the
- * two that have rules here and the four that do not and why.
+ * WHAT IT CANNOT SEE, stated so the green is not read as more than it is.
+ *
+ * It does not render anything, so it cannot catch a selector that stops
+ * matching — a Storybook release renaming `.sbdocs-content`, say.
+ *
+ * It measures the two theme keys Storybook draws as docs TEXT, and not every
+ * colour `truenasTheme.js` declares. `barTextColor`, `barSelectedColor`,
+ * `inputTextColor`, `colorPrimary`, `textInverseColor` and the rest of the
+ * `truenasColors` bag are outside it: those paint the MANAGER, which is
+ * `manager.ts`'s side of the same object and not what #293 was about.
+ *
+ * The roles Storybook paints from constants no theme can reach are enumerated
+ * in `themes-storybook.css`'s header — one has a rule, the rest are recorded
+ * with the reason each does not.
  */
 
 const STORYBOOK_DIR = join(__dirname, '../../../.storybook');
@@ -62,12 +70,20 @@ const storybookCss = readFileSync(join(STYLES_DIR, 'themes-storybook.css'), 'utf
  * that would rot the moment a Storybook release moved a block from one to
  * another.
  *
- * ONE DOCS SURFACE IS NOT IN THIS LIST and cannot be: a Canvas "Show code"
- * block is re-wrapped in `convert(themes.dark)` — `Preview` passes `dark: true`
- * unconditionally — so it renders on Storybook's #222325 rather than on
- * anything `truenasTheme` declares. No theme value reaches it, so there is
- * nothing here that could regress it; the colours measured below are 4.81:1 and
- * better there as it happens, and `themes-storybook.css` says so beside them.
+ * TWO DOCS SURFACES ARE NOT IN THIS LIST AND CANNOT BE, because neither comes
+ * from a `create()` key this file can read:
+ *
+ * - A Canvas "Show code" block is re-wrapped in `convert(themes.dark)` —
+ *   `Preview` passes `dark: true` unconditionally — so it renders on
+ *   Storybook's #222325. `#86909b`, the one literal `themes-storybook.css`
+ *   ships, is 4.85:1 there.
+ * - Every even `tr` of a docs markdown table is filled with `color.darker`
+ *   (#454C54), a constant. Body text on it is `#dedede` at 6.46:1, but
+ *   `colorSecondary` is 2.72:1 — so a LINK inside a table row is below AA.
+ *   Nothing renders one today: `theming.mdx` and `icon-system.mdx` have
+ *   tables, and no cell in either holds a link. Recorded rather than fixed,
+ *   and named in `themes-storybook.css`'s table by the same standard the
+ *   entries there use.
  */
 const SURFACE_KEYS = ['appContentBg', 'appBg', 'barBg'] as const;
 
@@ -293,12 +309,28 @@ describe('Storybook docs-page theming (#293)', () => {
       }
     );
 
-    // `it.each` on an empty table is an error, but a table built from two
-    // constant lists cannot be empty by accident — what it can be is built from
-    // the wrong lists. This pins the count so a key silently dropping out of
-    // either takes a case with it and says so.
+    // What was actually measured, spelled out rather than counted.
+    //
+    // The counted form — `toHaveLength(TEXT_KEYS.length * SURFACE_KEYS.length)`
+    // — is the shape this case had, and it cannot fail: `cases` is built by
+    // mapping those two lists, so both sides of the comparison move together.
+    // Dropping two entries from `SURFACE_KEYS` took the suite from 24 cases to
+    // 16 with this still green, which is the coverage loss it was written to
+    // catch, reported as success.
+    //
+    // Naming the pairs is what makes it a claim about something outside the
+    // arithmetic. A role or a surface that disappears fails here whatever the
+    // list lengths do, and adding one has to be written down rather than
+    // silently absorbed.
     it('measured every text role against every surface', () => {
-      expect(cases).toHaveLength(TEXT_KEYS.length * SURFACE_KEYS.length);
+      expect(cases.map(({ textKey, surface }) => `${textKey} on ${surface}`)).toEqual([
+        'textColor on appContentBg',
+        'textColor on appBg',
+        'textColor on barBg',
+        'colorSecondary on appContentBg',
+        'colorSecondary on appBg',
+        'colorSecondary on barBg',
+      ]);
     });
   });
 
