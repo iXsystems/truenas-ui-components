@@ -58,12 +58,37 @@ describe('TnFormListComponent', () => {
   let loader: HarnessLoader;
   let list: TnFormListHarness;
 
+  /**
+   * Renders, after a change Angular has no way to hear about.
+   *
+   * WHY THIS IS NOT `fixture.detectChanges()`. The suite is zoneless (#304),
+   * and a zoneless `detectChanges()` is `ApplicationRef.tick()`: it refreshes
+   * the views that are DIRTY, then runs check-no-changes over the rest. What
+   * marks a view dirty is a signal write it consumes, or an event listener —
+   * and a `FormArray` is neither. These specs edit one straight from the test
+   * body, outside the `(add)`/`(delete)` handlers a consumer pushes from, so
+   * nothing is dirty: the refresh pass does nothing and the `@for` over
+   * `entries.controls` creates its embedded views inside check-no-changes
+   * instead, which is the NG0100 this suite spent thirteen failures on.
+   *
+   * `markForCheck()` stands in for the listener. It is here rather than at the
+   * sites that need it because the ones that do not are not obviously safe:
+   * `host.disabled.set(true)` happens to dirty the host view, so a `push()`
+   * beside it renders — while `host.canDelete.set(false)`, read inside the
+   * `@for` and so consumed by no view that exists yet, does not. A spec should
+   * not turn on which of those it picked.
+   */
+  function detectChanges(): void {
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+  }
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
 
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
-    fixture.detectChanges();
+    detectChanges();
     loader = TestbedHarnessEnvironment.loader(fixture);
     list = await loader.getHarness(TnFormListHarness);
   });
@@ -77,7 +102,7 @@ describe('TnFormListComponent', () => {
 
     it('asks the consumer to append — it does not touch the array itself', async () => {
       await list.add();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(host.entries.length).toBe(1);
       expect(await list.getItemCount()).toBe(1);
@@ -87,18 +112,18 @@ describe('TnFormListComponent', () => {
     it('asks the consumer to remove the entry that was pressed', async () => {
       host.entries.push(new FormControl('first'));
       host.entries.push(new FormControl('second'));
-      fixture.detectChanges();
+      detectChanges();
 
       const [first] = await list.getItems();
       await first.remove();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(host.entries.value).toEqual(['second']);
     });
 
     it('stays quiet while the entries are still loading, if told to', async () => {
       host.empty.set(false);
-      fixture.detectChanges();
+      detectChanges();
 
       expect(await list.getItemCount()).toBe(0);
       expect(await list.isEmpty()).toBe(false);
@@ -106,11 +131,11 @@ describe('TnFormListComponent', () => {
 
     it('goes back to the empty message when the last entry is removed', async () => {
       host.entries.push(new FormControl('only'));
-      fixture.detectChanges();
+      detectChanges();
 
       const [only] = await list.getItems();
       await only.remove();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(await list.isEmpty()).toBe(true);
     });
@@ -119,7 +144,7 @@ describe('TnFormListComponent', () => {
   describe('what the consumer can turn off', () => {
     it('hides Add at a maximum length', async () => {
       host.canAdd.set(false);
-      fixture.detectChanges();
+      detectChanges();
 
       expect(await list.canAdd()).toBe(false);
     });
@@ -127,7 +152,7 @@ describe('TnFormListComponent', () => {
     it('hides the remove button on an entry the form requires', async () => {
       host.entries.push(new FormControl('fixed'));
       host.canDelete.set(false);
-      fixture.detectChanges();
+      detectChanges();
 
       const [only] = await list.getItems();
 
@@ -136,12 +161,12 @@ describe('TnFormListComponent', () => {
 
     it('disables Add for a list the user may not edit', async () => {
       host.disabled.set(true);
-      fixture.detectChanges();
+      detectChanges();
 
       expect(await list.isAddDisabled()).toBe(true);
 
       await list.add();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(host.entries.length).toBe(0);
     });
@@ -149,7 +174,7 @@ describe('TnFormListComponent', () => {
     it('says the group is disabled, rather than hiding it', () => {
       host.entries.push(new FormControl('first'));
       host.disabled.set(true);
-      fixture.detectChanges();
+      detectChanges();
 
       // `aria-disabled` and not `inert`: the entries are still on screen, and a
       // screen-reader user has to be able to read the values a sighted user is
@@ -162,28 +187,28 @@ describe('TnFormListComponent', () => {
       expect(fixture.nativeElement.querySelector('[inert]')).toBeNull();
 
       host.disabled.set(false);
-      fixture.detectChanges();
+      detectChanges();
 
       expect(group.hasAttribute('aria-disabled')).toBe(false);
     });
 
     it('disables each entry remove button, so the keyboard cannot delete from a locked list', async () => {
       host.entries.push(new FormControl('first'));
-      fixture.detectChanges();
+      detectChanges();
 
       const [entry] = await list.getItems();
 
       expect(await entry.isRemoveDisabled()).toBe(false);
 
       host.disabled.set(true);
-      fixture.detectChanges();
+      detectChanges();
 
       // Reached over TN_FORM_LIST_CONTEXT, so the consumer binds `disabled` on
       // the list alone and not again inside its own @for.
       expect(await entry.isRemoveDisabled()).toBe(true);
 
       await entry.remove();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(host.entries.length).toBe(1);
     });
@@ -191,7 +216,7 @@ describe('TnFormListComponent', () => {
     it('lets one entry be locked inside an editable list', async () => {
       host.entries.push(new FormControl('first'));
       host.lockFirstEntry.set(true);
-      fixture.detectChanges();
+      detectChanges();
 
       const [entry] = await list.getItems();
 
@@ -207,7 +232,7 @@ describe('TnFormListComponent', () => {
 
     it('reports no remove button when the entry only projects other icon buttons', async () => {
       host.canDelete.set(false);
-      fixture.detectChanges();
+      detectChanges();
 
       const [only] = await list.getItems();
 
@@ -217,11 +242,11 @@ describe('TnFormListComponent', () => {
     });
 
     it('removes through its own button, not the projected one', async () => {
-      fixture.detectChanges();
+      detectChanges();
 
       const [only] = await list.getItems();
       await only.remove();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(host.entries.length).toBe(0);
       expect(host.tested).toEqual([]);
@@ -229,7 +254,7 @@ describe('TnFormListComponent', () => {
 
     it('reports no Add when the header has none, whatever the entries project', async () => {
       host.canAdd.set(false);
-      fixture.detectChanges();
+      detectChanges();
 
       expect(await list.canAdd()).toBe(false);
       expect(await list.isAddDisabled()).toBe(false);
@@ -238,10 +263,10 @@ describe('TnFormListComponent', () => {
     });
 
     it('adds through the header button, not an entry\'s', async () => {
-      fixture.detectChanges();
+      detectChanges();
 
       await list.add();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(host.entries.length).toBe(2);
       expect(host.tested).toEqual([]);
@@ -266,7 +291,7 @@ describe('TnFormListComponent', () => {
 
     it('names each remove button after one entry, in the singular', async () => {
       host.entries.push(new FormControl(''));
-      fixture.detectChanges();
+      detectChanges();
 
       const remove: HTMLElement = fixture.nativeElement
         .querySelector('.tn-form-list-item__remove button');
@@ -276,7 +301,7 @@ describe('TnFormListComponent', () => {
 
     it('marks a required list, without putting the asterisk in the name', async () => {
       host.required.set(true);
-      fixture.detectChanges();
+      detectChanges();
 
       expect(fixture.nativeElement.querySelector('.required-asterisk')).not.toBeNull();
       expect(await list.getLabel()).toBe('Allowed addresses');
@@ -284,7 +309,7 @@ describe('TnFormListComponent', () => {
 
     it('leaves the group unnamed rather than naming it something wrong', () => {
       host.label.set('');
-      fixture.detectChanges();
+      detectChanges();
 
       const group: HTMLElement = fixture.nativeElement.querySelector('[role="group"]');
 
@@ -296,7 +321,7 @@ describe('TnFormListComponent', () => {
     it('shows an error that belongs to the array, once it is touched', () => {
       host.entries.push(new FormControl(''));
       host.entries.markAllAsTouched();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(host.entries.errors).toEqual({ minlength: expect.anything() });
       expect(fixture.nativeElement.querySelector('.tn-form-errors')?.textContent?.trim())
@@ -307,7 +332,7 @@ describe('TnFormListComponent', () => {
       host.entries.push(new FormControl(''));
       host.entries.push(new FormControl(''));
       host.entries.markAllAsTouched();
-      fixture.detectChanges();
+      detectChanges();
 
       expect(fixture.nativeElement.querySelector('.tn-form-errors')).toBeNull();
     });
@@ -316,7 +341,7 @@ describe('TnFormListComponent', () => {
       // role="alert" only covers the moment it appears.
       host.entries.push(new FormControl(''));
       host.entries.markAllAsTouched();
-      fixture.detectChanges();
+      detectChanges();
 
       const group: HTMLElement = fixture.nativeElement.querySelector('[role="group"]');
       const message: HTMLElement = fixture.nativeElement.querySelector('.tn-form-errors');
@@ -334,9 +359,9 @@ describe('TnFormListComponent', () => {
     it('stops describing the group once the message goes', () => {
       host.entries.push(new FormControl(''));
       host.entries.markAllAsTouched();
-      fixture.detectChanges();
+      detectChanges();
       host.entries.push(new FormControl(''));
-      fixture.detectChanges();
+      detectChanges();
 
       const group: HTMLElement = fixture.nativeElement.querySelector('[role="group"]');
 
@@ -348,7 +373,7 @@ describe('TnFormListComponent', () => {
     it('renders on a list with no label, rather than going with it', () => {
       host.label.set('');
       host.tooltip.set('One address per entry');
-      fixture.detectChanges();
+      detectChanges();
 
       const trigger: HTMLElement = fixture.nativeElement.querySelector('.tn-form-list__tooltip');
 
@@ -360,7 +385,7 @@ describe('TnFormListComponent', () => {
       host.label.set('');
       host.canAdd.set(false);
       host.tooltip.set('One address per entry');
-      fixture.detectChanges();
+      detectChanges();
 
       expect(fixture.nativeElement.querySelector('.tn-form-list__tooltip')).not.toBeNull();
     });
