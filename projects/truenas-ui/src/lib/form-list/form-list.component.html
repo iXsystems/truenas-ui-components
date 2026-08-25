@@ -10,9 +10,10 @@
   tnTestIdType="form-list"
   [tnTestId]="testId()"
   [attr.aria-labelledby]="label() ? labelId : null"
+  [attr.aria-describedby]="describedBy()"
   [attr.aria-disabled]="disabled() ? 'true' : null"
 >
-  @if (label() || canAdd()) {
+  @if (label() || tooltip() || canAdd()) {
     <div class="tn-form-list__header">
       @if (label()) {
         <span class="tn-form-list__label" [class.required]="required()">
@@ -21,18 +22,21 @@
             <span class="required-asterisk" aria-label="required">*</span>
           }
         </span>
+      }
 
-        @if (tooltip()) {
-          <button
-            type="button"
-            class="tn-form-list__tooltip"
-            [attr.aria-label]="tooltipAriaLabel()"
-            [tnTooltip]="tooltip()"
-            [tnTooltipPosition]="tooltipPosition()"
-          >
-            <tn-icon name="help-circle" library="mdi" size="sm" />
-          </button>
-        }
+      <!-- Outside the label's @if: a tooltip is bound to be shown, and one on a
+           label-less list rendering nothing at all is the one outcome with no
+           way for the consumer to notice. -->
+      @if (tooltip()) {
+        <button
+          type="button"
+          class="tn-form-list__tooltip"
+          [attr.aria-label]="tooltipAriaLabel()"
+          [tnTooltip]="tooltip()"
+          [tnTooltipPosition]="tooltipPosition()"
+        >
+          <tn-icon name="help-circle" library="mdi" size="sm" />
+        </button>
       }
 
       @if (canAdd()) {

@@ -155,6 +155,13 @@ export class TnFormErrorsComponent {
   });
 
   /**
+   * The id when there is a message to point at, and null when there is not — so
+   * a caller can bind this straight to `aria-describedby` without ever naming
+   * an element that is not on screen.
+   */
+  readonly describedBy = computed(() => (this.show() ? this.errorId : null));
+
+  /**
    * The error key the shown message came from. Same pick `resolveErrorMessage`
    * makes, so the dismiss button can never belong to an error other than the one
    * being read.

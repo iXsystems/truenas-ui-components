@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy, Component, computed, contentChildren, forwardRef, input, output,
+  viewChild,
 } from '@angular/core';
 import type { AbstractControl } from '@angular/forms';
 import { TN_FORM_LIST_CONTEXT } from './form-list-context';
@@ -79,7 +80,10 @@ export class TnFormListComponent implements TnFormListContext {
    */
   label = input<string>('');
 
-  /** Optional help tooltip shown via an icon next to the label. */
+  /**
+   * Optional help tooltip, shown via an icon in the header — next to the label
+   * where there is one, and on its own where there is not.
+   */
   tooltip = input<string>('');
 
   /** Placement of the tooltip relative to its help icon. */
@@ -166,6 +170,22 @@ export class TnFormListComponent implements TnFormListContext {
   private items = contentChildren(TnFormListItemComponent);
 
   protected isEmpty = computed(() => this.empty() ?? this.items().length === 0);
+
+  /**
+   * The array-level message, queried rather than reached through a template
+   * reference: it renders inside an `@if`, and a reference declared in a block
+   * is scoped to that block.
+   */
+  private errors = viewChild(TnFormErrorsComponent);
+
+  /**
+   * Points the group at its own message. `role="alert"` covers the moment the
+   * error appears; it says nothing to a screen reader that tabs into the list
+   * afterwards, which would otherwise hear the label and never learn the array
+   * is in error. Null while there is no message, so this never names an element
+   * that is not on screen.
+   */
+  protected describedBy = computed(() => this.errors()?.describedBy() ?? null);
 
   /**
    * Accessible name for the Add control, which reads as a bare 'Add' beside
