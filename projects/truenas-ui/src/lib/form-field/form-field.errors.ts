@@ -99,9 +99,15 @@ export const TN_FORM_FIELD_DISMISSIBLE_ERRORS = new InjectionToken<readonly stri
  * sibling left behind would simply render the same message again with its own
  * close button. The opt-in list is what bounds this.
  *
- * `setErrors`, not a delete plus `updateValueAndValidity()`: re-running the
- * validators would recompute the whole map, and a manual error nothing validates
- * is exactly the kind that gets dismissed.
+ * `setErrors`, not a delete plus `updateValueAndValidity()`, while anything is
+ * left behind: re-running the validators would recompute the whole map, and a
+ * manual error nothing validates is exactly the kind that gets dismissed.
+ *
+ * When nothing is left there is no sibling to protect, and `setErrors(null)`
+ * alone would assert VALID on the validators' behalf — a manual error typically
+ * REPLACED the map an invalid control had, so a `minlength` the array still
+ * fails would stay gone until the next value change, and a submit in between
+ * would pass. Re-running them there is what restores the truth.
  *
  * @internal
  */
@@ -113,7 +119,12 @@ export function clearDismissibleErrors(
   for (const key of dismissible) {
     delete remaining[key];
   }
-  control.setErrors(Object.keys(remaining).length ? remaining : null);
+  if (Object.keys(remaining).length) {
+    control.setErrors(remaining);
+  } else {
+    control.setErrors(null);
+    control.updateValueAndValidity();
+  }
 }
 
 /**

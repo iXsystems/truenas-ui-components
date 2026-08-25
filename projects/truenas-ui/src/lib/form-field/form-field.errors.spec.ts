@@ -1,4 +1,5 @@
-import { activeErrorKey, defaultErrorMessage } from './form-field.errors';
+import { FormArray, FormControl, Validators } from '@angular/forms';
+import { activeErrorKey, clearDismissibleErrors, defaultErrorMessage } from './form-field.errors';
 
 describe('activeErrorKey', () => {
   it('returns null when there are no errors', () => {
@@ -55,5 +56,50 @@ describe('defaultErrorMessage', () => {
     expect(defaultErrorMessage('maxlength', true)).toBe('Value is too long');
     expect(defaultErrorMessage('min', null)).toBe('Value is too small');
     expect(defaultErrorMessage('max', undefined)).toBe('Value is too large');
+  });
+});
+
+describe('clearDismissibleErrors', () => {
+  it('drops every listed key', () => {
+    const control = new FormControl('');
+    control.setErrors({ manualValidateError: true, manualValidateErrorMsg: 'Nope' });
+
+    clearDismissibleErrors(control, ['manualValidateError', 'manualValidateErrorMsg']);
+
+    expect(control.errors).toBeNull();
+  });
+
+  it('leaves the keys nobody dismissed, without re-running the validators', () => {
+    // The surviving key is the point: a manual error is one nothing validates,
+    // so recomputing the map here would delete it.
+    const control = new FormControl('');
+    control.setErrors({ manualValidateError: true, bothOrNeither: true });
+
+    clearDismissibleErrors(control, ['manualValidateError']);
+
+    expect(control.errors).toEqual({ bothOrNeither: true });
+  });
+
+  it('re-runs the validators once nothing is left, so a still-failing one comes back', () => {
+    // A manual error REPLACES the map, so `minlength` is gone from it while the
+    // message is on screen. Clearing back to null has to ask the validators
+    // again rather than leave a one-entry array reporting VALID.
+    const entries = new FormArray([new FormControl('10.0.0.1')], Validators.minLength(2));
+    entries.setErrors({ manualValidateError: 'Pool "tank" is offline' });
+
+    clearDismissibleErrors(entries, ['manualValidateError']);
+
+    expect(entries.errors).toEqual({ minlength: { requiredLength: 2, actualLength: 1 } });
+    expect(entries.status).toBe('INVALID');
+  });
+
+  it('reports VALID once nothing fails any more', () => {
+    const control = new FormControl('logo.png', Validators.required);
+    control.setErrors({ manualValidateError: 'Upload failed' });
+
+    clearDismissibleErrors(control, ['manualValidateError']);
+
+    expect(control.errors).toBeNull();
+    expect(control.status).toBe('VALID');
   });
 });

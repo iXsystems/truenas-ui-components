@@ -27,6 +27,7 @@ class HostComponent {
   readonly entries = new FormArray<FormControl<string | null>>([], Validators.minLength(2));
 
   readonly label = signal('Allowed addresses');
+  readonly tooltip = signal('');
   readonly required = signal(false);
   readonly canAdd = signal(true);
   readonly canDelete = signal(true);
@@ -309,6 +310,59 @@ describe('TnFormListComponent', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('.tn-form-errors')).toBeNull();
+    });
+
+    it('describes the group by the message, so tabbing in later still finds it', () => {
+      // role="alert" only covers the moment it appears.
+      host.entries.push(new FormControl(''));
+      host.entries.markAllAsTouched();
+      fixture.detectChanges();
+
+      const group: HTMLElement = fixture.nativeElement.querySelector('[role="group"]');
+      const message: HTMLElement = fixture.nativeElement.querySelector('.tn-form-errors');
+
+      expect(group.getAttribute('aria-describedby')).toBe(message.id);
+      expect(message.id).toBeTruthy();
+    });
+
+    it('describes the group by nothing while no message is on screen', () => {
+      const group: HTMLElement = fixture.nativeElement.querySelector('[role="group"]');
+
+      expect(group.getAttribute('aria-describedby')).toBeNull();
+    });
+
+    it('stops describing the group once the message goes', () => {
+      host.entries.push(new FormControl(''));
+      host.entries.markAllAsTouched();
+      fixture.detectChanges();
+      host.entries.push(new FormControl(''));
+      fixture.detectChanges();
+
+      const group: HTMLElement = fixture.nativeElement.querySelector('[role="group"]');
+
+      expect(group.getAttribute('aria-describedby')).toBeNull();
+    });
+  });
+
+  describe('the help tooltip', () => {
+    it('renders on a list with no label, rather than going with it', () => {
+      host.label.set('');
+      host.tooltip.set('One address per entry');
+      fixture.detectChanges();
+
+      const trigger: HTMLElement = fixture.nativeElement.querySelector('.tn-form-list__tooltip');
+
+      expect(trigger).not.toBeNull();
+      expect(trigger.getAttribute('aria-label')).toBe('One address per entry');
+    });
+
+    it('renders on a list with no label and no Add, which has no header otherwise', () => {
+      host.label.set('');
+      host.canAdd.set(false);
+      host.tooltip.set('One address per entry');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.tn-form-list__tooltip')).not.toBeNull();
     });
   });
 });
