@@ -1,0 +1,26 @@
+<tn-form-list
+  [control]="entries"
+  [label]="label()"
+  [tooltip]="tooltip()"
+  [required]="required()"
+  [canAdd]="canAdd()"
+  [disabled]="disabled()"
+  [empty]="empty()"
+  (add)="addEntry()"
+>
+  @for (entry of entries.controls; track entry; let i = $index) {
+    <tn-form-list-item
+      label="address"
+      [canDelete]="canDelete()"
+      [disabled]="lockFirstEntry() && i === 0 ? true : undefined"
+      (delete)="removeEntry(i)"
+    >
+      <tn-input [formControl]="entry" />
+
+      @if (entryActions()) {
+        <tn-button label="Test connection" (onClick)="testEntry(i)" />
+        <tn-icon-button name="cog" library="mdi" ariaLabel="Configure" (onClick)="testEntry(i)" />
+      }
+    </tn-form-list-item>
+  }
+</tn-form-list>

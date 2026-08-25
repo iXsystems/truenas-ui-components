@@ -1,0 +1,83 @@
+@use '../pipes/label-markup/label-markup' as label-markup;
+
+:host {
+  display: block;
+}
+
+.tn-form-list__header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.tn-form-list__label {
+  color: var(--tn-fg1, #333);
+  font-family: var(--tn-font-family-body, 'Inter'), sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.4;
+
+  @include label-markup.inline-code;
+
+  &.required .required-asterisk {
+    color: var(--tn-error, var(--tn-red, #bd2626));
+    margin-left: 0.25rem;
+  }
+}
+
+// Pushes Add to the trailing edge whether or not there is a label beside it.
+.tn-form-list__add {
+  margin-left: auto;
+}
+
+.tn-form-list__tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--tn-fg2, #6c757d);
+  cursor: help;
+  line-height: 0;
+
+  &:hover,
+  &:focus-visible {
+    // Icon-only, so 3:1 applies.
+    color: var(--tn-primary, #007bff);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tn-primary, #007bff);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+}
+
+.tn-form-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+
+  // The visual half of a disabled list, and the mouse half. It is deliberately
+  // not the whole lock: the remove buttons are disabled through
+  // `TN_FORM_LIST_CONTEXT`, and the fields are projected content, so a consumer
+  // who needs them locked for the keyboard too calls `disable()` on the
+  // `FormArray`. `inert` here would have covered all of it in one line, at the
+  // cost of deleting a still-visible list from the accessibility tree.
+  &--disabled {
+    opacity: var(--tn-disabled-opacity, 0.5);
+    pointer-events: none;
+  }
+}
+
+.tn-form-list__empty {
+  color: var(--tn-fg2, #6c757d);
+  font-size: 0.875rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px dashed var(--tn-lines, var(--tn-fg4, #d0d5dd));
+  border-radius: var(--tn-radius, 4px);
+}

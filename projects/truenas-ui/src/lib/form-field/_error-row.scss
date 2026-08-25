@@ -1,0 +1,29 @@
+// The layout a validation message and its optional close button share between
+// `tn-form-field`'s subscript and the standalone `tn-form-errors`.
+//
+// One copy rather than two: the two hosts render the same row — a message that
+// fills the line, a button beside it — and the reasoning below is what a second
+// copy would have to restate to stay correct.
+
+// The row. With no button this lays out exactly as the message alone did: one
+// flex child taking the full width.
+@mixin row {
+  display: flex;
+  // Centred, not top-aligned: the button's 32px box — comfortably past the 24px
+  // WCAG 2.5.8 minimum, which a smaller icon button would miss — is taller than
+  // the message, and top-aligning would drop its icon below the text.
+  align-items: center;
+  gap: 0.25rem;
+}
+
+// The message. `min-width: 0` so a long unbroken message shrinks instead of
+// pushing the button off the row.
+@mixin message {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// The close button.
+@mixin dismiss {
+  flex: none;
+}

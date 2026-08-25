@@ -12,6 +12,7 @@ import type { TnSelectOption } from '../lib/select/select.component';
 import { TnSelectComponent } from '../lib/select/select.component';
 
 tnIconMarker('help-circle', 'mdi');
+tnIconMarker('close', 'mdi');
 
 const harnessDoc = loadHarnessDoc('form-field');
 
@@ -90,6 +91,22 @@ When used with Angular reactive forms, the form field automatically:
     errorMessages: {
       control: 'object',
       description: 'Per-field overrides for validation messages, keyed by error key. Values are a string or a function receiving the error detail. Takes precedence over the app-wide TN_FORM_FIELD_ERRORS resolver and the built-in defaults.',
+    },
+    dismissibleErrors: {
+      control: 'object',
+      description: 'Error keys whose message renders with a close button, and which dismissing deletes — failures the user cannot edit their way out of, such as a server-side rejection. Only the error actually being shown gets the button. Unset falls back to the app-wide TN_FORM_FIELD_DISMISSIBLE_ERRORS default; [] opts out.',
+    },
+    dismissAriaLabel: {
+      control: 'text',
+      description: 'Accessible name for the close button. The library ships no localized strings, so an app with an i18n layer passes an already-translated one.',
+    },
+    dismissTooltip: {
+      control: 'text',
+      description: 'Hover hint for the close button. Defaults to dismissAriaLabel, so one string covers both.',
+    },
+    dismiss: {
+      action: 'dismiss',
+      description: 'Emits the error key the user dismissed, after the field has already removed every key it lists in dismissibleErrors from the control. Handle it for what happens next — retrying the request, telling the server.',
     },
   },
 };
@@ -305,6 +322,68 @@ export const CustomErrorMessages: Story = {
     `,
     moduleMetadata: {
       imports: [TnInputComponent, ReactiveFormsModule, CommonModule],
+    },
+  }),
+};
+
+export const DismissibleServerError: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A server-side rejection is not something the user can retype their way out ' +
+          'of, so without a way to clear it the message sits under the field forever. ' +
+          'List the key in `dismissibleErrors` and the message gets a close button.\n\n' +
+          'Dismissing drops that key from the control — listing it is what grants that — ' +
+          'and leaves any other errors in place. `dismiss` reports what went. Focus ' +
+          'returns to the control afterwards, since dismissing a server error means ' +
+          '"let me try again".\n\n' +
+          'Leave the input unset to take the app-wide `TN_FORM_FIELD_DISMISSIBLE_ERRORS` ' +
+          'default instead of naming keys on every field; pass `[]` to opt one out.',
+      },
+    },
+  },
+  args: {
+    label: 'Pool',
+    testId: 'pool-field',
+    dismissibleErrors: ['manualValidateError'],
+  },
+  render: (args) => ({
+    props: {
+      ...args,
+      poolControl: (() => {
+        const control = new FormControl('tank');
+        // What an error handler leaves behind after the API rejects the request.
+        control.setErrors({ manualValidateError: 'Pool "tank" is offline — bring it up and retry' });
+        control.markAsTouched();
+        return control;
+      })(),
+      reject(this: { poolControl: FormControl }) {
+        this.poolControl.setErrors({
+          manualValidateError: 'Pool "tank" is offline — bring it up and retry',
+        });
+        this.poolControl.markAsTouched();
+      },
+    },
+    template: `
+      <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 400px;">
+        <tn-form-field
+          [label]="label"
+          [testId]="testId"
+          [dismissibleErrors]="dismissibleErrors">
+          <tn-input [formControl]="poolControl" />
+        </tn-form-field>
+
+        <button
+          type="button"
+          (click)="reject()"
+          style="width: fit-content; padding: 0.5rem 1rem; background: var(--tn-primary); color: white; border: none; border-radius: 0.25rem; cursor: pointer;">
+          Reject again
+        </button>
+      </div>
+    `,
+    moduleMetadata: {
+      imports: [TnInputComponent, ReactiveFormsModule],
     },
   }),
 };

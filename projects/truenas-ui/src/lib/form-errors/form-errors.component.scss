@@ -1,0 +1,21 @@
+@use '../form-field/error-row';
+
+// A plain row so a dismissible error can carry its button beside the message.
+.tn-form-errors-row {
+  @include error-row.row;
+}
+
+// Matches `.tn-form-field-error`, so a group message and the field messages
+// around it are the same text at the same weight.
+.tn-form-errors {
+  @include error-row.message;
+
+  color: var(--tn-error, var(--tn-red, #bd2626));
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.tn-form-errors-dismiss {
+  @include error-row.dismiss;
+}

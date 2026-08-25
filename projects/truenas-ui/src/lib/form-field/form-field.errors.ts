@@ -1,4 +1,4 @@
-import { InjectionToken } from '@angular/core';
+import { InjectionToken, isDevMode } from '@angular/core';
 import type { AbstractControl, ValidationErrors } from '@angular/forms';
 
 /**
@@ -68,6 +68,66 @@ export const TN_FORM_FIELD_ERRORS = new InjectionToken<TnFormFieldErrorResolver>
 );
 
 /**
+ * App-wide default for which error keys carry a dismiss button, for apps whose
+ * server-side failures always land under the same keys. A field's
+ * `dismissibleErrors` input overrides it — including with `[]`, to opt one field
+ * out of the default.
+ *
+ * Listing a key here grants permission to delete it: dismissing removes it from
+ * the control's errors, since a message the user can close but that will not go
+ * away is worse than no button at all.
+ *
+ * @example
+ * ```ts
+ * providers: [
+ *   {
+ *     provide: TN_FORM_FIELD_DISMISSIBLE_ERRORS,
+ *     useValue: ['manualValidateError', 'manualValidateErrorMsg'],
+ *   },
+ * ];
+ * ```
+ */
+export const TN_FORM_FIELD_DISMISSIBLE_ERRORS = new InjectionToken<readonly string[]>(
+  'TN_FORM_FIELD_DISMISSIBLE_ERRORS'
+);
+
+/**
+ * Removes every dismissible key a control currently carries, leaving the rest.
+ *
+ * All of them, not just the one behind the message: an app may spread a single
+ * failure across sibling keys — a flag, its message, a legacy alias — and a
+ * sibling left behind would simply render the same message again with its own
+ * close button. The opt-in list is what bounds this.
+ *
+ * `setErrors`, not a delete plus `updateValueAndValidity()`, while anything is
+ * left behind: re-running the validators would recompute the whole map, and a
+ * manual error nothing validates is exactly the kind that gets dismissed.
+ *
+ * When nothing is left there is no sibling to protect, and `setErrors(null)`
+ * alone would assert VALID on the validators' behalf — a manual error typically
+ * REPLACED the map an invalid control had, so a `minlength` the array still
+ * fails would stay gone until the next value change, and a submit in between
+ * would pass. Re-running them there is what restores the truth.
+ *
+ * @internal
+ */
+export function clearDismissibleErrors(
+  control: AbstractControl,
+  dismissible: readonly string[]
+): void {
+  const remaining = { ...control.errors };
+  for (const key of dismissible) {
+    delete remaining[key];
+  }
+  if (Object.keys(remaining).length) {
+    control.setErrors(remaining);
+  } else {
+    control.setErrors(null);
+    control.updateValueAndValidity();
+  }
+}
+
+/**
  * Built-in fallback messages for Angular's standard validators. Used only when
  * neither a per-field `errorMessages` entry nor a {@link TN_FORM_FIELD_ERRORS}
  * resolver supplies a message. English-only by design — override the others for
@@ -134,4 +194,99 @@ export function activeErrorKey(errors: ValidationErrors): string | null {
     }
   }
   return Object.keys(errors)[0] ?? null;
+}
+
+/**
+ * Runs a caller-supplied message provider, swallowing any throw so a buggy
+ * override or resolver cannot break change detection. Logs in dev mode and
+ * returns null so resolution falls through to the next layer.
+ *
+ * A blank message counts as "no answer" and falls through too, so a
+ * translation service that returns `''` for a missing key does not hide the
+ * error behind an empty subscript.
+ *
+ * @internal
+ */
+function runGuarded(
+  provider: () => string | null | undefined,
+  selector: string,
+  context: string
+): string | null {
+  try {
+    const message = provider();
+    return message != null && message.trim() !== '' ? message : null;
+  } catch (error) {
+    if (isDevMode()) {
+      console.error(
+        `[${selector}] ${context} threw while resolving a validation message`,
+        error
+      );
+    }
+    return null;
+  }
+}
+
+/** What {@link resolveErrorMessage} needs to answer for one control. */
+export interface ResolveErrorMessageOptions {
+  /** The control's current errors — the caller has already checked it has some. */
+  errors: ValidationErrors;
+  /** Per-instance overrides, keyed by error key. Consulted first. */
+  errorMessages?: TnFormFieldErrorMessages;
+  /** The app-wide resolver from {@link TN_FORM_FIELD_ERRORS}, if one is provided. */
+  resolver?: TnFormFieldErrorResolver | null;
+  /** The failing control, passed through to the resolver. */
+  control?: AbstractControl | null;
+  /**
+   * Who is asking, used only to attribute the dev-mode `console.error` this
+   * logs when a caller-supplied message provider throws. Optional: the library's
+   * own components pass their selector so the log names the element on screen,
+   * and an outside caller has nothing useful to put here.
+   */
+  selector?: string;
+}
+
+/**
+ * Resolves a user-facing message for a control's active error, in the order
+ * `tn-form-field` has always used:
+ *
+ * 1. a per-instance `errorMessages` override (string or factory),
+ * 2. the app-wide {@link TN_FORM_FIELD_ERRORS} resolver,
+ * 3. {@link defaultErrorMessage} for Angular's standard validators,
+ * 4. the error value itself, when a custom validator returned its own string,
+ * 5. the raw error key.
+ *
+ * Shared with `tn-form-errors` so a group-level message reads exactly like the
+ * field-level one it sits beside.
+ */
+export function resolveErrorMessage(options: ResolveErrorMessageOptions): string {
+  const { errors, errorMessages, resolver, control, selector = 'resolveErrorMessage' } = options;
+
+  const key = activeErrorKey(errors);
+  if (!key) {return 'Invalid input';}
+
+  const value = errors[key];
+
+  const override = errorMessages?.[key];
+  if (override != null) {
+    const message = runGuarded(
+      () => (typeof override === 'function' ? override(value) : override),
+      selector,
+      `errorMessages["${key}"]`
+    );
+    if (message != null) {return message;}
+  }
+
+  const resolved = runGuarded(
+    () => resolver?.(key, value, control ?? null),
+    selector,
+    'TN_FORM_FIELD_ERRORS resolver'
+  );
+  if (resolved != null) {return resolved;}
+
+  const builtIn = defaultErrorMessage(key, value);
+  if (builtIn != null) {return builtIn;}
+
+  if (typeof value === 'string') {return value;}
+
+  return key;
 }

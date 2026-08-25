@@ -92,6 +92,7 @@ const KEEPS_PRIMARY: Readonly<Record<string, { count: number; why: string }>> = 
   },
   'form-field/form-field.component.scss': { count: 1, why: 'the icon-only help button' },
   'form-section/form-section.component.scss': { count: 1, why: 'the icon-only help button' },
+  'form-list/form-list.component.scss': { count: 1, why: 'the icon-only help button' },
   'menu/menu.component.scss': {
     count: 1,
     why: 'the selected row, which is text but paints on --tn-alt-bg2, not --tn-bg1/--tn-bg2',
