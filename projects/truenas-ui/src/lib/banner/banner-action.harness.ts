@@ -44,10 +44,14 @@ export class TnBannerActionHarness extends ComponentHarness {
    * @param options Options for filtering which action instances are considered a match.
    * @returns A `HarnessPredicate` configured with the given options.
    *
+   * Scope it to the action slot when composing a locator by hand — unscoped, it
+   * matches any `[tnBannerAction]` element on the page, which is why
+   * `TnBannerHarness` always passes an `ancestor`.
+   *
    * @example
    * ```typescript
    * const retry = await loader.getHarness(
-   *   TnBannerActionHarness.with({ label: 'Retry' })
+   *   TnBannerActionHarness.with({ label: 'Retry', ancestor: '.tn-banner__action' })
    * );
    * ```
    */
