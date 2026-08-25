@@ -38,18 +38,35 @@
    a foreground and its own background together, from the same palette, so it
    stays self-consistent on all nine.
 
-   ONE DELETION IS NOT COVERED BY THAT RULE AND IS DELIBERATE. The form-field
-   block set `background-color` and `color` together, which is the retention
-   criterion above, and two of its three selectors were docs chrome
-   (`.sbdocs-wrapper select`, `.sbdocs-wrapper textarea`). The third,
-   `input:not([role="switch"])`, was scoped to nothing: this file is linked
-   from `preview-head.html`, so it reached every native `input` inside every
-   RENDERED STORY, overriding the component's own SCSS with `!important`.
-   Removing it is the only change here that touches the story canvas rather
-   than the chrome, and what it restores is the component's real styling.
-   Docs-page controls keep their colours from the theme instead —
-   `theme.input.color` and `theme.input.background`, which is `inputTextColor`
-   and `inputBg` in `truenasTheme.js`, #dedede on #1e1e1e at 12.39:1.
+   FOUR REMOVALS TOUCH THE STORY CANVAS AND NOT ONLY THE CHROME, and all four
+   are the same shape: a bare-tag selector in a file `preview-head.html` links
+   into the PREVIEW IFRAME, so it reached every RENDERED STORY as well as the
+   docs page it was written for. Each is deliberate, and what they restore is
+   the component's own styling on its own canvas.
+
+   - The form-field rule set `background-color` and `color` together, which is
+     the retention criterion above, and two of its three selectors were docs
+     chrome (`.sbdocs-wrapper select`, `.sbdocs-wrapper textarea`). The third,
+     `input:not([role="switch"])`, was scoped to nothing and overrode every
+     component's own SCSS with `!important`. Docs-page controls keep their
+     colours from the theme instead — `theme.input.color` and
+     `theme.input.background`, which is `inputTextColor` and `inputBg` in
+     `truenasTheme.js`, #dedede on #1e1e1e at 12.39:1.
+   - `p, li, td { color: var(--tn-fg2) !important }`, and the
+     `color: var(--tn-fg1) !important` dropped from the `h1`–`h4` rule below.
+     Both are text colour from a switcher token, which is exactly what the
+     rule above prohibits, and both landed inside stories too.
+   - `thead, th { background-color: var(--tn-topbar); color:
+     var(--tn-topbar-txt) !important }`. This is the one with a consequence
+     worth naming rather than just a justification: it was the only ambient
+     `th` fill in `src/styles/`, and `month-view.component.scss` leans on it —
+     "The header's fill comes from the ambient table styling, so round the
+     outer corners of the row rather than painting a background of our own."
+     So the Calendar and Date Range Picker stories now render their weekday
+     band unfilled. The component never painted its own header, so a real
+     application always looked like that; what this rule did was make
+     Storybook look better than the product. Recorded here and proposed as a
+     follow-up on the calendar, rather than fixed by putting the crutch back.
 
    WHY THE OVERRIDES AT THE BOTTOM ARE A CLOSED LIST OF TWO
    --------------------------------------------------------
@@ -167,8 +184,9 @@ html, body {
 
 /* ================================
    TYPEFACE
-   Predates #293 and is left alone, but not left unexplained, because the
-   obvious reading of it is wrong: this does NOT put the header face on docs
+   Its `font-family` predates #293 and is left alone (its `color` is one of the
+   four removals above), but not left unexplained, because the obvious reading
+   of what remains is wrong: this does NOT put the header face on docs
    headings. addon-docs styles the same elements through `toGlobalSelector` at
    0,1,0 and spreads a reset setting `fontFamily: theme.typography.fonts.base`,
    so a docs heading renders in `fontBase` and this 0,0,1 rule loses. Where it
