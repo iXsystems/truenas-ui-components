@@ -76,13 +76,13 @@
               it is how the user escapes that state, but shows the neutral
               `mat-unfold_more` the table header already uses for unsorted columns.
 
-              The label names the action, so it is "Sort ascending" both when unsorted
+              The label names the action, so it is `sortAscending` both when unsorted
               and when descending — `toggleSortDirection()` starts at ascending.
             -->
             <button
               type="button"
               class="tn-table__cards-sort-dir"
-              [attr.aria-label]="sortDirection() === 'asc' ? 'Sort descending' : 'Sort ascending'"
+              [attr.aria-label]="sortDirection() === 'asc' ? labels().sortDescending : labels().sortAscending"
               [attr.data-sort-direction]="sortDirection()"
               (click)="toggleSortDirection()">
               @if (sortDirection() === 'asc') {
@@ -427,7 +427,7 @@
                     class="tn-table__expand-button"
                     [attr.aria-expanded]="isRowExpanded(row)"
                     [attr.aria-controls]="isRowExpanded(row) ? detailPanelId(rowIdx) : null"
-                    [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
+                    [attr.aria-label]="isRowExpanded(row) ? labels().collapseRow : labels().expandRow"
                     (click)="toggleRowExpansion(row)">
                     <tn-icon
                       class="tn-table__expand-icon"

@@ -11,7 +11,6 @@ import {
   inject,
   input,
   isDevMode,
-  isSignal,
   output,
   signal,
   untracked,
@@ -25,6 +24,7 @@ import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 /**
  * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
@@ -198,16 +198,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    */
   protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
 
-  private readonly providedLabels = inject(TN_AUTOCOMPLETE_LABELS);
-
-  /**
-   * Normalize the injected token into a Signal so consumers can supply either a
-   * plain object or a reactive signal (e.g. derived from a TranslateService's
-   * onLangChange) and the autocomplete re-renders when labels change.
-   */
-  private readonly defaultLabels: Signal<TnAutocompleteLabels> = isSignal(this.providedLabels)
-    ? this.providedLabels
-    : signal(this.providedLabels).asReadonly();
+  private readonly defaultLabels = injectTnLabels(TN_AUTOCOMPLETE_LABELS);
 
   /** Resolved labels: an explicit input takes precedence over the DI default. */
   protected readonly resolvedPlaceholder = computed(

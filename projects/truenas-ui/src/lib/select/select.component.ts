@@ -1,7 +1,7 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, forwardRef, InjectionToken, inject, input, isSignal, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, forwardRef, InjectionToken, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
 import type { ElementRef, OnDestroy, Signal, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -9,6 +9,7 @@ import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 export interface TnSelectOption<T = unknown> {
   value: T;
@@ -113,16 +114,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
 
-  private readonly providedLabels = inject(TN_SELECT_LABELS);
-
-  /**
-   * Normalize the injected token into a Signal so consumers can supply either a
-   * plain object or a reactive signal (e.g. derived from a TranslateService's
-   * onLangChange) and the select re-renders when labels change.
-   */
-  private readonly defaultLabels: Signal<TnSelectLabels> = isSignal(this.providedLabels)
-    ? this.providedLabels
-    : signal(this.providedLabels).asReadonly();
+  private readonly defaultLabels = injectTnLabels(TN_SELECT_LABELS);
 
   /** Resolved labels: an explicit input takes precedence over the DI default. */
   protected readonly resolvedPlaceholder = computed(

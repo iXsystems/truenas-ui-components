@@ -14,7 +14,6 @@ import {
   Injector,
   InjectionToken,
   input,
-  isSignal,
   model,
   output,
   signal,
@@ -31,6 +30,7 @@ import {
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
 import { TnTestIdDirective } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 // NOTE: the sort/expand icon names (mat-arrow_upward, mat-keyboard_arrow_down,
 // etc.) are written as string literals directly in the template's `[name]`
@@ -132,8 +132,19 @@ export interface TnTableLabels {
   moreFields: string;
   /** Card-mode button that opens a row's detail panel. */
   details: string;
-  /** Visually-hidden name for the row expand control. */
+  /**
+   * Card-mode direction toggle while unsorted or sorted descending — the label names the
+   * ACTION, and `toggleSortDirection()` starts at ascending from both of those states.
+   */
+  sortAscending: string;
+  /** Card-mode direction toggle while sorted ascending. */
+  sortDescending: string;
+  /** Visually-hidden name for the row-expand COLUMN's header cell, not the per-row control. */
   expand: string;
+  /** Per-row expand control while its detail row is collapsed. */
+  expandRow: string;
+  /** Per-row expand control while its detail row is open. */
+  collapseRow: string;
   /** Visually-hidden name for the row actions column. */
   actions: string;
 }
@@ -144,7 +155,11 @@ export const TN_TABLE_DEFAULT_LABELS: TnTableLabels = {
   unsorted: 'Unsorted',
   moreFields: 'More fields',
   details: 'Details',
+  sortAscending: 'Sort ascending',
+  sortDescending: 'Sort descending',
   expand: 'Expand',
+  expandRow: 'Expand row',
+  collapseRow: 'Collapse row',
   actions: 'Actions',
 };
 
@@ -195,15 +210,7 @@ export const TN_TABLE_LABELS = new InjectionToken<TnTableLabels | Signal<TnTable
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
-  private readonly providedLabels = inject(TN_TABLE_LABELS);
-
-  /**
-   * Normalize the injected token into a Signal so consumers can supply either a plain object or
-   * a reactive signal (e.g. derived from a TranslateService's onLangChange).
-   */
-  protected readonly labels: Signal<TnTableLabels> = isSignal(this.providedLabels)
-    ? this.providedLabels
-    : signal(this.providedLabels).asReadonly();
+  protected readonly labels = injectTnLabels(TN_TABLE_LABELS);
 
   private destroyRef = inject(DestroyRef);
   private elementRef = inject(ElementRef<HTMLElement>);

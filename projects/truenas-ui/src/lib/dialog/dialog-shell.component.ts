@@ -1,16 +1,21 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, InjectionToken, computed, effect, input, isSignal, signal, inject } from '@angular/core';
+import { Component, ElementRef, InjectionToken, computed, effect, input, signal, inject } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 /**
  * Chrome copy `tn-dialog-shell` renders itself. These were baked into the template as English
  * literals, which a consumer could not translate at all — there was no input to bind. Provide
- * {@link TN_DIALOG_LABELS} at the app root to wire them to an i18n service.
+ * {@link TN_DIALOG_CHROME_LABELS} at the app root to wire them to an i18n service.
+ *
+ * "Chrome" rather than plain `TnDialogLabels` to keep this bundle a clear letter apart from
+ * {@link TN_DIALOG_SHELL_DEFAULT_LABEL}, which is a different thing entirely — the fallback
+ * accessible name for the dialog surface itself, not copy the header renders.
  */
-export interface TnDialogLabels {
+export interface TnDialogChromeLabels {
   /** Accessible name for the header close (X) button. */
   close: string;
   /** Accessible name for the fullscreen toggle while the dialog is windowed. */
@@ -19,8 +24,8 @@ export interface TnDialogLabels {
   exitFullscreen: string;
 }
 
-/** English defaults used when no `TN_DIALOG_LABELS` provider is registered. */
-export const TN_DIALOG_DEFAULT_LABELS: TnDialogLabels = {
+/** English defaults used when no `TN_DIALOG_CHROME_LABELS` provider is registered. */
+export const TN_DIALOG_DEFAULT_CHROME_LABELS: TnDialogChromeLabels = {
   close: 'Close dialog',
   enterFullscreen: 'Enter fullscreen',
   exitFullscreen: 'Exit fullscreen',
@@ -28,12 +33,12 @@ export const TN_DIALOG_DEFAULT_LABELS: TnDialogLabels = {
 
 /**
  * DI token for app-wide dialog chrome labels. Provide either a static object or a
- * `Signal<TnDialogLabels>` — the latter lets every dialog react to language changes when the
- * consumer wires it up to an i18n service.
+ * `Signal<TnDialogChromeLabels>` — the latter lets every dialog react to language changes when
+ * the consumer wires it up to an i18n service.
  */
-export const TN_DIALOG_LABELS = new InjectionToken<TnDialogLabels | Signal<TnDialogLabels>>(
-  'TN_DIALOG_LABELS',
-  { providedIn: 'root', factory: () => TN_DIALOG_DEFAULT_LABELS },
+export const TN_DIALOG_CHROME_LABELS = new InjectionToken<TnDialogChromeLabels | Signal<TnDialogChromeLabels>>(
+  'TN_DIALOG_CHROME_LABELS',
+  { providedIn: 'root', factory: () => TN_DIALOG_DEFAULT_CHROME_LABELS },
 );
 
 let nextUniqueId = 0;
@@ -86,15 +91,7 @@ function firstNonBlank(...values: (string | null | undefined)[]): string | null 
   }
 })
 export class TnDialogShellComponent implements OnInit {
-  private readonly providedLabels = inject(TN_DIALOG_LABELS);
-
-  /**
-   * Normalize the injected token into a Signal so consumers can supply either a plain object or
-   * a reactive signal (e.g. derived from a TranslateService's onLangChange).
-   */
-  protected readonly labels: Signal<TnDialogLabels> = isSignal(this.providedLabels)
-    ? this.providedLabels
-    : signal(this.providedLabels).asReadonly();
+  protected readonly labels = injectTnLabels(TN_DIALOG_CHROME_LABELS);
 
   /** Accessible name for the fullscreen toggle, following its current state. */
   protected readonly fullscreenLabel = computed(
