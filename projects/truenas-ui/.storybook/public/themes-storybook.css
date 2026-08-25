@@ -38,6 +38,19 @@
    a foreground and its own background together, from the same palette, so it
    stays self-consistent on all nine.
 
+   ONE DELETION IS NOT COVERED BY THAT RULE AND IS DELIBERATE. The form-field
+   block set `background-color` and `color` together, which is the retention
+   criterion above, and two of its three selectors were docs chrome
+   (`.sbdocs-wrapper select`, `.sbdocs-wrapper textarea`). The third,
+   `input:not([role="switch"])`, was scoped to nothing: this file is linked
+   from `preview-head.html`, so it reached every native `input` inside every
+   RENDERED STORY, overriding the component's own SCSS with `!important`.
+   Removing it is the only change here that touches the story canvas rather
+   than the chrome, and what it restores is the component's real styling.
+   Docs-page controls keep their colours from the theme instead —
+   `theme.input.color` and `theme.input.background`, which is `inputTextColor`
+   and `inputBg` in `truenasTheme.js`, #dedede on #1e1e1e at 12.39:1.
+
    WHY THE OVERRIDE AT THE BOTTOM IS A CLOSED LIST OF ONE
    ------------------------------------------------------
    `convert()` in `storybook/theming` builds `theme.color` from
@@ -68,13 +81,20 @@
      transparentize(.6, text)  ~#717171  3.02:1  argstable section     no (1,4)
                                                  header, Typeset label
 
-   (1) inside `.docblock-argstable`, which addon-docs marks `sb-unstyled`, or
-       styled by emotion with a generated class. Either way there is no hook a
-       hand-written selector can hold that a Storybook patch release will not
-       move silently — which is a worse failure than the one it would fix. The
-       argstable's object control is the one of these that renders TODAY, on
-       the six pages declaring `control: 'object'`; it is the follow-up this
-       change deliberately does not reach.
+   (1) inside `.docblock-argstable`, styled by emotion with a generated class.
+       These are DEFERRED, not unreachable, and the difference matters because
+       a rule this change deletes — `.docblock-argstable-body span` — was
+       exactly such a hook: an addon-docs class on the `tbody`, holding at
+       0,1,1 without `!important`. (`sb-unstyled` is orthogonal. It keeps
+       addon-docs' own typography off a RENDERED STORY; it does not stop a
+       hand-written selector matching inside the argstable, which is why that
+       rule worked.) What is missing is not a hook but a value: nothing here
+       writes `color:` with a literal hex on one, the way the override at the
+       bottom does for `h6`/`blockquote`, and the markup under the object
+       control is emotion-generated rather than a stable class. The argstable's
+       object control is the one of these that renders TODAY, on the six pages
+       declaring `control: 'object'`; it is the follow-up this change
+       deliberately does not reach.
    (2) reachable, but nothing here emits `span.frame` markup — a dead selector
        would be worse than a documented omission.
    (3) `red2` is #9a050f in BOTH syntax palettes — the dark one retuned every
@@ -93,9 +113,10 @@
    ONE SURFACE BELONGS IN THAT TABLE FROM THE OTHER SIDE. `color.darker`
    (#454C54) is a constant too, and addon-docs fills every even `tr` of a docs
    markdown table with it. Body text reads 6.46:1 there, but `colorSecondary`
-   reads 2.72:1 — so a LINK in a table row would be below AA. No cell in
-   `theming.mdx` or `icon-system.mdx` holds one today; it is here rather than
-   dismissed, by footnote (4)'s standard.
+   reads 2.72:1 — so a LINK in a table row would be below AA. Three MDX files
+   here ship markdown tables — `theming.mdx`, `icon-system.mdx` and
+   `design-system-proposal-v2.mdx` — and no cell in any of them holds a link
+   today; it is here rather than dismissed, by footnote (4)'s standard.
 
    `docs-theme-contrast.spec.ts` measures the two theme keys Storybook draws as
    docs text and the literal colour below, and fails if a rule outside the

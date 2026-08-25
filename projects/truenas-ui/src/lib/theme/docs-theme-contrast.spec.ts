@@ -42,9 +42,20 @@ import { AA_MINIMUM, contrastRatio, formatRatio } from '../a11y/contrast-testing
  *
  * It measures the two theme keys Storybook draws as docs TEXT, and not every
  * colour `truenasTheme.js` declares. `barTextColor`, `barSelectedColor`,
- * `inputTextColor`, `colorPrimary`, `textInverseColor` and the rest of the
- * `truenasColors` bag are outside it: those paint the MANAGER, which is
- * `manager.ts`'s side of the same object and not what #293 was about.
+ * `colorPrimary`, `textInverseColor` and the rest of the `truenasColors` bag
+ * are outside it: those paint the MANAGER, which is `manager.ts`'s side of the
+ * same object and not what #293 was about.
+ *
+ * `inputTextColor` and `inputBg` are outside it for a different reason, and
+ * calling them manager-only stopped being true the moment this change wired
+ * `parameters.docs.theme`. `convert()` maps them to `theme.input.color` and
+ * `theme.input.background`, which `@storybook/components`' `Form.Input`,
+ * `Select` and `Textarea` read — and those are what the docs argstable renders
+ * every `control:` with. Before this change those controls took `themes.light`'s
+ * input colours; after it they take these two. They are a self-consistent PAIR
+ * out of one palette — #dedede on #1e1e1e, 12.39:1 — so they are recorded here
+ * rather than measured as a text role against the surfaces above: neither is
+ * drawn on a surface the other does not supply.
  *
  * The roles Storybook paints from constants no theme can reach are enumerated
  * in `themes-storybook.css`'s header — one has a rule, the rest are recorded
@@ -423,8 +434,12 @@ describe('Storybook docs-page theming (#293)', () => {
     );
 
     // The override is most of the reason this file still has rules at all after
-    // the theme was wired. If it were ever deleted, the case above would measure
-    // nothing and pass — a suite that has stopped checking, reported as green.
+    // the theme was wired. If it were ever deleted, `literalCases` would be
+    // empty — and `it.each([])` throws rather than passing, so the suite would
+    // go red either way. What this case adds is WHICH claim broke: an
+    // unattributed `.each` called with an empty Array of table data reads as a
+    // fault in the spec, and this reads as the stylesheet having stopped
+    // shipping the thing the case above measures.
     it('the documented override is still here to measure', () => {
       expect(literals.length).toBeGreaterThan(0);
     });
