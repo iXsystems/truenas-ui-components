@@ -54,9 +54,36 @@ import { AA_MINIMUM, contrastRatio, formatRatio } from '../a11y/contrast-testing
 const STORYBOOK_DIR = join(__dirname, '../../../.storybook');
 const STYLES_DIR = join(__dirname, '../../styles');
 
-const themeSource = readFileSync(join(STORYBOOK_DIR, 'truenasTheme.js'), 'utf8');
-const previewSource = readFileSync(join(STORYBOOK_DIR, 'preview.ts'), 'utf8');
-const managerSource = readFileSync(join(STORYBOOK_DIR, 'manager.ts'), 'utf8');
+/**
+ * Comments out of the three sources this spec reads as text, because to a regex
+ * a commented-out line is a live one — and both directions of that are ordinary
+ * edits rather than hypotheticals.
+ *
+ * - Comment the `docs:` block out while debugging and the wiring cases below
+ *   stay green while every docs page falls back to `ensure(undefined)`, which
+ *   is exactly the #293 regression those cases exist to catch.
+ * - Leave a superseded value above the live one and `themeValue`'s `.exec()`
+ *   returns the FIRST match, so the suite measures a colour that is not
+ *   shipped. `truenasTheme.js` already carries old hexes in trailing comments
+ *   on its `colorPrimary`/`colorSecondary` lines, so this is the file's
+ *   existing habit.
+ *
+ * Stripped once at read time, the way `cssRules` and `maxBraceDepth` already
+ * strip the stylesheet. A line comment is only recognised where the `//` is not
+ * preceded by a `:`, which is what leaves `brandUrl: 'https://truenas.com'`
+ * intact. The stylesheet is NOT put through this — `//` is not a CSS comment,
+ * and its two readers strip block comments separately for the reason given on
+ * `maxBraceDepth`.
+ */
+function stripJsComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+}
+
+const themeSource = stripJsComments(readFileSync(join(STORYBOOK_DIR, 'truenasTheme.js'), 'utf8'));
+const previewSource = stripJsComments(readFileSync(join(STORYBOOK_DIR, 'preview.ts'), 'utf8'));
+const managerSource = stripJsComments(readFileSync(join(STORYBOOK_DIR, 'manager.ts'), 'utf8'));
 const storybookCss = readFileSync(join(STYLES_DIR, 'themes-storybook.css'), 'utf8');
 
 /**
