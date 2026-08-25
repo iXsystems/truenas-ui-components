@@ -1,4 +1,6 @@
-import { formatSize, parseSize } from './size-conversion';
+import {
+  canonicalizeSize, formatSize, formatSizeExact, formatSizeForEditing, parseSize,
+} from './size-conversion';
 
 describe('size-conversion', () => {
   describe('formatSize', () => {
@@ -80,6 +82,89 @@ describe('size-conversion', () => {
     it('round-trips a formatted value back to (approximately) the same bytes', () => {
       const bytes = 3 * 1024 ** 3;
       expect(parseSize(formatSize(bytes))).toBe(bytes);
+    });
+  });
+
+  describe('formatSizeExact', () => {
+    it('uses the natural unit when it states the value exactly', () => {
+      expect(formatSizeExact(2 * 1024 ** 3)).toBe('2 GiB');
+      expect(formatSizeExact(2 * 1024 ** 2)).toBe('2 MiB');
+      expect(formatSizeExact(1536)).toBe('1.5 KiB');
+      expect(formatSizeExact(1023)).toBe('1023 B');
+      expect(formatSizeExact(0)).toBe('0 B');
+    });
+
+    it('drops one unit to stay exact where the natural one rounds', () => {
+      // 1 572 864 000 is '1.46 GiB' to two decimals, which is ~5 MB short of it.
+      expect(formatSizeExact(1500 * 1024 ** 2)).toBe('1500 MiB');
+    });
+
+    it('goes no further than one unit down, so nothing collapses to raw bytes', () => {
+      // Exact in neither GiB nor MiB. It IS exact in bytes, and '1567663063 B'
+      // is precisely the rendering this must not produce.
+      expect(formatSizeExact(1567663063)).toBeNull();
+    });
+
+    it('follows the standard it is given', () => {
+      expect(formatSizeExact(1500 * 1000 ** 2, 'si')).toBe('1.5 GB');
+      expect(formatSizeExact(2 * 1000 ** 3, 'si')).toBe('2 GB');
+    });
+
+    it('narrows what counts as exact as `round` drops', () => {
+      expect(formatSizeExact(1536, 'iec', 2)).toBe('1.5 KiB');
+      expect(formatSizeExact(1536, 'iec', 0)).toBe('1536 B');
+    });
+
+    it('declines a value that is not a whole, safe byte count', () => {
+      expect(formatSizeExact(0.5)).toBeNull();
+      expect(formatSizeExact(-1024)).toBeNull();
+      expect(formatSizeExact(1e21)).toBeNull();
+    });
+  });
+
+  describe('formatSizeForEditing', () => {
+    it('prefers the exact rendering', () => {
+      expect(formatSizeForEditing(1500 * 1024 ** 2)).toBe('1500 MiB');
+    });
+
+    it('falls back to the rounded one where no unit is exact', () => {
+      expect(formatSizeForEditing(1567663063)).toBe('1.46 GiB');
+    });
+
+    it('renders blank for the values that have no size', () => {
+      expect(formatSizeForEditing(null)).toBe('');
+      expect(formatSizeForEditing(undefined)).toBe('');
+      expect(formatSizeForEditing('')).toBe('');
+      expect(formatSizeForEditing('abc')).toBe('');
+    });
+  });
+
+  describe('canonicalizeSize', () => {
+    it('tidies spelling and promotes a unit when that stays exact', () => {
+      expect(canonicalizeSize('2048 KiB')).toBe('2 MiB');
+      expect(canonicalizeSize('200tib')).toBe('200 TiB');
+      expect(canonicalizeSize('2  gb')).toBe('2 GiB');
+    });
+
+    it('names the unit a bare number was read as', () => {
+      expect(canonicalizeSize('1500')).toBe('1500 MiB');
+      expect(canonicalizeSize('1500', 'KiB')).toBe('1500 KiB');
+    });
+
+    it('keeps what the user wrote where no unit states it exactly', () => {
+      expect(canonicalizeSize('1.755 GiB')).toBe('1.755 GiB');
+    });
+
+    it('leaves the result denoting exactly the bytes the input did', () => {
+      for (const raw of ['1500', '1500M', '1.755 GiB', '2048 KiB', '999 B']) {
+        expect(parseSize(canonicalizeSize(raw))).toBe(parseSize(raw));
+      }
+    });
+
+    it('returns null for text it cannot read', () => {
+      expect(canonicalizeSize('abc')).toBeNull();
+      expect(canonicalizeSize('')).toBeNull();
+      expect(canonicalizeSize(null)).toBeNull();
     });
   });
 });

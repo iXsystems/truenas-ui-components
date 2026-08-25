@@ -3,7 +3,9 @@ import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
 import { Component, viewChild, inject, input, output, computed, signal, linkedSignal, forwardRef } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { formatSize, parseSize, type SizeStandard } from './size-conversion';
+import {
+  canonicalizeSize, formatSizeForEditing, parseSize, type SizeStandard,
+} from './size-conversion';
 import { InputType } from '../enums/input-type.enum';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { tnIconMarker } from '../icon/icon-marker';
@@ -123,8 +125,10 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
    * (e.g. `1.5 GiB`). Ignored unless `inputType` is `Size`.
    *
    * Display only: the form model always holds the exact byte count the typed
-   * text denotes, and is never re-read from the rounded display. Typing
-   * `1500M` stores 1 572 864 000 even though the field then shows `1.46 GiB`.
+   * text denotes, and is never re-read from the display. The display avoids
+   * rounding where it can — `1500M` shows as `1500 MiB`, not as a `1.46 GiB`
+   * that means 1 567 663 063 — and where a value fits no unit exactly (a size
+   * read back from the server, say) it is rounded for reading only.
    */
   sizeRound = input<number>(2);
 
@@ -262,7 +266,10 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
     if (this.isSize()) {
       // The model is a byte count; show it as a human-readable string. Empty/null
       // stays blank, and a non-numeric model maps to blank (formatSize returns '').
-      this.value.set(formatSize(value, this.sizeStandard(), this.sizeRound()));
+      // `formatSizeForEditing` prefers a unit that states the value exactly, so a
+      // field the user can edit shows '1500 MiB' rather than a '1.46 GiB' that
+      // would parse back ~5 MB short of what it holds.
+      this.value.set(formatSizeForEditing(value, this.sizeStandard(), this.sizeRound()));
       return;
     }
     // Display the model verbatim via String(); do NOT sanitize here. Sanitizing a
@@ -323,22 +330,26 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
 
   protected onBlur(): void {
     if (this.isSize() && this.value() !== '') {
-      // Canonicalize the DISPLAY on blur: "2048 KiB" -> "2 MiB", "200tib" -> "200 TiB".
-      // Leave unparseable text in place so the consumer's validators can flag it.
+      // Canonicalize the DISPLAY on blur: "2048 KiB" -> "2 MiB", "200tib" ->
+      // "200 TiB", "1500" -> "1500 MiB". Leave unparseable text in place so the
+      // consumer's validators can flag it.
       //
-      // The model is deliberately NOT re-emitted from the canonicalized text. The
-      // byte count `onValueChange` already emitted is the exact value of what the
-      // user typed; re-parsing the rounded display would quietly overwrite it with
-      // whatever `sizeRound` decimal places can express — e.g. typing "1500M" would
-      // be stored as 1.46 GiB = 1_567_663_063 instead of the 1_572_864_000 asked
-      // for, ~5 MB off. The model is the source of truth and stays exact; the
-      // display is a rounded, human-readable rendering of it (the same contract
-      // `writeValue` already applies to a value arriving from the server).
-      const bytes = parseSize(this.value(), this.sizeDefaultUnit(), this.sizeStandard());
-      if (bytes !== null) {
+      // `canonicalizeSize` never restates the value as something it is not: where
+      // no unit expresses it within `sizeRound` decimals it keeps the number and
+      // unit the user wrote. So the text left on screen always denotes the byte
+      // count in the model — "1500" tidies to "1500 MiB", not to a "1.46 GiB"
+      // that means 1_567_663_063, ~5 MB short of the 1_572_864_000 stored.
+      //
+      // The model is still deliberately NOT re-emitted from that text. The byte
+      // count `onValueChange` emitted while typing is already exact, and emitting
+      // again would mark a control dirty for a field the user only tabbed through.
+      const canonical = canonicalizeSize(
+        this.value(), this.sizeDefaultUnit(), this.sizeStandard(), this.sizeRound()
+      );
+      if (canonical !== null) {
         // A no-op for a pre-filled control the user merely tabbed through: the
         // signal already holds that exact string, so nothing repaints.
-        this.value.set(formatSize(bytes, this.sizeStandard(), this.sizeRound()));
+        this.value.set(canonical);
       }
     }
     this.onTouched();
