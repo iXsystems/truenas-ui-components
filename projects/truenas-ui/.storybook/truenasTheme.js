@@ -6,7 +6,22 @@ const truenasColors = {
   red: '#CE2929',
   magenta: '#C006C7',
   violet: '#7617D8',
-  blue: '#0095D5', // WCAG fix #007db3
+  /* Drawn as TEXT by Storybook, not only as a fill: `colorSecondary` below is
+     `theme.color.secondary`, which addon-docs uses for every link on a docs
+     page and for the argstable's expand controls. #0095D5 measured 4.39:1 on
+     `appContentBg` (#282828) — short of the 4.5:1 body-text minimum, and
+     invisible as a failure for as long as docs pages were rendering in
+     Storybook's light theme anyway (#293).
+
+     #0099db is `--tn-primary-text` from themes.css, which that file tuned as
+     the smallest hue-preserving lightness step clearing 4.5:1 on --tn-bg1 and
+     --tn-bg2 — #1E1E1E and #282828, the same pair `appBg` and `appContentBg`
+     declare below. The value that was already right for these two surfaces,
+     rather than a second one derived the same way.
+
+     4.62:1 on appContentBg, 5.22:1 on appBg. `#007db3` in the note this
+     replaces was the fix for a LIGHT background and is 3.22:1 here. */
+  blue: '#0099db',
   cyan: '#00d0d6',
   green: '#71BF44',
   pink: '#ffc0cb',

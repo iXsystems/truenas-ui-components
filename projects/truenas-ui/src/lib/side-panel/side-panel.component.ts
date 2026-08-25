@@ -11,6 +11,7 @@ import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { tnFocusOnOpen } from '../a11y/initial-focus';
+import { TN_SCROLLABLE_REGION_TOLERANCE_PX, tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -35,6 +36,36 @@ import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
  * Exported so specs assert against it by name rather than by a copied literal.
  */
 export const TN_SIDE_PANEL_DEFAULT_LABEL = 'Side panel';
+
+/**
+ * The name given to the scrolling content region once it becomes focusable
+ * (#248).
+ *
+ * A focusable element with no accessible name is announced as a bare "group",
+ * which tells a listener that something has been reached and nothing about what
+ * it is. It names the region rather than repeating the panel's own title: the
+ * dialog announces that on entry, so a second copy of it here would say the
+ * same words twice and still not distinguish the part that scrolls.
+ *
+ * Overridable through `contentAriaLabel`, on the same reasoning as
+ * `closeButtonAriaLabel` — a string this library renders into a consumer's UI
+ * has to be translatable. Exported so specs assert against it by name rather
+ * than by a copied literal.
+ */
+export const TN_SIDE_PANEL_CONTENT_LABEL = 'Panel content';
+
+/**
+ * How far the content has to exceed the region before the region counts as
+ * scrolling (#248).
+ *
+ * **This is now `TN_SCROLLABLE_REGION_TOLERANCE_PX`**, which is axe's own 13px
+ * buffer and lives with the measurement it belongs to (#270). The alias stays
+ * because it is what `side-panel-scrollable-content.spec.ts` pins against axe
+ * from both sides, and that spec is a guard on this component rather than on
+ * the helper — see `../a11y/scrollable-region.ts` for what the number is and
+ * why it is copied from the rule at all.
+ */
+export const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = TN_SCROLLABLE_REGION_TOLERANCE_PX;
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -104,7 +135,29 @@ export class TnSidePanelComponent implements OnDestroy {
 
   private overlayRef = viewChild.required<ElementRef>('overlay');
   private panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
+  private contentRef = viewChild.required<ElementRef<HTMLElement>>('content');
   protected initialized = signal(false);
+
+  /**
+   * Whether the content region carries the tab stop, its role and its name
+   * (#248) — which is NOT the same question as whether it currently overflows.
+   *
+   * The measurement, the two observers that keep it current and the focus rule
+   * that decides when the attributes may be taken off again are all
+   * `tnScrollableRegion`'s (#270); this component decides only what to put on
+   * the element, which is the part that differs between the five regions in
+   * this library that scroll. `../a11y/scrollable-region.ts` sets out why the
+   * answer is held true while the region has focus, and why `role` and
+   * `aria-label` are gated on the same signal as `tabindex` rather than left on.
+   *
+   * Read in `afterNextRender`, which is where the helper takes its first
+   * measurement — before the overlay is portaled to `<body>` below, which does
+   * not affect it: `.tn-side-panel__overlay` is `position: fixed; inset: 0`, so
+   * its size comes from the viewport rather than from its parent.
+   */
+  protected contentKeyboardReachable = tnScrollableRegion(
+    () => this.contentRef().nativeElement
+  );
 
   // Two-way bindable via [(open)]
   open = model<boolean>(false);
@@ -139,6 +192,13 @@ export class TnSidePanelComponent implements OnDestroy {
    * of context otherwise hears only "Dismiss".
    */
   closeButtonAriaLabel = input<string>('Dismiss');
+
+  /**
+   * Accessible name for the scrolling content region, which is named only while
+   * it is focusable — see `TN_SIDE_PANEL_CONTENT_LABEL`. Override it to
+   * translate it, or to say what the region holds ("Dataset properties").
+   */
+  contentAriaLabel = input<string>(TN_SIDE_PANEL_CONTENT_LABEL);
 
   /**
    * Accessible name for the panel itself, for a panel that renders no `title`.

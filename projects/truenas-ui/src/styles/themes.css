@@ -18,7 +18,48 @@
   --tn-btn-default-bg: #545454;
   --tn-btn-default-txt: #ffffff;
   --tn-topbar: #111111;
-  --tn-topbar-txt: rgba(255,255,255,0.85);
+  /* TEXT DRAWN ON THE --tn-topbar BAR, and on nothing else: tn-table's header
+     is the only thing in this library that reads it. That makes its one
+     pairing its whole job, so every palette's value clears 4.5:1 on that
+     palette's own bar and records the ratio — unlike --tn-fg1/--tn-fg2, which
+     answer to the page surfaces and cannot also answer to a coloured bar. Four
+     palettes did not, and #277 gave each its own value: .tn-blue inherited
+     this one onto a mid-blue bar at 3.75:1, .tn-dracula read 4.09:1,
+     .tn-solarized-dark 3.39:1 and .tn-midnight 3.12:1. The two that still
+     inherit are the two with dark bars — .tn-paper at 6.12:1 and
+     .tn-high-contrast at 14.84:1 — where this value is already the right one.
+     text-token-surface-contrast.spec.ts holds all nine to it. */
+  --tn-topbar-txt: rgba(255,255,255,0.85); /* 13.68:1 on --tn-topbar */
+  /* THE HOVERED --tn-topbar BAR: tn-table paints it when a sortable header is
+     under the pointer, and the label on it is still --tn-topbar-txt.
+
+     Its own token in every palette because the fill used to be DERIVED —
+     color-mix(in srgb, var(--tn-topbar) 85%, var(--tn-topbar-txt)) — and a mix
+     toward the label moves the surface toward the text, so the label's ratio
+     could only fall. It fell under 4.5:1 on the four mid-tone bars: .tn-blue
+     3.59:1, .tn-dracula 3.54:1, .tn-solarized-dark 3.92:1 and .tn-midnight
+     3.83:1 (#284).
+
+     Each value is a hue-preserving lightness shift of that palette's own
+     --tn-topbar — the same construction as --tn-primary-text above — taken as
+     the smallest whole-percent step whose contrast AGAINST the bar reaches
+     1.30:1, so the hover stays visible. That floor is read off the derivation
+     it replaces rather than invented: the mix moved the bar by between 1.28:1
+     (.tn-blue) and 1.42:1 (.tn-nord), so 1.30:1 sits inside the band it
+     already produced and above its weakest palette.
+
+     THE DIRECTION IS NOT THE SAME IN EVERY PALETTE, and that is the whole
+     reason one derivation could not serve all nine. It is away from the label
+     where the bar has room to go there, and toward it only where the bar is
+     already near-black and darkening would not be visible at all: :root,
+     .tn-dark and .tn-high-contrast lighten, the other six darken.
+
+     Both ratios are recorded on every palette's value — the label on the hover
+     fill, which is the 4.5:1 claim, then the hover fill against the bar, which
+     is the affordance. text-token-surface-contrast.spec.ts holds all nine to
+     both, and to declaring this themselves: a palette inheriting this value
+     would be hovering its own bar to a colour shifted off :root's. */
+  --tn-topbar-hover: #2b2b2b; /* 10.64:1 under --tn-topbar-txt; 1.33:1 against --tn-topbar */
   --tn-accent: #545454;
   /* TEXT DRAWN ON A --tn-accent FILL — the companion --tn-accent never had, and
      the same arrangement as --tn-primary / --tn-primary-txt above.
@@ -139,7 +180,9 @@
      itself is only 3.64:1 on --tn-bg1 — see the note in :root. */
   --tn-primary-text: #0099db;
   --tn-topbar: #111111;
-  --tn-topbar-txt: rgba(255,255,255,0.85);
+  --tn-topbar-txt: rgba(255,255,255,0.85); /* 13.68:1 on --tn-topbar */
+  /* Lightened, this bar being near-black — see the note in :root. */
+  --tn-topbar-hover: #2b2b2b; /* 10.64:1 under --tn-topbar-txt; 1.33:1 against --tn-topbar */
   --tn-accent: var(--tn-yellow);
   /* The yellow this resolves to is the brightest accent of the nine, so the
      text on it is this theme's own --tn-bg1 rather than a light shade. */
@@ -195,6 +238,14 @@
      this is a light theme. */
   --tn-primary-text: #0074a7;
   --tn-topbar: #007db3;
+  /* Declared rather than inherited: :root's rgba(255,255,255,0.85) composites
+     to 3.75:1 on this bar. White is the whole of the remaining headroom and it
+     clears by 0.08 (#277) — a bar any lighter than #007db3 would leave this
+     palette with no legible label at all. */
+  --tn-topbar-txt: #ffffff; /* 4.58:1 on --tn-topbar */
+  /* Darkened — see the note in :root. This is the palette the old derivation
+     hurt most: white had 0.08 of headroom on the bar and the mix spent it. */
+  --tn-topbar-hover: #006894; /* 6.16:1 under --tn-topbar-txt; 1.35:1 against --tn-topbar */
   --tn-accent: #DED142;
   --tn-accent-txt: #282a36; /* 9.02:1 on --tn-accent */
   --tn-bg1: #f2f2f2;
@@ -248,7 +299,13 @@
      itself is only 3.67:1 on --tn-bg1. */
   --tn-primary-text: #8592b8;
   --tn-topbar: #6272a4;
-  --tn-topbar-txt: #efefef;
+  /* Was #efefef, which read 4.09:1 on this bar (#277). Dracula's own two
+     lighter tones do not save it either — --tn-alt-fg1 (#f8f8f2) reads 4.41:1
+     here and --tn-alt-fg2 (#fafaf5) 4.49:1 — so nothing already in the palette
+     clears 4.5:1 on this bar; white does, by 0.21. */
+  --tn-topbar-txt: #ffffff; /* 4.71:1 on --tn-topbar */
+  /* Darkened — see the note in :root. */
+  --tn-topbar-hover: #515f8c; /* 6.24:1 under --tn-topbar-txt; 1.33:1 against --tn-topbar */
   --tn-accent: #bd93f9;
   --tn-accent-txt: #282a36; /* 5.90:1 on --tn-accent */
   --tn-bg1: #181a26;
@@ -300,7 +357,12 @@
      surfaces, not these. */
   --tn-primary-text: var(--tn-primary);
   --tn-topbar: #4c566a;
-  --tn-topbar-txt: #eceff4;
+  --tn-topbar-txt: #eceff4; /* 6.40:1 on --tn-topbar */
+  /* Darkened — see the note in :root. Not one of Nord's own Polar Night tones,
+     unlike the bar above it: the palette spends all three darker ones as
+     surfaces, #434c5e on --tn-alt-bg1, #3b4252 on --tn-bg2 and #2e3440 on
+     --tn-bg1, so a hover taken from the ramp would render as one of them. */
+  --tn-topbar-hover: #3d4555; /* 8.35:1 under --tn-topbar-txt; 1.31:1 against --tn-topbar */
   --tn-accent: #5e81aC;
   /* Black, where every other theme uses one of its own surfaces. Nord's accent
      sits mid-luminance and the palette runs out at both ends before clearing
@@ -363,6 +425,10 @@
      --tn-bg2 (7.46:1) — see the note in .tn-nord for why it is still declared. */
   --tn-primary-text: var(--tn-primary);
   --tn-topbar: #0D5687;
+  /* Darkened — see the note in :root. The label here is :root's, which this
+     theme's dark bar already suits; the hover is still its own, because the
+     shift is off THIS bar. */
+  --tn-topbar-hover: #0a446b; /* 7.87:1 under --tn-topbar-txt; 1.31:1 against --tn-topbar */
   --tn-accent: #f0cb00;
   --tn-accent-txt: #282a36; /* 8.98:1 on --tn-accent */
   --tn-bg1: #F2F2F2;
@@ -409,41 +475,103 @@
    Solarized Dark - Solarized dark color scheme
    ================================ */
 .tn-solarized-dark {
-  --tn-primary: var(--tn-fg1);
+  /* The literal #586e75 rather than var(--tn-fg1), which is what this read
+     until #265. --tn-primary is a fill colour tuned toward the 3:1 non-text
+     minimum and labelled with --tn-primary-txt (white, 5.38:1 on it); --tn-fg1
+     is body text on a dark page and has to clear 4.5:1 there. On Solarized's
+     backgrounds no single value does both jobs — #586e75 is 2.79:1 as text on
+     --tn-bg1, and anything clearing that as text is too light to carry white.
+     So the two separate, and pinning the literal keeps every fill, border and
+     focus ring rendering the colour it already did. --tn-topbar below is
+     pinned to the same literal so that the bar does not move either; its
+     label is --tn-topbar-txt, and #277 measured and fixed that pairing. */
+  --tn-primary: #586e75;
   --tn-primary-txt: #ffffff;
   /* >=4.5:1 against both --tn-bg1 (5.34:1) and --tn-bg2 (4.62:1); --tn-primary
-     itself is 2.79:1 on --tn-bg1, the worst of the nine, because it resolves to
-     --tn-fg1 (#586e75) rather than to a blue. */
+     itself is 2.79:1 on --tn-bg1, the worst of the nine, because it is a muted
+     Solarized base tone rather than a blue. */
   --tn-primary-text: #879ea5;
   --tn-btn-default-bg: #0b4f60;
+  /* 5.32:1 on --tn-btn-default-bg, up from 3.03:1 before #265 retuned
+     --tn-fg2 — this is the only theme declaring both halves of this pair. */
   --tn-btn-default-txt: var(--tn-fg2);
-  --tn-topbar: var(--tn-fg1);
-  --tn-topbar-txt: #cdcdcd;
+  --tn-topbar: #586e75;
+  /* Was #cdcdcd, which read 3.39:1 on this bar — one of the two pairings #277
+     was filed for. Solarized's own base3 (#fdf6e3) would clear at 4.99:1;
+     white is taken instead because this bar is --tn-primary's literal and the
+     brightest label is what leaves the most room if it ever moves. */
+  --tn-topbar-txt: #ffffff; /* 5.38:1 on --tn-topbar */
+  /* Darkened — see the note in :root. Off Solarized's ramp for the same reason
+     the bar is pinned to a literal above: the tones below base01 are base02
+     (#073642) and base03 (#002b36), which this palette spends on --tn-bg2 and
+     --tn-bg1, so a hover from the ramp would render as a page surface. */
+  --tn-topbar-hover: #495b61; /* 7.11:1 under --tn-topbar-txt; 1.32:1 against --tn-topbar */
   --tn-accent: var(--tn-cyan);
   --tn-accent-txt: #002b36; /* 4.75:1 on --tn-accent */
   --tn-bg1: #002b36;
   --tn-bg2: #073642;
   --tn-bg3: #0a4050;
-  --tn-fg1: #586e75;
-  --tn-fg2: #7f99a2;
+  /* TEXT, 4.5:1 on --tn-bg1/--tn-bg2, retuned in #265. They were #586e75
+     (base01), #7f99a2 and #839496 (base0), and measured 2.79/2.42, 4.99/4.32
+     and 4.75/4.11 — the one palette of nine whose text tokens did not clear the
+     text minimum on both page surfaces. Solarized's base00-base01 tones are
+     designed to sit close to base03, which is what makes them comment colours
+     there and unusable as body text here, so the ramp had to move up into the
+     base1-base3 range rather than nudge: nothing under roughly base1's
+     luminance clears 4.5:1 on --tn-bg2 at all. base3 and base1 are Solarized's
+     own tones and --tn-fg2 is a hue-preserving lift of base1 toward base2,
+     placed to keep three distinguishable steps instead of three values crowded
+     into the 4.50-4.86 band just above the minimum. The order is also righted:
+     --tn-fg1 was the LEAST legible of the three, which is how the primary text
+     role came to be the failing one. text-fg-contrast.spec.ts holds all nine
+     palettes to both the threshold and that order. */
+  --tn-fg1: #fdf6e3; /* base3 — 13.92:1 on --tn-bg1, 12.05:1 on --tn-bg2 */
+  --tn-fg2: #b8c9c9; /* 8.75:1 on --tn-bg1, 7.57:1 on --tn-bg2 */
   /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240). The
      largest move of the nine, and the only one that changes a theme's look
      rather than nudging it: #4a5e65 read 1.91:1 on --tn-bg2 and #3a4d53
      1.46:1, the worst pair in the palette, because Solarized's base01/base02
      sit deliberately close to its own background. Two steps that both clear
-     3:1 do not fit between those and this theme's --tn-fg2, so both move up to
-     where they do. Nothing reads either token, so nothing regresses.
-     They land above this theme's own --tn-fg1 (2.79:1 on --tn-bg1, 2.42:1 on
-     --tn-bg2) — the one palette of nine where a non-text token out-reads a text
-     one. Nothing clearing 3:1 could sit under 2.79:1, so that is --tn-fg1's
-     defect (#265) rather than this one's. Recorded as OUTREADS_TEXT in
-     muted-fg-contrast.spec.ts, and asserted to still be true there, so retuning
-     --tn-fg1 takes the exception with it. */
+     3:1 do not fit between those and this theme's --tn-fg2 as it then was, so
+     both move up to where they do. Nothing reads either token, so nothing
+     regresses. */
   --tn-fg3: #779099; /* 4.46:1 on --tn-bg1, 3.86:1 on --tn-bg2 */
   --tn-fg4: #6e868e; /* 3.91:1 on --tn-bg1, 3.38:1 on --tn-bg2 */
   --tn-alt-bg1: #0e4853;
   --tn-alt-bg2: #155a68;
-  --tn-alt-fg1: #839496;
+  /* Was #93a1a1, Solarized's base1 — the dimmest of that palette's own tones
+     clearing 4.5:1 on --tn-bg1 (5.61:1) and --tn-bg2 (4.86:1), which #265 picked
+     because muted text wants the step below --tn-fg2 rather than a fourth value
+     alongside it. That is all the text tokens claim, and it was true. On
+     --tn-alt-bg1 base1 read 3.79:1, and that fill is where tn-stepper draws its
+     step indicator, as well as the banner and the hovered table row (#283).
+
+     SOLARIZED HAS NO TONE LEFT TO TAKE, so the muted role leaves the palette
+     here — the thing #265's comment on this token was explicitly against.
+     base1 is the last of Solarized's base ramp before base2 (#eee8d5) and base3
+     (#fdf6e3), and both of those clear 4.5:1 on --tn-alt-bg1 — but this theme
+     has already spent them: base2 is --tn-alt-fg2 and base3 is --tn-fg1. So
+     staying in the palette means either the value that fails or a muted token
+     that is another role's token under a second name, which is the distinctness
+     the muted step exists for. This is the
+     smallest lift of base1 that clears 4.5:1 on --tn-alt-bg1 by more than a
+     rounding, with the hue held at 180 degrees (G and B equal, as base1 has
+     them) and the saturation within an 8-bit step of base1's 6.9%. Measured
+     unrounded, as the specs compare them: #a3afaf is 4.4956 and FORMATS as
+     "4.50", and #a4afaf clears by 0.006, which any later nudge to the fill would
+     spend.
+
+     THE FILL COULD NOT MOVE INSTEAD. base1 clears 4.5:1 only on a surface of
+     luminance 0.0373 or below; --tn-bg2 is already at 0.0308 and --tn-bg3 at
+     0.0431. --tn-alt-bg1 would have had to darken past --tn-bg3 into the narrow
+     band just above the card surface, inverting the elevation it exists to show
+     and taking the banner and the hovered row down with it.
+
+     Still a step below --tn-fg2 (#b8c9c9), which is what the muted role is for:
+     1.30:1 apart on --tn-alt-bg1, where the other eight palettes ship 1.11:1 to
+     3.01:1. */
+  --tn-alt-fg1: #a5b0b0; /* 6.75:1 on --tn-bg1, 5.84:1 on --tn-bg2, 4.56:1 on
+                            --tn-alt-bg1 (the stepper step indicator) */
   /* Was #282a36 — near-black, copied from a light theme, and painted on this
      theme's own --tn-alt-bg1 (1.40:1) and --tn-alt-bg2 (1.83:1), the only two
      surfaces this token is ever drawn on. Solarized's base2 instead (#238). */
@@ -485,14 +613,39 @@
      itself is only 2.90:1 on --tn-bg1. */
   --tn-primary-text: #50afee;
   --tn-topbar: var(--tn-blue);
-  --tn-topbar-txt: var(--tn-fg2);
+  /* Was var(--tn-fg2) (#cccccc), which read 3.12:1 on this bar (#277). This
+     palette's --tn-fg2 answers to --tn-bg1/--tn-bg2 and cannot also answer to
+     a mid-blue bar, which is why the bar's label is its own token. */
+  --tn-topbar-txt: #ffffff; /* 5.01:1 on --tn-topbar */
+  /* Darkened — see the note in :root. A literal rather than a shift of
+     var(--tn-blue): --tn-blue is a fill and border colour in its own right
+     here, and this is the bar's hover, not the blue's. */
+  --tn-topbar-hover: #0f5f95; /* 6.79:1 under --tn-topbar-txt; 1.36:1 against --tn-topbar */
   --tn-accent: var(--tn-violet);
   --tn-accent-txt: #212a35; /* 4.92:1 on --tn-accent */
   --tn-bg1: #212a35;
   --tn-bg2: #303d48;
   --tn-bg3: #3d4a55;
-  --tn-fg1: #aaaaaa;
-  --tn-fg2: #cccccc;
+  /* Was #aaaaaa, the calmer half of a deliberate inversion: --tn-fg2 (#cccccc)
+     was this palette's emphasis colour and --tn-fg1 the quieter one, the only
+     palette of nine ordered that way. Both cleared 4.5:1 on --tn-bg1 and
+     --tn-bg2, which is all the text tokens claim — but on the three fills that
+     sit above --tn-bg2, #aaaaaa read 3.91:1 on --tn-bg3/--tn-alt-bg1 and
+     3.19:1 on --tn-alt-bg2, the worst of the nine palettes (#282). Those fills
+     are the hovered menu item and list item, the active table row, the banner
+     and the stepper indicator, so that was primary text on ordinary
+     interactive states.
+
+     THE FILLS COULD NOT MOVE INSTEAD. #aaaaaa clears 4.5:1 only on a surface of
+     luminance 0.0504 or below, and --tn-bg2 is already at 0.0443: all three
+     fills would have had to land in the band between the card surface and a
+     ceiling just above it, 12.9% of the elevation --tn-alt-bg2 has today. The
+     fills exist to read as raised, so keeping the inversion meant keeping the
+     failure. #cccccc holds its role unchanged. */
+  --tn-fg1: #e0e0e0; /* 10.99:1 on --tn-bg1, 8.43:1 on --tn-bg2, 6.89:1 on
+                        --tn-bg3/--tn-alt-bg1, 5.62:1 on --tn-alt-bg2 */
+  --tn-fg2: #cccccc; /* 9.04:1 on --tn-bg1, 6.93:1 on --tn-bg2, 5.66:1 on
+                        --tn-bg3/--tn-alt-bg1, 4.62:1 on --tn-alt-bg2 */
   /* Non-text, 3:1 on --tn-bg1/--tn-bg2 — see the note in :root (#240).
      #666666 read 1.94:1 on --tn-bg2 and #888888 3.14:1, so --tn-fg4 had to
      move a long way and --tn-fg3 had to move with it to stay a step ahead. */
@@ -544,6 +697,12 @@
      the one worth noticing. Darkened, this being a light theme. */
   --tn-primary-text: #366584;
   --tn-topbar: var(--tn-black);
+  /* Lightened, and it is the one bar with no other option — see the note in
+     :root. #000000 cannot be darkened at all, so the direction the other six
+     take is not available here, which is why the fill is a per-palette token
+     rather than one derivation. This is the value the old mix already rendered
+     (#212121), so the accessibility theme's bar looks exactly as it did. */
+  --tn-topbar-hover: #212121; /* 11.93:1 under --tn-topbar-txt; 1.30:1 against --tn-topbar */
   --tn-accent: var(--tn-magenta);
   --tn-accent-txt: #000000; /* 5.75:1 on --tn-accent */
   --tn-bg1: #dddddd;

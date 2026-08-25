@@ -461,6 +461,27 @@ element around the text — `<li><h3>` in plain HTML. Dropping to
 from the accessibility tree, which is a silent regression a passing rule cannot
 show you.
 
+**Where it cannot be moved, keep the text as an accessible name.** The same
+subheader inside a `listbox` has nowhere to move the heading to (#259).
+`listitem` is not an allowed child there either, and — measured, and asserted as
+a control in `list/list-a11y.spec.ts` — **axe reads THROUGH a `group` when it
+collects what a listbox owns**, so wrapping the heading in the one container the
+listbox does allow reports the identical violation with the heading named
+instead. So the host becomes the `group` and takes the section's own text as its
+accessible name, via `aria-labelledby` to the unmarked span around it. The text
+is still in the accessibility tree and still announced; what it is announced as
+changes, from a heading to a named section.
+
+That the answer differs per container is the point of asking who owns you: there
+is no one substitute role, and `presentation` is never it.
+
+**A decorative element needs no substitute at all** — it carries no role and the
+stylesheet still draws it. `tn-divider` resolves to `presentation` because its
+host is shared with the standalone case; the two rules in
+`select.component.html`, written directly inside that component's own listbox,
+simply have no `role` attribute. Where an element sits is only a question worth
+asking with `ariaOwner()` when the same component renders in both places.
+
 ### Live Regions
 
 **Declare politeness exactly once.** A live-region role implies one — `alert` is
@@ -481,6 +502,90 @@ until it existed. Do not restate the mapping in a `computed`.
 passes just as happily on markup that reintroduces the other. Use `liveSources()`
 and `politeness()` from `lib/a11y/live-region-testing.ts`; see
 `banner-a11y.spec.ts` for the shape.
+
+### Scrolling Regions
+
+**An element that scrolls has to be reachable from a keyboard.** axe's
+`scrollable-region-focusable` reports any element that scrolls, is not in the
+tab order, and contains nothing that is — because content below its fold is
+content a keyboard cannot get to. Five elements in this library are scroll
+containers and every one of them can be handed content with no control in it.
+
+**Take the measurement from `lib/a11y/scrollable-region.ts`. Do not write it
+again.** `tnScrollableRegion(() => element)` returns the signal a component
+binds its `tabindex` (and, where the element is not already named, its `role`
+and `aria-label`) to. What it is not is one comparison:
+
+- **axe's own 13px buffer**, `getScroll(node, 13)`. Measuring with a bare `>`
+  marks regions the rule considers fine, because `scrollHeight` and
+  `clientHeight` are integers rounded from fractional layout.
+- **The computed `overflow` on the overflowing axis.** Content wider than a
+  `overflow-x: visible` box does not scroll; it spills out and is on screen, and
+  axe does not report it.
+- **A `ResizeObserver` on the region AND on its direct children**, plus a
+  `MutationObserver`. The children are the half that catches growth no DOM
+  mutation announces — an image loading, a webfont swapping.
+- **A focus latch.** Removing `tabindex` from an element that HAS focus blurs it
+  to `<body>`, so a region that stops overflowing while someone is reading it
+  keeps its tab stop until focus leaves. Focus *retains* a stop; it does not
+  grant one — `tn-drawer` focuses its own panel on open, and the earlier
+  `overflowing || focused` reading made every modal drawer a tab stop.
+
+**The component still decides what to put on the element**, because that is what
+legitimately differs: `tn-drawer`'s panel is already a named `role="dialog"` and
+takes only the tab stop, while `tn-side-panel`'s bare `<section>` takes
+`role="group"` and a name as well. A directive owning those attributes through
+host bindings would clobber the template bindings the drawer already has.
+
+**A scrolling region that takes a tab stop is named.** A focusable element with
+no accessible name is announced as a bare "group". Prefer a name the component
+already has — `tn-tab-panel` uses its own `label`, which is what its tab says —
+and expose an input for it where there is none.
+
+**Test it with `lib/a11y/scrollable-region-testing.ts`.** jsdom has no layout
+engine, so nothing in this library can overflow under jest by itself:
+`scrollingTo(el, scrollSize, clientSize, axis)` stubs the two readings and sets
+the matching `overflow` inline, which is what both axe and the helper read.
+Stubbing only the sizes gives a rule that never matches and a spec that is green
+for nothing. `staticScroller()` is the positive control every such spec needs
+beside it.
+
+#### A combobox popup is the exception, and does NOT take a tab stop
+
+**Do not reach for `tnScrollableRegion` when the scrolling thing is a dropdown.**
+axe exempts a combobox popup from `scrollable-region-focusable` outright — its
+options are reached with the arrow keys through the input's
+`aria-activedescendant` and are `tabindex="-1"` on purpose, so giving the panel a
+tab stop would add a stop the ARIA pattern says should not be there.
+
+**The exemption tests the SCROLL CONTAINER'S OWN ROLE.** `isComboboxPopup` reads
+the node's role first and returns false for anything that is not `listbox`,
+`menu`, `tree`, `grid` or `dialog` — then resolves the combobox by
+`aria-controls`/`aria-owns` pointing at the node's id. So a role-less wrapper
+carrying the `overflow`, whether inside the listbox or around it, is reported
+even though the panel it belongs to is exempt. `tn-select` and `tn-autocomplete`
+both missed the exemption that way (#292).
+
+**So the `overflow` goes on the `role="listbox"` element itself** — the shape
+`tn-chip-input`, `tn-select` and `tn-autocomplete` now share. Two consequences
+worth knowing before moving one: a `scroll` handler has to move with it, because
+a `scroll` event fires on the element that scrolls and does not bubble; and
+anything ARIA does not allow inside a listbox (a `role="status"` row for loading
+or no-results) is a SIBLING, so it ends up outside the scrolling area.
+
+**The panel's `max-height` follows the overflow only where the panel IS the
+listbox**, which is `tn-chip-input` and `tn-select`. A panel with a sibling row
+keeps its own cap: `tn-autocomplete` declares the max-height on the wrapper,
+which is a flex column, and the listbox scrolls inside whatever is left
+(`min-height: 0`, or a flex item floors at its content height and pushes the
+status row past the cap). A cap on the listbox alone would bound the options and
+let the panel grow past the number a caller asked for.
+
+**A spec for one asserts `evaluated` does NOT contain the rule.** "Excluded" and
+"passed" are different verdicts and only the first says the exemption applied —
+a pass would mean axe found something tabbable in the panel. Pair it with a
+control that takes the `aria-controls` away and gets the violation back; see
+`select-scrollable-dropdown.spec.ts`.
 
 ### Running axe in a spec
 
@@ -564,9 +669,11 @@ that makes a failing colour look passing.
 
 **`themePalettes(css)` reads the tokens; `contrast()` measures one against the
 surface it renders on.** That pairing — a token and the background behind it — is
-the form every one of those scripts actually needed. Pass the text of
-`styles/themes.css`; the module takes CSS rather than reading the file, so the
-resolution rules can be covered against a fixture that no theme retune breaks.
+the form every one of those scripts actually needed. The module takes CSS text
+rather than reading the file, so the resolution rules can be covered against a
+fixture that no theme retune breaks — and so nothing in it depends on Node. A
+spec measuring the shipped palette does not call it with a path of its own; see
+the next section.
 
 **`declares()` and `color()` answer different questions.** `color()` resolves the
 way the browser does, following `var()` chains and inheriting from `:root`;
@@ -590,6 +697,80 @@ layout engine to find what is actually painted behind an element; under jsdom it
 reports `incomplete`, which `axeResult()` treats as an error. What these
 assertions measure is the palette as shipped, against the surface the spec names.
 See `theme/error-text-contrast.spec.ts` for the shape.
+
+### Measuring the shipped palette in every theme
+
+**Use `lib/a11y/palette-contrast-testing.ts`. Do not read `themes.css` yourself
+and do not write the loop again.** #197 shared the arithmetic and the duplication
+moved up one level: nine specs each read the stylesheet, cross-checked what they
+found against the theme registry, dropped the palettes missing a token, and then
+looped palette × token × surface. Review counted the copies twice unprompted, on
+PR #264 and again on PR #281 (#295).
+
+**Three calls, in this order.** They declare cases as well as returning data, so
+call them in the `describe` body:
+
+```ts
+const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
+testEachPalette(measured, PAIRINGS, AA_MINIMUM.normal);
+```
+
+- `itMeasuresEveryRegisteredPalette()` loads the stylesheet and holds what it
+  finds to `TN_THEME_DEFINITIONS`. Getting the palettes and being held to the
+  registry is deliberately one call: a theme that stops being recognised — a
+  renamed class, a block that drops `--tn-bg1` — otherwise goes unmeasured while
+  every remaining case still passes.
+- `itDeclares(palettes, tokens)` asserts each palette declares them **itself**,
+  and returns the ones that do. One list, asserted and filtered on, so a palette
+  dropping out of the cases below always leaves something red.
+- `testEachPalette(palettes, pairings, minimum)` measures each
+  `{ token, surface, where? }` on each palette, one case and one message format
+  apiece. `minimum` is a ratio, not a text size: pass `AA_MINIMUM.normal` for body
+  text and the 3:1 SC 1.4.11 floor for a fill, a border or an icon.
+
+**`THEME_STYLESHEET` is the one place that decides which copy is measured.**
+`.storybook/public/themes.css` is a tracked copy that Storybook serves, and
+`theme/themes-css-copy.spec.ts` is what keeps the two byte-identical. A spec
+holding its own path is how one comes to measure the copy the library does not
+render from.
+
+**A spec whose exclusions are per palette calls `paletteContrastCases` and
+declares its own cases** — `theme/text-token-surface-contrast.spec.ts` excuses
+individual (palette, token, surface) triples through `KNOWN_GAPS`, which a
+per-pairing list cannot express. That gets the same palette × pairing walk
+without the case `testEachPalette` would declare, so the loop is still written
+once.
+
+### Reading a stylesheet back in a spec
+
+**Use `lib/a11y/scss-testing.ts`. Do not write another brace walk.** A contrast
+spec is a hardcoded table of pairs, and a table is exactly as current as the last
+person to edit it — a new variant, or a `color:` moved to another token, leaves
+every case green while measuring markup that no longer exists. The half of such a
+spec that stops it rotting reads the `.scss` back, and that half is identical
+whichever component it is pointed at. It was written inside
+`chip/chip-contrast.spec.ts` and moved here when
+`pipes/label-markup/inline-code-contrast.spec.ts` became its second caller (#262).
+
+**`scssRules(scss, source)` returns every rule with its `parent`, and the nesting
+is the point.** `color` and `background-color` are rarely declared together:
+`&--secondary:hover` repaints the background and inherits its label colour from
+`&--secondary`, one level up and on the same element. Collecting the two
+properties independently gives the right two *sets* of tokens and says nothing
+about which goes with which, so re-pairing an existing foreground with an
+existing surface passes.
+
+**`inheritedValue(rule, 'color')` walks that chain; `flattenSelector(rule)`
+resolves `&` outward.** Use the flattened form whenever a guard enumerates the
+rules that paint something — `&__close` finds the one rule written inside
+`.tn-chip` and misses every theme-scoped override of it, which is exactly where
+an unmeasured colour comes back.
+
+**It reads nesting and declarations, not Sass.** `@include`, `@if` and
+interpolation are invisible to it. A spec that needs to know which rule includes
+a mixin can rewrite the include into a marker declaration before parsing — see
+`inline-code-contrast.spec.ts` — and a spec that needs the *compiled* output has
+to compile it.
 
 ### Keyboard Navigation
 Support standard keys:

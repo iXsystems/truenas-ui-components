@@ -15,9 +15,9 @@ import { join } from 'path';
  * copy: `storybook`, `build-storybook`, `sb` and `sbh` each run `copy-assets`
  * — and so `copy-themes` — before anything is built, and CI's Storybook
  * Interaction Tests job runs `yarn build-storybook` before `test-sb`. So the
- * served palette is always regenerated from `src/styles/`, and the four
- * contrast specs measuring `src/styles/themes.css` are measuring the file that
- * reaches the page.
+ * served palette is always regenerated from `src/styles/`, and the specs
+ * measuring `src/styles/themes.css` are measuring the file that reaches the
+ * page.
  *
  * WHAT IT DOES BREAK is the repository: two files that claim to be the same file
  * and are not, one of them the copy a reader is most likely to open, and a
@@ -25,10 +25,11 @@ import { join } from 'path';
  * resync is `yarn copy-themes`, which is what a failure here means — never an
  * edit to the copy itself.
  *
- * `primary-text-contrast.spec.ts`, `error-text-contrast.spec.ts`,
- * `semantic-status-contrast.spec.ts` and `muted-fg-contrast.spec.ts` are the
- * specs that read `src/styles/themes.css`; this is what keeps the other copy
- * from telling a different story.
+ * Which of the two copies a spec reads is not each spec's decision to make:
+ * `a11y/palette-contrast-testing.ts` names `src/styles/themes.css` once, as
+ * `THEME_STYLESHEET`, and every palette spec loads through it (#295). This file
+ * is the other half of that arrangement — one decision about which copy is
+ * authoritative, and one case holding the other to it.
  */
 
 const STYLES_DIR = join(__dirname, '../../styles');

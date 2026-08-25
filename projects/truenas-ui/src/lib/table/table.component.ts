@@ -18,6 +18,7 @@ import {
   signal,
 } from '@angular/core';
 import type { OnInit } from '@angular/core';
+import { tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnEmptyComponent } from '../empty/empty.component';
 import { TnIconComponent } from '../icon/icon.component';
@@ -35,6 +36,26 @@ import { TnTestIdDirective } from '../test-id';
 // from template literals or marker calls; a name returned from a component
 // getter is invisible to it, so the icons would be dropped from the generated
 // sprite and render as nothing. Keep the literals in the template.
+
+/**
+ * The name the table's scroll region falls back to when the consumer has not
+ * said what the table holds (#270).
+ *
+ * A focusable element with no accessible name is announced as a bare "group",
+ * which tells a listener that something has been reached and nothing about what
+ * it is. "Table" is a poor name and is deliberately the fallback rather than
+ * the expectation — `scrollRegionAriaLabel` is how a consumer says something
+ * useful, and it is the one input on this component whose default is worth
+ * overriding on sight.
+ *
+ * No dev-mode warning goes with it, unlike `tnAccessibleName`'s fallbacks: this
+ * name is rendered only on a table that is WIDER THAN ITS CONTAINER, which
+ * depends on the consumer's layout rather than on their markup, so the warning
+ * would fire on a viewport rather than on a mistake.
+ *
+ * Exported so specs assert against it by name rather than by a copied literal.
+ */
+export const TN_TABLE_SCROLL_REGION_LABEL = 'Table';
 
 export interface TnTableDataSource<T = unknown> {
   data?: T[];
@@ -123,6 +144,12 @@ function getExpandDuration(): string {
     '[class.tn-table--scroll]': 'isScrollMode()',
     '[style.--tn-table-active-bg]': 'activeBg()',
     '[style.--tn-table-active-indicator]': 'activeIndicator()',
+    // The host is the element that scrolls (see `overflow-x` in the stylesheet
+    // and `scrollKeyboardReachable` below), so it is the element that has to be
+    // reachable when it does. All three arrive and leave together.
+    '[attr.tabindex]': 'scrollKeyboardReachable() ? "0" : null',
+    '[attr.role]': 'scrollKeyboardReachable() ? "group" : null',
+    '[attr.aria-label]': 'scrollKeyboardReachable() ? resolvedScrollRegionLabel() : null',
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
@@ -139,6 +166,45 @@ export class TnTableComponent<T = unknown> implements OnInit {
    */
   private focusBeforeLoading: HTMLElement | null = null;
 
+  /**
+   * Whether the host carries a tab stop, `role="group"` and a name because it
+   * is currently scrolling (#270).
+   *
+   * `:host` is `overflow-x: auto` — the stylesheet says why the scrollport is
+   * the host and not `.tn-table__table` — so a table wider than its container
+   * scrolls HERE, and axe's `scrollable-region-focusable` reports a scroll
+   * container that is neither in the tab order nor holds anything that is.
+   *
+   * Which this table is depends entirely on how it was configured: sortable
+   * headers and clickable rows are `tabindex="0"`, so a table with either
+   * satisfies the rule through its content, and a plain read-only one — the
+   * default of every input on this component — satisfies nothing and leaves its
+   * trailing columns unreachable from a keyboard.
+   *
+   * Gated on the measurement rather than on `isScrollMode()`: that class says
+   * which LAYOUT the container's width selected, and this asks whether the
+   * content actually exceeds the box, which is a different question and the one
+   * axe asks. The measurement, the observers behind it and the rule that holds
+   * the answer true while the host has focus are `tnScrollableRegion`'s.
+   *
+   * A field initializer rather than the constructor, because it registers an
+   * `effect` and so needs an injection context.
+   */
+  protected scrollKeyboardReachable = tnScrollableRegion(
+    () => this.elementRef.nativeElement as HTMLElement
+  );
+
+  /**
+   * The scroll region's name, falling back when a consumer passes whitespace.
+   *
+   * Blank is not a name: an `aria-label=" "` names the group as emptily as no
+   * label at all, and axe agrees — the same rule `tnAccessibleName` applies to
+   * every other name in this library.
+   */
+  protected resolvedScrollRegionLabel = computed(
+    () => this.scrollRegionAriaLabel().trim() || TN_TABLE_SCROLL_REGION_LABEL
+  );
+
   // --- Core inputs ---
   dataSource = input<TnTableDataSource<T> | T[]>([]);
   displayedColumns = input<string[]>([]);
@@ -154,6 +220,18 @@ export class TnTableComponent<T = unknown> implements OnInit {
   emptyDescription = input<string>('');
 
   emptyIcon = input<string>('');
+
+  /**
+   * Accessible name for the table's own scroll region, used only while the host
+   * actually scrolls — see `scrollKeyboardReachable` and
+   * `TN_TABLE_SCROLL_REGION_LABEL`.
+   *
+   * Set it to say what the table holds ("Storage pools"). It names the SCROLL
+   * REGION rather than the table: a table's own structure is announced from its
+   * rows and headers, and this is the box around it that a keyboard user stands
+   * on to scroll sideways.
+   */
+  scrollRegionAriaLabel = input<string>(TN_TABLE_SCROLL_REGION_LABEL);
 
   // --- Feature inputs (all opt-in) ---
   selectable = input<boolean>(false);

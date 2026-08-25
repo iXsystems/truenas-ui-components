@@ -1,4 +1,12 @@
-import { AA_MINIMUM, contrastRatio, formatRatio, meetsAa, themePalettes } from './contrast-testing';
+import {
+  AA_MINIMUM,
+  compositeColor,
+  contrastRatio,
+  formatRatio,
+  meetsAa,
+  mixColors,
+  themePalettes,
+} from './contrast-testing';
 import * as contrastTesting from './contrast-testing';
 import * as publicApi from '../../public-api';
 
@@ -131,6 +139,117 @@ describe('contrastRatio', () => {
       expect(() => contrastRatio('#ffffff', 'rgba(0, 0, 0, 0.5)')).toThrow('is not opaque');
       expect(() => contrastRatio('#ffffff', '#00000080')).toThrow('is not opaque');
     });
+  });
+});
+
+/**
+ * The way out of the refusal above: `contrastRatio` tells a caller to composite
+ * a translucent background against what is behind it and pass the result, and
+ * this is what does that.
+ */
+describe('compositeColor', () => {
+  it('mixes each channel by the front colour\'s alpha, source-over', () => {
+    // 20% white over #007db3 — the wash #261 removed from the chip's close
+    // circle. Worked by hand: 0.2 x 255 + 0.8 x 0 = 51 on red, and
+    // 0.2 x 255 + 0.8 x 179 = 194.2 on blue.
+    expect(compositeColor('rgba(255, 255, 255, 0.2)', '#007db3')).toBe('rgb(51, 151, 194.20000000000002)');
+  });
+
+  it('does not round the channels, because the gamma curve is applied after this', () => {
+    // A fractional channel is not a defect to be tidied up: rounding here moves
+    // the ratio in whichever direction the rounding went, and the whole reason
+    // the close circle needed measuring was a pair sitting at 3.31:1 against a
+    // 4.5 threshold. The two-decimal difference this makes is the difference
+    // between #261's own table (3.24:1 for Dracula, channels rounded) and what
+    // this file reports (3.23:1).
+    expect(compositeColor('rgba(255, 255, 255, 0.2)', '#007db3')).not.toBe('rgb(51, 151, 194)');
+  });
+
+  it('returns the backdrop unchanged for a fully transparent front', () => {
+    // `background-color: transparent` is what the fixed close circle declares,
+    // and reading it back out of the stylesheet has to mean "no wash" rather
+    // than throw — otherwise the spec that composites a declared background
+    // cannot express the state the fix puts it in.
+    expect(compositeColor('transparent', '#007db3')).toBe('rgb(0, 125, 179)');
+  });
+
+  it('returns the front unchanged when it is fully opaque', () => {
+    expect(compositeColor('#ffffff', '#007db3')).toBe('rgb(255, 255, 255)');
+  });
+
+  it('composites to a colour contrastRatio then accepts as a background', () => {
+    // The two halves fitting together is the point of the export: the result is
+    // opaque, so it does not hit the refusal that sent the caller here. The
+    // number is #261's own headline — white on --tn-primary is 4.58:1 on the
+    // chip, the ratio themes.css records next to the token, and 3.31:1 once the
+    // close circle's wash is between them. Both are asserted, because a wash
+    // that made no difference would satisfy the first line on its own.
+    const behind = compositeColor('rgba(255, 255, 255, 0.2)', '#007db3');
+    expect(formatRatio(contrastRatio('#ffffff', behind))).toBe('3.31:1');
+    expect(formatRatio(contrastRatio('#ffffff', '#007db3'))).toBe('4.58:1');
+  });
+
+  it('refuses a translucent backdrop, for the same reason contrastRatio does', () => {
+    expect(() => compositeColor('rgba(255, 255, 255, 0.2)', 'rgba(0, 0, 0, 0.5)'))
+      .toThrow('is not opaque');
+  });
+
+  it('refuses a colour it cannot read rather than guessing at one', () => {
+    // `transparent` is the one keyword read, and it is not a hue. A real colour
+    // name still has to be converted by the caller.
+    expect(() => compositeColor('red', '#007db3')).toThrow('is not a colour this can read');
+  });
+});
+
+describe('mixColors', () => {
+  it('weights each channel by the first colour\'s percentage', () => {
+    // The table's own sortable-header hover in .tn-blue: 85% of #007db3 mixed
+    // with white. Worked by hand: 0.85 x 0 + 0.15 x 255 = 38.25 on red, and
+    // 0.85 x 179 + 0.15 x 255 = 190.4 on blue.
+    expect(mixColors('#007db3', '#ffffff', 85)).toBe('rgb(38.25, 144.5, 190.4)');
+  });
+
+  it('is the same arithmetic as compositing the second colour at the remaining alpha', () => {
+    // Not decoration: it is why this needs no colour maths of its own beyond the
+    // weighting, and why a caller can reason about a mix and a wash the same
+    // way. If these ever disagree, one of the two is wrong about sRGB mixing.
+    expect(mixColors('#007db3', '#ffffff', 85))
+      .toBe(compositeColor('rgba(255, 255, 255, 0.15)', '#007db3'));
+  });
+
+  it('does not round the channels, because the gamma curve is applied after this', () => {
+    expect(mixColors('#007db3', '#ffffff', 85)).not.toBe('rgb(38, 145, 190)');
+  });
+
+  it('reads every colour form contrastRatio does, so a caller cannot narrow it by accident', () => {
+    // The shorthand hex and the functional form are the ones a hand-rolled
+    // parser drops: #fff is #ffffff, not #0f0f0f, and a spec that measured one
+    // palette and threw on another spelling of the same colour would be a hole
+    // in the spec reported as a palette problem.
+    expect(mixColors('#007db3', '#fff', 85)).toBe(mixColors('#007db3', '#ffffff', 85));
+    expect(mixColors('#007db3', 'rgb(255, 255, 255)', 85)).toBe(mixColors('#007db3', '#ffffff', 85));
+  });
+
+  it('returns each colour unchanged at the ends of the range', () => {
+    expect(mixColors('#007db3', '#ffffff', 100)).toBe('rgb(0, 125, 179)');
+    expect(mixColors('#007db3', '#ffffff', 0)).toBe('rgb(255, 255, 255)');
+  });
+
+  it('refuses a translucent input, because CSS mixes those into a translucent colour', () => {
+    // Both positions, because either one carries the alpha into the result and
+    // the caller would get a number for a colour whose rendering depends on
+    // what is behind it.
+    expect(() => mixColors('rgba(0, 0, 0, 0.5)', '#ffffff', 85)).toThrow('is not opaque');
+    expect(() => mixColors('#007db3', 'rgba(255, 255, 255, 0.85)', 85)).toThrow('is not opaque');
+  });
+
+  it('refuses a percentage that is not one', () => {
+    expect(() => mixColors('#007db3', '#ffffff', 150)).toThrow('is not a percentage');
+    expect(() => mixColors('#007db3', '#ffffff', Number.NaN)).toThrow('is not a percentage');
+  });
+
+  it('refuses a colour it cannot read rather than guessing at one', () => {
+    expect(() => mixColors('#007db3', 'red', 85)).toThrow('is not a colour this can read');
   });
 });
 

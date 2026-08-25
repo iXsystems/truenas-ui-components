@@ -500,8 +500,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // (effect timing vs. embedded-view refresh) — render them first so the
     // measurement below never sees a stale, shorter panel.
     this.panelViewRef?.detectChanges();
+    // The listbox rather than the panel wrapper: the wrapper does not scroll
+    // (#292), so its scrollHeight always equals its clientHeight and this
+    // check would read every panel as underfilled.
     const panel = this.overlayRef?.overlayElement
-      ?.querySelector<HTMLElement>('.tn-autocomplete__dropdown');
+      ?.querySelector<HTMLElement>('.tn-autocomplete__listbox');
     if (panel && panel.scrollHeight <= panel.clientHeight) {
       this.loadMorePending = true;
       this.loadMore.emit();

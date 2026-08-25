@@ -1,7 +1,11 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { TN_THEME_DEFINITIONS } from './theme.constants';
-import { formatRatio, themePalettes } from '../a11y/contrast-testing';
+import { formatRatio } from '../a11y/contrast-testing';
+import type {
+  ContrastPairing} from '../a11y/palette-contrast-testing';
+import {
+  itDeclares,
+  itMeasuresEveryRegisteredPalette,
+  testEachPalette,
+} from '../a11y/palette-contrast-testing';
 
 /**
  * `--tn-fg3` and `--tn-fg4` were documented as text roles — "muted text
@@ -40,13 +44,12 @@ import { formatRatio, themePalettes } from '../a11y/contrast-testing';
  * is regenerated from the one measured here rather than read as it was
  * committed. `themes-css-copy.spec.ts` keeps the committed copy honest anyway.
  *
- * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197);
+ * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197) and
+ * the per-palette harness is `lib/a11y/palette-contrast-testing.ts` (#295);
  * nothing is re-derived here. `primary-text-contrast.spec.ts` and
  * `semantic-status-contrast.spec.ts` are the same shape at the 4.5:1 text
  * threshold.
  */
-
-const STYLES_DIR = join(__dirname, '../../styles');
 
 /**
  * WCAG 2.1 SC 1.4.11, the minimum for user interface components and graphical
@@ -76,9 +79,12 @@ const SURFACES: Readonly<Record<string, string>> = {
  * as well as one carrying body copy is the way this fix could go wrong.
  *
  * Their order relative to EACH OTHER is a per-theme choice and is deliberately
- * not pinned: `.tn-midnight` reads `--tn-fg2` at 9.04:1 over `--tn-fg1` at
- * 6.25:1 on `--tn-bg1`. The claim is only that neither muted token out-reads
- * either of these.
+ * not pinned. `.tn-midnight` used to be the example — it read `--tn-fg2` at
+ * 9.04:1 over `--tn-fg1` at 6.25:1 on `--tn-bg1` — until #282 lifted its
+ * `--tn-fg1` to clear AA on the fills above `--tn-bg2`, and no palette inverts
+ * the pair today. Not pinned all the same: which of the two leads is
+ * `text-fg-contrast.spec.ts`'s question, and it records rather than forbids.
+ * The claim here is only that neither muted token out-reads either of these.
  */
 const TEXT_TOKENS = ['--tn-fg1', '--tn-fg2'];
 
@@ -95,114 +101,59 @@ const TEXT_TOKENS = ['--tn-fg1', '--tn-fg2'];
  * than the assertion — which the out-read cases used to have, requiring the text
  * tokens while only the muted ones were asserted — lets a palette leave those
  * cases with nothing red anywhere: exactly the silent coverage loss
- * `expectedSelectors` exists to prevent, one layer down.
+ * `itMeasuresEveryRegisteredPalette`'s registry cases exist to prevent, one
+ * layer down.
  */
 const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...TEXT_TOKENS, ...MUTED_TOKENS];
 
 /**
+ * Both muted tokens on both surfaces — the full cross product, built from the
+ * two lists rather than written out, so a token or a surface added above is
+ * measured without a second edit here.
+ */
+const PAIRINGS: readonly ContrastPairing[] = MUTED_TOKENS.flatMap((token) =>
+  Object.entries(SURFACES).map(([surface, where]) => ({ token, surface, where })));
+
+/**
  * Muted-over-text inversions that are real, recorded as the PAIR that inverts
- * and why. `.tn-solarized-dark`'s `--tn-fg1` measures 2.79:1 on `--tn-bg1` and
- * 2.42:1 on `--tn-bg2` — beneath the 3:1 floor `--tn-fg3` and `--tn-fg4` are now
- * held to — so both necessarily clear it. No value that clears 3:1 can sit under
- * 2.79:1, so this is not something the retune could have avoided by choosing
- * different colours: it is `--tn-fg1` that is wrong, tracked as #265.
+ * and why.
+ *
+ * EMPTY, and that is the resolved state rather than an unwritten one. It held
+ * `.tn-solarized-dark`'s `--tn-fg3/--tn-fg1` and `--tn-fg4/--tn-fg1` while that
+ * theme's `--tn-fg1` measured 2.79:1 on `--tn-bg1` and 2.42:1 on `--tn-bg2` —
+ * beneath the 3:1 floor these two are held to, so both necessarily cleared it.
+ * No value clearing 3:1 could sit under 2.79:1, so it was never something this
+ * retune could have avoided by choosing different colours; it was `--tn-fg1`
+ * that was wrong. #265 retuned it to #fdf6e3 (13.92:1 / 12.05:1), which is what
+ * failed the "still there" case below and took the entry out — the mechanism
+ * working, rather than a note anyone had to remember to delete.
  *
  * By the pair rather than by the palette, because recording the palette
  * suppressed every comparison in it. `--tn-fg3` against Solarized Dark's
- * `--tn-fg2` (4.32:1 on `--tn-bg2`) is a live claim with nothing to do with
- * #265, and a `--tn-fg3` of #c0d0d5 — well past that `--tn-fg2` — shipped green
- * while the entry was keyed on the theme.
+ * `--tn-fg2` was a live claim with nothing to do with #265, and a `--tn-fg3` of
+ * #c0d0d5 — well past that `--tn-fg2` — shipped green while the entry was keyed
+ * on the theme.
  *
- * Asserted to STILL BE TRUE rather than merely skipped, so #265 retuning
- * `--tn-fg1` breaks this suite and takes the entry out with it, instead of
- * leaving a note here that has quietly stopped describing the palette.
+ * Anything added here is asserted to STILL BE TRUE rather than merely skipped,
+ * so a pair that stops inverting takes its own entry out the same way.
  */
-const OUTREADS_TEXT: Readonly<Record<string, { pairs: string[]; why: string }>> = {
-  '.tn-solarized-dark': {
-    pairs: ['--tn-fg3/--tn-fg1', '--tn-fg4/--tn-fg1'],
-    why: '--tn-fg1 is 2.79:1 on --tn-bg1 and 2.42:1 on --tn-bg2, below the 3:1 these two now clear (#265)',
-  },
-};
-
-interface ThemeCase {
-  selector: string;
-  token: string;
-  colour: string;
-  ratios: string;
-  failing: string[];
-}
+const OUTREADS_TEXT: Readonly<Record<string, { pairs: string[]; why: string }>> = {};
 
 describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
-  const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
-  const palettes = themePalettes(css);
+  // Only the palettes that declare every required token are measured — one that
+  // does not has already failed inside `itDeclares`, and measuring it would add
+  // a second failure saying the same thing in worse words.
+  const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
 
-  // Derived from the theme registry rather than hardcoded: a themed surface
-  // that stops being recognised — a renamed class, a block that drops
-  // `--tn-bg1` — would otherwise go unmeasured while every remaining case still
-  // passed.
-  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
-
-  it('found every registered themed surface in themes.css', () => {
-    expect(palettes).toHaveLength(expectedSelectors.length);
-  });
-
-  it.each(expectedSelectors)('%s is a themed surface found in themes.css', (selector) => {
-    expect(palettes.map((palette) => palette.selector)).toContain(selector);
-  });
-
-  const declarations = palettes.map((palette) => ({
-    selector: palette.selector,
-    missing: REQUIRED_TOKENS.filter((token) => !palette.declares(token)),
-  }));
-
-  // Titled from the list rather than spelling it out, so a token added to
-  // REQUIRED_TOKENS cannot leave the case name describing the old set.
-  it.each(declarations)(
-    `$selector declares ${REQUIRED_TOKENS.join(', ')} itself`,
-    ({ missing }) => {
-      expect(missing).toEqual([]);
-    }
-  );
-
-  // Only the surfaces that passed the check above are measured — a palette
-  // missing a token has already failed, and measuring it would add a second
-  // failure saying the same thing in worse words. If that leaves nothing to
-  // measure, `it.each` errors on the empty array rather than reporting a suite
-  // with no contrast cases in it as green.
-  const cases: ThemeCase[] = palettes
-    .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
-    .flatMap((palette) => MUTED_TOKENS.map((token) => {
-      const measured = Object.keys(SURFACES).map((surface) => ({
-        surface,
-        ratio: palette.contrast(token, surface),
-      }));
-      return {
-        selector: palette.selector,
-        token,
-        colour: palette.color(token),
-        ratios: measured
-          .map(({ surface, ratio }) => `${surface.slice(5)} ${formatRatio(ratio)}`)
-          .join(', '),
-        // Listed rather than reduced to a boolean, so a failure prints the
-        // surface and the number instead of "expected true". Compared
-        // unrounded: a pair measuring 2.999 does not clear 3:1, however it
-        // formats.
-        failing: measured
-          .filter(({ ratio }) => ratio < NON_TEXT_MINIMUM)
-          .map(({ surface, ratio }) => `${surface} (${SURFACES[surface]}): ${formatRatio(ratio)}`),
-      };
-    }));
-
-  it.each(cases)('$selector: $token is $colour — $ratios', ({ failing }) => {
-    expect(failing).toEqual([]);
-  });
+  // The 3:1 non-text floor, not an AA text one: these two tokens are for icon
+  // and glyph strokes, decorative marks and inactive affordances.
+  testEachPalette(measured, PAIRINGS, NON_TEXT_MINIMUM);
 
   // Two tokens on the same surface that measure the same are one token with two
   // names. This is what stopped the retune from flattening the ramp while it
   // chased the minimum: in `.tn-blue` and `.tn-midnight` the fix for --tn-fg4
   // pushed it past where --tn-fg3 was, and --tn-fg3 had to move with it.
-  const ramp = palettes
-    .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
+  const ramp = measured
     .flatMap((palette) => Object.keys(SURFACES).map((surface) => ({
       selector: palette.selector,
       surface,
@@ -221,8 +172,7 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
   // pins --tn-fg3 against --tn-fg4, which is the pair the retune moved together;
   // it says nothing about either landing on top of a token that carries actual
   // text, which is what raising a 3:1 token risks.
-  const ranked = palettes
-    .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
+  const ranked = measured
     .flatMap((palette) => Object.keys(SURFACES).map((surface) => {
       const ratio = (token: string) => palette.contrast(token, surface);
       const recordedPairs = OUTREADS_TEXT[palette.selector]?.pairs ?? [];
@@ -234,7 +184,7 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
         .filter((text) => ratio(muted) >= ratio(text))
         .map((text) => ({
           pair: `${muted}/${text}`,
-          measured:
+          reading:
             `${muted} ${formatRatio(ratio(muted))} over ${text} ${formatRatio(ratio(text))}`,
         })));
       return {
@@ -245,7 +195,7 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
           .join(', '),
         unrecorded: outreading
           .filter(({ pair }) => !recordedPairs.includes(pair))
-          .map(({ measured }) => measured),
+          .map(({ reading }) => reading),
         // Recorded pairs that have STOPPED inverting. #265 retuning --tn-fg1
         // fills this, which is what fails the case below and forces the entry
         // out; a pair recorded under a name nothing measures fills it too.
@@ -281,7 +231,7 @@ describe('--tn-fg3/--tn-fg4 non-text contrast (#240)', () => {
   }
 
   it('every palette recorded in OUTREADS_TEXT was measured', () => {
-    const measured = ranked.map(({ selector }) => selector);
-    expect(Object.keys(OUTREADS_TEXT).filter((selector) => !measured.includes(selector))).toEqual([]);
+    const ranking = ranked.map(({ selector }) => selector);
+    expect(Object.keys(OUTREADS_TEXT).filter((selector) => !ranking.includes(selector))).toEqual([]);
   });
 });

@@ -193,7 +193,7 @@ export const FullWidth: Story = {
     props: args,
     template: `
       <div style="width: 360px; display: flex; flex-direction: column; gap: 16px;
-                  padding: 16px; border: 1px dashed var(--lines, #ccc);">
+                  padding: 16px; border: 1px dashed var(--tn-lines);">
         <tn-slide-toggle
           [label]="label"
           [labelPosition]="labelPosition"

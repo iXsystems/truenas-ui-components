@@ -332,19 +332,19 @@ export const LibraryComparison: Story = {
   render: () => ({
     template: `
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px;">
-        <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+        <div style="text-align: center; border: 1px solid var(--tn-lines); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">Material (Default)</h4>
           <tn-icon name="home" size="lg" tooltip="Material Home"></tn-icon>
           <div style="margin-top: 8px;">name="home"</div>
           <div style="font-size: 12px; color: var(--tn-alt-fg1);">Unicode fallback</div>
         </div>
-        <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+        <div style="text-align: center; border: 1px solid var(--tn-lines); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">Lucide</h4>
           <tn-icon name="home" library="lucide" size="lg" tooltip="Lucide Home"></tn-icon>
           <div style="margin-top: 8px;">library="lucide"</div>
           <div style="font-size: 12px; color: var(--tn-alt-fg1);">Library parameter</div>
         </div>
-        <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+        <div style="text-align: center; border: 1px solid var(--tn-lines); padding: 16px; border-radius: 8px;">
           <h4 style="margin-top: 0;">MDI</h4>
           <tn-icon name="folder" library="mdi" size="lg" tooltip="MDI Folder"></tn-icon>
           <div style="margin-top: 8px;">library="mdi"</div>
@@ -390,9 +390,9 @@ export const SizesAndColors: Story = {
         <h4>Colors</h4>
         <div style="display: flex; align-items: center; gap: 16px;">
           <tn-icon name="server" library="mdi" size="lg" color="var(--tn-primary, #007acc)"></tn-icon>
-          <tn-icon name="server" library="mdi" size="lg" color="var(--success, #28a745)"></tn-icon>
-          <tn-icon name="server" library="mdi" size="lg" color="var(--warning, #ffc107)"></tn-icon>
-          <tn-icon name="server" library="mdi" size="lg" color="var(--danger, #dc3545)"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--tn-success, var(--tn-green, #416f26))"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--tn-warning, var(--tn-orange, #955313))"></tn-icon>
+          <tn-icon name="server" library="mdi" size="lg" color="var(--tn-error, var(--tn-red, #bd2626))"></tn-icon>
           <tn-icon name="server" library="mdi" size="lg" color="#9c27b0"></tn-icon>
         </div>
       </div>
@@ -419,19 +419,19 @@ export const FullSize: Story = {
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px;">
           <div style="text-align: center;">
-            <div style="width: 48px; height: 48px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <div style="width: 48px; height: 48px; border: 2px dashed var(--tn-lines); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
               <tn-icon name="harddisk" library="mdi" [fullSize]="true"></tn-icon>
             </div>
             <div style="margin-top: 8px; font-size: 12px;">48×48 container</div>
           </div>
           <div style="text-align: center;">
-            <div style="width: 80px; height: 80px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <div style="width: 80px; height: 80px; border: 2px dashed var(--tn-lines); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
               <tn-icon name="harddisk" library="mdi" [fullSize]="true"></tn-icon>
             </div>
             <div style="margin-top: 8px; font-size: 12px;">80×80 container</div>
           </div>
           <div style="text-align: center;">
-            <div style="width: 120px; height: 120px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <div style="width: 120px; height: 120px; border: 2px dashed var(--tn-lines); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
               <tn-icon name="harddisk" library="mdi" [fullSize]="true"></tn-icon>
             </div>
             <div style="margin-top: 8px; font-size: 12px;">120×120 container</div>
@@ -440,17 +440,17 @@ export const FullSize: Story = {
 
         <h4>Comparison: Fixed Size vs Full Size</h4>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
-          <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+          <div style="text-align: center; border: 1px solid var(--tn-lines); padding: 16px; border-radius: 8px;">
             <h5 style="margin-top: 0;">Fixed Size (default)</h5>
-            <div style="width: 100px; height: 100px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <div style="width: 100px; height: 100px; border: 2px dashed var(--tn-lines); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
               <tn-icon name="server" library="mdi" size="lg"></tn-icon>
             </div>
             <code style="display: block; margin-top: 8px; font-size: 11px;">size="lg"</code>
             <div style="font-size: 12px; color: var(--tn-alt-fg1);">Icon stays at fixed lg size</div>
           </div>
-          <div style="text-align: center; border: 1px solid var(--border-color, #ccc); padding: 16px; border-radius: 8px;">
+          <div style="text-align: center; border: 1px solid var(--tn-lines); padding: 16px; border-radius: 8px;">
             <h5 style="margin-top: 0;">Full Size</h5>
-            <div style="width: 100px; height: 100px; border: 2px dashed var(--border-color, #ccc); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <div style="width: 100px; height: 100px; border: 2px dashed var(--tn-lines); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
               <tn-icon name="server" library="mdi" [fullSize]="true"></tn-icon>
             </div>
             <code style="display: block; margin-top: 8px; font-size: 11px;">[fullSize]="true"</code>

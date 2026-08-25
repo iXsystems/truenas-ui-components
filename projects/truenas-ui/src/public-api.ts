@@ -11,6 +11,7 @@ export * from './lib/drawer/drawer.harness';
 export * from './lib/disk-icon/disk-icon.component';
 export * from './lib/banner/banner.component';
 export * from './lib/banner/banner.harness';
+export * from './lib/banner/banner-action.harness';
 export * from './lib/button/button.component';
 export * from './lib/button/button.harness';
 export * from './lib/icon-button/icon-button.component';

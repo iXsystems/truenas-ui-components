@@ -149,6 +149,88 @@ export function contrastRatio(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+/**
+ * The opaque colour a translucent `front` renders as when it is painted over
+ * `back` — source-over compositing, as `rgb(r, g, b)`.
+ *
+ * This is the answer `contrastRatio` refuses to guess at. A translucent
+ * BACKGROUND has no ratio of its own, so that function throws and tells the
+ * caller to "composite it against that surface and pass the result" — and until
+ * this was exported there was no way to do so, which is how a wash painted over
+ * a themed surface came to be excused from measurement rather than measured
+ * (#261: `.tn-chip__close` washing `rgba(255,255,255,0.2)` over the chip, with
+ * the `×` inheriting a colour chosen for the unwashed surface, at 3.31:1).
+ *
+ * `back` must be opaque, for the same reason `contrastRatio`'s background must
+ * be: what is behind it decides the answer. Stacking two washes is therefore
+ * two calls, innermost first, which is also the order a browser paints them.
+ *
+ * Channels are not rounded. The result feeds `contrastRatio`, which linearises
+ * each channel through a gamma curve, and rounding first moves the ratio in
+ * whichever direction the rounding went — the same class of mistake as
+ * comparing a `formatRatio` string against a threshold.
+ */
+export function compositeColor(front: string, back: string): string {
+  const behind = parseColor(back, 'back');
+  if (behind.a !== 1) {
+    throw new Error(
+      `compositeColor: the backdrop ${back} is not opaque, so the colour it renders `
+      + 'as depends on what is behind it. Composite that pair first and pass the result.'
+    );
+  }
+  const { r, g, b } = compositeOver(parseColor(front, 'front'), behind);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+/**
+ * What `color-mix(in srgb, <first> <firstPercent>%, <second>)` computes to, as
+ * `rgb(r, g, b)`.
+ *
+ * A stylesheet that derives one colour from two others puts a surface on the
+ * page that is not any token, so a spec measuring the tokens measures something
+ * nobody sees — `table.component.scss` hovers its sortable headers to a mix of
+ * `--tn-topbar` with `--tn-topbar-txt`, and until this existed that fill could
+ * only be argued about (#277). `parseColor` refuses `color-mix()` itself, and
+ * rightly: this takes the two colours and the percentage, which is what the
+ * caller has to have read out of the stylesheet anyway.
+ *
+ * BOTH INPUTS MUST BE OPAQUE, and a translucent one throws. CSS mixes those
+ * with premultiplied alpha and hands back a translucent colour, whose rendered
+ * value depends on whatever is behind it — the same reason `contrastRatio`
+ * refuses a translucent background. Supporting it here would produce a number
+ * for a colour that renders differently everywhere it is used.
+ *
+ * Channels are not rounded, for the reason `compositeColor` gives: the result
+ * feeds a gamma curve, and rounding first moves the ratio.
+ */
+export function mixColors(first: string, second: string, firstPercent: number): string {
+  if (!Number.isFinite(firstPercent) || firstPercent < 0 || firstPercent > 100) {
+    throw new Error(`mixColors: ${String(firstPercent)} is not a percentage between 0 and 100`);
+  }
+  const opaque = (colour: string, role: string): Rgba => {
+    const parsed = parseColor(colour, `mixColors ${role}`);
+    if (parsed.a !== 1) {
+      throw new Error(
+        `mixColors: ${role} ${colour} is not opaque. CSS mixes a translucent colour with `
+        + 'premultiplied alpha and the result is translucent too, so what it renders as '
+        + 'depends on what is behind it.'
+      );
+    }
+    return parsed;
+  };
+  const a = opaque(first, 'first');
+  const b = opaque(second, 'second');
+  // Both weights divided out of the integer percentages rather than one taken
+  // as `1 - other`: at 85% that subtraction gives 0.15000000000000002, and the
+  // channel it produces differs in the last bits from the one `compositeColor`
+  // computes for the same mix. Two functions that are the same arithmetic
+  // should agree exactly, and the spec asserts that they do.
+  const weight = firstPercent / 100;
+  const rest = (100 - firstPercent) / 100;
+  const mix = (from: number, to: number): number => from * weight + to * rest;
+  return `rgb(${mix(a.r, b.r)}, ${mix(a.g, b.g)}, ${mix(a.b, b.b)})`;
+}
+
 /** One themed surface from `themes.css`: `:root`, `.tn-dark`, `.tn-nord`, … */
 export interface ThemePalette {
   /** The selector the block was declared under. */
@@ -416,6 +498,15 @@ function customProperties(body: string): Map<string, string> {
 
 function parseColor(value: string, context: string): Rgba {
   const text = value.trim();
+  // The one colour keyword read here, and it is not a hue: `transparent` is
+  // `rgba(0, 0, 0, 0)`, which is how a stylesheet says "paint nothing". Refusing
+  // it would mean a spec compositing a declared background could not read the
+  // value that means there is no wash — the very state #261's fix puts the
+  // close circle in. Every actual colour name stays refused: `red` has to be
+  // converted, and guessing at one is how a wrong ratio gets asserted.
+  if (text.toLowerCase() === 'transparent') {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
   const hex = /^#([0-9a-f]+)$/i.exec(text);
   if (hex) {
     return parseHex(hex[1], text, context);
