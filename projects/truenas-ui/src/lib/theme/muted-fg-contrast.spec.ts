@@ -101,7 +101,8 @@ const TEXT_TOKENS = ['--tn-fg1', '--tn-fg2'];
  * than the assertion — which the out-read cases used to have, requiring the text
  * tokens while only the muted ones were asserted — lets a palette leave those
  * cases with nothing red anywhere: exactly the silent coverage loss
- * `expectedSelectors` exists to prevent, one layer down.
+ * `itMeasuresEveryRegisteredPalette`'s registry cases exist to prevent, one
+ * layer down.
  */
 const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...TEXT_TOKENS, ...MUTED_TOKENS];
 

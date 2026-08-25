@@ -97,8 +97,10 @@ const REQUIRED_TOKENS = [
  * One (token, surface) pairing, with the call sites that create it.
  *
  * `ContrastPairing` leaves `where` optional; every entry here has one, and the
- * narrowing is what keeps a new pairing from arriving without saying where to go
- * and look when it fails.
+ * narrowing is what keeps a new pairing from arriving with nothing recorded
+ * about what puts it on the page. It is documentation rather than output — the
+ * case titles below name the token, the surface and the ratio, and a reader
+ * chasing one comes back to this table for the call sites.
  */
 interface Pairing extends ContrastPairing {
   readonly where: string;
