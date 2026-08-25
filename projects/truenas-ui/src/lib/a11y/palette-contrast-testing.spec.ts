@@ -7,6 +7,8 @@ import {
   registeredSelectors,
   THEME_STYLESHEET,
 } from './palette-contrast-testing';
+import * as paletteContrastTesting from './palette-contrast-testing';
+import * as publicApi from '../../public-api';
 import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
 
 /**
@@ -42,6 +44,31 @@ const FIXTURE = `
     --tn-fg1: #ffffff;
   }
 `;
+
+/**
+ * The docblock in `palette-contrast-testing.ts` says this module must not be
+ * exported, and this is what holds it to that — the same guard
+ * `contrast-testing.spec.ts` and `axe-testing.spec.ts` carry, and it matters
+ * more here. Those two are merely useless to a consumer; this one imports `fs`,
+ * so an `export * from './lib/a11y/palette-contrast-testing'` added to
+ * `public-api.ts` by the same reflex that exported `icon-testing` and
+ * `toast-testing` would pull a Node builtin into the ng-packagr build. Nothing
+ * in this repository would fail — the library builds, and the break lands on
+ * whoever bundles the package for a browser.
+ *
+ * The names are derived from the module rather than restated, for the reason
+ * `axe-testing.spec.ts` gives: a guard keyed to a string literal covers one name
+ * and not the module, and both a rename and a second export walk out from under
+ * it without breaking anything. `Object.hasOwn` rather than `in`, so a
+ * public-api export named after an `Object.prototype` key does not fail this for
+ * a reason unrelated to the claim.
+ */
+describe('palette-contrast-testing is not part of the public API', () => {
+  it('exports nothing that public-api.ts also exports', () => {
+    expect(Object.keys(publicApi).filter((name) => Object.hasOwn(paletteContrastTesting, name)))
+      .toEqual([]);
+  });
+});
 
 describe('palette-contrast-testing', () => {
   describe('THEME_STYLESHEET', () => {

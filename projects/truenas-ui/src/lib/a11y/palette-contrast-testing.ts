@@ -37,7 +37,11 @@ import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
  *
  * The pure halves are exported separately (`missingTokens`,
  * `paletteContrastCases`) so that `palette-contrast-testing.spec.ts` can assert
- * on them without a jest runner inside a jest runner.
+ * on them without a jest runner inside a jest runner — and so that a spec whose
+ * exclusions the shared case cannot express still gets the walk rather than
+ * writing a tenth copy of it. `text-token-surface-contrast.spec.ts` is that
+ * spec: `KNOWN_GAPS` excuses individual (palette, token, surface) triples, which
+ * a per-pairing list has no way to say.
  *
  * WHAT THIS IS NOT
  * ----------------
@@ -254,9 +258,11 @@ export function testEachPalette(
   const cases = paletteContrastCases(palettes, pairings);
 
   it('there are pairings to measure', () => {
-    // `it.each` on an empty table is a jest collection error, which says only
-    // that the table was empty. This says which of the two inputs was: a spec
-    // whose palettes were all filtered out, or one whose pairing list is empty.
+    // Nothing to measure is not a passing suite, and `it.each` on an empty table
+    // is a jest COLLECTION error — it takes the whole file down before the cases
+    // above it are reported, so the declaration failure that emptied the palette
+    // list is never shown. This reports it as one ordinary red case instead,
+    // underneath the ones that say why.
     expect(cases.length).toBeGreaterThan(0);
   });
 

@@ -6,7 +6,12 @@ import {
   formatRatio,
   meetsAa,
 } from '../a11y/contrast-testing';
-import { itDeclares, itMeasuresEveryRegisteredPalette } from '../a11y/palette-contrast-testing';
+import type { ContrastPairing, PaletteContrastCase } from '../a11y/palette-contrast-testing';
+import {
+  itDeclares,
+  itMeasuresEveryRegisteredPalette,
+  paletteContrastCases,
+} from '../a11y/palette-contrast-testing';
 
 /**
  * The text tokens, measured on the surfaces `text-fg-contrast.spec.ts`
@@ -88,11 +93,14 @@ const REQUIRED_TOKENS = [
   ...Object.keys(TEXT_TOKENS).filter((token) => token !== '--tn-topbar-txt'),
 ];
 
-/** One (token, surface) pairing, with the call sites that create it. */
-interface Pairing {
-  readonly token: string;
-  readonly surface: string;
-  /** Where this pairing happens, so a failure names something to go and look at. */
+/**
+ * One (token, surface) pairing, with the call sites that create it.
+ *
+ * `ContrastPairing` leaves `where` optional; every entry here has one, and the
+ * narrowing is what keeps a new pairing from arriving without saying where to go
+ * and look when it fails.
+ */
+interface Pairing extends ContrastPairing {
   readonly where: string;
 }
 
@@ -472,18 +480,8 @@ function scssFiles(directory: string): string[] {
     .sort();
 }
 
-interface PairingCase {
-  selector: string;
-  token: string;
-  role: string;
-  colour: string;
-  surface: string;
-  surfaceName: string;
-  surfaceColour: string;
-  where: string;
-  ratio: number;
-  ratioLabel: string;
-}
+/** A measured pairing, with the two names this file's case titles add. */
+type PairingCase = PaletteContrastCase & { role: string; surfaceName: string };
 
 describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#277)', () => {
   // Only the palettes that declare every required token are measured — one that
@@ -491,20 +489,15 @@ describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#
   // a second failure saying the same thing in worse words.
   const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
 
-  const cases: PairingCase[] = measured.flatMap((palette) => PAIRINGS.map((pairing) => {
-    const ratio = palette.contrast(pairing.token, pairing.surface);
-    return {
-      selector: palette.selector,
-      token: pairing.token,
-      role: TEXT_TOKENS[pairing.token],
-      colour: palette.color(pairing.token),
-      surface: pairing.surface,
-      surfaceName: SURFACES[pairing.surface],
-      surfaceColour: palette.color(pairing.surface),
-      where: pairing.where,
-      ratio,
-      ratioLabel: formatRatio(ratio),
-    };
+  // Through `paletteContrastCases` rather than a loop of its own — the same
+  // palette × pairing walk the shared `testEachPalette` does, without the case
+  // it would declare, because what a pairing is held to here depends on whether
+  // `KNOWN_GAPS` records it. That is a per-palette exclusion rather than a
+  // per-pairing one, so the cases are declared below instead.
+  const cases: PairingCase[] = paletteContrastCases(measured, PAIRINGS).map((one) => ({
+    ...one,
+    role: TEXT_TOKENS[one.token],
+    surfaceName: SURFACES[one.surface],
   }));
 
   const excused = new Map(

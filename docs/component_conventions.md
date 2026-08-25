@@ -734,11 +734,12 @@ testEachPalette(measured, PAIRINGS, AA_MINIMUM.normal);
 holding its own path is how one comes to measure the copy the library does not
 render from.
 
-**A spec whose exclusions are per palette keeps its own loop and uses
-`paletteContrastCases` instead** — `theme/text-token-surface-contrast.spec.ts`
-excuses individual (palette, token, surface) triples through `KNOWN_GAPS`, which
-is not something a per-pairing list can express. It still takes the loader and the
-registry cases from here.
+**A spec whose exclusions are per palette calls `paletteContrastCases` and
+declares its own cases** — `theme/text-token-surface-contrast.spec.ts` excuses
+individual (palette, token, surface) triples through `KNOWN_GAPS`, which a
+per-pairing list cannot express. That gets the same palette × pairing walk
+without the case `testEachPalette` would declare, so the loop is still written
+once.
 
 ### Reading a stylesheet back in a spec
 
