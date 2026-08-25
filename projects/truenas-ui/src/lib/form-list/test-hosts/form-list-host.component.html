@@ -8,7 +8,12 @@
   (add)="addEntry()"
 >
   @for (entry of entries.controls; track entry; let i = $index) {
-    <tn-form-list-item label="address" [canDelete]="canDelete()" (delete)="removeEntry(i)">
+    <tn-form-list-item
+      label="address"
+      [canDelete]="canDelete()"
+      [disabled]="lockFirstEntry() && i === 0 ? true : undefined"
+      (delete)="removeEntry(i)"
+    >
       <tn-input [formControl]="entry" />
 
       @if (entryActions()) {

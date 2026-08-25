@@ -40,6 +40,16 @@ export class TnFormListItemHarness extends ComponentHarness {
     return (await this.removeButton()) !== null;
   }
 
+  /**
+   * Whether the remove control is disabled — true for an entry inside a
+   * `disabled` list, or one given its own `disabled`. `false` when the entry
+   * offers no remove control at all; ask `canRemove()` to tell the two apart.
+   */
+  async isRemoveDisabled(): Promise<boolean> {
+    const button = await this.removeButton();
+    return button ? button.isDisabled() : false;
+  }
+
   /** Presses the remove control. Throws when the entry has none. */
   async remove(): Promise<void> {
     const button = await this.removeButton();

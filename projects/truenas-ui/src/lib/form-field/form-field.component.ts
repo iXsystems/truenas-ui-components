@@ -8,10 +8,10 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl, Validators } from '@angular/forms';
 import type { ValidationErrors } from '@angular/forms';
+import { dismissibleErrorState } from './dismissible-error';
 import { TN_FORM_FIELD_CONTEXT } from './form-field-context';
 import type { TnFormFieldContext } from './form-field-context';
 import {
-  TN_FORM_FIELD_DISMISSIBLE_ERRORS,
   TN_FORM_FIELD_ERRORS,
   activeErrorKey,
   clearDismissibleErrors,
@@ -206,9 +206,6 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    */
   private errorResolver = inject(TN_FORM_FIELD_ERRORS, { optional: true });
 
-  /** App-wide dismissible keys, used when the field names none of its own. */
-  private defaultDismissibleErrors = inject(TN_FORM_FIELD_DISMISSIBLE_ERRORS, { optional: true });
-
   /**
    * Snapshot of the relevant control state. Updated from the control's status
    * stream because `NgControl` itself is not signal-based; downstream `computed`s
@@ -266,23 +263,18 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
     return errors ? activeErrorKey(errors) : null;
   });
 
-  /** The field's own list when it has one, otherwise the app-wide default. */
-  protected resolvedDismissibleErrors = computed(
-    () => this.dismissibleErrors() ?? this.defaultDismissibleErrors ?? [],
-  );
-
-  protected showDismiss = computed(() => {
-    const key = this.activeError();
-    return this.showError() && !!key && this.resolvedDismissibleErrors().includes(key);
+  /**
+   * Which list applies, whether the button shows, and what it is called — shared
+   * with `tn-form-errors` so a field message and a group message beside it can
+   * never decide dismissibility by different rules.
+   */
+  protected dismissible = dismissibleErrorState({
+    showError: () => this.showError(),
+    activeError: () => this.activeError(),
+    dismissibleErrors: () => this.dismissibleErrors(),
+    dismissAriaLabel: () => this.dismissAriaLabel(),
+    dismissTooltip: () => this.dismissTooltip(),
   });
-
-  protected readonly resolvedDismissAriaLabel = computed(
-    () => this.dismissAriaLabel() ?? 'Dismiss this error',
-  );
-
-  protected readonly resolvedDismissTooltip = computed(
-    () => this.dismissTooltip() ?? this.resolvedDismissAriaLabel(),
-  );
 
   /**
    * Drops the dismissed error, then puts focus back on the control rather than
@@ -304,7 +296,7 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
     const button = this.dismissButton()?.nativeElement;
     const hadFocus = !!button && button.contains(button.ownerDocument.activeElement);
 
-    clearDismissibleErrors(control, this.resolvedDismissibleErrors());
+    clearDismissibleErrors(control, this.dismissible.resolvedDismissibleErrors());
     this.syncControlState();
     this.dismiss.emit(key);
 

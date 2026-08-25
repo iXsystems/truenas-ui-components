@@ -1,5 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, contentChildren, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy, Component, computed, contentChildren, forwardRef, input, output,
+} from '@angular/core';
 import type { AbstractControl } from '@angular/forms';
+import { TN_FORM_LIST_CONTEXT } from './form-list-context';
+import type { TnFormListContext } from './form-list-context';
 import { TnFormListItemComponent } from './form-list-item.component';
 import { TnButtonComponent } from '../button/button.component';
 import { TnFormErrorsComponent } from '../form-errors/form-errors.component';
@@ -48,10 +52,19 @@ let nextUniqueId = 0;
     TnTestIdDirective,
     LabelMarkupPipe,
   ],
+  providers: [
+    // Published to the projected entries (their element injectors chain through
+    // this host), so `disabled` reaches each remove button without the consumer
+    // re-binding it inside its own @for. See TnFormListContext.
+    {
+      provide: TN_FORM_LIST_CONTEXT,
+      useExisting: forwardRef(() => TnFormListComponent),
+    },
+  ],
   templateUrl: './form-list.component.html',
   styleUrls: ['./form-list.component.scss'],
 })
-export class TnFormListComponent {
+export class TnFormListComponent implements TnFormListContext {
   /**
    * The `FormArray` being edited. Optional, and used only to render an error
    * that belongs to the array as a whole — a minimum or maximum length. The
@@ -79,9 +92,16 @@ export class TnFormListComponent {
   canAdd = input<boolean>(true);
 
   /**
-   * Locks the list, for one the user may not edit yet: Add is disabled and the entries are
-   * dimmed and made `inert`, so neither the mouse nor the keyboard reaches the projected
-   * fields or their remove buttons.
+   * Locks the list, for one the user may not edit yet: the group reports itself
+   * `aria-disabled`, the entries are dimmed and stop taking pointer events, and
+   * Add and every remove button are disabled.
+   *
+   * It does NOT disable the fields inside the entries — those are projected
+   * content the consumer owns, so locking them is `entries.disable()` on the
+   * `FormArray`, which is also what keeps their values out of `form.value`. This
+   * input deliberately does not reach them by going `inert` instead: the entries
+   * stay on screen, and `inert` would drop what a sighted user can still read out
+   * of the accessibility tree entirely.
    */
   disabled = input<boolean>(false);
 
@@ -101,11 +121,42 @@ export class TnFormListComponent {
   /** Per-error overrides for the array-level message, as on `tn-form-field`. */
   errorMessages = input<TnFormFieldErrorMessages>({});
 
-  /** Test-id base for the group (`form-list-` prefixed). */
+  /**
+   * Show the array-level message before the user has touched the array — for a
+   * list populated from an API, or one an error handler has just attached a
+   * server-side failure to. Passed straight to `tn-form-errors`.
+   */
+  showErrorWhenUntouched = input<boolean>(false);
+
+  /**
+   * Error keys whose array-level message renders with a close button, and which
+   * dismissing deletes. Unset takes the app-wide
+   * `TN_FORM_FIELD_DISMISSIBLE_ERRORS` default; `[]` opts this list out. Passed
+   * straight to `tn-form-errors`, which is where the reasoning lives.
+   */
+  dismissibleErrors = input<readonly string[] | undefined>(undefined);
+
+  /** Accessible name for that close button. Pass it already translated. */
+  dismissAriaLabel = input<string | undefined>(undefined);
+
+  /** Hover hint for that close button. Defaults to `dismissAriaLabel`. */
+  dismissTooltip = input<string | undefined>(undefined);
+
+  /**
+   * Test-id base for the group (`form-list-` prefixed). Also names the
+   * array-level message, which gets it `error-` prefixed.
+   */
   testId = input<TnTestIdValue>(undefined);
 
   /** Emitted when Add is pressed. Appending the element is the consumer's. */
   add = output<void>();
+
+  /**
+   * Emitted with the error key when the user closes the array-level message,
+   * after it has been removed. `tn-form-errors` has no control to hand focus
+   * back to, so a consumer who cares where focus lands moves it here.
+   */
+  dismiss = output<string>();
 
   /**
    * The projected entries. Counted rather than derived from the `FormArray`,

@@ -1,28 +1,21 @@
+@use '../form-field/error-row';
+
+// A plain row so a dismissible error can carry its button beside the message.
+.tn-form-errors-row {
+  @include error-row.row;
+}
+
 // Matches `.tn-form-field-error`, so a group message and the field messages
 // around it are the same text at the same weight.
 .tn-form-errors {
+  @include error-row.message;
+
   color: var(--tn-error, var(--tn-red, #bd2626));
   font-size: 0.75rem;
   line-height: 1.4;
   margin: 0;
 }
 
-// A plain row so a dismissible error can carry its button beside the message.
-// With no button this lays out exactly as the message alone did.
-.tn-form-errors-row {
-  display: flex;
-  // Centred, not top-aligned: the button's 32px box (the WCAG 2.5.8 minimum
-  // target, which a smaller icon button would miss) is twice the height of the
-  // message, and top-aligning would drop its icon well below the text.
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.tn-form-errors {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 .tn-form-errors-dismiss {
-  flex: none;
+  @include error-row.dismiss;
 }

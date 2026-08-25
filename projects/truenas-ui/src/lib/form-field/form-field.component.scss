@@ -1,4 +1,5 @@
 @use '../pipes/label-markup/label-markup' as label-markup;
+@use 'error-row';
 
 .tn-form-field {
   display: block;
@@ -115,26 +116,28 @@
 }
 
 // A plain row so a dismissible error can carry its button beside the message.
-// With no button this lays out exactly as the message alone did: one flex child
-// that takes the full width.
 .tn-form-field-error-row {
-  display: flex;
-  // Centred, not top-aligned: the button's 32px box (the WCAG 2.5.8 minimum
-  // target, which a smaller icon button would miss) is twice the height of the
-  // message, and top-aligning would drop its icon well below the text.
-  align-items: center;
-  gap: 0.25rem;
+  @include error-row.row;
 }
 
 .tn-form-field-error {
+  @include error-row.message;
+
   color: var(--tn-error, var(--tn-red, #bd2626));
   margin: 0;
-  flex: 1 1 auto;
-  min-width: 0;
 }
 
 .tn-form-field-error-dismiss {
-  flex: none;
+  @include error-row.dismiss;
+
+  // Give the button a layout box the height of the line the subscript reserves,
+  // and let the 32px target it renders overflow that box rather than open the
+  // row to 32px. `subscriptSizing="fixed"` exists so that revealing an error
+  // does not shift the fields below it, and an error that happens to be
+  // dismissible must not be the one case that shifts them anyway.
+  display: flex;
+  align-items: center;
+  height: 1.25rem;
 }
 
 .tn-form-field-hint {

@@ -225,8 +225,13 @@ export interface ResolveErrorMessageOptions {
   resolver?: TnFormFieldErrorResolver | null;
   /** The failing control, passed through to the resolver. */
   control?: AbstractControl | null;
-  /** Component selector, used only to attribute dev-mode error logs. */
-  selector: string;
+  /**
+   * Who is asking, used only to attribute the dev-mode `console.error` this
+   * logs when a caller-supplied message provider throws. Optional: the library's
+   * own components pass their selector so the log names the element on screen,
+   * and an outside caller has nothing useful to put here.
+   */
+  selector?: string;
 }
 
 /**
@@ -243,7 +248,7 @@ export interface ResolveErrorMessageOptions {
  * field-level one it sits beside.
  */
 export function resolveErrorMessage(options: ResolveErrorMessageOptions): string {
-  const { errors, errorMessages, resolver, control, selector } = options;
+  const { errors, errorMessages, resolver, control, selector = 'resolveErrorMessage' } = options;
 
   const key = activeErrorKey(errors);
   if (!key) {return 'Invalid input';}

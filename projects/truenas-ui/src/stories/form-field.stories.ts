@@ -106,7 +106,7 @@ When used with Angular reactive forms, the form field automatically:
     },
     dismiss: {
       action: 'dismiss',
-      description: 'Emits the error key the user dismissed. The field does not clear it — the consumer does.',
+      description: 'Emits the error key the user dismissed, after the field has already removed every key it lists in dismissibleErrors from the control. Handle it for what happens next — retrying the request, telling the server.',
     },
   },
 };

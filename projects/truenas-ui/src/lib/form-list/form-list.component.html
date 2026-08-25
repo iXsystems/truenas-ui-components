@@ -1,9 +1,16 @@
+<!-- aria-disabled rather than `inert` on the entries: they stay VISIBLE while
+     the list is locked, and `inert` would take the addresses a sighted user can
+     still read straight out of the accessibility tree. A native disabled control
+     stays in the tree and announces as unavailable, and this says the same about
+     the group. `aria-disabled` lives here, on the element that carries the role
+     that supports it. -->
 <div
   class="tn-form-list"
   role="group"
   tnTestIdType="form-list"
   [tnTestId]="testId()"
   [attr.aria-labelledby]="label() ? labelId : null"
+  [attr.aria-disabled]="disabled() ? 'true' : null"
 >
   @if (label() || canAdd()) {
     <div class="tn-form-list__header">
@@ -44,14 +51,19 @@
   }
 
   @if (control(); as control) {
-    <tn-form-errors [control]="control" [errorMessages]="errorMessages()" />
+    <tn-form-errors
+      [control]="control"
+      [errorMessages]="errorMessages()"
+      [showWhenUntouched]="showErrorWhenUntouched()"
+      [dismissibleErrors]="dismissibleErrors()"
+      [dismissAriaLabel]="dismissAriaLabel()"
+      [dismissTooltip]="dismissTooltip()"
+      [testId]="testId()"
+      (dismiss)="dismiss.emit($event)"
+    />
   }
 
-  <div
-    class="tn-form-list__items"
-    [class.tn-form-list__items--disabled]="disabled()"
-    [attr.inert]="disabled() ? '' : null"
-  >
+  <div class="tn-form-list__items" [class.tn-form-list__items--disabled]="disabled()">
     <ng-content />
 
     @if (isEmpty()) {

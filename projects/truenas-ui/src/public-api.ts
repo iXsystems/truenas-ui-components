@@ -53,6 +53,7 @@ export {
   TN_FORM_FIELD_DISMISSIBLE_ERRORS, TN_FORM_FIELD_ERRORS, resolveErrorMessage,
 } from './lib/form-field/form-field.errors';
 export type {
+  ResolveErrorMessageOptions,
   TnFormFieldErrorMessage,
   TnFormFieldErrorMessages,
   TnFormFieldErrorResolver,
@@ -62,6 +63,8 @@ export * from './lib/form-errors/form-errors.component';
 export * from './lib/form-errors/form-errors.harness';
 export * from './lib/form-list/form-list.component';
 export * from './lib/form-list/form-list-item.component';
+export { TN_FORM_LIST_CONTEXT } from './lib/form-list/form-list-context';
+export type { TnFormListContext } from './lib/form-list/form-list-context';
 export * from './lib/form-list/form-list.harness';
 export * from './lib/form-section/form-section.component';
 export * from './lib/form-section/form-section.harness';

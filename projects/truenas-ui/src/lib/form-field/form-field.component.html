@@ -43,15 +43,15 @@
             [attr.id]="errorId">
             {{ errorMessage() }}
           </div>
-          @if (showDismiss()) {
+          @if (dismissible.showDismiss()) {
             <tn-icon-button
               #dismissButton
               class="tn-form-field-error-dismiss"
               name="close"
               library="mdi"
               size="sm"
-              [ariaLabel]="resolvedDismissAriaLabel()"
-              [tooltip]="resolvedDismissTooltip()"
+              [ariaLabel]="dismissible.resolvedDismissAriaLabel()"
+              [tooltip]="dismissible.resolvedDismissTooltip()"
               (onClick)="dismissError()"
             />
           }

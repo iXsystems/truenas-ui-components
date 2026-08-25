@@ -1,8 +1,8 @@
-import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import type { AbstractControl, ValidationErrors } from '@angular/forms';
+import { dismissibleErrorState } from '../form-field/dismissible-error';
 import {
-  TN_FORM_FIELD_DISMISSIBLE_ERRORS,
   TN_FORM_FIELD_ERRORS,
   activeErrorKey,
   clearDismissibleErrors,
@@ -126,11 +126,7 @@ export class TnFormErrorsComponent {
    */
   readonly errorId = `tn-form-errors-${nextId++}`;
 
-  private destroyRef = inject(DestroyRef);
   private errorResolver = inject(TN_FORM_FIELD_ERRORS, { optional: true });
-
-  /** App-wide dismissible keys, used when the instance names none of its own. */
-  private defaultDismissibleErrors = inject(TN_FORM_FIELD_DISMISSIBLE_ERRORS, { optional: true });
 
   private state = signal<FormErrorsState>(EMPTY_STATE);
 
@@ -168,23 +164,18 @@ export class TnFormErrorsComponent {
     return errors ? activeErrorKey(errors) : null;
   });
 
-  /** The instance's own list when it has one, otherwise the app-wide default. */
-  protected resolvedDismissibleErrors = computed(
-    () => this.dismissibleErrors() ?? this.defaultDismissibleErrors ?? [],
-  );
-
-  protected showDismiss = computed(() => {
-    const key = this.activeError();
-    return this.show() && !!key && this.resolvedDismissibleErrors().includes(key);
+  /**
+   * Which list applies, whether the button shows, and what it is called — shared
+   * with `tn-form-field` so a group message and the field messages beside it can
+   * never decide dismissibility by different rules.
+   */
+  protected dismissible = dismissibleErrorState({
+    showError: () => this.show(),
+    activeError: () => this.activeError(),
+    dismissibleErrors: () => this.dismissibleErrors(),
+    dismissAriaLabel: () => this.dismissAriaLabel(),
+    dismissTooltip: () => this.dismissTooltip(),
   });
-
-  protected readonly resolvedDismissAriaLabel = computed(
-    () => this.dismissAriaLabel() ?? 'Dismiss this error',
-  );
-
-  protected readonly resolvedDismissTooltip = computed(
-    () => this.dismissTooltip() ?? this.resolvedDismissAriaLabel(),
-  );
 
   protected dismissError(): void {
     const key = this.activeError();
@@ -192,7 +183,7 @@ export class TnFormErrorsComponent {
       return;
     }
     const control = this.control();
-    clearDismissibleErrors(control, this.resolvedDismissibleErrors());
+    clearDismissibleErrors(control, this.dismissible.resolvedDismissibleErrors());
     this.sync(control);
     this.dismiss.emit(key);
   }
@@ -207,8 +198,6 @@ export class TnFormErrorsComponent {
       onCleanup(() => subscription.unsubscribe());
       this.sync(control);
     });
-
-    this.destroyRef.onDestroy(() => this.state.set(EMPTY_STATE));
   }
 
   private sync(control: AbstractControl): void {

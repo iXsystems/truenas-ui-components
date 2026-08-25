@@ -135,8 +135,10 @@ export class TnFormFieldHarness extends ComponentHarness {
   /**
    * Clicks the dismiss button, as a user clearing a server-side error would.
    *
-   * The field only emits `dismiss` — clearing the error is the consumer's job —
-   * so what the message does next depends on the handler under test.
+   * The field clears the error itself — every key in its `dismissibleErrors`
+   * that the control carries — puts focus back on the control, and then emits
+   * `dismiss` with the key that was on screen, so the message is gone by the
+   * time this resolves.
    *
    * @throws If the shown error is not dismissible.
    *

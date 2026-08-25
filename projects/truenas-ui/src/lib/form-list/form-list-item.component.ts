@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { TN_FORM_LIST_CONTEXT } from './form-list-context';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective } from '../test-id';
 import type { TnTestIdValue } from '../test-id';
@@ -41,11 +42,28 @@ export class TnFormListItemComponent {
    */
   removeAriaLabel = input<string>('');
 
+  /**
+   * Disables the remove button — the entry stays readable, the control just
+   * stops working, the way a native disabled control does.
+   *
+   * Left unset it follows the enclosing `tn-form-list`'s own `disabled`, so
+   * locking a list is one binding on the list rather than one per entry. Set it
+   * explicitly to lock a single entry inside an otherwise editable list.
+   */
+  disabled = input<boolean | undefined>(undefined);
+
   /** Test-id base for the remove button (`icon-button-` prefixed). */
   testId = input<TnTestIdValue>(undefined);
 
   /** Emitted when the remove button is pressed. Removing is the consumer's. */
   delete = output<void>();
+
+  /** Absent when the entry is used outside a `tn-form-list`. */
+  private list = inject(TN_FORM_LIST_CONTEXT, { optional: true });
+
+  protected resolvedDisabled = computed(
+    () => this.disabled() ?? this.list?.disabled() ?? false,
+  );
 
   protected resolvedRemoveAriaLabel = computed(() => {
     const explicit = this.removeAriaLabel().trim();

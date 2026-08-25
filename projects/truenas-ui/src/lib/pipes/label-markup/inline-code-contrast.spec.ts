@@ -206,6 +206,15 @@ const CALL_SITES: readonly CallSite[] = [
     ],
   },
   {
+    file: 'form-list/form-list.component.scss',
+    element: '.tn-form-list__label',
+    // The plain-text twin of `.tn-form-field-label`, and painted from the same
+    // token on the same page surface. It has no error or focus state of its own:
+    // the list's label names a group, and the array-level message is a sibling
+    // `tn-form-errors` rather than a recolouring of the label.
+    states: [{ name: 'resting', colour: '--tn-fg1', surface: TRANSPARENT }],
+  },
+  {
     file: 'stepper/stepper.component.scss',
     element: '.tn-stepper__step-title',
     states: [

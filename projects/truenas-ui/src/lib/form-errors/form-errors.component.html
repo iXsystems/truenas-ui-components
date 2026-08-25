@@ -11,14 +11,14 @@
       [attr.id]="errorId"
       [tnTestId]="testId()"
     >{{ errorMessage() }}</div>
-    @if (showDismiss()) {
+    @if (dismissible.showDismiss()) {
       <tn-icon-button
         class="tn-form-errors-dismiss"
         name="close"
         library="mdi"
         size="sm"
-        [ariaLabel]="resolvedDismissAriaLabel()"
-        [tooltip]="resolvedDismissTooltip()"
+        [ariaLabel]="dismissible.resolvedDismissAriaLabel()"
+        [tooltip]="dismissible.resolvedDismissTooltip()"
         (onClick)="dismissError()"
       />
     }

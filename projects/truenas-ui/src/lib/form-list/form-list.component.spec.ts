@@ -31,6 +31,7 @@ class HostComponent {
   readonly canAdd = signal(true);
   readonly canDelete = signal(true);
   readonly disabled = signal(false);
+  readonly lockFirstEntry = signal(false);
   readonly empty = signal<boolean | undefined>(undefined);
   /** Entry-level controls the consumer projects alongside the fields. */
   readonly entryActions = signal(false);
@@ -144,22 +145,56 @@ describe('TnFormListComponent', () => {
       expect(host.entries.length).toBe(0);
     });
 
-    it('takes the entries out of the tab order too, not just out of reach of the mouse', () => {
+    it('says the group is disabled, rather than hiding it', () => {
       host.entries.push(new FormControl('first'));
       host.disabled.set(true);
       fixture.detectChanges();
 
-      // The entries are projected, so a guard inside this component cannot reach them: without
-      // `inert` a keyboard user still tabs into the field and onto the remove button, and Enter
-      // there deletes from a list the consumer said may not be edited.
-      const items: HTMLElement = fixture.nativeElement.querySelector('.tn-form-list__items');
+      // `aria-disabled` and not `inert`: the entries are still on screen, and a
+      // screen-reader user has to be able to read the values a sighted user is
+      // being shown but not allowed to edit. It sits on the `role="group"`
+      // element, which is the role that supports the attribute.
+      const group: HTMLElement = fixture.nativeElement.querySelector('.tn-form-list');
 
-      expect(items.hasAttribute('inert')).toBe(true);
+      expect(group.getAttribute('role')).toBe('group');
+      expect(group.getAttribute('aria-disabled')).toBe('true');
+      expect(fixture.nativeElement.querySelector('[inert]')).toBeNull();
 
       host.disabled.set(false);
       fixture.detectChanges();
 
-      expect(items.hasAttribute('inert')).toBe(false);
+      expect(group.hasAttribute('aria-disabled')).toBe(false);
+    });
+
+    it('disables each entry remove button, so the keyboard cannot delete from a locked list', async () => {
+      host.entries.push(new FormControl('first'));
+      fixture.detectChanges();
+
+      const [entry] = await list.getItems();
+
+      expect(await entry.isRemoveDisabled()).toBe(false);
+
+      host.disabled.set(true);
+      fixture.detectChanges();
+
+      // Reached over TN_FORM_LIST_CONTEXT, so the consumer binds `disabled` on
+      // the list alone and not again inside its own @for.
+      expect(await entry.isRemoveDisabled()).toBe(true);
+
+      await entry.remove();
+      fixture.detectChanges();
+
+      expect(host.entries.length).toBe(1);
+    });
+
+    it('lets one entry be locked inside an editable list', async () => {
+      host.entries.push(new FormControl('first'));
+      host.lockFirstEntry.set(true);
+      fixture.detectChanges();
+
+      const [entry] = await list.getItems();
+
+      expect(await entry.isRemoveDisabled()).toBe(true);
     });
   });
 

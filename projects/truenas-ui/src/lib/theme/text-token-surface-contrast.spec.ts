@@ -149,7 +149,7 @@ const PAIRINGS: readonly Pairing[] = [
     where: 'the table cell on a hovered, expanded or detail row; the hovered list item, tab and '
       + 'vertical tab; the selected select option; the highlighted autocomplete option; the '
       + 'expanded tree node; the hovered expansion-panel header; the marked calendar cell; the '
-      + 'list avatar',
+      + 'list avatar; the label of a field inside a tn-form-list entry card',
   },
   {
     token: '--tn-fg1',
@@ -173,7 +173,8 @@ const PAIRINGS: readonly Pairing[] = [
     token: '--tn-fg2',
     surface: '--tn-alt-bg1',
     where: 'the banner message; the secondary line of a hovered list item; the hovered '
-      + 'button-toggle label; the hovered table card sort direction',
+      + 'button-toggle label; the hovered table card sort direction; the hint of a field inside '
+      + 'a tn-form-list entry card',
   },
   {
     token: '--tn-fg2',
@@ -374,6 +375,13 @@ const PAINTS_UNTUNED: Readonly<Record<string, { fills: number; text: number; why
     fills: 1,
     text: 4,
     why: 'only the disabled input, which is under an opacity',
+  },
+  'form-list/form-list-item.component.scss': {
+    fills: 1,
+    text: 0,
+    why: 'the entry card fills --tn-alt-bg1 and declares no colour of its own — what sits on it '
+      + 'is the consumer\'s projected fields, so the pairings that matter are the --tn-fg1 label '
+      + 'and --tn-fg2 hint tn-form-field paints, both measured above',
   },
   'icon-button/icon-button.component.scss': {
     fills: 2,
