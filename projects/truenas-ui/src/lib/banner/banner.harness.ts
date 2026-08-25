@@ -1,9 +1,11 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
-import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
+import { ComponentHarness, HarnessPredicate, parallel } from '@angular/cdk/testing';
+import { TnBannerActionHarness } from './banner-action.harness';
 
 /**
  * Harness for interacting with tn-banner in tests.
- * Provides simple text-based querying for existence checks.
+ * Provides text-based querying for existence checks, and access to the actions
+ * the banner projects into its action slot.
  *
  * @example
  * ```typescript
@@ -19,6 +21,9 @@ import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
  * const hasBanner = await loader.hasHarness(
  *   TnBannerHarness.with({ textContains: /success/i })
  * );
+ *
+ * // Press one of the banner's actions
+ * await errorBanner.clickAction('Retry');
  * ```
  */
 export class TnBannerHarness extends ComponentHarness {
@@ -26,6 +31,12 @@ export class TnBannerHarness extends ComponentHarness {
    * The selector for the host element of an `TnBannerComponent` instance.
    */
   static hostSelector = 'tn-banner';
+
+  // Scoped to `.tn-banner__action` so a control the caller projected into the
+  // default content slot is never mistaken for an action.
+  private _actions = this.locatorForAll(
+    TnBannerActionHarness.with({ ancestor: '.tn-banner__action' })
+  );
 
   /**
    * Gets a `HarnessPredicate` that can be used to search for a banner
@@ -75,6 +86,68 @@ export class TnBannerHarness extends ComponentHarness {
   async getText(): Promise<string> {
     const host = await this.host();
     return (await host.text()).trim();
+  }
+
+  /**
+   * Gets every action the banner projects into its action slot, in DOM order.
+   *
+   * Actions are not necessarily `tn-button`s — `[tnBannerAction]` is an
+   * attribute directive that takes any element — so these come back as
+   * `TnBannerActionHarness`, which reads a label and clicks whatever was
+   * projected. Nothing is filtered out by element type.
+   *
+   * @returns Promise resolving to an array of `TnBannerActionHarness` instances.
+   *
+   * @example
+   * ```typescript
+   * const banner = await loader.getHarness(TnBannerHarness);
+   * const actions = await banner.getActions();
+   * expect(actions).toHaveLength(2);
+   * expect(await actions[0].getLabel()).toBe('Retry');
+   * ```
+   */
+  async getActions(): Promise<TnBannerActionHarness[]> {
+    return this._actions();
+  }
+
+  /**
+   * Clicks one of the banner's actions by its label, matching the first in DOM
+   * order. Only matches inside the `.tn-banner__action` slot, not controls in
+   * the banner's default content.
+   *
+   * Named `clickAction` rather than `TnDialogHarness`'s `clickActionButton`
+   * because a banner action need not be a button: a projected `<a
+   * tnBannerAction>` is reached by this method exactly as a `tn-button` is.
+   *
+   * @param label The action label to match. Supports string or regex.
+   * @throws Error naming the label, and the labels actually present, if nothing matches.
+   *
+   * @example
+   * ```typescript
+   * const banner = await loader.getHarness(
+   *   TnBannerHarness.with({ textContains: 'network error' })
+   * );
+   * await banner.clickAction('Retry');
+   * await banner.clickAction(/learn more/i);
+   * ```
+   */
+  async clickAction(label: string | RegExp): Promise<void> {
+    const matches = await this.locatorForAll(
+      TnBannerActionHarness.with({ label, ancestor: '.tn-banner__action' })
+    )();
+    if (matches.length === 0) {
+      // Naming what IS there turns the common miss — a label that reads
+      // differently once rendered — from a hunt through the DOM into a diff.
+      const actions = await this._actions();
+      const labels = await parallel(() => actions.map((action) => action.getLabel()));
+      const present = labels.length
+        ? labels.map((found) => JSON.stringify(found)).join(', ')
+        : '(none)';
+      throw new Error(
+        `No banner action found with label matching: ${label}. Actions present: ${present}`
+      );
+    }
+    await matches[0].click();
   }
 }
 
