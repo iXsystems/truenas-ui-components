@@ -41,15 +41,19 @@ class LifecycleHostComponent {
  * old assertion would have passed with the `runOutsideAngular` deleted. A test
  * that cannot fail is worse than no test, because it reads as coverage.
  *
- * These two assert the same guard WITHOUT needing a real Zone, by checking that
- * the calls are made and that the timer is the one they made:
+ * These assert the same guard WITHOUT needing a real Zone, by watching WHERE
+ * the calls happen rather than what a no-op zone reports afterwards:
  *
- *  - the fallback timer is the handle `runOutsideAngular` RETURNED, proven by
- *    clearing that handle and watching the fallback not fire. Moving the
- *    `setTimeout` out from inside the callback breaks that, because the call
- *    then returns something else (or is not made at all).
- *  - the report goes back through `zone.run`, which is what makes a consumer's
- *    `(closed)` handler visible to change detection under a zone-based app.
+ *  - the fallback timer is scheduled while inside a `runOutsideAngular`
+ *    callback, read from a depth counter the spy maintains. Moving the
+ *    `setTimeout` out from inside the callback drops the depth to zero.
+ *  - the report runs while inside a `zone.run` callback, read the same way.
+ *    That is what makes a consumer's `(closed)` handler visible to change
+ *    detection under a zone-based application.
+ *
+ * Neither counts CALLS: `ComponentFixture`'s constructor and Angular's own
+ * render hooks use both methods, so a count measures framework internals. Depth
+ * at the moment of the thing under test does not.
  *
  * `NoopNgZone` runs both callbacks synchronously, so the spies observe the real
  * control flow rather than a stub's.
@@ -72,8 +76,12 @@ describe('tnTransitionLifecycle zone discipline', () => {
 
   afterEach(() => {
     fixture?.destroy();
-    jest.useRealTimers();
+    // Mocks first. One of the tests below spies on `globalThis.setTimeout`
+    // while the fake clock is installed, so what `restoreAllMocks` puts back is
+    // the FAKE function — running it after `useRealTimers` would write the fake
+    // timer onto `globalThis` again and leave it there for the next test.
     jest.restoreAllMocks();
+    jest.useRealTimers();
   });
 
   function createHost(): void {
@@ -131,7 +139,24 @@ describe('tnTransitionLifecycle zone discipline', () => {
 
   it('reports back inside the Angular zone, so a consumer handler is seen', () => {
     createHost();
-    const run = jest.spyOn(zone, 'run');
+
+    // Depth again, not a call count, and for the same reason. `zone.run` in
+    // particular is called all over Angular's own testing infrastructure, so
+    // `toHaveBeenCalled()` here would be true no matter what this function did.
+    let depth = 0;
+    jest.spyOn(zone, 'run').mockImplementation(<T, >(fn: () => T): T => {
+      depth += 1;
+      try {
+        return fn();
+      } finally {
+        depth -= 1;
+      }
+    });
+
+    let reportedInside: boolean | null = null;
+    host.settled.mockImplementation(() => {
+      reportedInside = depth > 0;
+    });
 
     host.open.set(true);
     fixture.detectChanges();
@@ -140,7 +165,10 @@ describe('tnTransitionLifecycle zone discipline', () => {
     jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.settled).toHaveBeenCalledWith(true);
-    expect(run).toHaveBeenCalled();
+    // `null` would mean `settled` never ran; `false` that it ran outside the
+    // zone, which is the shape that leaves a consumer's `(closed)` handler
+    // invisible to zone-based change detection.
+    expect(reportedInside).toBe(true);
   });
 
   // The early report takes the same route out, so it needs no zone of its own —

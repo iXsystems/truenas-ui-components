@@ -269,7 +269,8 @@ describe('tn-side-panel focus capture (#227)', () => {
    * the three entries come from `scheduleCallbackWithRafRace`.)
    *
    * So the frames are run as a set and the verdict is read from `attempts` and
-   * `document.activeElement` — which is what these tests were always about.
+   * `document.activeElement` — which is what these tests were always about —
+   * and the length of the list is not asserted at all, in either direction.
    * Swallowing Angular's half of the race is harmless: its `setTimeout` half
    * still fires. That the retry runs AT ALL is held by 'tries again after a
    * first focus that is silently dropped' above, which uses the real frame.
@@ -294,9 +295,12 @@ describe('tn-side-panel focus capture (#227)', () => {
     trigger().focus();
     await openByClick();
 
-    // The component asked once, was declined, and has a retry waiting.
+    // The component asked once and was declined. That a retry is WAITING is not
+    // asserted here: Angular's scheduler puts its own callbacks in `held`, so a
+    // non-empty list says nothing about this component and an assertion on it
+    // could not fail. 'tries again after a first focus that is silently
+    // dropped' above is what holds the retry's existence.
     expect(attempts).toBe(1);
-    expect(held.length).toBeGreaterThan(0);
 
     (overlay().querySelector('.tn-icon-button') as HTMLElement).focus();
     const landed = document.activeElement;
@@ -339,7 +343,6 @@ describe('tn-side-panel focus capture (#227)', () => {
     trigger().focus();
     await openByClick();
     expect(attempts).toBe(1);
-    expect(held.length).toBeGreaterThan(0);
 
     const elsewhere = fixture.nativeElement.querySelector('#elsewhere') as HTMLElement;
     elsewhere.focus();

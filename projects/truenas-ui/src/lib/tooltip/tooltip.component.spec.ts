@@ -282,7 +282,7 @@ class DescriptionHostComponent {}
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
-  template: `<button class="null-host" [tnTooltip]="message()">Null message()</button>`,
+  template: `<button class="null-host" [tnTooltip]="message()">Null message</button>`,
 })
 class NullMessageHostComponent {
   // Real consumers bind expressions like `reason ?? null` — the input accepts them

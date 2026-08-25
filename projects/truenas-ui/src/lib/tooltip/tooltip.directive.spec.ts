@@ -585,7 +585,6 @@ describe('TnTooltipDirective sticky mode', () => {
   describe('a control host that leaves the tab order after view init', () => {
     const collapsibleHost = () => fixture.nativeElement.querySelector('#collapsible') as HTMLElement;
 
-    /** The observer's callback is a microtask outside Zone's queue, so `jest.advanceTimersByTime(0)` never reaches it. */
     function clickHost(): void {
       collapsibleHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
     }
@@ -639,7 +638,6 @@ describe('TnTooltipDirective sticky mode', () => {
   describe('an anchor host that stops being a link after view init', () => {
     const linkHost = () => fixture.nativeElement.querySelector('#conditional-link') as HTMLElement;
 
-    /** The observer's callback is a microtask outside Zone's queue, so `jest.advanceTimersByTime(0)` never reaches it. */
     function clickLinkHost(): void {
       linkHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
     }
