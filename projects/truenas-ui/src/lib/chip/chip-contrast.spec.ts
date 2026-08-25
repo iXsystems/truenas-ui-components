@@ -6,8 +6,12 @@ import {
   contrastRatio,
   formatRatio,
   meetsAa,
-  themePalettes,
 } from '../a11y/contrast-testing';
+import {
+  itDeclares,
+  itMeasuresEveryRegisteredPalette,
+  registeredSelectors,
+} from '../a11y/palette-contrast-testing';
 import type { ScssRule } from '../a11y/scss-testing';
 import {
   flattenSelector,
@@ -15,7 +19,6 @@ import {
   scssRules,
   tokenOf,
 } from '../a11y/scss-testing';
-import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
 
 /**
  * Every surface `tn-chip` paints, measured against the label it paints on it,
@@ -59,7 +62,6 @@ import { TN_THEME_DEFINITIONS } from '../theme/theme.constants';
  * `--tn-error-text`.
  */
 
-const STYLES_DIR = join(__dirname, '../../styles');
 const CHIP_SCSS = join(__dirname, 'chip.component.scss');
 
 /**
@@ -256,20 +258,17 @@ function tally(pairings: readonly string[]): Record<string, number> {
 }
 
 describe('tn-chip label contrast (#238)', () => {
-  const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
   const scss = readFileSync(CHIP_SCSS, 'utf8');
-  const palettes = themePalettes(css);
   const rules = scssRules(scss, 'chip.component.scss');
+  const expectedSelectors = registeredSelectors();
 
-  // Derived from the theme registry rather than hardcoded: a themed surface
-  // that stops being recognised — a renamed class, a block that drops
-  // `--tn-bg1` — would otherwise go unmeasured while every remaining case
-  // still passed.
-  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
-
-  it('found every registered themed surface in themes.css', () => {
-    expect(palettes.map((palette) => palette.selector).sort()).toEqual([...expectedSelectors].sort());
-  });
+  // Inheriting `:root`'s value is not the same as having one: High Contrast
+  // rendered white on its own #4784ac at 4.07:1 for exactly that reason, and
+  // `color` would have resolved it and reported a number without complaint. Only
+  // the palettes that pass are measured below — one that does not has already
+  // failed, and measuring it would add a second failure saying the same thing in
+  // worse words.
+  const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
 
   describe('the table above still describes chip.component.scss', () => {
     const chipRule = rules.find((rule) => rule.selector === '.tn-chip');
@@ -394,29 +393,8 @@ describe('tn-chip label contrast (#238)', () => {
     });
   });
 
-  describe('every palette declares both halves of every pair itself', () => {
-    const declarations = palettes.map((palette) => ({
-      selector: palette.selector,
-      missing: REQUIRED_TOKENS.filter((token) => !palette.declares(token)),
-    }));
-
-    it.each(declarations)('$selector declares every token the chip reads', ({ missing }) => {
-      // Inheriting `:root`'s value is not the same as having one: High
-      // Contrast rendered white on its own #4784ac at 4.07:1 for exactly that
-      // reason, and `color` would have resolved it and reported a number
-      // without complaint.
-      expect(missing).toEqual([]);
-    });
-  });
-
   describe('every pair clears AA on every palette', () => {
-    // Only surfaces that passed the declaration check are measured — a palette
-    // missing a token has already failed, and measuring it would add a second
-    // failure saying the same thing in worse words. If that leaves nothing,
-    // `it.each` errors on an empty array rather than reporting a suite with no
-    // contrast cases in it as green.
-    const cases = palettes
-      .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
+    const cases = measured
       .flatMap((palette) =>
         CHIP_SURFACES.map((surface) => {
           const ratio = palette.contrast(surface.foreground, surface.background);
@@ -542,8 +520,7 @@ describe('tn-chip label contrast (#238)', () => {
       expect(AA_MINIMUM.normal).toBe(4.5);
     });
 
-    const cases = palettes
-      .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
+    const cases = measured
       .flatMap((palette) =>
         CLOSE_SURFACES.map((surface) => {
           // Two steps, in the order a browser paints them: the circle's own

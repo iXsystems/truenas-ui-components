@@ -1,7 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, relative } from 'path';
-import { TN_THEME_DEFINITIONS } from './theme.constants';
-import { themePalettes } from '../a11y/contrast-testing';
+import { itMeasuresEveryRegisteredPalette } from '../a11y/palette-contrast-testing';
 
 /**
  * Every custom property a story file reads with `var()` must be one that EVERY
@@ -70,7 +69,6 @@ import { themePalettes } from '../a11y/contrast-testing';
  */
 
 const STORIES_DIR = join(__dirname, '../../stories');
-const THEMES_CSS = join(__dirname, '../../styles/themes.css');
 
 /**
  * Custom properties `src/stories/` reads that NO palette declares, with the
@@ -204,11 +202,17 @@ function storyReferences(): Reference[] {
 }
 
 describe('custom properties read by the story files (#268, #280)', () => {
-  // `themePalettes` walks the braces and strips comments before reading any
-  // declaration, so a commented-out `--x: …` does not count as declared and a
-  // recorded ratio sitting next to a token is not mistaken for one. The regex
-  // this spec used to build its own set did neither.
-  const palettes = themePalettes(readFileSync(THEMES_CSS, 'utf8'));
+  // `themePalettes`, behind `itMeasuresEveryRegisteredPalette`, walks the braces
+  // and strips comments before reading any declaration — so a commented-out
+  // `--x: …` does not count as declared, and a recorded ratio sitting next to a
+  // token is not mistaken for one. The regex this spec used to build its own set
+  // did neither.
+  //
+  // The registry cases come with it: a palette that stops being recognised — a
+  // renamed class, a block that drops `--tn-bg1` — would otherwise leave every
+  // case below passing while asking about one palette fewer, which is the
+  // any-palette hole this spec was strengthened to close.
+  const palettes = itMeasuresEveryRegisteredPalette();
   const references = storyReferences();
 
   /** The palettes that declare `property` themselves, in stylesheet order. */
@@ -220,21 +224,6 @@ describe('custom properties read by the story files (#268, #280)', () => {
   const missingFrom = (property: string): string[] => palettes
     .filter((palette) => !palette.declares(property))
     .map((palette) => palette.selector);
-
-  // Derived from the theme registry rather than hardcoded, as
-  // `text-fg-contrast.spec.ts` does it: a palette that stops being recognised —
-  // a renamed class, a block that drops `--tn-bg1` — would otherwise leave every
-  // case below passing while asking about one palette fewer, which is the
-  // any-palette hole this spec was strengthened to close.
-  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
-
-  it('found every registered themed surface in themes.css', () => {
-    expect(palettes).toHaveLength(expectedSelectors.length);
-  });
-
-  it.each(expectedSelectors)('%s is a themed surface found in themes.css', (selector) => {
-    expect(palettes.map((palette) => palette.selector)).toContain(selector);
-  });
 
   // Guards the cases below, which are vacuously true against an empty scan: a
   // walk that silently stopped finding story files would leave them passing.

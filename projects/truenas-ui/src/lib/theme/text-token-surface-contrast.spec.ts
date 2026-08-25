@@ -1,13 +1,12 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { TN_THEME_DEFINITIONS } from './theme.constants';
 import {
   AA_MINIMUM,
   contrastRatio,
   formatRatio,
   meetsAa,
-  themePalettes,
 } from '../a11y/contrast-testing';
+import { itDeclares, itMeasuresEveryRegisteredPalette } from '../a11y/palette-contrast-testing';
 
 /**
  * The text tokens, measured on the surfaces `text-fg-contrast.spec.ts`
@@ -43,11 +42,15 @@ import {
  * can honestly be made without a browser: it is about the palette rather than
  * about a rendered page. `yarn test-sb` is what checks the page.
  *
- * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197);
- * nothing is re-derived here.
+ * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197) and
+ * the palette loader and the registry cases are
+ * `lib/a11y/palette-contrast-testing.ts` (#295); nothing is re-derived here.
+ * The cases themselves stay in this file rather than using that module's
+ * `testEachPalette`: what a pairing is held to here depends on whether
+ * `KNOWN_GAPS` records it, which is a per-palette exclusion rather than a
+ * per-pairing one.
  */
 
-const STYLES_DIR = join(__dirname, '../../styles');
 const LIB_DIR = join(__dirname, '..');
 
 /** The surfaces outside the `--tn-bg1`/`--tn-bg2` guarantee, and what paints them. */
@@ -483,36 +486,10 @@ interface PairingCase {
 }
 
 describe('text tokens on the surfaces outside the --tn-bg1/--tn-bg2 guarantee (#277)', () => {
-  const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
-  const palettes = themePalettes(css);
-
-  // Derived from the theme registry rather than hardcoded: a themed surface that
-  // stops being recognised — a renamed class, a block that drops `--tn-bg1` —
-  // would otherwise go unmeasured while every remaining case still passed.
-  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
-
-  it('found every registered themed surface in themes.css', () => {
-    expect(palettes.map((palette) => palette.selector).sort()).toEqual([...expectedSelectors].sort());
-  });
-
-  const declarations = palettes.map((palette) => ({
-    selector: palette.selector,
-    missing: REQUIRED_TOKENS.filter((token) => !palette.declares(token)),
-  }));
-
-  // Titled from the list rather than spelling it out, so a token added to
-  // REQUIRED_TOKENS cannot leave the case name describing the old set.
-  it.each(declarations)(
-    `$selector declares ${REQUIRED_TOKENS.join(', ')} itself`,
-    ({ missing }) => {
-      expect(missing).toEqual([]);
-    }
-  );
-
-  // Only the surfaces that passed the check above are measured — a palette
-  // missing a token has already failed, and measuring it would add a second
-  // failure saying the same thing in worse words.
-  const measured = palettes.filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)));
+  // Only the palettes that declare every required token are measured — one that
+  // does not has already failed inside `itDeclares`, and measuring it would add
+  // a second failure saying the same thing in worse words.
+  const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
 
   const cases: PairingCase[] = measured.flatMap((palette) => PAIRINGS.map((pairing) => {
     const ratio = palette.contrast(pairing.token, pairing.surface);

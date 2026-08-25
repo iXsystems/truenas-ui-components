@@ -669,9 +669,11 @@ that makes a failing colour look passing.
 
 **`themePalettes(css)` reads the tokens; `contrast()` measures one against the
 surface it renders on.** That pairing — a token and the background behind it — is
-the form every one of those scripts actually needed. Pass the text of
-`styles/themes.css`; the module takes CSS rather than reading the file, so the
-resolution rules can be covered against a fixture that no theme retune breaks.
+the form every one of those scripts actually needed. The module takes CSS text
+rather than reading the file, so the resolution rules can be covered against a
+fixture that no theme retune breaks — and so nothing in it depends on Node. A
+spec measuring the shipped palette does not call it with a path of its own; see
+the next section.
 
 **`declares()` and `color()` answer different questions.** `color()` resolves the
 way the browser does, following `var()` chains and inheriting from `:root`;
@@ -695,6 +697,48 @@ layout engine to find what is actually painted behind an element; under jsdom it
 reports `incomplete`, which `axeResult()` treats as an error. What these
 assertions measure is the palette as shipped, against the surface the spec names.
 See `theme/error-text-contrast.spec.ts` for the shape.
+
+### Measuring the shipped palette in every theme
+
+**Use `lib/a11y/palette-contrast-testing.ts`. Do not read `themes.css` yourself
+and do not write the loop again.** #197 shared the arithmetic and the duplication
+moved up one level: nine specs each read the stylesheet, cross-checked what they
+found against the theme registry, dropped the palettes missing a token, and then
+looped palette × token × surface. Review counted the copies twice unprompted, on
+PR #264 and again on PR #281 (#295).
+
+**Three calls, in this order.** They declare cases as well as returning data, so
+call them in the `describe` body:
+
+```ts
+const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
+testEachPalette(measured, PAIRINGS, AA_MINIMUM.normal);
+```
+
+- `itMeasuresEveryRegisteredPalette()` loads the stylesheet and holds what it
+  finds to `TN_THEME_DEFINITIONS`. Getting the palettes and being held to the
+  registry is deliberately one call: a theme that stops being recognised — a
+  renamed class, a block that drops `--tn-bg1` — otherwise goes unmeasured while
+  every remaining case still passes.
+- `itDeclares(palettes, tokens)` asserts each palette declares them **itself**,
+  and returns the ones that do. One list, asserted and filtered on, so a palette
+  dropping out of the cases below always leaves something red.
+- `testEachPalette(palettes, pairings, minimum)` measures each
+  `{ token, surface, where? }` on each palette, one case and one message format
+  apiece. `minimum` is a ratio, not a text size: pass `AA_MINIMUM.normal` for body
+  text and the 3:1 SC 1.4.11 floor for a fill, a border or an icon.
+
+**`THEME_STYLESHEET` is the one place that decides which copy is measured.**
+`.storybook/public/themes.css` is a tracked copy that Storybook serves, and
+`theme/themes-css-copy.spec.ts` is what keeps the two byte-identical. A spec
+holding its own path is how one comes to measure the copy the library does not
+render from.
+
+**A spec whose exclusions are per palette keeps its own loop and uses
+`paletteContrastCases` instead** — `theme/text-token-surface-contrast.spec.ts`
+excuses individual (palette, token, surface) triples through `KNOWN_GAPS`, which
+is not something a per-pairing list can express. It still takes the loader and the
+registry cases from here.
 
 ### Reading a stylesheet back in a spec
 

@@ -1,7 +1,11 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { TN_THEME_DEFINITIONS } from './theme.constants';
-import { AA_MINIMUM, formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
+import { AA_MINIMUM, formatRatio } from '../a11y/contrast-testing';
+import type {
+  ContrastPairing} from '../a11y/palette-contrast-testing';
+import {
+  itDeclares,
+  itMeasuresEveryRegisteredPalette,
+  testEachPalette,
+} from '../a11y/palette-contrast-testing';
 
 /**
  * The three tokens `theming.mdx` documents as text — `--tn-fg1` (headings and
@@ -38,13 +42,12 @@ import { AA_MINIMUM, formatRatio, meetsAa, themePalettes } from '../a11y/contras
  * can honestly be made without a browser: it is about the palette rather than
  * about a rendered page. `yarn test-sb` is what checks the page.
  *
- * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197);
+ * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197) and
+ * the per-palette harness is `lib/a11y/palette-contrast-testing.ts` (#295);
  * nothing is re-derived here. `primary-text-contrast.spec.ts` and
  * `error-text-contrast.spec.ts` are the same shape for the companion tokens,
  * and `muted-fg-contrast.spec.ts` is it at the 3:1 non-text threshold.
  */
-
-const STYLES_DIR = join(__dirname, '../../styles');
 
 /**
  * The surfaces the guarantee covers, and what paints them. Not `--tn-bg3` or
@@ -78,6 +81,17 @@ const TEXT_TOKENS: Readonly<Record<string, string>> = {
 const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...Object.keys(TEXT_TOKENS)];
 
 /**
+ * Every text token on every surface the guarantee covers — the full cross
+ * product, built from the two records rather than written out, so a token or a
+ * surface added above is measured without a second edit here. The role and the
+ * surface's name travel with the pairing, so a failure says what the token is
+ * for and what paints the thing behind it.
+ */
+const PAIRINGS: readonly ContrastPairing[] = Object.entries(TEXT_TOKENS)
+  .flatMap(([token, role]) => Object.entries(SURFACES)
+    .map(([surface, surfaceName]) => ({ token, surface, where: `${role} on ${surfaceName}` })));
+
+/**
  * Palettes where `--tn-fg2` reads at least as well as `--tn-fg1`, with why.
  *
  * Their order relative to each other is a per-theme choice and is not a defect
@@ -107,18 +121,6 @@ const REQUIRED_TOKENS = [...Object.keys(SURFACES), ...Object.keys(TEXT_TOKENS)];
  */
 const FG2_OUTREADS_FG1: Readonly<Record<string, string>> = {};
 
-interface TokenCase {
-  selector: string;
-  token: string;
-  role: string;
-  colour: string;
-  surface: string;
-  surfaceName: string;
-  surfaceColour: string;
-  ratio: number;
-  ratioLabel: string;
-}
-
 interface RampCase {
   selector: string;
   surface: string;
@@ -129,69 +131,12 @@ interface RampCase {
 }
 
 describe('--tn-fg1/--tn-fg2/--tn-alt-fg1 text contrast (#265)', () => {
-  const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
-  const palettes = themePalettes(css);
+  // Only the palettes that declare every required token are measured — one that
+  // does not has already failed inside `itDeclares`, and measuring it would add
+  // a second failure saying the same thing in worse words.
+  const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
 
-  // Derived from the theme registry rather than hardcoded: a themed surface that
-  // stops being recognised — a renamed class, a block that drops `--tn-bg1` —
-  // would otherwise go unmeasured while every remaining case still passed.
-  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
-
-  it('found every registered themed surface in themes.css', () => {
-    expect(palettes).toHaveLength(expectedSelectors.length);
-  });
-
-  it.each(expectedSelectors)('%s is a themed surface found in themes.css', (selector) => {
-    expect(palettes.map((palette) => palette.selector)).toContain(selector);
-  });
-
-  const declarations = palettes.map((palette) => ({
-    selector: palette.selector,
-    missing: REQUIRED_TOKENS.filter((token) => !palette.declares(token)),
-  }));
-
-  // Titled from the list rather than spelling it out, so a token added to
-  // REQUIRED_TOKENS cannot leave the case name describing the old set.
-  it.each(declarations)(
-    `$selector declares ${REQUIRED_TOKENS.join(', ')} itself`,
-    ({ missing }) => {
-      expect(missing).toEqual([]);
-    }
-  );
-
-  // Only the surfaces that passed the check above are measured — a palette
-  // missing a token has already failed, and measuring it would add a second
-  // failure saying the same thing in worse words. If that leaves nothing to
-  // measure, `it.each` errors on the empty array rather than reporting a suite
-  // with no contrast cases in it as green.
-  const measured = palettes.filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)));
-
-  const cases: TokenCase[] = measured.flatMap((palette) => Object.entries(TEXT_TOKENS)
-    .flatMap(([token, role]) => Object.entries(SURFACES).map(([surface, surfaceName]) => {
-      const ratio = palette.contrast(token, surface);
-      return {
-        selector: palette.selector,
-        token,
-        role,
-        colour: palette.color(token),
-        surface,
-        surfaceName,
-        surfaceColour: palette.color(surface),
-        ratio,
-        ratioLabel: formatRatio(ratio),
-      };
-    })));
-
-  // The measured ratio is in each case's title, so a failure names the colour
-  // and the number it came to as well as the theme and the surface it belongs
-  // to. Compared unrounded: a pair measuring 4.4999 does not clear AA, however
-  // it formats.
-  it.each(cases)(
-    '$selector: $token — $role — is $colour on $surface ($surfaceColour, $surfaceName) at $ratioLabel',
-    ({ ratio }) => {
-      expect(meetsAa(ratio, 'normal')).toBe(true);
-    }
-  );
+  testEachPalette(measured, PAIRINGS, AA_MINIMUM.normal);
 
   describe('the ramp the three tokens make', () => {
     const ramp: RampCase[] = measured.flatMap((palette) => Object.keys(SURFACES).map((surface) => {

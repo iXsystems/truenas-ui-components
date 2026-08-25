@@ -6,10 +6,9 @@ import {
   contrastRatio,
   formatRatio,
   meetsAa,
-  themePalettes,
 } from '../../a11y/contrast-testing';
+import { itMeasuresEveryRegisteredPalette } from '../../a11y/palette-contrast-testing';
 import { flattenSelector, scssRules, tokenOf } from '../../a11y/scss-testing';
-import { TN_THEME_DEFINITIONS } from '../../theme/theme.constants';
 
 /**
  * The `<code>` span `label-markup.inline-code` paints, measured against the
@@ -57,7 +56,6 @@ import { TN_THEME_DEFINITIONS } from '../../theme/theme.constants';
  */
 
 const LIB_DIR = join(__dirname, '../..');
-const STYLES_DIR = join(__dirname, '../../../styles');
 const MIXIN_SCSS = join(__dirname, '_label-markup.scss');
 
 /**
@@ -333,17 +331,7 @@ function resolved(palette: ThemePalette, colour: string): string {
 }
 
 describe('a <code> span in a label clears AA wherever the mixin is included (#262)', () => {
-  const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
-  const palettes = themePalettes(css);
-
-  // Derived from the theme registry rather than hardcoded: a themed surface that
-  // stops being recognised — a renamed class, a block that drops `--tn-bg1` —
-  // would otherwise go unmeasured while every remaining case still passed.
-  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
-
-  it('found every registered themed surface in themes.css', () => {
-    expect(palettes.map((palette) => palette.selector).sort()).toEqual([...expectedSelectors].sort());
-  });
+  const palettes = itMeasuresEveryRegisteredPalette();
 
   /**
    * What the mixin itself paints, read out of `_label-markup.scss`.
