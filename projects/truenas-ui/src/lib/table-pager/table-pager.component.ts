@@ -10,7 +10,6 @@ import {
   effect,
   inject,
   input,
-  isSignal,
   model,
   output,
   signal,
@@ -21,6 +20,7 @@ import type { Observable, Subscription } from 'rxjs';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnSelectComponent, type TnSelectOption } from '../select/select.component';
 import { TN_TEST_ATTR, composeTestId, scopeTestId, writeTestId, type TnTestIdValue } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 /**
  * Default labels rendered inside `tn-table-pager`. Consumers can override any
@@ -179,12 +179,7 @@ export class TnTablePagerComponent {
       .join('-');
   }
 
-  /**
-   * Normalize the injected token into a Signal so consumers can supply either
-   * a plain object or a reactive signal (e.g. derived from a TranslateService's
-   * onLangChange) and the pager re-renders when labels change.
-   */
-  private readonly defaultLabels: Signal<TnTablePagerLabels>;
+  private readonly defaultLabels = injectTnLabels(TN_TABLE_PAGER_LABELS);
 
   /** 1-based index of the currently displayed page. */
   currentPage = model<number>(1);
@@ -380,9 +375,6 @@ export class TnTablePagerComponent {
   );
 
   constructor() {
-    const provided = inject(TN_TABLE_PAGER_LABELS);
-    this.defaultLabels = isSignal(provided) ? provided : signal(provided).asReadonly();
-
     // Write the pager's own test-id to the host. We write it imperatively rather
     // than applying `TnTestIdDirective` via `hostDirectives`: the pager also needs
     // to read this base back (see `childTestId`), and injecting a host directive

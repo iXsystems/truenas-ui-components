@@ -46,7 +46,7 @@
           <tn-icon name="mat-sort" size="sm" aria-hidden="true" />
           <select
             class="tn-table__cards-sort-select"
-            aria-label="Sort by"
+            [attr.aria-label]="labels().sortBy"
             [value]="sortColumn()"
             (change)="onSortSelectChange($event)">
             <!--
@@ -55,7 +55,7 @@
               browser discards it and the binding is never dirty again — a table
               sorted before card mode engaged would render as "Unsorted".
             -->
-            <option value="" [selected]="!sortColumn()">Unsorted</option>
+            <option value="" [selected]="!sortColumn()">{{ labels().unsorted }}</option>
             @for (column of sortableColumns(); track column) {
               <option [value]="column" [selected]="column === sortColumn()">
                 {{ getCardLabel(column) }}
@@ -76,13 +76,13 @@
               it is how the user escapes that state, but shows the neutral
               `mat-unfold_more` the table header already uses for unsorted columns.
 
-              The label names the action, so it is "Sort ascending" both when unsorted
+              The label names the action, so it is `sortAscending` both when unsorted
               and when descending — `toggleSortDirection()` starts at ascending.
             -->
             <button
               type="button"
               class="tn-table__cards-sort-dir"
-              [attr.aria-label]="sortDirection() === 'asc' ? 'Sort descending' : 'Sort ascending'"
+              [attr.aria-label]="sortDirection() === 'asc' ? labels().sortDescending : labels().sortAscending"
               [attr.data-sort-direction]="sortDirection()"
               (click)="toggleSortDirection()">
               @if (sortDirection() === 'asc') {
@@ -216,7 +216,7 @@
         @if (cardSecondaryColumns().length > 0) {
           <details class="tn-table__card-more">
             <summary class="tn-table__card-more-summary">
-              <span>More fields</span>
+              <span>{{ labels().moreFields }}</span>
               <tn-icon size="sm" name="mat-keyboard_arrow_down" aria-hidden="true" />
             </summary>
             <dl class="tn-table__card-fields">
@@ -249,7 +249,7 @@
             [attr.aria-expanded]="isRowExpanded(row)"
             [attr.aria-controls]="isRowExpanded(row) ? detailPanelId(rowIdx) : null"
             (click)="toggleRowExpansion(row); $event.stopPropagation()">
-            <span>Details</span>
+            <span>{{ labels().details }}</span>
             <tn-icon
               size="sm"
               aria-hidden="true"
@@ -307,7 +307,7 @@
             </th>
           } @else if (column === '__expand') {
             <th class="tn-table__header-cell tn-table__expand-cell">
-              <span class="cdk-visually-hidden">Expand</span>
+              <span class="cdk-visually-hidden">{{ labels().expand }}</span>
             </th>
           } @else {
             <th
@@ -373,7 +373,7 @@
         }
         @if (rowActionsDef()) {
           <th class="tn-table__header-cell tn-table__actions-cell">
-            <span class="cdk-visually-hidden">Actions</span>
+            <span class="cdk-visually-hidden">{{ labels().actions }}</span>
           </th>
         }
       </tr>
@@ -427,7 +427,7 @@
                     class="tn-table__expand-button"
                     [attr.aria-expanded]="isRowExpanded(row)"
                     [attr.aria-controls]="isRowExpanded(row) ? detailPanelId(rowIdx) : null"
-                    [attr.aria-label]="isRowExpanded(row) ? 'Collapse row' : 'Expand row'"
+                    [attr.aria-label]="isRowExpanded(row) ? labels().collapseRow : labels().expandRow"
                     (click)="toggleRowExpansion(row)">
                     <tn-icon
                       class="tn-table__expand-icon"

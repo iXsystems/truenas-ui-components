@@ -102,6 +102,7 @@ export * from './lib/enums/input-type.enum';
 export * from './lib/enums/modifier-keys.enum';
 export * from './lib/enums/common-shortcuts.enum';
 export * from './lib/utils/shortcut-builder';
+export * from './lib/utils/inject-labels';
 export * from './lib/pipes/file-size/file-size.pipe';
 export * from './lib/pipes/label-markup/label-markup.pipe';
 export * from './lib/pipes/label-markup/label-text.pipe';

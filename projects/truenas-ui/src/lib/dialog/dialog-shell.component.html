@@ -9,18 +9,27 @@
     <h2 class="tn-dialog__title" [id]="titleId">{{ title() }}</h2>
   }
   @if (showFullscreenButton()) {
+    <!--
+      `data-fullscreen` is the language-independent state hook `TnDialogHarness.isFullscreen()`
+      reads. The state is also on the panel's `.tn-dialog--fullscreen` class, but the panel is an
+      ANCESTOR of this component's host — out of reach for a harness locator, and ambiguous while
+      more than one dialog is open. `aria-label` is not the hook: it is now DI-configurable, so a
+      translated app would flip the harness's answer. Same call the table's sort-direction toggle
+      makes, for the same reason (see `data-sort-direction`).
+    -->
     <button
       type="button"
       class="tn-dialog__fullscreen"
       tnTestIdType="button"
       [tnTestId]="fullscreenTestId()"
-      [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+      [attr.aria-label]="fullscreenLabel()"
+      [attr.data-fullscreen]="isFullscreen()"
       (click)="toggleFullscreen()">
       <span class="tn-dialog__fullscreen-icon" aria-hidden="true">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
     </button>
   }
   @if (showCloseButton()) {
-    <button type="button" class="tn-dialog__close" aria-label="Close dialog" tnTestIdType="button" [tnTestId]="closeTestId()" (click)="close()">
+    <button type="button" class="tn-dialog__close" tnTestIdType="button" [attr.aria-label]="labels().close" [tnTestId]="closeTestId()" (click)="close()">
       <span class="tn-dialog__close-icon" aria-hidden="true">✕</span>
     </button>
   }

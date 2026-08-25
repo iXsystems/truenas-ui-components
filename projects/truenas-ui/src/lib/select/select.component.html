@@ -73,7 +73,7 @@
             [indeterminate]="selectAllIndeterminate()"
             [disabled]="true"
             [hideLabel]="true" />
-          {{ selectAllLabel() }}
+          {{ resolvedSelectAllLabel() }}
         </div>
         <!-- Decorative only, and deliberately role-less: the panel above is a
              `role="listbox"`, which owns `option` and `group` and nothing else,
@@ -165,7 +165,7 @@
       <!-- No Options Message -->
       @if (!hasAnyOptions()) {
         <div class="tn-select-no-options">
-          {{ noOptionsLabel() }}
+          {{ resolvedNoOptionsLabel() }}
         </div>
       }
     </div>

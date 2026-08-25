@@ -200,8 +200,11 @@ export class TnDialogHarness extends ComponentHarness {
   }
 
   /**
-   * Whether the dialog is currently in fullscreen mode.
-   * Checks the aria-label of the fullscreen button.
+   * Whether the dialog is currently in fullscreen mode, read from the fullscreen toggle's
+   * `data-fullscreen`. Deliberately not derived from the button's `aria-label`: that label is
+   * app-configurable through `TN_DIALOG_CHROME_LABELS`, so matching display text would report
+   * `false` forever the moment a consumer translated the chrome — silently, in exactly the apps
+   * the token exists for. Same call `TnTableHarness.getCardSortDirection` makes.
    *
    * @returns Promise resolving to true if fullscreen, false if not or if no fullscreen button.
    */
@@ -210,8 +213,7 @@ export class TnDialogHarness extends ComponentHarness {
     if (!btn) {
       return false;
     }
-    const ariaLabel = await btn.getAttribute('aria-label');
-    return ariaLabel === 'Exit fullscreen';
+    return (await btn.getAttribute('data-fullscreen')) === 'true';
   }
 }
 

@@ -1,14 +1,15 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, forwardRef, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
-import type { ElementRef, OnDestroy, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, forwardRef, InjectionToken, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
+import type { ElementRef, OnDestroy, Signal, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import type { Subscription } from 'rxjs';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 export interface TnSelectOption<T = unknown> {
   value: T;
@@ -21,6 +22,43 @@ export interface TnSelectOptionGroup<T = unknown> {
   options: TnSelectOption<T>[];
   disabled?: boolean;
 }
+
+/**
+ * Copy rendered inside `tn-select` that is the same for every select in an app.
+ *
+ * Binding these per call site means repeating the identical string on every
+ * `<tn-select>` in the codebase — an app with translated copy ends up with two
+ * extra attribute rows on each one. Provide {@link TN_SELECT_LABELS} at the app
+ * root instead; inputs on `<tn-select>` still win where a particular select
+ * needs its own wording.
+ */
+export interface TnSelectLabels {
+  /** Trigger text shown while nothing is selected. */
+  placeholder: string;
+  /** Message shown inside the dropdown when there are no options to list. */
+  noOptions: string;
+  /** Label of the "select all" row rendered when `showSelectAll` is set. */
+  selectAll: string;
+}
+
+/** English defaults used when no `TN_SELECT_LABELS` provider is registered. */
+export const TN_SELECT_DEFAULT_LABELS: TnSelectLabels = {
+  placeholder: 'Select an option',
+  noOptions: 'No options available',
+  selectAll: 'Select All',
+};
+
+/**
+ * DI token for app-wide default labels. Provide either a static object or a
+ * `Signal<TnSelectLabels>` — the latter lets every select react to language
+ * changes when the consumer wires it up to an i18n service.
+ *
+ * Explicit input bindings on `<tn-select>` still win over these defaults.
+ */
+export const TN_SELECT_LABELS = new InjectionToken<TnSelectLabels | Signal<TnSelectLabels>>(
+  'TN_SELECT_LABELS',
+  { providedIn: 'root', factory: () => TN_SELECT_DEFAULT_LABELS },
+);
 
 /**
  * A keyboard-navigable row in the open dropdown. Either the synthetic
@@ -52,7 +90,13 @@ const VIEWPORT_MARGIN_PX = 8;
 export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
   options = input<TnSelectOption<T>[]>([]);
   optionGroups = input<TnSelectOptionGroup<T>[]>([]);
-  placeholder = input<string>('Select an option');
+  /**
+   * Label inputs are nullable on purpose: the component reads the resolved
+   * `resolved*` computeds below, which fall back to the DI-provided defaults
+   * (a signal — so language changes propagate live). An explicit input binding
+   * always wins.
+   */
+  placeholder = input<string | undefined>(undefined);
   /**
    * Explicit accessible label for the select trigger. When set, this is used as
    * the trigger's `aria-label` instead of the visible `placeholder` — useful in
@@ -70,20 +114,33 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
 
+  private readonly defaultLabels = injectTnLabels(TN_SELECT_LABELS);
+
+  /** Resolved labels: an explicit input takes precedence over the DI default. */
+  protected readonly resolvedPlaceholder = computed(
+    () => this.placeholder() ?? this.defaultLabels().placeholder,
+  );
+  protected readonly resolvedNoOptionsLabel = computed(
+    () => this.noOptionsLabel() ?? this.defaultLabels().noOptions,
+  );
+  protected readonly resolvedSelectAllLabel = computed(
+    () => this.selectAllLabel() ?? this.defaultLabels().selectAll,
+  );
+
   /**
    * `aria-label` for the trigger. An explicit `ariaLabel` always wins; the
    * `placeholder` fallback only applies while no form-field label is wired via
    * `aria-labelledby`, so the trigger never advertises two names at once.
    */
   protected triggerAriaLabel = computed(() =>
-    this.ariaLabel() ?? (this.fieldAria.labelledby() ? null : this.placeholder())
+    this.ariaLabel() ?? (this.fieldAria.labelledby() ? null : this.resolvedPlaceholder())
   );
   /**
    * Message shown inside the dropdown when no options (and no option groups)
-   * are available. Defaults to the English `'No options available'`; consumers
-   * with i18n requirements can pass a translated string.
+   * are available. Falls back to {@link TN_SELECT_LABELS}, so an app with i18n
+   * wiring provides it once rather than per call site.
    */
-  noOptionsLabel = input<string>('No options available');
+  noOptionsLabel = input<string | undefined>(undefined);
   /**
    * When `true` (single-select mode only), prepends a synthetic "empty"
    * option to the dropdown so users can unset a chosen value: picking it
@@ -105,7 +162,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    */
   showSelectAll = input<boolean>(false);
   /** Label of the select-all row rendered when `showSelectAll` is set. */
-  selectAllLabel = input<string>('Select All');
+  selectAllLabel = input<string | undefined>(undefined);
   testId = input<TnTestIdValue>(undefined);
   /** Test-id base, falling back to the bound control name when `testId` is unset. */
   protected resolvedTestId = controlTestId(this.testId);
@@ -502,7 +559,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     if (this.multiple()) {
       const values = this.selectedValues();
       if (values.length === 0) {
-        return this.placeholder();
+        return this.resolvedPlaceholder();
       }
       const labels = values
         .map(v => this.findOptionByValue(v)?.label ?? String(v))
@@ -512,7 +569,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
     const value = this.selectedValue();
     if (value === null || value === undefined) {
-      return this.placeholder();
+      return this.resolvedPlaceholder();
     }
     const option = this.findOptionByValue(value);
     return option ? option.label : String(value);
