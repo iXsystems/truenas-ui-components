@@ -69,8 +69,9 @@ describe('tnTransitionLifecycle zone discipline', () => {
     }).compileComponents();
 
     jest.useFakeTimers();
-    // Injected before the fixture exists, so the spies are in place for the
-    // very first `effect` run.
+    // The instance both tests spy on. Resolved here rather than inside them so
+    // that it is the SAME `NoopNgZone` the helper will inject — each test then
+    // installs its own spy on it, after `createHost()`.
     zone = TestBed.inject(NgZone);
   });
 

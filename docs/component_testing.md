@@ -32,9 +32,9 @@ it('reports after the fallback window', () => {
 ```
 
 The one behavioural difference that bites: **`tick()` drained the microtask
-queue as well as the timer queue, and `advanceTimersByTime()` does not.**
-Anything waiting on a promise — a `MutationObserver` callback, a component
-harness action — needs a real `await`, so the test has to be `async`:
+queue as well as the timer queue, and `advanceTimersByTime()` does not.** A
+`MutationObserver` callback is a microtask, so a spec waiting on one needs a
+real `await` and the test has to be `async`:
 
 ```typescript
 async function settle(): Promise<void> {
@@ -43,6 +43,13 @@ async function settle(): Promise<void> {
   fixture.detectChanges();
 }
 ```
+
+**A component harness action needs more than that**, and a fake clock does not
+help it at all: the harness environment awaits promises of its own between the
+action and the query, so the component's `setTimeout` has to land on a REAL
+macrotask before the harness looks. `tooltip.harness.spec.ts` is the worked
+example — it uses `await new Promise((resolve) => setTimeout(resolve))` and no
+fake timers.
 
 **2. A test host must hold changing state in a `signal`.** Zoneless change
 detection refreshes what has been marked dirty, and a plain property assignment
