@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { hasInteractiveContent, plainTextMessage } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
@@ -282,12 +282,12 @@ class DescriptionHostComponent {}
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
-  template: `<button class="null-host" [tnTooltip]="message">Null message</button>`,
+  template: `<button class="null-host" [tnTooltip]="message()">Null message</button>`,
 })
 class NullMessageHostComponent {
   // Real consumers bind expressions like `reason ?? null` — the input accepts them
   // by contract (via its transform) and the runtime must treat them as "no tooltip".
-  message: string | null | undefined = null;
+  message = signal<string | null | undefined>(null);
 }
 
 describe('TnTooltipDirective nullish message tolerance', () => {
@@ -307,7 +307,7 @@ describe('TnTooltipDirective nullish message tolerance', () => {
 
   it('treats an undefined message the same as no tooltip', () => {
     const fixture = createNullHost();
-    fixture.componentInstance.message = undefined;
+    fixture.componentInstance.message.set(undefined);
 
     expect(() => fixture.detectChanges()).not.toThrow();
 
@@ -317,13 +317,13 @@ describe('TnTooltipDirective nullish message tolerance', () => {
 
   it('removes an existing description when the message becomes null', () => {
     const fixture = createNullHost();
-    fixture.componentInstance.message = 'Reason';
+    fixture.componentInstance.message.set('Reason');
     fixture.detectChanges();
 
     const button = (fixture.nativeElement as HTMLElement).querySelector('.null-host');
     expect(button?.getAttribute('aria-describedby')).toBeTruthy();
 
-    fixture.componentInstance.message = null;
+    fixture.componentInstance.message.set(null);
     fixture.detectChanges();
 
     expect(button?.getAttribute('aria-describedby')).toBeNull();

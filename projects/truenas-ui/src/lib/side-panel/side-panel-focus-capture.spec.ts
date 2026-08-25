@@ -257,6 +257,23 @@ describe('tn-side-panel focus capture (#227)', () => {
    * stubbed to hand the callback back rather than schedule it, so the frame
    * lands after the close button has taken focus rather than racing it —
    * jsdom is otherwise free to serve a frame inside `whenStable`, and does.
+   *
+   * WHAT THAT STUB CATCHES SINCE #304, AND WHY THE COUNT IS NOT ASSERTED
+   * -------------------------------------------------------------------
+   * Under Zone this list held exactly one callback — the capture's retry — and
+   * both tests below read `toHaveLength(1)` to say so. Zoneless change
+   * detection schedules its own work through `scheduleCallbackWithRafRace`,
+   * which races a `requestAnimationFrame` against a `setTimeout`, so Angular's
+   * scheduler now puts callbacks in here too and nothing at this seam can tell
+   * them from the capture's. (Named by reading the stacks, not guessed: two of
+   * the three entries come from `scheduleCallbackWithRafRace`.)
+   *
+   * So the frames are run as a set and the verdict is read from `attempts` and
+   * `document.activeElement` — which is what these tests were always about —
+   * and the length of the list is not asserted at all, in either direction.
+   * Swallowing Angular's half of the race is harmless: its `setTimeout` half
+   * still fires. That the retry runs AT ALL is held by 'tries again after a
+   * first focus that is silently dropped' above, which uses the real frame.
    */
   it('leaves focus alone when it is already inside the panel', async () => {
     const target = panel();
@@ -269,25 +286,28 @@ describe('tn-side-panel focus capture (#227)', () => {
       }
     });
 
-    const pending: FrameRequestCallback[] = [];
+    const held: FrameRequestCallback[] = [];
     jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
-      pending.push(callback);
-      return pending.length;
+      held.push(callback);
+      return held.length;
     });
 
     trigger().focus();
     await openByClick();
 
-    // The component asked once, was declined, and has a retry waiting.
+    // The component asked once and was declined. That a retry is WAITING is not
+    // asserted here: Angular's scheduler puts its own callbacks in `held`, so a
+    // non-empty list says nothing about this component and an assertion on it
+    // could not fail. 'tries again after a first focus that is silently
+    // dropped' above is what holds the retry's existence.
     expect(attempts).toBe(1);
-    expect(pending).toHaveLength(1);
 
     (overlay().querySelector('.tn-icon-button') as HTMLElement).focus();
     const landed = document.activeElement;
     expect(target.contains(landed)).toBe(true);
     expect(landed).not.toBe(target);
 
-    pending.shift()?.(0);
+    held.splice(0, held.length).forEach((frame) => frame(0));
 
     // The retry saw focus already inside and did not spend its call. Reading
     // that AFTER focusing, or comparing with `===` instead of `contains`,
@@ -308,26 +328,36 @@ describe('tn-side-panel focus capture (#227)', () => {
    */
   it('gives up when focus has moved somewhere it has no claim on', async () => {
     const target = panel();
-    jest.spyOn(target, 'focus').mockImplementation(() => undefined);
+    let attempts = 0;
+    jest.spyOn(target, 'focus').mockImplementation(() => {
+      attempts++;
+    });
 
-    const pending: FrameRequestCallback[] = [];
+    // Angular's scheduler shares this list; see the note above.
+    const held: FrameRequestCallback[] = [];
     jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
-      pending.push(callback);
-      return pending.length;
+      held.push(callback);
+      return held.length;
     });
 
     trigger().focus();
     await openByClick();
-    expect(pending).toHaveLength(1);
+    expect(attempts).toBe(1);
 
     const elsewhere = fixture.nativeElement.querySelector('#elsewhere') as HTMLElement;
     elsewhere.focus();
 
-    pending.shift()?.(0);
+    held.splice(0, held.length).forEach((frame) => frame(0));
 
     expect(document.activeElement).toBe(elsewhere);
-    // And it stopped: no further frame was asked for.
-    expect(pending).toHaveLength(0);
+    // And it stopped. Read as "the capture made no further attempt" rather than
+    // as "no further frame was asked for": Angular's own scheduler asks for
+    // frames on this list too, so an empty list is no longer the component's
+    // statement. A second round proves the give-up is permanent rather than
+    // one frame late.
+    held.splice(0, held.length).forEach((frame) => frame(0));
+    expect(attempts).toBe(1);
+    expect(document.activeElement).toBe(elsewhere);
   });
 
   /**

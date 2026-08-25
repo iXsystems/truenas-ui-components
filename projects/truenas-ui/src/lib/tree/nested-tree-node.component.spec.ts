@@ -1,7 +1,7 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { CdkTreeModule } from '@angular/cdk/tree';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { TnNestedTreeDataSource } from './nested-tree-datasource';
 import { TnNestedTreeNodeComponent } from './nested-tree-node.component';
@@ -38,10 +38,10 @@ const dataset: ExampleNode[] = [
 
       <tn-nested-tree-node
         *cdkTreeNodeDef="let node; when: hasChild"
-        [testId]="withNodeTestIds ? node.name : undefined"
+        [testId]="withNodeTestIds() ? node.name : undefined"
         [toggleAriaLabel]="'Toggle ' + node.name"
-        [toggleTestId]="withExplicitToggleTestIds ? ['custom-toggle', node.name] : undefined"
-        [hideToggle]="hideToggle"
+        [toggleTestId]="withExplicitToggleTestIds() ? ['custom-toggle', node.name] : undefined"
+        [hideToggle]="hideToggle()"
       >
         {{ node.name }}
         <ng-container slot="children" tnTreeNodeOutlet />
@@ -50,9 +50,9 @@ const dataset: ExampleNode[] = [
   `,
 })
 class HostComponent {
-  hideToggle = false;
-  withNodeTestIds = true;
-  withExplicitToggleTestIds = false;
+  hideToggle = signal(false);
+  withNodeTestIds = signal(true);
+  withExplicitToggleTestIds = signal(false);
 
   readonly treeControl = createNestedTreeControl<ExampleNode>((node) => node.children);
   readonly dataSource = new TnNestedTreeDataSource<ExampleNode>(dataset);
@@ -109,7 +109,7 @@ describe('TnNestedTreeNodeComponent', () => {
   });
 
   it('prefers an explicit toggleTestId over the derived one', () => {
-    host.withExplicitToggleTestIds = true;
+    host.withExplicitToggleTestIds.set(true);
     fixture.detectChanges();
 
     expect(toggleButton('pool')).toBeNull();
@@ -117,7 +117,7 @@ describe('TnNestedTreeNodeComponent', () => {
   });
 
   it('renders no toggle test id when the node has no testId either', () => {
-    host.withNodeTestIds = false;
+    host.withNodeTestIds.set(false);
     fixture.detectChanges();
 
     const toggle = fixture.nativeElement.querySelector('.tn-nested-tree-node__toggle');
@@ -153,7 +153,7 @@ describe('TnNestedTreeNodeComponent', () => {
   });
 
   it('suppresses the built-in toggle and spacer when hideToggle is set', () => {
-    host.hideToggle = true;
+    host.hideToggle.set(true);
     fixture.detectChanges();
 
     expect(toggleButton('pool')).toBeNull();

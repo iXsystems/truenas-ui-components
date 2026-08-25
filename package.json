@@ -59,8 +59,7 @@
     "node": ">=24"
   },
   "peerDependencies": {
-    "rxjs": "^7.5.0",
-    "zone.js": "^0.15.0"
+    "rxjs": "^7.5.0"
   },
   "dependencies": {
     "@material-design-icons/svg": "~0.14.13",
@@ -142,8 +141,7 @@
     "style-loader": "^4.0.0",
     "ts-jest": "~29.4.6",
     "typescript": "~5.9.3",
-    "wait-on": "^9.1.0",
-    "zone.js": "^0.15.1"
+    "wait-on": "^9.1.0"
   },
   "resolutions": {
     "caniuse-lite": "^1.0.30001764"

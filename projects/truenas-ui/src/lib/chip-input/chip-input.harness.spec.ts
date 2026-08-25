@@ -372,12 +372,15 @@ class LabelledPrimitiveValueHostComponent {
   imports: [TnChipInputComponent, ReactiveFormsModule],
   template: `
     <form [formGroup]="form">
-      <tn-chip-input testId="tags" formControlName="regions" [options]="options" />
+      <tn-chip-input testId="tags" formControlName="regions" [options]="options()" />
     </form>
   `,
 })
 class AsyncOptionsHostComponent {
-  options: TnChipInputOption<string>[] = [];
+  // The one host here whose options ARRIVE after first render, which is the
+  // subject; a plain reassignment marks no view dirty under zoneless change
+  // detection, so the chip would keep its pre-load name (#304).
+  options = signal<TnChipInputOption<string>[]>([]);
   form = new FormGroup({ regions: new FormControl<string[]>(['us']) });
 }
 
@@ -526,7 +529,7 @@ describe('TnChipInputComponent test ids', () => {
       ?.getAttribute('data-testid');
     expect(chipId()).toBe('chip-tags-us');
 
-    fixture.componentInstance.options = [{ label: 'United States', value: 'us' }];
+    fixture.componentInstance.options.set([{ label: 'United States', value: 'us' }]);
     fixture.detectChanges();
     expect(chipId()).toBe('chip-tags-united-states');
   });

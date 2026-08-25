@@ -5,7 +5,6 @@ import { provideRouter, withDisabledInitialNavigation } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
 import { withThemeByClassName } from '@storybook/addon-themes';
 import { APP_INITIALIZER } from '@angular/core';
-import 'zone.js';
 import { TnThemeService, TnTheme } from '../src/public-api';
 import { TnIconRegistryService } from '../src/lib/icon/icon-registry.service';
 import { TnSpriteLoaderService } from '../src/lib/icon/sprite-loader.service';

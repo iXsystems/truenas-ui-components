@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TnTableTesting } from './table-testing';
@@ -47,20 +47,20 @@ const SERVERS: Server[] = [
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-table
-      [mobileLayout]="mobileLayout"
-      [dataSource]="tableData"
-      [displayedColumns]="displayedColumns"
-      [selectable]="selectable"
-      [clickable]="clickable"
-      [expandable]="expandable"
-      [expandOnRowClick]="expandOnRowClick"
-      [cardPrimaryCount]="cardPrimaryCount"
-      [fixedLayout]="fixedLayout"
-      [minColumnWidth]="minColumnWidth"
-      [minWidth]="minWidth"
-      [activeRow]="activeRow"
-      [loading]="loading"
-      [trackBy]="trackByFn"
+      [mobileLayout]="mobileLayout()"
+      [dataSource]="tableData()"
+      [displayedColumns]="displayedColumns()"
+      [selectable]="selectable()"
+      [clickable]="clickable()"
+      [expandable]="expandable()"
+      [expandOnRowClick]="expandOnRowClick()"
+      [cardPrimaryCount]="cardPrimaryCount()"
+      [fixedLayout]="fixedLayout()"
+      [minColumnWidth]="minColumnWidth()"
+      [minWidth]="minWidth()"
+      [activeRow]="activeRow()"
+      [loading]="loading()"
+      [trackBy]="trackByFn()"
       (sortChange)="sortEvents.push($event)"
       (rowClick)="rowClicks.push($event)"
       (rowDoubleClick)="rowDoubleClicks.push($event)">
@@ -74,7 +74,7 @@ const SERVERS: Server[] = [
         <ng-template let-row tnCellDef>{{ row.id }}</ng-template>
       </ng-container>
 
-      <ng-container tnColumnDef="name" label="Name" [cardTitle]="titleOnName" [sortable]="true">
+      <ng-container tnColumnDef="name" label="Name" [cardTitle]="titleOnName()" [sortable]="true">
         <ng-template tnHeaderCellDef>Name</ng-template>
         <ng-template let-row tnCellDef>{{ row.name }}</ng-template>
       </ng-container>
@@ -110,7 +110,7 @@ const SERVERS: Server[] = [
         <ng-template let-row tnCellDef>{{ row.email }}</ng-template>
       </ng-container>
 
-      @if (expandable) {
+      @if (expandable()) {
         <ng-template let-row tnDetailRowDef>
           <div class="detail-body">
             <button
@@ -124,7 +124,7 @@ const SERVERS: Server[] = [
         </ng-template>
       }
 
-      @if (withActions) {
+      @if (withActions()) {
         <ng-template let-row tnRowActionsDef>
           <button type="button" class="row-action" (click)="actionClicks.push(row)">Edit</button>
         </ng-template>
@@ -133,22 +133,22 @@ const SERVERS: Server[] = [
   `,
 })
 class TableCardTestComponent {
-  tableData: Server[] = [...SERVERS];
-  displayedColumns = ['id', 'name', 'status', 'role', 'email'];
-  mobileLayout: 'cards' | 'scroll' = 'cards';
-  selectable = false;
-  clickable = false;
-  expandable = false;
-  expandOnRowClick = false;
-  withActions = false;
-  fixedLayout = false;
-  minColumnWidth = '';
-  minWidth = '';
-  activeRow: Server | null = null;
-  loading = false;
-  trackByFn: ((index: number, row: Server) => unknown) | undefined = undefined;
-  titleOnName = true;
-  cardPrimaryCount = 3;
+  tableData = signal<Server[]>([...SERVERS]);
+  displayedColumns = signal(['id', 'name', 'status', 'role', 'email']);
+  mobileLayout = signal<'cards' | 'scroll'>('cards');
+  selectable = signal(false);
+  clickable = signal(false);
+  expandable = signal(false);
+  expandOnRowClick = signal(false);
+  withActions = signal(false);
+  fixedLayout = signal(false);
+  minColumnWidth = signal('');
+  minWidth = signal('');
+  activeRow = signal<Server | null>(null);
+  loading = signal(false);
+  trackByFn = signal<((index: number, row: Server) => unknown) | undefined>(undefined);
+  titleOnName = signal(true);
+  cardPrimaryCount = signal(3);
   sortEvents: TnSortEvent[] = [];
   rowClicks: Server[] = [];
   rowDoubleClicks: Server[] = [];
@@ -254,7 +254,7 @@ describe('TnTable card layout', () => {
     it('skips a cardHidden column when falling back to a title', async () => {
       // No column claims cardTitle, so the fallback runs. `id` is first in
       // displayedColumns but cardHidden, so `name` should win.
-      component.titleOnName = false;
+      component.titleOnName.set(false);
       fixture.detectChanges();
       await goNarrow();
 
@@ -281,7 +281,7 @@ describe('TnTable card layout', () => {
     });
 
     it('folds fields past cardPrimaryCount behind the disclosure', async () => {
-      component.cardPrimaryCount = 2;
+      component.cardPrimaryCount.set(2);
       fixture.detectChanges();
       await goNarrow();
 
@@ -290,7 +290,7 @@ describe('TnTable card layout', () => {
     });
 
     it('prefers cardLabel over the shared label for a field', async () => {
-      component.cardPrimaryCount = 5;
+      component.cardPrimaryCount.set(5);
       fixture.detectChanges();
       await goNarrow();
 
@@ -545,8 +545,8 @@ describe('TnTable card layout', () => {
 
   describe('card detail section', () => {
     beforeEach(() => {
-      component.expandable = true;
-      component.clickable = true;
+      component.expandable.set(true);
+      component.clickable.set(true);
       fixture.detectChanges();
     });
 
@@ -563,7 +563,7 @@ describe('TnTable card layout', () => {
     // click on projected content used to bubble into card activation — emitting
     // rowClick and, with expandOnRowClick, collapsing the panel being used.
     it('does not activate the card when projected detail content is clicked', async () => {
-      component.expandOnRowClick = true;
+      component.expandOnRowClick.set(true);
       fixture.detectChanges();
       await goNarrow();
       await harness.toggleCardDetail(0);
@@ -591,7 +591,7 @@ describe('TnTable card layout', () => {
     });
 
     it('marks the card aria-expanded when the card itself is the expand trigger', async () => {
-      component.expandOnRowClick = true;
+      component.expandOnRowClick.set(true);
       fixture.detectChanges();
       await goNarrow();
 
@@ -608,7 +608,7 @@ describe('TnTable card layout', () => {
     // reports the state unconditionally — including when the card is also a trigger and
     // carries the same state. Redundant beats muting the real control.
     it('reports expanded state on the Details button even when the card is a trigger', async () => {
-      component.expandOnRowClick = true;
+      component.expandOnRowClick.set(true);
       fixture.detectChanges();
       await goNarrow();
 
@@ -648,8 +648,8 @@ describe('TnTable card layout', () => {
 
   describe('card activation', () => {
     beforeEach(() => {
-      component.clickable = true;
-      component.withActions = true;
+      component.clickable.set(true);
+      component.withActions.set(true);
       fixture.detectChanges();
     });
 
@@ -690,7 +690,7 @@ describe('TnTable card layout', () => {
       await goNarrow();
       expect(await harness.isCardFocusable(0)).toBe(true);
 
-      component.clickable = false;
+      component.clickable.set(false);
       fixture.detectChanges();
 
       expect(await harness.isCardFocusable(0)).toBe(false);
@@ -716,7 +716,7 @@ describe('TnTable card layout', () => {
     });
 
     it('activates the card from a field value folded under More fields', async () => {
-      component.cardPrimaryCount = 1;
+      component.cardPrimaryCount.set(1);
       fixture.detectChanges();
       await goNarrow();
       await harness.expandCardMoreFields(0);
@@ -741,9 +741,9 @@ describe('TnTable card layout', () => {
     }
 
     beforeEach(() => {
-      component.fixedLayout = true;
+      component.fixedLayout.set(true);
       // The derived floor is opt-in: `minColumnWidth` defaults to '' and applies none.
-      component.minColumnWidth = '120px';
+      component.minColumnWidth.set('120px');
       fixture.detectChanges();
     });
 
@@ -754,17 +754,17 @@ describe('TnTable card layout', () => {
     // The floor is opt-in (#168). The actions column contributes only to a floor that exists — it
     // must not conjure one on its own, or every actions table would silently get a floor back.
     it('applies no floor at all when minColumnWidth is unset, even with an actions column', () => {
-      component.minColumnWidth = '';
-      component.withActions = true;
+      component.minColumnWidth.set('');
+      component.withActions.set(true);
       fixture.detectChanges();
 
       expect(tableMinWidth()).toBe('');
     });
 
     it('still honours an explicit minWidth over the derivation', () => {
-      component.minColumnWidth = '';
-      component.minWidth = '900px';
-      component.withActions = true;
+      component.minColumnWidth.set('');
+      component.minWidth.set('900px');
+      component.withActions.set(true);
       fixture.detectChanges();
 
       expect(tableMinWidth()).toBe('900px');
@@ -774,16 +774,16 @@ describe('TnTable card layout', () => {
     // `minColumnWidth` share each — reserving full shares overstates the floor, and the slack
     // hides shortfalls elsewhere in it.
     it('adds the actions column width to the floor', () => {
-      component.withActions = true;
+      component.withActions.set(true);
       fixture.detectChanges();
 
       expect(tableMinWidth()).toBe('calc(120px * 5 + var(--tn-table-actions-width))');
     });
 
     it('counts the select and expand columns as shares, and adds the actions width', () => {
-      component.selectable = true;
-      component.expandable = true;
-      component.withActions = true;
+      component.selectable.set(true);
+      component.expandable.set(true);
+      component.withActions.set(true);
       fixture.detectChanges();
 
       // 5 displayed + __select + __expand as shares, plus the actions column's own width.
@@ -797,8 +797,8 @@ describe('TnTable card layout', () => {
   // and `rowClick` fired for the row instead. Card mode had guarded this from the start.
   describe('projected controls under the keyboard (table mode)', () => {
     beforeEach(() => {
-      component.clickable = true;
-      component.withActions = true;
+      component.clickable.set(true);
+      component.withActions.set(true);
       fixture.detectChanges();
     });
 
@@ -823,7 +823,7 @@ describe('TnTable card layout', () => {
     });
 
     it('leaves Space on the row checkbox alone', () => {
-      component.selectable = true;
+      component.selectable.set(true);
       fixture.detectChanges();
       const input = fixture.nativeElement.querySelector(
         '.tn-table__row .tn-table__select-cell input[type="checkbox"]'
@@ -888,8 +888,8 @@ describe('TnTable card layout', () => {
   // while card mode never did — same consumer template, behaviour keyed to container width.
   describe('projected controls under the mouse (table mode)', () => {
     beforeEach(() => {
-      component.clickable = true;
-      component.withActions = true;
+      component.clickable.set(true);
+      component.withActions.set(true);
       fixture.detectChanges();
     });
 
@@ -981,7 +981,7 @@ describe('TnTable card layout', () => {
 
   describe('loading blocks interaction in both layouts', () => {
     it('marks every rendered surface inert while loading', async () => {
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
 
       const table = fixture.nativeElement.querySelector('.tn-table__table') as HTMLElement;
@@ -1001,13 +1001,13 @@ describe('TnTable card layout', () => {
       header.focus();
       expect(document.activeElement).toBe(header);
 
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
       // jsdom does not implement inert's blur, so stand in for it.
       (document.activeElement as HTMLElement).blur();
       expect(document.activeElement).toBe(document.body);
 
-      component.loading = false;
+      component.loading.set(false);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -1021,17 +1021,17 @@ describe('TnTable card layout', () => {
       const header = fixture.nativeElement.querySelector('th[data-column="name"]') as HTMLElement;
       header.focus();
 
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
       (document.activeElement as HTMLElement).blur();
 
       // Second load begins while focus is still parked on <body>.
-      component.loading = false;
-      component.loading = true;
+      component.loading.set(false);
+      component.loading.set(true);
       fixture.detectChanges();
       expect(document.activeElement).toBe(document.body);
 
-      component.loading = false;
+      component.loading.set(false);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -1039,25 +1039,25 @@ describe('TnTable card layout', () => {
     });
 
     it('falls back to the host when the remembered element is gone', async () => {
-      component.trackByFn = (_index: number, row: Server) => row.id;
+      component.trackByFn.set((_index: number, row: Server) => row.id);
       fixture.detectChanges();
       const firstRow = fixture.nativeElement.querySelector('.tn-table__row') as HTMLElement;
       const cell = firstRow.querySelector('.tn-table__cell') as HTMLElement;
       cell.setAttribute('tabindex', '0');
       cell.focus();
 
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
       (document.activeElement as HTMLElement).blur();
       // The scenario the fallback exists for: an id-based `trackBy` plus a reload that drops
       // the focused row, so Angular destroys that element rather than reusing it. (Under the
       // default index `trackBy` the row element is reused and nothing detaches — which is why
       // an earlier version of this test proved nothing.)
-      component.tableData = [SERVERS[1]];
+      component.tableData.set([SERVERS[1]]);
       fixture.detectChanges();
       expect(cell.isConnected).toBe(false);
 
-      component.loading = false;
+      component.loading.set(false);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -1071,11 +1071,11 @@ describe('TnTable card layout', () => {
       document.body.appendChild(elsewhere);
       header.focus();
 
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
       elsewhere.focus();
 
-      component.loading = false;
+      component.loading.set(false);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -1084,9 +1084,9 @@ describe('TnTable card layout', () => {
     });
 
     it('drops inert again once loading finishes', () => {
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
-      component.loading = false;
+      component.loading.set(false);
       fixture.detectChanges();
 
       const table = fixture.nativeElement.querySelector('.tn-table__table') as HTMLElement;
@@ -1122,7 +1122,7 @@ describe('TnTable card layout', () => {
     });
 
     it('expandCardMoreFields is idempotent', async () => {
-      component.cardPrimaryCount = 1;
+      component.cardPrimaryCount.set(1);
       fixture.detectChanges();
       await goNarrow();
 
@@ -1143,7 +1143,7 @@ describe('TnTable card layout', () => {
     });
 
     it('counts expanded card details from getExpandedRowCount', async () => {
-      component.expandable = true;
+      component.expandable.set(true);
       fixture.detectChanges();
       await goNarrow();
       expect(await harness.getExpandedRowCount()).toBe(0);
@@ -1157,7 +1157,7 @@ describe('TnTable card layout', () => {
     // started counting cards: it cleared the bounds guard, then found no
     // `.tn-table__expand-button` over a card that renders a "Details" button.
     it('throws from hasExpandControl instead of answering a silent false', async () => {
-      component.expandable = true;
+      component.expandable.set(true);
       fixture.detectChanges();
       await goNarrow();
 
@@ -1215,7 +1215,7 @@ describe('TnTable card layout', () => {
     // `getActiveRowIndex()` used to answer null in card mode — "nothing is active" — over a
     // visibly active card, which greens a test rather than failing it.
     it('reports the active card index through the harness', async () => {
-      component.activeRow = SERVERS[1];
+      component.activeRow.set(SERVERS[1]);
       fixture.detectChanges();
       await goNarrow();
 
@@ -1237,8 +1237,8 @@ describe('TnTable card layout', () => {
   // ScrollModePinnedColumns play function.
   describe('scroll mode', () => {
     beforeEach(() => {
-      component.mobileLayout = 'scroll';
-      component.selectable = true;
+      component.mobileLayout.set('scroll');
+      component.selectable.set(true);
       fixture.detectChanges();
     });
 
@@ -1286,7 +1286,7 @@ describe('TnTable card layout', () => {
 
   describe('selection across the breakpoint', () => {
     beforeEach(() => {
-      component.selectable = true;
+      component.selectable.set(true);
       fixture.detectChanges();
     });
 

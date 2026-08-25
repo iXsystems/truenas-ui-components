@@ -1,7 +1,7 @@
 import { CdkMenu } from '@angular/cdk/menu';
 import { Component, getDebugNode, signal, viewChild } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TnMenuItemComponent } from './menu-item.component';
 import { TnMenuTriggerDirective } from './menu-trigger.directive';
 import type { TnMenuItem } from './menu.component';
@@ -32,10 +32,10 @@ function getBackdrop(): HTMLElement | null {
   standalone: true,
   imports: [TnMenuComponent, TnMenuTriggerDirective],
   template: `
-    <button class="trigger" [tnMenuTriggerFor]="menu" [tnMenuPosition]="position">Open</button>
+    <button class="trigger" [tnMenuTriggerFor]="menu" [tnMenuPosition]="position()">Open</button>
     <tn-menu
       #menu
-      [items]="items"
+      [items]="items()"
       (menuItemClick)="lastClicked = $event"
       (menuOpen)="opened = true"
       (menuClose)="closed = true"
@@ -43,7 +43,7 @@ function getBackdrop(): HTMLElement | null {
   `,
 })
 class MenuTestHostComponent {
-  items: TnMenuItem[] = [
+  items = signal<TnMenuItem[]>([
     { id: 'cut', label: 'Cut', icon: 'content_cut', shortcut: '⌘X' },
     { id: 'copy', label: 'Copy' },
     { id: 'disabled', label: 'Disabled', disabled: true },
@@ -52,8 +52,8 @@ class MenuTestHostComponent {
       { id: 'child-1', label: 'Child 1' },
       { id: 'child-2', label: 'Child 2' },
     ]},
-  ];
-  position: 'above' | 'below' | 'before' | 'after' = 'below';
+  ]);
+  position = signal<'above' | 'below' | 'before' | 'after'>('below');
   lastClicked: TnMenuItem | null = null;
   opened = false;
   closed = false;
@@ -109,10 +109,17 @@ describe('tn-menu with trigger', () => {
     host = fixture.componentInstance;
     fixture.detectChanges();
     triggerButton = fixture.nativeElement.querySelector('.trigger');
+
+    // The backdrop-click test has to let CDK's overlay teardown timers run, and
+    // #304 replaced `fakeAsync`/`flush` with Jest's clock. Enabled for the whole
+    // block rather than for that one test: no test here awaits anything, so a
+    // fake clock costs the others nothing and there is one place to find it.
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     host.trigger().closeMenu();
+    jest.useRealTimers();
   });
 
   // -- Opening & closing --------------------------------------------------
@@ -136,17 +143,17 @@ describe('tn-menu with trigger', () => {
     expect(host.closed).toBe(true);
   });
 
-  it('should close menu when backdrop is clicked', fakeAsync(() => {
+  it('should close menu when backdrop is clicked', () => {
     triggerButton.click();
     fixture.detectChanges();
 
     getBackdrop()!.click();
-    flush();
+    jest.runOnlyPendingTimers();
     fixture.detectChanges();
 
     expect(getMenuPanel()).toBeFalsy();
     expect(host.closed).toBe(true);
-  }));
+  });
 
   it('closes the menu on Tab so the browser can advance focus to the next element', () => {
     triggerButton.click();
@@ -303,10 +310,10 @@ describe('tn-menu with trigger', () => {
   });
 
   it('composes the item.testId override with the button prefix when provided', () => {
-    host.items = [
+    host.items.set([
       { id: 'cut', label: 'Cut', testId: 'custom-cut' },
       { id: 'copy', label: 'Copy' },
-    ];
+    ]);
     fixture.detectChanges();
 
     triggerButton.click();
@@ -382,7 +389,7 @@ describe('tn-menu with trigger', () => {
 
   for (const position of ['above', 'below', 'before', 'after'] as const) {
     it(`should open menu with "${position}" position`, () => {
-      host.position = position;
+      host.position.set(position);
       fixture.detectChanges();
 
       triggerButton.click();
@@ -410,6 +417,14 @@ describe('tn-menu as context menu', () => {
     host = fixture.componentInstance;
     fixture.detectChanges();
     contextArea = fixture.nativeElement.querySelector('.context-area');
+
+    // Every test in this block steps CDK's overlay timers; see the same note in
+    // 'tn-menu with trigger' above.
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   function rightClick(el: HTMLElement, x = 100, y = 100): void {
@@ -421,68 +436,68 @@ describe('tn-menu as context menu', () => {
     }));
   }
 
-  it('should open menu on right-click', fakeAsync(() => {
+  it('should open menu on right-click', () => {
     rightClick(contextArea);
     fixture.detectChanges();
-    flush();
+    jest.runOnlyPendingTimers();
 
     expect(getMenuPanel()).toBeTruthy();
     expect(host.opened).toBe(true);
-  }));
+  });
 
-  it('should render context menu items', fakeAsync(() => {
+  it('should render context menu items', () => {
     rightClick(contextArea);
     fixture.detectChanges();
-    flush();
+    jest.runOnlyPendingTimers();
 
     const labels = Array.from(document.querySelectorAll('.tn-menu-item-label'))
       .map(el => el.textContent?.trim());
     expect(labels).toContain('Cut');
     expect(labels).toContain('Copy');
-  }));
+  });
 
-  it('should close context menu and emit on item click', fakeAsync(() => {
+  it('should close context menu and emit on item click', () => {
     rightClick(contextArea);
     fixture.detectChanges();
-    flush();
+    jest.runOnlyPendingTimers();
 
     const cutButton = getMenuItems().find(
       el => el.textContent?.includes('Cut')
     )!;
     cutButton.click();
     fixture.detectChanges();
-    flush();
+    jest.runOnlyPendingTimers();
 
     expect(host.lastClicked?.id).toBe('cut');
     expect(host.closed).toBe(true);
-  }));
+  });
 
-  it('should close previous context menu when opening a new one', fakeAsync(() => {
+  it('should close previous context menu when opening a new one', () => {
     rightClick(contextArea, 50, 50);
     fixture.detectChanges();
-    flush();
+    jest.runOnlyPendingTimers();
 
     rightClick(contextArea, 150, 150);
     fixture.detectChanges();
-    flush();
+    jest.runOnlyPendingTimers();
 
     // Only one menu panel should exist
     const panels = document.querySelectorAll('.tn-menu');
     expect(panels.length).toBe(1);
-  }));
+  });
 
-  it('should close context menu on backdrop click', fakeAsync(() => {
+  it('should close context menu on backdrop click', () => {
     rightClick(contextArea);
     fixture.detectChanges();
-    flush();
+    jest.runOnlyPendingTimers();
 
     getBackdrop()!.click();
-    flush();
+    jest.runOnlyPendingTimers();
     fixture.detectChanges();
 
     expect(getMenuPanel()).toBeFalsy();
     expect(host.closed).toBe(true);
-  }));
+  });
 });
 
 // ===========================================================================
@@ -778,16 +793,16 @@ describe('tn-menu focus restoration with <tn-button> trigger', () => {
   imports: [TnMenuComponent, TnMenuTriggerDirective],
   template: `
     <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
-    <tn-menu #menu [items]="items" [testId]="testId" />
+    <tn-menu #menu [items]="items()" [testId]="testId()" />
   `,
 })
 class BaseScopedMenuHostComponent {
-  items: TnMenuItem[] = [
+  items = signal<TnMenuItem[]>([
     { id: 'edit', label: 'Edit' },
     { id: 'delete', label: 'Delete' },
     { id: 'more', label: 'More', children: [{ id: 'rename', label: 'Rename' }] },
-  ];
-  testId: string | undefined = 'actions';
+  ]);
+  testId = signal<string | undefined>('actions');
   trigger = viewChild.required(TnMenuTriggerDirective);
 }
 
@@ -832,7 +847,7 @@ describe('tn-menu base-scoped test ids', () => {
   });
 
   it('falls back to the unscoped button-<id> when no base is set', () => {
-    host.testId = undefined;
+    host.testId.set(undefined);
     fixture.detectChanges();
 
     triggerButton.click();
@@ -843,10 +858,10 @@ describe('tn-menu base-scoped test ids', () => {
   });
 
   it('composes a per-item testId override with the button prefix', () => {
-    host.items = [
+    host.items.set([
       { id: 'edit', label: 'Edit', testId: 'totally-custom' },
       { id: 'delete', label: 'Delete' },
-    ];
+    ]);
     fixture.detectChanges();
 
     triggerButton.click();

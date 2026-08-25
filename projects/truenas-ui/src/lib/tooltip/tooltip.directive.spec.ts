@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TnTooltipDirective } from './tooltip.directive';
 import { TnButtonComponent } from '../button/button.component';
 
@@ -91,71 +91,95 @@ describe('TnTooltipDirective sticky mode', () => {
     plainHost = fixture.nativeElement.querySelector('#plain') as HTMLButtonElement;
     ownerHost = fixture.nativeElement.querySelector('#owns-expanded') as HTMLButtonElement;
     sideHost = fixture.nativeElement.querySelector('#side') as HTMLButtonElement;
+
+    // The directive's show/hide are `setTimeout`s, and #304 replaced
+    // `fakeAsync`/`tick` with Jest's clock. `settleObserver()` below is where
+    // the two differ and it is the whole cost of the swap in this file.
+    jest.useFakeTimers();
   });
 
-  afterEach(fakeAsync(() => {
+  afterEach(() => {
     fixture.destroy();
-    tick();
-  }));
+    jest.advanceTimersByTime(0);
+    jest.useRealTimers();
+  });
+
+  /**
+   * Let the directive's 0ms show/hide timers run AND the `MutationObserver`
+   * deliver, then sync the view.
+   *
+   * `tick()` used to do both halves: Zone patched `MutationObserver`'s delivery
+   * onto its own microtask queue, so draining the clock drained that too.
+   * Jest's `advanceTimersByTime` moves only the timer queue — the observer's
+   * callback is an ordinary microtask and needs a real `await` to land. Which
+   * is why the tests that depend on it are `async`, as they already were for
+   * the same reason under Zone (its queue did not cover jsdom's observer
+   * either; see the comments they carry).
+   */
+  async function settleObserver(): Promise<void> {
+    jest.advanceTimersByTime(0);
+    await Promise.resolve();
+    fixture.detectChanges();
+  }
 
   function hover(target: HTMLElement = host): void {
     target.dispatchEvent(new MouseEvent('mouseenter'));
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
   }
 
   function leave(target: HTMLElement = host): void {
     target.dispatchEvent(new MouseEvent('mouseleave'));
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
   }
 
   function click(detail = 1): void {
     host.dispatchEvent(new MouseEvent('click', { bubbles: true, detail }));
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
   }
 
-  it('shows plain help text on hover and hides it on mouseleave', fakeAsync(() => {
+  it('shows plain help text on hover and hides it on mouseleave', () => {
     hover(plainHost);
     expect(tooltipPanel()).not.toBeNull();
     expect(closeButton()).toBeNull();
 
     leave(plainHost);
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('does not open a pinnable tooltip on hover - the click is the only way in', fakeAsync(() => {
+  it('does not open a pinnable tooltip on hover - the click is the only way in', () => {
     hover();
 
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('does not open a pinnable tooltip on keyboard focus either', fakeAsync(() => {
+  it('does not open a pinnable tooltip on keyboard focus either', () => {
     TestBed.inject(FocusMonitor).focusVia(host, 'keyboard');
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
 
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('never pins plain help text, so it does not hijack the host click', fakeAsync(() => {
+  it('never pins plain help text, so it does not hijack the host click', () => {
     plainHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
 
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('opens the tooltip already pinned on click, with a dismiss button', fakeAsync(() => {
+  it('opens the tooltip already pinned on click, with a dismiss button', () => {
     click();
 
     expect(tooltipPanel()).not.toBeNull();
     expect(closeButton()).not.toBeNull();
     expect(closeButton()?.getAttribute('aria-label')).toBe('Close tooltip');
-  }));
+  });
 
-  it('keeps a pinned tooltip open on mouseleave and blur', fakeAsync(() => {
+  it('keeps a pinned tooltip open on mouseleave and blur', () => {
     click();
 
     leave();
@@ -164,37 +188,37 @@ describe('TnTooltipDirective sticky mode', () => {
     // Focus moving into the overlay leaves the host, so without the sticky guard this blur
     // would hide the tooltip the moment the user reached its content.
     host.blur();
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
     expect(tooltipPanel()).not.toBeNull();
-  }));
+  });
 
-  it('makes a pinned tooltip interactive rather than click-through', fakeAsync(() => {
+  it('makes a pinned tooltip interactive rather than click-through', () => {
     click();
 
     const tooltipHost = document.querySelector('tn-tooltip') as HTMLElement;
     expect(tooltipHost.classList).toContain('tn-tooltip-component--sticky');
-  }));
+  });
 
-  it('dismisses on a second click of the host', fakeAsync(() => {
+  it('dismisses on a second click of the host', () => {
     click();
     expect(tooltipPanel()).not.toBeNull();
 
     click();
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('dismisses when the tooltip dismiss button is clicked', fakeAsync(() => {
+  it('dismisses when the tooltip dismiss button is clicked', () => {
     click();
 
     closeButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
 
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('moves focus onto the tooltip panel when pinned from the keyboard', fakeAsync(() => {
+  it('moves focus onto the tooltip panel when pinned from the keyboard', () => {
     host.focus();
     // A click with detail 0 is what Enter/Space on a button produces.
     click(0);
@@ -202,46 +226,46 @@ describe('TnTooltipDirective sticky mode', () => {
     expect(document.activeElement).toBe(tooltipPanel());
     // Focused ahead of the message, so Tab reaches the tooltip's own links first.
     expect(tooltipPanel()?.getAttribute('tabindex')).toBe('-1');
-  }));
+  });
 
-  it('dismisses on Escape and restores focus to the host', fakeAsync(() => {
+  it('dismisses on Escape and restores focus to the host', () => {
     host.focus();
     click(0);
 
     document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
 
     expect(tooltipPanel()).toBeNull();
     expect(document.activeElement).toBe(host);
-  }));
+  });
 
-  it('does not intercept Escape while it is only a hover tooltip', fakeAsync(() => {
+  it('does not intercept Escape while it is only a hover tooltip', () => {
     // A permanent keydownEvents() subscription would make the tooltip's overlay the top-most
     // Escape handler, stealing the key from whatever dialog the host sits in.
     hover(plainHost);
 
     const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
     document.body.dispatchEvent(escape);
-    tick();
+    jest.advanceTimersByTime(0);
 
     expect(escape.defaultPrevented).toBe(false);
-  }));
+  });
 
-  it('dismisses on an outside click', fakeAsync(() => {
+  it('dismisses on an outside click', () => {
     click();
 
     const outside = document.createElement('div');
     document.body.appendChild(outside);
     outside.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    tick();
+    jest.advanceTimersByTime(0);
     fixture.detectChanges();
 
     expect(tooltipPanel()).toBeNull();
     outside.remove();
-  }));
+  });
 
-  it('falls back to hover when sticky mode is turned off, even with a link in the message', fakeAsync(() => {
+  it('falls back to hover when sticky mode is turned off, even with a link in the message', () => {
     fixture.componentInstance.sticky.set(false);
     fixture.detectChanges();
 
@@ -253,27 +277,27 @@ describe('TnTooltipDirective sticky mode', () => {
 
     leave();
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('does not pin a disabled tooltip', fakeAsync(() => {
+  it('does not pin a disabled tooltip', () => {
     fixture.componentInstance.disabled.set(true);
     fixture.detectChanges();
 
     click();
 
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('does not pin when there is no message', fakeAsync(() => {
+  it('does not pin when there is no message', () => {
     fixture.componentInstance.message.set('');
     fixture.detectChanges();
 
     click();
 
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('re-opens after being dismissed', fakeAsync(() => {
+  it('re-opens after being dismissed', () => {
     click();
     click();
     expect(tooltipPanel()).toBeNull();
@@ -281,7 +305,7 @@ describe('TnTooltipDirective sticky mode', () => {
     click();
     expect(tooltipPanel()).not.toBeNull();
     expect(closeButton()).not.toBeNull();
-  }));
+  });
 
   // stick() ignores both `tnTooltipSticky` and the interactive-content rule by design. What it
   // must not do is produce a pinned tooltip that behaves unlike a pinned tooltip.
@@ -289,39 +313,39 @@ describe('TnTooltipDirective sticky mode', () => {
   // unobservable. A pinned panel stays until the user dismisses it, and `aria-describedby`
   // follows the input immediately - so a panel left on the old message would have the announced
   // text and the link on screen disagreeing for as long as it stayed up.
-  it('re-renders a pinned panel when the message changes underneath it', fakeAsync(() => {
+  it('re-renders a pinned panel when the message changes underneath it', () => {
     click();
     expect(tooltipPanel()?.textContent).toContain('Read the');
 
     fixture.componentInstance.message.set('Now says <a href="#other">something else</a>');
     fixture.detectChanges();
-    tick();
+    jest.advanceTimersByTime(0);
 
     expect(tooltipPanel()?.textContent).toContain('Now says');
     expect(tooltipPanel()?.querySelector('a')?.getAttribute('href')).toBe('#other');
     expect(host.getAttribute('aria-describedby')).not.toBeNull();
-  }));
+  });
 
-  it('takes a pinned panel down when its message is switched off', fakeAsync(() => {
+  it('takes a pinned panel down when its message is switched off', () => {
     click();
     expect(tooltipPanel()).not.toBeNull();
 
     fixture.componentInstance.message.set(null as unknown as string);
     fixture.detectChanges();
-    tick();
+    jest.advanceTimersByTime(0);
 
     expect(tooltipPanel()).toBeNull();
-  }));
+  });
 
-  it('re-renders a pinned panel when the dismiss label changes underneath it', fakeAsync(() => {
+  it('re-renders a pinned panel when the dismiss label changes underneath it', () => {
     click();
 
     fixture.componentInstance.closeLabel.set('Cerrar');
     fixture.detectChanges();
-    tick();
+    jest.advanceTimersByTime(0);
 
     expect(closeButton()?.getAttribute('aria-label')).toBe('Cerrar');
-  }));
+  });
 
   // Pinning made the click the only way in. A disabled control never delivers one - the native
   // button fires none, and tn-button swallows the retargeted one in a capture-phase listener - so
@@ -331,7 +355,7 @@ describe('TnTooltipDirective sticky mode', () => {
     const disabledHost = () => fixture.nativeElement.querySelector('#native-disabled') as HTMLButtonElement;
     const disabledWrapper = () => fixture.nativeElement.querySelector('#wrapper-disabled') as HTMLElement;
 
-    it('falls back to hover on a disabled host', fakeAsync(() => {
+    it('falls back to hover on a disabled host', () => {
       hover(disabledHost());
 
       expect(tooltipPanel()).not.toBeNull();
@@ -339,28 +363,28 @@ describe('TnTooltipDirective sticky mode', () => {
 
       leave(disabledHost());
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
-    it('falls back to hover when the disabled control is inside a wrapper host', fakeAsync(() => {
+    it('falls back to hover when the disabled control is inside a wrapper host', () => {
       hover(disabledWrapper());
 
       expect(tooltipPanel()).not.toBeNull();
-    }));
+    });
 
     // The reported case: tn-button registers a capture-phase click listener that
     // stopImmediatePropagation()s while disabled, so the directive's own host binding never runs.
-    it('falls back to hover on a disabled tn-button, whose click never reaches the directive', fakeAsync(() => {
+    it('falls back to hover on a disabled tn-button, whose click never reaches the directive', () => {
       const button = fixture.nativeElement.querySelector('#tn-button-disabled') as HTMLElement;
 
       button.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
       expect(tooltipPanel()).toBeNull();
 
       hover(button);
       expect(tooltipPanel()).not.toBeNull();
       expect(tooltipPanel()?.textContent).toContain('Read the');
-    }));
+    });
 
     it('advertises no disclosure state, since there is nothing to disclose by clicking', () => {
       expect(disabledHost().hasAttribute('aria-expanded')).toBe(false);
@@ -368,20 +392,20 @@ describe('TnTooltipDirective sticky mode', () => {
     });
 
     // Read live from the event handler, so this needs no re-sync to be correct.
-    it('goes back to click-only once the host is enabled again', fakeAsync(() => {
+    it('goes back to click-only once the host is enabled again', () => {
       disabledHost().removeAttribute('disabled');
 
       hover(disabledHost());
       expect(tooltipPanel()).toBeNull();
 
       disabledHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
       expect(closeButton()).not.toBeNull();
-    }));
+    });
 
-    // The disclosure attributes are written, not read, so they do need the re-sync. Real
-    // microtasks rather than fakeAsync: MutationObserver's queue is not part of the fake clock.
+    // The disclosure attributes are written, not read, so they do need the re-sync. A real
+    // microtask rather than the fake clock: MutationObserver's queue is not part of it.
     it('picks the disclosure state back up when disabled is toggled off', async () => {
       expect(disabledHost().hasAttribute('aria-haspopup')).toBe(false);
 
@@ -392,27 +416,27 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(disabledHost().getAttribute('aria-expanded')).toBe('false');
     });
 
-    it('treats aria-disabled the same way', fakeAsync(() => {
+    it('treats aria-disabled the same way', () => {
       const ariaDisabled = disabledHost();
       ariaDisabled.removeAttribute('disabled');
       ariaDisabled.setAttribute('aria-disabled', 'true');
 
       hover(ariaDisabled);
       expect(tooltipPanel()).not.toBeNull();
-    }));
+    });
 
     // aria-disabled is advisory, so unlike `:disabled` the element still dispatches clicks. The
     // hover fallback above puts the panel on screen; without the same check in `_onClick` that
     // click would then pin it, which is the two-stage "hover, then click what is already on
     // screen" flow the fallback exists to avoid.
-    it('does not pin an aria-disabled host, whose click does still arrive', fakeAsync(() => {
+    it('does not pin an aria-disabled host, whose click does still arrive', () => {
       const ariaDisabled = disabledHost();
       ariaDisabled.removeAttribute('disabled');
       ariaDisabled.setAttribute('aria-disabled', 'true');
 
       hover(ariaDisabled);
       ariaDisabled.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       expect(closeButton()).toBeNull();
@@ -420,21 +444,21 @@ describe('TnTooltipDirective sticky mode', () => {
       // ...and it stays a hover panel, rather than one that outlives the pointer.
       leave(ariaDisabled);
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
-    it('leaves an aria-disabled host advertising no disclosure state after a click', fakeAsync(() => {
+    it('leaves an aria-disabled host advertising no disclosure state after a click', () => {
       const ariaDisabled = disabledHost();
       ariaDisabled.removeAttribute('disabled');
       ariaDisabled.setAttribute('aria-disabled', 'true');
 
       hover(ariaDisabled);
       ariaDisabled.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       expect(ariaDisabled.getAttribute('aria-expanded')).toBeNull();
       expect(ariaDisabled.getAttribute('aria-controls')).toBeNull();
-    }));
+    });
   });
 
   // A host that is not a control cannot be focused or activated from the keyboard, and the click
@@ -444,9 +468,9 @@ describe('TnTooltipDirective sticky mode', () => {
   describe('a host that cannot be operated from the keyboard', () => {
     const spanHost = () => fixture.nativeElement.querySelector('#span-host') as HTMLElement;
 
-    it('falls back to hover rather than pinning on click', fakeAsync(() => {
+    it('falls back to hover rather than pinning on click', () => {
       spanHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
       expect(tooltipPanel()).toBeNull();
 
@@ -456,19 +480,19 @@ describe('TnTooltipDirective sticky mode', () => {
 
       leave(spanHost());
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
     // The panel does open on hover here, so the click that follows must not pin what is already
     // on screen — the same two-stage flow the aria-disabled fallback guards against.
-    it('does not pin the hover panel when the click arrives', fakeAsync(() => {
+    it('does not pin the hover panel when the click arrives', () => {
       hover(spanHost());
       spanHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       expect(closeButton()).toBeNull();
       expect(spanHost().hasAttribute('aria-expanded')).toBe(false);
-    }));
+    });
 
     it('advertises no disclosure state, which is not valid on a non-control anyway', () => {
       expect(spanHost().hasAttribute('aria-expanded')).toBe(false);
@@ -478,39 +502,39 @@ describe('TnTooltipDirective sticky mode', () => {
     // `tabindex="-1"` makes an element a focus target without putting it in the tab order, so it
     // is no more keyboard-operable than the bare span - and `_restoreFocusTarget` leaves exactly
     // that behind on hosts it had to focus by hand.
-    it('does not count tabindex="-1" as being operable', fakeAsync(() => {
+    it('does not count tabindex="-1" as being operable', () => {
       spanHost().setAttribute('tabindex', '-1');
 
       hover(spanHost());
       expect(tooltipPanel()).not.toBeNull();
       expect(closeButton()).toBeNull();
-    }));
+    });
 
     // A text control is focusable, which is what made it look operable, but Enter submits the
     // form and Space types a space - neither produces the click a pinned panel is opened by.
     describe('a text control host, which is focusable but not activatable', () => {
       const inputHost = () => fixture.nativeElement.querySelector('#input-host') as HTMLInputElement;
 
-      it('shows the message on keyboard focus instead of waiting for a click', fakeAsync(() => {
+      it('shows the message on keyboard focus instead of waiting for a click', () => {
         TestBed.inject(FocusMonitor).focusVia(inputHost(), 'keyboard');
-        tick();
+        jest.advanceTimersByTime(0);
         fixture.detectChanges();
 
         expect(tooltipPanel()).not.toBeNull();
         expect(closeButton()).toBeNull();
-      }));
+      });
 
       // Every click into a text field places the caret, so pinning here would toggle the panel
       // each time the user repositioned the cursor.
-      it('does not pin when a click lands in the field', fakeAsync(() => {
+      it('does not pin when a click lands in the field', () => {
         hover(inputHost());
         inputHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-        tick();
+        jest.advanceTimersByTime(0);
         fixture.detectChanges();
 
         expect(tooltipPanel()).not.toBeNull();
         expect(closeButton()).toBeNull();
-      }));
+      });
 
       // `aria-expanded` is not supported on `role="textbox"`, and there is no disclosure to
       // describe in the first place.
@@ -527,25 +551,25 @@ describe('TnTooltipDirective sticky mode', () => {
     describe('a host wearing role="button", which the browser still sends no click for', () => {
       const roleHost = () => fixture.nativeElement.querySelector('#role-host') as HTMLElement;
 
-      it('shows the message on keyboard focus rather than waiting for a click', fakeAsync(() => {
+      it('shows the message on keyboard focus rather than waiting for a click', () => {
         TestBed.inject(FocusMonitor).focusVia(roleHost(), 'keyboard');
-        tick();
+        jest.advanceTimersByTime(0);
         fixture.detectChanges();
 
         expect(tooltipPanel()).not.toBeNull();
         expect(closeButton()).toBeNull();
-      }));
+      });
 
-      it('falls back to hover, and pins on neither route', fakeAsync(() => {
+      it('falls back to hover, and pins on neither route', () => {
         hover(roleHost());
         expect(tooltipPanel()).not.toBeNull();
 
         roleHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-        tick();
+        jest.advanceTimersByTime(0);
         fixture.detectChanges();
 
         expect(closeButton()).toBeNull();
-      }));
+      });
 
       it('advertises no disclosure it cannot deliver', () => {
         expect(roleHost().hasAttribute('aria-expanded')).toBe(false);
@@ -560,12 +584,6 @@ describe('TnTooltipDirective sticky mode', () => {
   // there, promising a dialog the click no longer opens.
   describe('a control host that leaves the tab order after view init', () => {
     const collapsibleHost = () => fixture.nativeElement.querySelector('#collapsible') as HTMLElement;
-
-    /** The observer's callback is a microtask outside Zone's queue, so `tick()` never reaches it. */
-    async function settleObserver(): Promise<void> {
-      await new Promise((resolve) => setTimeout(resolve));
-      fixture.detectChanges();
-    }
 
     function clickHost(): void {
       collapsibleHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
@@ -619,12 +637,6 @@ describe('TnTooltipDirective sticky mode', () => {
   // observer has to watch `href` too, or they sit there advertising a dialog nothing opens.
   describe('an anchor host that stops being a link after view init', () => {
     const linkHost = () => fixture.nativeElement.querySelector('#conditional-link') as HTMLElement;
-
-    /** The observer's callback is a microtask outside Zone's queue, so `tick()` never reaches it. */
-    async function settleObserver(): Promise<void> {
-      await new Promise((resolve) => setTimeout(resolve));
-      fixture.detectChanges();
-    }
 
     function clickLinkHost(): void {
       linkHost().dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
@@ -681,36 +693,36 @@ describe('TnTooltipDirective sticky mode', () => {
         .query((node) => node.nativeElement === spanHost())
         .injector.get(TnTooltipDirective)
         .stick({ focusTooltip: true });
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
     }
 
-    it('makes the host focusable rather than dropping focus to the body', fakeAsync(() => {
+    it('makes the host focusable rather than dropping focus to the body', () => {
       document.body.appendChild(fixture.nativeElement);
       stickSpanHost();
       expect(tooltipPanel()).not.toBeNull();
 
       closeButton()?.focus();
       closeButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       expect(spanHost().getAttribute('tabindex')).toBe('-1');
       expect(document.activeElement).toBe(spanHost());
       fixture.nativeElement.remove();
-    }));
+    });
 
     // Pinning it does not make the markup valid: none of the three attributes is allowed on a
     // `<span>`'s implicit `generic` role, so a panel pinned this way stays unadvertised rather
     // than reintroducing through `stick()` the axe violation the click path declines to produce.
-    it('still writes no disclosure state onto a host that cannot carry it', fakeAsync(() => {
+    it('still writes no disclosure state onto a host that cannot carry it', () => {
       stickSpanHost();
       expect(tooltipPanel()).not.toBeNull();
 
       expect(spanHost().hasAttribute('aria-expanded')).toBe(false);
       expect(spanHost().hasAttribute('aria-haspopup')).toBe(false);
       expect(spanHost().hasAttribute('aria-controls')).toBe(false);
-    }));
+    });
   });
 
   // The three entry points have to agree: `toggle()` routing to `show()` would put up an
@@ -722,32 +734,32 @@ describe('TnTooltipDirective sticky mode', () => {
         .query((node) => node.nativeElement === target)
         .injector.get(TnTooltipDirective)
         .toggle();
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
     }
 
-    it('opens a pinnable message pinned, as the host click would', fakeAsync(() => {
+    it('opens a pinnable message pinned, as the host click would', () => {
       toggleOn(host);
 
       expect(tooltipPanel()).not.toBeNull();
       expect(closeButton()).not.toBeNull();
-    }));
+    });
 
-    it('closes it again on a second call', fakeAsync(() => {
+    it('closes it again on a second call', () => {
       toggleOn(host);
       toggleOn(host);
 
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
-    it('still just shows and hides plain help text', fakeAsync(() => {
+    it('still just shows and hides plain help text', () => {
       toggleOn(plainHost);
       expect(tooltipPanel()).not.toBeNull();
       expect(closeButton()).toBeNull();
 
       toggleOn(plainHost);
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
   });
 
   describe('isSticky()', () => {
@@ -757,18 +769,18 @@ describe('TnTooltipDirective sticky mode', () => {
         .injector.get(TnTooltipDirective);
     }
 
-    it('reports the pin as soon as the host click makes it', fakeAsync(() => {
+    it('reports the pin as soon as the host click makes it', () => {
       expect(directiveOn(host).isSticky()).toBe(false);
 
       click();
 
       expect(directiveOn(host).isSticky()).toBe(true);
-    }));
+    });
 
     // `unstick` ends in `hide(0)`, which only *schedules* the teardown. Reading the flag out of
     // that timeout would leave a public "is it pinned right now" answering `true` for a macrotask
     // after the call that unpinned it - a caller cannot see the timeout to wait for it.
-    it('reports the unpin as soon as unstick() returns, not a macrotask later', fakeAsync(() => {
+    it('reports the unpin as soon as unstick() returns, not a macrotask later', () => {
       click();
       const directive = directiveOn(host);
 
@@ -780,11 +792,11 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(host.getAttribute('aria-expanded')).toBe('false');
       expect(host.hasAttribute('aria-controls')).toBe(false);
 
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
       expect(tooltipPanel()).toBeNull();
       expect(directive.isSticky()).toBe(false);
-    }));
+    });
   });
 
   describe('a tooltip pinned imperatively through stick()', () => {
@@ -793,40 +805,40 @@ describe('TnTooltipDirective sticky mode', () => {
         .query((node) => node.nativeElement === plainHost)
         .injector.get(TnTooltipDirective);
       directive.stick();
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
     }
 
-    it('dismisses on a host click, like every other pinned tooltip', fakeAsync(() => {
+    it('dismisses on a host click, like every other pinned tooltip', () => {
       stickPlainHost();
       expect(closeButton()).not.toBeNull();
 
       plainHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
-    it('advertises itself on the host while it is up', fakeAsync(() => {
+    it('advertises itself on the host while it is up', () => {
       stickPlainHost();
 
       expect(plainHost.getAttribute('aria-expanded')).toBe('true');
       expect(plainHost.getAttribute('aria-controls')).toBe(tooltipPanel()?.id);
 
       plainHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       // Back to a plain hover tooltip, which advertises nothing.
       expect(plainHost.hasAttribute('aria-expanded')).toBe(false);
-    }));
+    });
   });
 
   describe('the host disclosure state', () => {
     // Nothing else on a plain button says "clicking me opens something", so the pinnable host has
     // to carry the state that does.
-    it('marks a pinnable host as a control that reveals a dialog, and tracks whether it is open', fakeAsync(() => {
+    it('marks a pinnable host as a control that reveals a dialog, and tracks whether it is open', () => {
       expect(host.getAttribute('aria-expanded')).toBe('false');
       expect(host.getAttribute('aria-haspopup')).toBe('dialog');
       expect(host.hasAttribute('aria-controls')).toBe(false);
@@ -838,7 +850,7 @@ describe('TnTooltipDirective sticky mode', () => {
       click();
       expect(host.getAttribute('aria-expanded')).toBe('false');
       expect(host.hasAttribute('aria-controls')).toBe(false);
-    }));
+    });
 
     it('leaves it off a hover tooltip, which reveals nothing on activation', () => {
       expect(plainHost.hasAttribute('aria-expanded')).toBe(false);
@@ -877,7 +889,7 @@ describe('TnTooltipDirective sticky mode', () => {
     // The three describe one popup between them, so they are yielded as a set: writing the two
     // the host does not own would announce "expanded dialog controlling tn-tooltip-xxx", mixing
     // the host's own expanded region with a tooltip panel that may well be closed.
-    it('yields the whole set, not just the attribute the host owns', fakeAsync(() => {
+    it('yields the whole set, not just the attribute the host owns', () => {
       fixture.componentInstance.ownerMessage.set('Read the <a href="#docs">docs</a>');
       fixture.detectChanges();
 
@@ -885,7 +897,7 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(ownerHost.hasAttribute('aria-haspopup')).toBe(false);
 
       ownerHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       // Still pins - only the advertising is dropped, and the panel is reached by the same click.
@@ -893,28 +905,28 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(ownerHost.getAttribute('aria-expanded')).toBe('true');
       expect(ownerHost.hasAttribute('aria-haspopup')).toBe(false);
       expect(ownerHost.hasAttribute('aria-controls')).toBe(false);
-    }));
+    });
 
     // Ownership is decided over the whole set, not over the attributes a given sync is about to
     // write. `aria-controls` is only written while pinned, so a host owning that one alone would
     // slip past an unpinned check - leaving the tooltip's collapsed dialog advertised next to the
     // host's own `aria-controls`, and dropped again the moment the pin brought `aria-controls`
     // into the set.
-    it('yields the set to a host that owns only the attribute the unpinned state never writes', fakeAsync(() => {
+    it('yields the set to a host that owns only the attribute the unpinned state never writes', () => {
       const controlsHost = fixture.nativeElement.querySelector('#owns-controls') as HTMLElement;
 
       expect(controlsHost.hasAttribute('aria-expanded')).toBe(false);
       expect(controlsHost.hasAttribute('aria-haspopup')).toBe(false);
 
       controlsHost.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       // Still pins, and the host's own target is left pointing where it pointed.
       expect(tooltipPanel()).not.toBeNull();
       expect(controlsHost.getAttribute('aria-controls')).toBe('panel-1');
       expect(controlsHost.hasAttribute('aria-expanded')).toBe(false);
-    }));
+    });
   });
 
   // The ledger that tells this directive's own writes apart from the host's is spent by the
@@ -924,11 +936,6 @@ describe('TnTooltipDirective sticky mode', () => {
   describe('a wrapper whose inner control is swapped out', () => {
     const innerControl = () => fixture.nativeElement
       .querySelector('#swap-host a, #swap-host button') as HTMLElement;
-
-    async function settleObserver(): Promise<void> {
-      await new Promise((resolve) => setTimeout(resolve));
-      fixture.detectChanges();
-    }
 
     it('still notices the replacement taking a disclosure attribute over', async () => {
       expect(innerControl().tagName).toBe('A');
@@ -988,15 +995,8 @@ describe('TnTooltipDirective sticky mode', () => {
   describe('a host that starts with no aria-expanded and takes it over later', () => {
     const lateHost = () => fixture.nativeElement.querySelector('#late-expanded') as HTMLElement;
 
-    /**
-     * The observer's callback is a microtask jsdom schedules outside Zone's queue, so `tick()`
-     * never reaches it - these have to run as real async tests rather than in `fakeAsync`.
-     */
-    async function settleObserver(): Promise<void> {
-      await new Promise((resolve) => setTimeout(resolve));
-      fixture.detectChanges();
-    }
-
+    // The observer's callback is a microtask, which no clock reaches - so the tests below that
+    // depend on it are `async` and go through `settleObserver()`, which awaits one.
     it('claims the attributes while the host has none of its own', () => {
       expect(lateHost().getAttribute('aria-expanded')).toBe('false');
       expect(lateHost().getAttribute('aria-haspopup')).toBe('dialog');
@@ -1030,12 +1030,12 @@ describe('TnTooltipDirective sticky mode', () => {
     });
   });
 
-  it('leaves no overlay pane behind once hidden', fakeAsync(() => {
+  it('leaves no overlay pane behind once hidden', () => {
     hover(plainHost);
     leave(plainHost);
 
     expect(document.querySelector('.cdk-overlay-pane')).toBeNull();
-  }));
+  });
 
   // The arrow is measured against the pane, so it has to be measured after CDK has moved the
   // pane, not before. Both this directive and `RepositionScrollStrategy` reach `scrolled()`
@@ -1048,7 +1048,7 @@ describe('TnTooltipDirective sticky mode', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('measures the panel after the scroll has re-placed it', fakeAsync(() => {
+    it('measures the panel after the scroll has re-placed it', () => {
       hover(sideHost);
 
       // A side-placed panel, where the offset runs down the panel: the host sits at y 170-186
@@ -1067,13 +1067,13 @@ describe('TnTooltipDirective sticky mode', () => {
 
       // A page scroll, which reaches the directive through CDK's ScrollDispatcher.
       document.dispatchEvent(new Event('scroll'));
-      tick(100);
+      jest.advanceTimersByTime(100);
       fixture.detectChanges();
 
       // 178 - 70. Reading 78px would mean the arrow was measured against the panel's pre-scroll
       // top of 100, i.e. before CDK had moved it.
       expect(arrowOffset()).toBe('108px');
-    }));
+    });
   });
 
   describe('a null message', () => {
@@ -1091,15 +1091,15 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(() => fixture.detectChanges()).not.toThrow();
     });
 
-    it('shows nothing on hover', fakeAsync(() => {
+    it('shows nothing on hover', () => {
       expect(() => hover()).not.toThrow();
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
-    it('shows nothing on click', fakeAsync(() => {
+    it('shows nothing on click', () => {
       expect(() => click()).not.toThrow();
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
     it('describes nothing to assistive tech', () => {
       expect(host.getAttribute('aria-describedby')).toBeNull();
@@ -1110,38 +1110,38 @@ describe('TnTooltipDirective sticky mode', () => {
   // flips is a state neither entry point could produce - and a pinned one has no mouseleave or
   // blur left to close it.
   describe('disabling a tooltip that is already pinned', () => {
-    it('takes the panel down', fakeAsync(() => {
+    it('takes the panel down', () => {
       click();
       expect(closeButton()).not.toBeNull();
 
       fixture.componentInstance.disabled.set(true);
       fixture.detectChanges();
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
 
-    it('stops advertising the host as expanded', fakeAsync(() => {
+    it('stops advertising the host as expanded', () => {
       click();
       expect(host.getAttribute('aria-expanded')).toBe('true');
 
       fixture.componentInstance.disabled.set(true);
       fixture.detectChanges();
-      tick();
+      jest.advanceTimersByTime(0);
       fixture.detectChanges();
 
       expect(host.getAttribute('aria-expanded')).not.toBe('true');
-    }));
+    });
 
-    it('leaves a plain hover tooltip unaffected while it is not showing', fakeAsync(() => {
+    it('leaves a plain hover tooltip unaffected while it is not showing', () => {
       fixture.componentInstance.disabled.set(true);
       fixture.detectChanges();
-      tick();
+      jest.advanceTimersByTime(0);
 
       expect(() => hover()).not.toThrow();
       expect(tooltipPanel()).toBeNull();
-    }));
+    });
   });
 
   describe('arrow placement', () => {
@@ -1200,11 +1200,11 @@ describe('TnTooltipDirective sticky mode', () => {
 
     function reposition(): void {
       window.dispatchEvent(new Event('resize'));
-      tick(100);
+      jest.advanceTimersByTime(100);
       fixture.detectChanges();
     }
 
-    it('points the arrow at the host rather than at the panel centre', fakeAsync(() => {
+    it('points the arrow at the host rather than at the panel centre', () => {
       hover(plainHost);
       stubGeometry(plainHost, 40, 200);
 
@@ -1212,9 +1212,9 @@ describe('TnTooltipDirective sticky mode', () => {
 
       // Host centre 108 sits 68px into a panel starting at 40 - not the 100px panel centre.
       expect(arrowOffset()).toBe('68px');
-    }));
+    });
 
-    it('keeps the arrow clear of the panel corners when the host is far to one side', fakeAsync(() => {
+    it('keeps the arrow clear of the panel corners when the host is far to one side', () => {
       hover(plainHost);
       // A panel pushed right of the host by viewport clamping: the host centre lands outside it.
       stubGeometry(plainHost, 300, 200);
@@ -1223,9 +1223,9 @@ describe('TnTooltipDirective sticky mode', () => {
 
       // The stylesheet's inset, not the directive's fallback - see STUBBED_INSET.
       expect(arrowOffset()).toBe(`${STUBBED_INSET}px`);
-    }));
+    });
 
-    it('clamps against the far corner too', fakeAsync(() => {
+    it('clamps against the far corner too', () => {
       hover(plainHost);
       // A panel pushed left of the host: the host centre lands past its right edge.
       stubGeometry(plainHost, -160, 200);
@@ -1233,11 +1233,11 @@ describe('TnTooltipDirective sticky mode', () => {
       reposition();
 
       expect(arrowOffset()).toBe(`${200 - STUBBED_INSET}px`);
-    }));
+    });
 
     // A side-placed panel runs the other branch of the offset maths: a different axis, with its
     // own dimension and its own sign.
-    it('points the arrow down the panel when the tooltip sits beside its host', fakeAsync(() => {
+    it('points the arrow down the panel when the tooltip sits beside its host', () => {
       hover(sideHost);
       stubVerticalGeometry(sideHost, 100, 200);
 
@@ -1245,9 +1245,9 @@ describe('TnTooltipDirective sticky mode', () => {
 
       // Host centre 208 sits 108px down a panel starting at 100 - not the 100px panel centre.
       expect(arrowOffset()).toBe('108px');
-    }));
+    });
 
-    it('clamps a side-placed arrow clear of the corners as well', fakeAsync(() => {
+    it('clamps a side-placed arrow clear of the corners as well', () => {
       hover(sideHost);
       // A panel pushed below the host by viewport clamping: the host centre lands above it.
       stubVerticalGeometry(sideHost, 300, 200);
@@ -1255,9 +1255,9 @@ describe('TnTooltipDirective sticky mode', () => {
       reposition();
 
       expect(arrowOffset()).toBe(`${STUBBED_INSET}px`);
-    }));
+    });
 
-    it('re-places the panel when pinning resizes it, so the arrow stays on the host', fakeAsync(() => {
+    it('re-places the panel when pinning resizes it, so the arrow stays on the host', () => {
       // The resize happens inside the single click that opens a pinnable tooltip: the panel is
       // attached at hover width and only then switched into the wider sticky layout. Stubbed on
       // the prototype so the pane is covered from the moment it comes into existence.
@@ -1281,7 +1281,7 @@ describe('TnTooltipDirective sticky mode', () => {
       // Host centre 108, sticky panel starting at 20. Reading 68px would mean the offset was
       // computed against the hover-sized panel and never refreshed - the reported bug.
       expect(arrowOffset()).toBe('88px');
-    }));
+    });
   });
 });
 

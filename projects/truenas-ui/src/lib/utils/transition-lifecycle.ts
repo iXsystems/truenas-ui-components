@@ -161,6 +161,14 @@ export function tnTransitionLifecycle(
     // component-harness interaction) waits the full window. The emit itself
     // must be back inside, since `settled` is what fires the component's
     // outputs and a consumer's handler has to be seen by change detection.
+    //
+    // BOTH CALLS STILL MATTER THOUGH THIS PROJECT'S OWN TESTS ARE NOW ZONELESS
+    // (#304). Consumers choose their own change detection, and under a
+    // zone-based application both of the costs above are live. Zoneless, they
+    // resolve to `NoopNgZone` and run the callback straight through — which is
+    // why `transition-lifecycle.spec.ts` asserts that the calls are MADE rather
+    // than asserting `NgZone.hasPendingMacrotasks`, which `NoopNgZone` answers
+    // `false` to whatever this function does.
     timer = zone.runOutsideAngular(() =>
       setTimeout(() => zone.run(report), TN_TRANSITION_FALLBACK_MS)
     );

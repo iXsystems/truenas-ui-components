@@ -1,5 +1,5 @@
 import { ApplicationRef } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnToastComponent } from './toast.component';
 import { TN_TOAST_ANNOUNCE_DELAY_MS, TnToastService } from './toast.service';
@@ -187,10 +187,14 @@ describe('tn-toast live-region timing (#195)', () => {
       providers: [TnIconTesting.jest.providers()],
     });
     service = TestBed.inject(TnToastService);
+    // The announce delay this whole suite is about is a `setTimeout`, stepped
+    // over with Jest's clock since #304 made the suite zoneless.
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     document.querySelectorAll('tn-toast').forEach((el) => el.remove());
+    jest.useRealTimers();
   });
 
   /**
@@ -230,17 +234,20 @@ describe('tn-toast live-region timing (#195)', () => {
    * Reach the step the service defers the message to, then render it.
    *
    * The explicit `ApplicationRef.tick()` is because setting a signal only marks
-   * the view dirty — nothing in a TestBed zone test renders it on its own.
+   * the view dirty — nothing here renders it on its own. That was true under
+   * Zone and is more so without one (#304): zoneless change detection runs
+   * only what has been marked, and this suite drives the service rather than a
+   * fixture, so there is no `fixture.detectChanges()` to stand in for it.
    */
   function announceStep(): void {
-    tick(TN_TOAST_ANNOUNCE_DELAY_MS);
+    jest.advanceTimersByTime(TN_TOAST_ANNOUNCE_DELAY_MS);
     TestBed.inject(ApplicationRef).tick();
   }
 
   describe('the region is inserted empty and populated afterwards', () => {
     it.each([TnToastType.Info, TnToastType.Success])(
       'gives a polite %s toast a content change to announce',
-      fakeAsync((type: TnToastType) => {
+      (type: TnToastType) => {
         service.open('Changes saved', { type, duration: 0 });
 
         const el = renderedRegion();
@@ -254,7 +261,7 @@ describe('tn-toast live-region timing (#195)', () => {
 
         expect(renderedRegion()).toBe(el);
         expect(messageOf(el)).toBe('Changes saved');
-      })
+      }
     );
 
     // Alert toasts were never the broken case, and the deferral does not cost
@@ -263,7 +270,7 @@ describe('tn-toast live-region timing (#195)', () => {
     // — and re-run for `warning`, which #194 moved onto this role.
     it.each([TnToastType.Error, TnToastType.Warning])(
       'keeps a %s toast announcing, on the role that interrupts',
-      fakeAsync((type: TnToastType) => {
+      (type: TnToastType) => {
         service.open('Save failed', { type, duration: 0 });
 
         const el = renderedRegion();
@@ -274,13 +281,13 @@ describe('tn-toast live-region timing (#195)', () => {
 
         expect(renderedRegion()).toBe(el);
         expect(messageOf(el)).toBe('Save failed');
-      })
+      }
     );
 
     // An action label is set before the host is attached, so this region is
     // NOT empty at insertion — and it does not need to be. What a reader
     // reports is the mutation, and the message still arrives as one.
-    it('announces a toast whose region already carries an action label', fakeAsync(() => {
+    it('announces a toast whose region already carries an action label', () => {
       service.open('Item deleted', 'Undo', { duration: 0 });
 
       const el = renderedRegion();
@@ -291,11 +298,11 @@ describe('tn-toast live-region timing (#195)', () => {
 
       expect(renderedRegion()).toBe(el);
       expect(messageOf(el)).toBe('Item deleted');
-    }));
+    });
   });
 
   describe('a toast dismissed before its frame never announces', () => {
-    it('leaves a superseded toast silent, and announces the one that replaced it', fakeAsync(() => {
+    it('leaves a superseded toast silent, and announces the one that replaced it', () => {
       service.open('First', { duration: 0 });
       const first = renderedRegion();
 
@@ -312,12 +319,12 @@ describe('tn-toast live-region timing (#195)', () => {
       expect(messageOf(first)).toBe('');
       expect(messageOf(renderedRegion(1))).toBe('Second');
 
-      tick(200);
-    }));
+      jest.advanceTimersByTime(200);
+    });
   });
 
   describe('the visible behaviour is unchanged', () => {
-    it('never shows the empty region, and still runs the enter transition', fakeAsync(() => {
+    it('never shows the empty region, and still runs the enter transition', () => {
       service.open('Changes saved', { duration: 0 });
 
       const el = renderedRegion();
@@ -332,6 +339,6 @@ describe('tn-toast live-region timing (#195)', () => {
       // render that gives it something to say, so there is no empty flash.
       expect(messageOf(el)).toBe('Changes saved');
       expect(el.classList.contains('tn-toast--visible')).toBe(true);
-    }));
+    });
   });
 });

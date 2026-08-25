@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import type { HarnessLoader } from '@angular/cdk/testing';
-import { Component, viewChild } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnMenuTesting } from './menu-testing';
@@ -16,16 +16,16 @@ import { TnIconTesting } from '../icon/icon-testing';
   imports: [TnMenuComponent, TnMenuTriggerDirective, OverlayModule],
   template: `
     <button data-testid="trigger" [tnMenuTriggerFor]="menu">Open</button>
-    <tn-menu #menu [items]="items" />
+    <tn-menu #menu [items]="items()" />
   `
 })
 class TestHostComponent {
   menuRef = viewChild<TnMenuComponent>('menu');
-  items: TnMenuItem[] = [
+  items = signal<TnMenuItem[]>([
     { id: 'edit', label: 'Edit', action: jest.fn() },
     { id: 'delete', label: 'Delete', action: jest.fn() },
     { id: 'disabled-item', label: 'Locked', disabled: true, action: jest.fn() },
-  ];
+  ]);
 }
 
 describe('TnMenuHarness', () => {
@@ -74,14 +74,14 @@ describe('TnMenuHarness', () => {
     openMenu();
     const menu = await rootLoader.getHarness(TnMenuHarness);
     await menu.clickItem({ label: 'Edit' });
-    expect(hostComponent.items[0].action).toHaveBeenCalled();
+    expect(hostComponent.items()[0].action).toHaveBeenCalled();
   });
 
   it('should click a menu item by regex', async () => {
     openMenu();
     const menu = await rootLoader.getHarness(TnMenuHarness);
     await menu.clickItem({ label: /del/i });
-    expect(hostComponent.items[1].action).toHaveBeenCalled();
+    expect(hostComponent.items()[1].action).toHaveBeenCalled();
   });
 
   it('should throw when clicking non-existent item', async () => {
@@ -100,10 +100,10 @@ describe('TnMenuHarness', () => {
   });
 
   it('reports isItemSelected for items marked selected', async () => {
-    hostComponent.items = [
+    hostComponent.items.set([
       { id: 'csv', label: 'CSV' },
       { id: 'json', label: 'JSON', selected: true },
-    ];
+    ]);
     fixture.detectChanges();
     openMenu();
 
@@ -113,10 +113,10 @@ describe('TnMenuHarness', () => {
   });
 
   it('returns the label of the currently-selected item', async () => {
-    hostComponent.items = [
+    hostComponent.items.set([
       { id: 'csv', label: 'CSV' },
       { id: 'json', label: 'JSON', selected: true },
-    ];
+    ]);
     fixture.detectChanges();
     openMenu();
 

@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -40,15 +40,15 @@ const TEST_USERS: User[] = [
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-table
-      [dataSource]="tableData"
+      [dataSource]="tableData()"
       [displayedColumns]="['name', 'email']"
-      [selectable]="selectable"
-      [expandable]="expandable"
-      [isRowExpandable]="isRowExpandable"
-      [activeRow]="activeRow"
-      [loading]="loading"
-      [clickable]="clickable"
-      [mobileLayout]="mobileLayout"
+      [selectable]="selectable()"
+      [expandable]="expandable()"
+      [isRowExpandable]="isRowExpandable()"
+      [activeRow]="activeRow()"
+      [loading]="loading()"
+      [clickable]="clickable()"
+      [mobileLayout]="mobileLayout()"
       (sortChange)="onSort($event)"
       (selectionChange)="selectedUsers = $event"
       (rowClick)="lastClickedRow = $event"
@@ -63,7 +63,7 @@ const TEST_USERS: User[] = [
         <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
       </ng-container>
 
-      @if (expandable) {
+      @if (expandable()) {
         <ng-template let-user tnDetailRowDef>
           Details for {{ user.name }} ({{ user.email }})
         </ng-template>
@@ -72,14 +72,14 @@ const TEST_USERS: User[] = [
   `,
 })
 class TableHarnessTestComponent {
-  tableData: User[] = [...TEST_USERS];
-  selectable = false;
-  expandable = false;
-  mobileLayout: 'cards' | 'scroll' = 'scroll';
-  isRowExpandable: ((row: User) => boolean) | undefined = undefined;
-  activeRow: User | null = null;
-  loading = false;
-  clickable = false;
+  tableData = signal<User[]>([...TEST_USERS]);
+  selectable = signal(false);
+  expandable = signal(false);
+  mobileLayout = signal<'cards' | 'scroll'>('scroll');
+  isRowExpandable = signal<((row: User) => boolean) | undefined>(undefined);
+  activeRow = signal<User | null>(null);
+  loading = signal(false);
+  clickable = signal(false);
   lastClickedRow: User | null = null;
   lastDoubleClickedRow: User | null = null;
   lastSort: TnSortEvent | null = null;
@@ -88,14 +88,14 @@ class TableHarnessTestComponent {
   onSort(event: TnSortEvent): void {
     this.lastSort = event;
     if (!event.direction) {
-      this.tableData = [...TEST_USERS];
+      this.tableData.set([...TEST_USERS]);
       return;
     }
     const key = event.column as keyof User;
-    this.tableData = [...this.tableData].sort((a, b) => {
+    this.tableData.set([...this.tableData()].sort((a, b) => {
       const cmp = String(a[key]).localeCompare(String(b[key]));
       return event.direction === 'asc' ? cmp : -cmp;
-    });
+    }));
   }
 }
 
@@ -211,7 +211,7 @@ describe('TnTableHarness', () => {
 
   describe('selection', () => {
     beforeEach(() => {
-      component.selectable = true;
+      component.selectable.set(true);
       fixture.detectChanges();
     });
 
@@ -245,7 +245,7 @@ describe('TnTableHarness', () => {
 
   describe('expandable rows', () => {
     beforeEach(() => {
-      component.expandable = true;
+      component.expandable.set(true);
       fixture.detectChanges();
     });
 
@@ -285,7 +285,7 @@ describe('TnTableHarness', () => {
     });
 
     it('should not render an expand control on rows the predicate disallows', async () => {
-      component.isRowExpandable = (user) => user.id === 1;
+      component.isRowExpandable.set((user) => user.id === 1);
       fixture.detectChanges();
 
       const table = await loader.getHarness(TnTableHarness);
@@ -297,7 +297,7 @@ describe('TnTableHarness', () => {
 
   describe('clickable rows', () => {
     beforeEach(() => {
-      component.clickable = true;
+      component.clickable.set(true);
       fixture.detectChanges();
     });
 
@@ -340,7 +340,7 @@ describe('TnTableHarness', () => {
     });
 
     it('should report loading when enabled', async () => {
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
 
       const table = await loader.getHarness(TnTableHarness);
@@ -348,7 +348,7 @@ describe('TnTableHarness', () => {
     });
 
     it('should keep existing rows visible while loading', async () => {
-      component.loading = true;
+      component.loading.set(true);
       fixture.detectChanges();
 
       const table = await loader.getHarness(TnTableHarness);
@@ -364,7 +364,7 @@ describe('TnTableHarness', () => {
     });
 
     it('should mark the matching row as active', async () => {
-      component.activeRow = component.tableData[1];
+      component.activeRow.set(component.tableData()[1]);
       fixture.detectChanges();
 
       const table = await loader.getHarness(TnTableHarness);
@@ -375,13 +375,13 @@ describe('TnTableHarness', () => {
     });
 
     it('should clear active state when set to null', async () => {
-      component.activeRow = component.tableData[0];
+      component.activeRow.set(component.tableData()[0]);
       fixture.detectChanges();
 
       const table = await loader.getHarness(TnTableHarness);
       expect(await table.isRowActive(0)).toBe(true);
 
-      component.activeRow = null;
+      component.activeRow.set(null);
       fixture.detectChanges();
       expect(await table.isRowActive(0)).toBe(false);
       expect(await table.getActiveRowIndex()).toBeNull();
@@ -390,8 +390,8 @@ describe('TnTableHarness', () => {
 
   describe('combined features', () => {
     beforeEach(() => {
-      component.selectable = true;
-      component.expandable = true;
+      component.selectable.set(true);
+      component.expandable.set(true);
       fixture.detectChanges();
     });
 
@@ -435,8 +435,8 @@ describe('TnTableHarness', () => {
     }
 
     beforeEach(() => {
-      component.selectable = true;
-      component.mobileLayout = 'cards';
+      component.selectable.set(true);
+      component.mobileLayout.set('cards');
       fixture.detectChanges();
     });
 
@@ -477,7 +477,7 @@ describe('TnTableHarness', () => {
       }
 
       it('marks the active card with aria-current', () => {
-        component.activeRow = TEST_USERS[1];
+        component.activeRow.set(TEST_USERS[1]);
         forceCardMode();
 
         expect(card(1).getAttribute('aria-current')).toBe('true');
@@ -499,8 +499,8 @@ describe('TnTableHarness', () => {
       // the abstract `section` role, so the card does carry it when it is the expand trigger;
       // see the template comment above the card list.
       it('does not put aria-selected or role=button on the card', () => {
-        component.activeRow = TEST_USERS[0];
-        component.clickable = true;
+        component.activeRow.set(TEST_USERS[0]);
+        component.clickable.set(true);
         forceCardMode();
 
         expect(card(0).getAttribute('aria-selected')).toBeNull();

@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
@@ -392,7 +392,7 @@ describe('TnFormFieldHarness', () => {
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
-    <tn-form-field label="Name" testId="name" [errorMessages]="stringMessages">
+    <tn-form-field label="Name" testId="name" [errorMessages]="stringMessages()">
       <tn-input [formControl]="nameControl" />
     </tn-form-field>
 
@@ -415,9 +415,13 @@ class ErrorMessagesHostComponent {
   unrelatedControl = new FormControl('', Validators.required);
   throwingControl = new FormControl('', Validators.required);
 
-  stringMessages: TnFormFieldErrorMessages = {
+  // A signal, not a plain field: this is the one override the specs REPLACE
+  // mid-test (a locale switch), and under zoneless change detection a plain
+  // reassignment marks nothing dirty, so the field would keep rendering the
+  // old message. The three below are only ever read.
+  stringMessages = signal<TnFormFieldErrorMessages>({
     required: 'Please enter a name',
-  };
+  });
 
   fnMessages: TnFormFieldErrorMessages = {
     minlength: (err) =>
@@ -500,7 +504,7 @@ describe('TnFormField per-field errorMessages', () => {
     expect(await field.getErrorMessage()).toBe('Please enter a name');
 
     // Change only the overrides (e.g. a locale switch) — no control status change.
-    host.stringMessages = { required: 'Updated message' };
+    host.stringMessages.set({ required: 'Updated message' });
     fixture.detectChanges();
 
     expect(await field.getErrorMessage()).toBe('Updated message');
@@ -525,7 +529,7 @@ describe('TnFormField per-field errorMessages', () => {
   it('should fall through to the built-in default when an override resolves to a blank string', async () => {
     const host = fixture.componentInstance;
     // e.g. a translation service returning '' for a missing key.
-    host.stringMessages = { required: '   ' };
+    host.stringMessages.set({ required: '   ' });
     host.nameControl.markAsTouched();
     host.nameControl.updateValueAndValidity();
     fixture.detectChanges();
@@ -613,7 +617,7 @@ describe('TnFormField global error resolver', () => {
   standalone: true,
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
   template: `
-    <tn-form-field label="Dataset" [tooltip]="tooltip" [tooltipSticky]="tooltipSticky">
+    <tn-form-field label="Dataset" [tooltip]="tooltip()" [tooltipSticky]="tooltipSticky()">
       <tn-input [formControl]="control" />
     </tn-form-field>
   `
@@ -622,8 +626,8 @@ class StickyHostComponent {
   control = new FormControl('');
   // Field help is plain text and never pinnable, so the flag is only observable through a message
   // that holds a link - but it still has to reach the directive to be settable at all.
-  tooltip = 'Read the <a href="#docs">docs</a>';
-  tooltipSticky = true;
+  tooltip = signal('Read the <a href="#docs">docs</a>');
+  tooltipSticky = signal(true);
 }
 
 describe('TnFormFieldComponent tooltipSticky', () => {
@@ -641,7 +645,7 @@ describe('TnFormFieldComponent tooltipSticky', () => {
       .injector.get(TnTooltipDirective);
     expect(tooltip.stickyEnabled()).toBe(true);
 
-    fixture.componentInstance.tooltipSticky = false;
+    fixture.componentInstance.tooltipSticky.set(false);
     fixture.detectChanges();
     expect(tooltip.stickyEnabled()).toBe(false);
   });
@@ -661,7 +665,7 @@ describe('TnFormFieldComponent tooltipSticky', () => {
     const button = fixture.debugElement.query(By.css('.tn-form-field-tooltip')).nativeElement;
     expect(button.getAttribute('aria-label')).toBe('Read the docs');
 
-    fixture.componentInstance.tooltip = 'Plain help text';
+    fixture.componentInstance.tooltip.set('Plain help text');
     fixture.detectChanges();
     expect(button.getAttribute('aria-label')).toBe('Plain help text');
   });

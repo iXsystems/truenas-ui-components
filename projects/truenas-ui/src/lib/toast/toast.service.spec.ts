@@ -1,5 +1,5 @@
 import { ApplicationRef } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TN_TOAST_ANNOUNCE_DELAY_MS, TnToastService } from './toast.service';
 import { TnToastPosition, TnToastType } from './toast.types';
 import { TnIconTesting } from '../icon/icon-testing';
@@ -12,10 +12,16 @@ describe('TnToastService', () => {
       providers: [TnIconTesting.jest.providers()],
     });
     service = TestBed.inject(TnToastService);
+    // The announce delay and the auto-dismiss window are both `setTimeout`, and
+    // #304 replaced `fakeAsync`/`tick` with Jest's own clock. Nothing in this
+    // suite waits on a promise, so `advanceTimersByTime` is a straight swap for
+    // `tick` — see `../../setup-jest.ts` for where the two differ.
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
     document.querySelectorAll('tn-toast').forEach(el => el.remove());
+    jest.useRealTimers();
   });
 
   function detectChanges() {
@@ -34,13 +40,13 @@ describe('TnToastService', () => {
   // The message lands after insertion, so that the live region changes rather
   // than arriving already populated (#195). `toast-a11y.spec.ts` holds that
   // contract; this only needs to reach the same step before reading.
-  it('should render the message text', fakeAsync(() => {
+  it('should render the message text', () => {
     service.open('Hello world', { duration: 0 });
-    tick(TN_TOAST_ANNOUNCE_DELAY_MS);
+    jest.advanceTimersByTime(TN_TOAST_ANNOUNCE_DELAY_MS);
     detectChanges();
     const message = document.querySelector('.tn-toast__message');
     expect(message?.textContent?.trim()).toBe('Hello world');
-  }));
+  });
 
   it('should return a TnToastRef', () => {
     const ref = service.open('Test');
@@ -51,7 +57,7 @@ describe('TnToastService', () => {
     ref.dismiss();
   });
 
-  it('should dismiss the toast programmatically', fakeAsync(() => {
+  it('should dismiss the toast programmatically', () => {
     const ref = service.open('Test', { duration: 0 });
     let dismissed = false;
     ref.afterDismissed().subscribe(() => { dismissed = true; });
@@ -59,42 +65,42 @@ describe('TnToastService', () => {
     ref.dismiss();
     expect(dismissed).toBe(true);
 
-    tick(200);
-  }));
+    jest.advanceTimersByTime(200);
+  });
 
   // `duration` is time on screen, so it is counted from the announcement and
   // not from the call (#195).
-  it('should auto-dismiss after duration', fakeAsync(() => {
+  it('should auto-dismiss after duration', () => {
     const ref = service.open('Test', { duration: 1000 });
     let dismissed = false;
     ref.afterDismissed().subscribe(() => { dismissed = true; });
 
-    tick(TN_TOAST_ANNOUNCE_DELAY_MS + 999);
+    jest.advanceTimersByTime(TN_TOAST_ANNOUNCE_DELAY_MS + 999);
     expect(dismissed).toBe(false);
 
-    tick(1);
+    jest.advanceTimersByTime(1);
     expect(dismissed).toBe(true);
 
-    tick(200);
-  }));
+    jest.advanceTimersByTime(200);
+  });
 
   // Counted from the call, this duration would elapse before the toast was
   // ever shown — and dismissal cancels the pending announcement, so it would
   // appear and announce nothing at all.
-  it('should still show a toast whose duration is shorter than the announce delay', fakeAsync(() => {
+  it('should still show a toast whose duration is shorter than the announce delay', () => {
     service.open('Brief', { duration: 50 });
 
-    tick(TN_TOAST_ANNOUNCE_DELAY_MS);
+    jest.advanceTimersByTime(TN_TOAST_ANNOUNCE_DELAY_MS);
     detectChanges();
     const message = document.querySelector('.tn-toast__message');
     expect(message?.textContent?.trim()).toBe('Brief');
     expect(document.querySelector('.tn-toast')?.classList.contains('tn-toast--visible')).toBe(true);
 
-    tick(50);
-    tick(200);
-  }));
+    jest.advanceTimersByTime(50);
+    jest.advanceTimersByTime(200);
+  });
 
-  it('should dismiss previous toast when opening a new one', fakeAsync(() => {
+  it('should dismiss previous toast when opening a new one', () => {
     const ref1 = service.open('First', { duration: 0 });
     let dismissed1 = false;
     ref1.afterDismissed().subscribe(() => { dismissed1 = true; });
@@ -102,8 +108,8 @@ describe('TnToastService', () => {
     service.open('Second', { duration: 0 });
     expect(dismissed1).toBe(true);
 
-    tick(200);
-  }));
+    jest.advanceTimersByTime(200);
+  });
 
   it('should render action button when action is provided', () => {
     service.open('Error', 'Retry');
@@ -135,7 +141,7 @@ describe('TnToastService', () => {
     expect(button?.textContent?.trim()).toBe('Retry');
   });
 
-  it('should emit onAction when action button is clicked', fakeAsync(() => {
+  it('should emit onAction when action button is clicked', () => {
     const ref = service.open('Error', 'Retry', { duration: 0 });
     detectChanges();
     let actionFired = false;
@@ -145,10 +151,10 @@ describe('TnToastService', () => {
     button?.click();
     expect(actionFired).toBe(true);
 
-    tick(200);
-  }));
+    jest.advanceTimersByTime(200);
+  });
 
-  it('should dismiss after action button is clicked', fakeAsync(() => {
+  it('should dismiss after action button is clicked', () => {
     const ref = service.open('Error', 'Retry', { duration: 0 });
     detectChanges();
     let dismissed = false;
@@ -158,8 +164,8 @@ describe('TnToastService', () => {
     button?.click();
     expect(dismissed).toBe(true);
 
-    tick(200);
-  }));
+    jest.advanceTimersByTime(200);
+  });
 
   it('should default to info type', () => {
     service.open('Info message');
@@ -182,17 +188,17 @@ describe('TnToastService', () => {
     expect(host?.classList.contains('tn-toast--top')).toBe(true);
   });
 
-  it('should default to 4000ms duration', fakeAsync(() => {
+  it('should default to 4000ms duration', () => {
     const ref = service.open('Test');
     let dismissed = false;
     ref.afterDismissed().subscribe(() => { dismissed = true; });
 
-    tick(TN_TOAST_ANNOUNCE_DELAY_MS + 3999);
+    jest.advanceTimersByTime(TN_TOAST_ANNOUNCE_DELAY_MS + 3999);
     expect(dismissed).toBe(false);
 
-    tick(1);
+    jest.advanceTimersByTime(1);
     expect(dismissed).toBe(true);
 
-    tick(200);
-  }));
+    jest.advanceTimersByTime(200);
+  });
 });

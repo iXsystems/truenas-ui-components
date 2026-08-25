@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnBannerComponent, TnBannerActionDirective } from './banner.component';
@@ -28,14 +28,14 @@ class BannerWithoutActionTestComponent {}
   standalone: true,
   imports: [TnBannerComponent],
   template: `
-    <tn-banner [heading]="heading" [message]="message">
+    <tn-banner [heading]="heading()" [message]="message()">
       <div class="projected-content">Projected Content</div>
     </tn-banner>
   `
 })
 class BannerWithProjectedContentTestComponent {
-  heading: string | undefined = undefined;
-  message: string | undefined = undefined;
+  heading = signal<string | undefined>(undefined);
+  message = signal<string | undefined>(undefined);
 }
 
 describe('TnBannerComponent', () => {
@@ -250,7 +250,7 @@ describe('TnBannerComponent', () => {
 
     it('should not display projected content when heading is provided', () => {
       const hostFixture = TestBed.createComponent(BannerWithProjectedContentTestComponent);
-      hostFixture.componentInstance.heading = 'Real Heading';
+      hostFixture.componentInstance.heading.set('Real Heading');
       hostFixture.detectChanges();
 
       expect(hostFixture.nativeElement.querySelector('.projected-content')).toBeNull();
@@ -261,7 +261,7 @@ describe('TnBannerComponent', () => {
 
     it('should not display projected content when only message is provided', () => {
       const hostFixture = TestBed.createComponent(BannerWithProjectedContentTestComponent);
-      hostFixture.componentInstance.message = 'Real Message';
+      hostFixture.componentInstance.message.set('Real Message');
       hostFixture.detectChanges();
 
       expect(hostFixture.nativeElement.querySelector('.projected-content')).toBeNull();
@@ -278,7 +278,7 @@ describe('TnBannerComponent', () => {
       expect(hostFixture.nativeElement.querySelector('.tn-banner__icon')).toBeNull();
 
       // Structured mode: icon present
-      hostFixture.componentInstance.heading = 'Heading';
+      hostFixture.componentInstance.heading.set('Heading');
       hostFixture.detectChanges();
       expect(hostFixture.nativeElement.querySelector('.tn-banner__icon')).toBeTruthy();
     });

@@ -1,6 +1,6 @@
-import { Component, NgZone, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TnDrawerComponent } from './drawer.component';
 import type { TnDrawerMode } from './drawer.component';
 import { TN_TRANSITION_FALLBACK_MS } from '../utils/transition-lifecycle';
@@ -44,18 +44,21 @@ class TestHostComponent {
  *
  * WHY THE FIXTURE IS BUILT INSIDE EACH TEST, AND WHY THIS IS ITS OWN FILE
  * ----------------------------------------------------------------------
- * The fallback is a timer, so these tests need `fakeAsync` to see it — and a
- * timer is only reachable by `tick()` if it was scheduled inside that
- * `fakeAsync` zone. This one is armed with `runOutsideAngular`, so it lands in
- * the zone `NgZone` was CONSTRUCTED in — and `TestBed` constructs that once,
- * lazily, at the FIRST `TestBed.createComponent` of the suite. A `beforeEach`
- * that creates a fixture
- * therefore fixes the zone for every test after it, and the fallback then fires
- * on the real clock a third of a second after the test has already finished.
+ * The fallback is a timer, so these tests have to be able to advance a clock to
+ * see it, and the fixture has to exist before the clock they advance is the one
+ * the timer lands on. Both of those held under Zone for a subtler reason —
+ * `runOutsideAngular` put the timer in the zone `NgZone` was CONSTRUCTED in,
+ * which `TestBed` did lazily at the suite's FIRST `createComponent`, so a
+ * `beforeEach` that built a fixture fixed the zone for every test after it and
+ * the fallback then fired on the real clock a third of a second after the test
+ * had finished.
  *
- * That is why this is a separate file rather than another `describe` in
- * `drawer.component.spec.ts`: sharing a suite means sharing that first
- * `createComponent`, and the fix is not local to the block that needs it.
+ * Zone is gone (#304) and the timer is now a plain `setTimeout` on Jest's fake
+ * clock, which has no such lazily-fixed identity. The shape is kept anyway: a
+ * per-test fixture is what keeps one test's armed fallback from reporting into
+ * the next one's spies, and this stays a separate file from
+ * `drawer.component.spec.ts` so a suite-wide `useFakeTimers` does not have to be
+ * imposed on specs that want a real clock.
  */
 describe('TnDrawerComponent lifecycle outputs', () => {
   let fixture: ComponentFixture<TestHostComponent>;
@@ -65,6 +68,10 @@ describe('TnDrawerComponent lifecycle outputs', () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
     }).compileComponents();
+
+    // After `compileComponents`, so the fake clock is never the thing an
+    // awaited compile is waiting on.
+    jest.useFakeTimers();
   });
 
   afterEach(() => {
@@ -74,9 +81,10 @@ describe('TnDrawerComponent lifecycle outputs', () => {
     // reference to.
     document.body.querySelectorAll('.tn-drawer__panel--over').forEach((el) => el.remove());
     document.body.querySelectorAll('.tn-drawer__backdrop').forEach((el) => el.remove());
+    jest.useRealTimers();
   });
 
-  /** Build the fixture under test. Call first, from inside the `fakeAsync` body. */
+  /** Build the fixture under test. Call first. */
   function createDrawer(mode: TnDrawerMode = 'side', opened = false): void {
     fixture = TestBed.createComponent(TestHostComponent);
     host = fixture.componentInstance;
@@ -105,114 +113,117 @@ describe('TnDrawerComponent lifecycle outputs', () => {
     panel.dispatchEvent(Object.assign(new Event('transitionend'), { propertyName: 'transform' }));
   }
 
-  it('emits openedComplete when no transitionend arrives', fakeAsync(() => {
+  it('emits openedComplete when no transitionend arrives', () => {
     createDrawer();
     setOpened(true);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).toHaveBeenCalledTimes(1);
     expect(host.closed).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('emits closed when no transitionend arrives', fakeAsync(() => {
+  it('emits closed when no transitionend arrives', () => {
     createDrawer();
     setOpened(true);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
     setOpened(false);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).toHaveBeenCalledTimes(1);
     expect(host.closed).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('emits in over mode too, where the panel is portaled', fakeAsync(() => {
+  it('emits in over mode too, where the panel is portaled', () => {
     createDrawer('over');
     setOpened(true);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
     setOpened(false);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).toHaveBeenCalledTimes(1);
     expect(host.closed).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('emits once, not twice, when the transition does complete', fakeAsync(() => {
+  it('emits once, not twice, when the transition does complete', () => {
     createDrawer();
     setOpened(true);
     finishTransition();
 
     expect(host.openedComplete).toHaveBeenCalledTimes(1);
 
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
     expect(host.openedComplete).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('ignores a transitionend that arrives after the fallback already fired', fakeAsync(() => {
+  it('ignores a transitionend that arrives after the fallback already fired', () => {
     createDrawer();
     setOpened(true);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
     finishTransition();
 
     expect(host.openedComplete).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('emits nothing while the drawer stays closed', fakeAsync(() => {
+  it('emits nothing while the drawer stays closed', () => {
     createDrawer();
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).not.toHaveBeenCalled();
     expect(host.closed).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('emits nothing for a drawer that RENDERS open, which never opened', fakeAsync(() => {
+  it('emits nothing for a drawer that RENDERS open, which never opened', () => {
     createDrawer('side', true);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).not.toHaveBeenCalled();
     expect(host.closed).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('still emits closed for a drawer that rendered open and is then closed', fakeAsync(() => {
+  it('still emits closed for a drawer that rendered open and is then closed', () => {
     createDrawer('side', true);
     setOpened(false);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).not.toHaveBeenCalled();
     expect(host.closed).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('emits only the final state when a close interrupts an open', fakeAsync(() => {
+  it('emits only the final state when a close interrupts an open', () => {
     createDrawer();
     setOpened(true);
     setOpened(false);
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).not.toHaveBeenCalled();
     expect(host.closed).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('does not hold NgZone unstable while the fallback is armed', fakeAsync(() => {
-    createDrawer();
-    setOpened(true);
+  /*
+   * WHERE 'does not hold NgZone unstable while the fallback is armed' WENT
+   * ---------------------------------------------------------------------
+   * This file used to assert
+   * `expect(TestBed.inject(NgZone).hasPendingMacrotasks).toBe(false)` right
+   * after an open, guarding the `runOutsideAngular` in
+   * `../utils/transition-lifecycle.ts`. #304 made the test suite zoneless, and
+   * with no Zone `NgZone` resolves to `NoopNgZone`, whose `hasPendingMacrotasks`
+   * is a hard-coded `false`. The assertion would have kept passing — including
+   * with the `runOutsideAngular` deleted — which is worse than not having it.
+   *
+   * It is DELETED HERE AND REPLACED, not dropped: `../utils/transition-lifecycle.spec.ts`
+   * covers the same guard by asserting that the fallback timer is the one armed
+   * inside `runOutsideAngular` and that the report goes back through
+   * `zone.run`, both of which fail if the calls are removed. That test is on the
+   * shared helper rather than on each of its two callers, which is where the
+   * behaviour lives.
+   */
 
-    // The timer is armed from an `effect`, which runs inside
-    // `ApplicationRef.tick()` inside `NgZone.run(...)`, so scheduling it
-    // without `runOutsideAngular` makes it an Angular-zone macrotask — and
-    // `fixture.whenStable()` and CDK's `forceStabilize()` would then block for
-    // the whole fallback window after every open and every close, in every
-    // downstream suite that toggles one of these components.
-    expect(TestBed.inject(NgZone).hasPendingMacrotasks).toBe(false);
-
-    tick(TN_TRANSITION_FALLBACK_MS);
-    expect(host.openedComplete).toHaveBeenCalledTimes(1);
-  }));
-
-  it('emits nothing after the drawer is destroyed mid-transition', fakeAsync(() => {
+  it('emits nothing after the drawer is destroyed mid-transition', () => {
     createDrawer();
     setOpened(true);
     fixture.destroy();
-    tick(TN_TRANSITION_FALLBACK_MS);
+    jest.advanceTimersByTime(TN_TRANSITION_FALLBACK_MS);
 
     expect(host.openedComplete).not.toHaveBeenCalled();
-  }));
+  });
 });
