@@ -8,6 +8,72 @@ Testing patterns and best practices for TrueNAS UI Components using Jest.
 - **Testing library:** @angular/core/testing
 - **Assertions:** Jest matchers
 - **Storybook tests:** @storybook/testing-library + @storybook/jest
+- **Change detection:** zoneless. There is no `zone.js` in this repository.
+
+## The suite is zoneless, and two habits do not survive that
+
+`setup-jest.ts` calls `setupZonelessTestEnv()`, so every spec runs the change
+detection an Angular 21 application gets by default. Two things follow, and both
+of them fail in ways that name the wrong culprit.
+
+**1. `fakeAsync` and `tick` are gone.** They are Zone APIs. A spec that reaches
+for them fails the whole file with *"zone-testing.js is needed for the
+fakeAsync() test helper but could not be found"*. Use Jest's own clock:
+
+```typescript
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
+
+it('reports after the fallback window', () => {
+  openTheThing();
+  jest.advanceTimersByTime(400);   // was: tick(400)
+  expect(settled).toHaveBeenCalled();
+});
+```
+
+The one behavioural difference that bites: **`tick()` drained the microtask
+queue as well as the timer queue, and `advanceTimersByTime()` does not.**
+Anything waiting on a promise — a `MutationObserver` callback, a component
+harness action — needs a real `await`, so the test has to be `async`:
+
+```typescript
+async function settle(): Promise<void> {
+  jest.advanceTimersByTime(0);
+  await Promise.resolve();
+  fixture.detectChanges();
+}
+```
+
+**2. A test host must hold changing state in a `signal`.** Zoneless change
+detection refreshes what has been marked dirty, and a plain property assignment
+marks nothing — so `fixture.detectChanges()` renders nothing and dev mode then
+reports the stale binding as `NG0100:
+ExpressionChangedAfterItHasBeenCheckedError`, which reads as a bug in the
+component rather than as a spec that never re-rendered.
+
+```typescript
+@Component({ template: `<tn-thing [loading]="loading()" />` })
+class HostComponent {
+  loading = signal(false);          // not: loading = false;
+}
+
+it('reports loading', () => {
+  host.loading.set(true);           // not: host.loading = true;
+  fixture.detectChanges();
+  ...
+});
+```
+
+Only the fields the template READS need this. A field an output binding writes
+into (`(rowClick)="clicks.push($event)"`) is never read by a binding and can
+stay plain.
+
+**`fixture.whenStable()` waits for less than it used to.** Under Zone it meant
+"no pending macrotasks". Zoneless, it resolves once Angular's `PendingTasks` set
+is empty — and a bare `setTimeout` or `requestAnimationFrame` is not one of
+those. A spec waiting on a component's own timer (`tn-tooltip`'s show delay) or
+on an animation frame (`tn-tree-virtual-scroll-view`'s node stream) has to await
+that thing itself.
 
 ## Basic Test Structure
 
@@ -609,6 +675,15 @@ debugger;
 ### "Cannot set input"
 - Use `fixture.componentRef.setInput('name', value)` to set input signals in tests
 - Don't try to directly assign to input signals: `component.label = 'test'` won't work
+
+### "NG0100: ExpressionChangedAfterItHasBeenCheckedError" pointing at your test host
+- The host field the binding reads is a plain property, so nothing was marked
+  dirty and `detectChanges()` refreshed nothing — see *The suite is zoneless*
+  at the top. Hold it in a `signal` and `set()` it
+
+### "zone-testing.js is needed for the fakeAsync() test helper"
+- `fakeAsync`/`tick` do not exist here; use `jest.useFakeTimers()` and
+  `jest.advanceTimersByTime(ms)` — see *The suite is zoneless* at the top
 
 ## Examples
 

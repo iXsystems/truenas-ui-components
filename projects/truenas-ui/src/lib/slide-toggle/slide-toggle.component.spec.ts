@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnSlideToggleComponent } from './slide-toggle.component';
@@ -8,12 +8,12 @@ import { TnSlideToggleComponent } from './slide-toggle.component';
   standalone: true,
   imports: [TnSlideToggleComponent],
   template: `
-    <tn-slide-toggle label="Enable" [fullWidth]="fullWidth" (change)="changeCount = changeCount + 1" />
+    <tn-slide-toggle label="Enable" [fullWidth]="fullWidth()" (change)="changeCount = changeCount + 1" />
   `,
 })
 class TestHostComponent {
   changeCount = 0;
-  fullWidth = false;
+  fullWidth = signal(false);
 }
 
 describe('TnSlideToggleComponent', () => {
@@ -53,7 +53,7 @@ describe('TnSlideToggleComponent', () => {
     });
 
     it('stretches both the host and the inner row when set', () => {
-      host.fullWidth = true;
+      host.fullWidth.set(true);
       fixture.detectChanges();
 
       const toggle = fixture.nativeElement.querySelector('tn-slide-toggle') as HTMLElement;

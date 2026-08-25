@@ -605,7 +605,13 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     const idx = this.highlightedIndex();
     const options = this.overlayRef?.overlayElement
       ?.querySelectorAll<HTMLElement>('.tn-chip-input__option');
-    options?.[idx]?.scrollIntoView({ block: 'nearest' });
+    // Guarded rather than called outright, the same way `tn-autocomplete` does
+    // it: jsdom implements no `scrollIntoView`, so an unguarded call throws
+    // `TypeError` in every spec that arrows through the suggestions. Zone used
+    // to swallow that, and #304 took the zone away.
+    if (options?.[idx]?.scrollIntoView) {
+      options[idx].scrollIntoView({ block: 'nearest' });
+    }
   }
 
   private open(): void {

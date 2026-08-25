@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnListItemComponent } from './list-item.component';
@@ -33,11 +33,11 @@ class TextSlotsHostComponent {}
   selector: 'tn-list-item-plain-test',
   standalone: true,
   imports: [TnListItemComponent],
-  template: `<tn-list-item [dense]="dense" [wrap]="wrap">Just text</tn-list-item>`,
+  template: `<tn-list-item [dense]="dense()" [wrap]="wrap()">Just text</tn-list-item>`,
 })
 class PlainHostComponent {
-  dense = false;
-  wrap = false;
+  dense = signal(false);
+  wrap = signal(false);
 }
 
 describe('TnListItemComponent', () => {
@@ -187,8 +187,8 @@ describe('TnListItemComponent', () => {
       expect(host.classList).not.toContain('tn-list-item--dense');
       expect(host.classList).not.toContain('tn-list-item--wrap');
 
-      fixture.componentInstance.dense = true;
-      fixture.componentInstance.wrap = true;
+      fixture.componentInstance.dense.set(true);
+      fixture.componentInstance.wrap.set(true);
       fixture.detectChanges();
 
       expect(host.classList).toContain('tn-list-item--dense');

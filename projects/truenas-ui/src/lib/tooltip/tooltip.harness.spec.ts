@@ -44,8 +44,26 @@ describe('TnTooltipHarness', () => {
     plainHost = fixture.nativeElement.querySelector('#plain') as HTMLButtonElement;
   });
 
+  /**
+   * Let the directive's show/hide timeout run.
+   *
+   * `tnTooltip` opens and closes from a `setTimeout`, and until #304 the
+   * harness environment's own stabilisation covered it: `forceStabilize()`
+   * waits on `fixture.whenStable()`, which under Zone meant "no pending
+   * macrotasks". Zoneless, `whenStable()` resolves once Angular's
+   * `PendingTasks` set is empty, and a bare `setTimeout` is not one of those —
+   * so `getHarness` ran before the panel existed and read an empty document.
+   *
+   * A real macrotask rather than Jest's fake clock, because the harness
+   * environment awaits promises of its own between here and the query.
+   */
+  function settle(): Promise<void> {
+    return new Promise<void>((resolve) => setTimeout(resolve));
+  }
+
   it('finds a hover tooltip and reads its text', async () => {
     plainHost.dispatchEvent(new MouseEvent('mouseenter'));
+    await settle();
 
     const tooltip = await rootLoader.getHarness(TnTooltipHarness);
 
@@ -62,12 +80,14 @@ describe('TnTooltipHarness', () => {
     expect(await tooltip.getDismissLabel()).toBe('Close tooltip');
 
     await tooltip.dismiss();
+    await settle();
 
     expect(await rootLoader.getHarnessOrNull(TnTooltipHarness)).toBeNull();
   });
 
   it('refuses to dismiss a tooltip that is not sticky', async () => {
     plainHost.dispatchEvent(new MouseEvent('mouseenter'));
+    await settle();
 
     const tooltip = await rootLoader.getHarness(TnTooltipHarness);
 

@@ -87,10 +87,19 @@ describe('TnTreeVirtualScrollViewComponent', () => {
    * Drive several change-detection passes to let the node stream (async `auditTime`)
    * emit and the DOM settle. The viewport's recycling repeater can reshuffle rows, so
    * the outlet's self-healing `ngDoCheck` reconciles aria attributes over the next
-   * pass or two — mirroring how zone-driven CD settles in the browser.
+   * pass or two.
+   *
+   * THE `flushFrame()` IS LOAD-BEARING, and was not needed before #304. The node
+   * stream is `auditTime(0, animationFrameScheduler)`, so it emits from a
+   * `requestAnimationFrame`. Zone patched rAF and counted it as a pending
+   * macrotask, so `whenStable()` alone waited for it. Zoneless `whenStable()`
+   * resolves when Angular's `PendingTasks` set is empty, and a bare rAF is not
+   * one of those — it resolved immediately, the stream never emitted, and every
+   * assertion here read a viewport with zero materialised rows.
    */
   async function settle(passes = 3): Promise<void> {
     for (let i = 0; i < passes; i++) {
+      await flushFrame();
       await fixture.whenStable();
       fixture.detectChanges();
     }

@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -12,15 +12,15 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
   standalone: true,
   imports: [TnFormSectionComponent],
   template: `
-    <tn-form-section [heading]="heading" [tooltip]="tooltip" [tooltipSticky]="tooltipSticky">
+    <tn-form-section [heading]="heading()" [tooltip]="tooltip()" [tooltipSticky]="tooltipSticky()">
       <p class="projected">Projected field content</p>
     </tn-form-section>
   `,
 })
 class HostComponent {
-  heading = 'Network Settings';
-  tooltip = '';
-  tooltipSticky = true;
+  heading = signal('Network Settings');
+  tooltip = signal('');
+  tooltipSticky = signal(true);
 }
 
 describe('TnFormSectionComponent', () => {
@@ -64,7 +64,7 @@ describe('TnFormSectionComponent', () => {
   });
 
   it('names the group from the heading alone, not the tooltip text', () => {
-    host.tooltip = 'A long help sentence that must not pollute the group name.';
+    host.tooltip.set('A long help sentence that must not pollute the group name.');
     fixture.detectChanges();
 
     const fieldset = fixture.debugElement.query(By.css('fieldset.tn-form-section')).nativeElement;
@@ -79,20 +79,20 @@ describe('TnFormSectionComponent', () => {
   });
 
   it('drops aria-labelledby when there is no heading', () => {
-    host.heading = '';
+    host.heading.set('');
     fixture.detectChanges();
     const fieldset = fixture.debugElement.query(By.css('fieldset.tn-form-section')).nativeElement;
     expect(fieldset.getAttribute('aria-labelledby')).toBeNull();
   });
 
   it('omits the legend when no heading is set', () => {
-    host.heading = '';
+    host.heading.set('');
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('.tn-form-section__legend'))).toBeNull();
   });
 
   it('renders lightweight label markup in the heading', () => {
-    host.heading = '**Storage** settings';
+    host.heading.set('**Storage** settings');
     fixture.detectChanges();
     const legend = fixture.debugElement.query(By.css('.tn-form-section__legend'));
     expect(legend.nativeElement.innerHTML).toContain('<strong>Storage</strong>');
@@ -101,25 +101,25 @@ describe('TnFormSectionComponent', () => {
   it('shows the tooltip button only when a tooltip is set', () => {
     expect(fixture.debugElement.query(By.css('.tn-form-section__tooltip'))).toBeNull();
 
-    host.tooltip = 'Controls how the interface reaches the network.';
+    host.tooltip.set('Controls how the interface reaches the network.');
     fixture.detectChanges();
 
     const tooltip = fixture.debugElement.query(By.css('.tn-form-section__tooltip'));
     expect(tooltip).toBeTruthy();
-    expect(tooltip.nativeElement.getAttribute('aria-label')).toBe(host.tooltip);
+    expect(tooltip.nativeElement.getAttribute('aria-label')).toBe(host.tooltip());
   });
 
   // Section help is plain text and never pinnable, so the flag is only observable through a
   // message that holds a link — but it still has to reach the directive to be settable at all.
   it('forwards tooltipSticky to the help button', () => {
-    host.tooltip = 'Read the <a href="#docs">docs</a>';
+    host.tooltip.set('Read the <a href="#docs">docs</a>');
     fixture.detectChanges();
 
     const button = fixture.debugElement.query(By.css('.tn-form-section__tooltip'));
     const tooltip = button.injector.get(TnTooltipDirective);
     expect(tooltip.stickyEnabled()).toBe(true);
 
-    host.tooltipSticky = false;
+    host.tooltipSticky.set(false);
     fixture.detectChanges();
     expect(tooltip.stickyEnabled()).toBe(false);
   });
@@ -128,7 +128,7 @@ describe('TnFormSectionComponent', () => {
   // link is exactly what this feature makes normal to pass. Announced raw it would be read out as
   // literal tags.
   it('names the help button with the message as text, not as markup', () => {
-    host.tooltip = 'Read the <a href="#docs">docs</a>';
+    host.tooltip.set('Read the <a href="#docs">docs</a>');
     fixture.detectChanges();
 
     const button = fixture.debugElement.query(By.css('.tn-form-section__tooltip'));
@@ -145,7 +145,7 @@ describe('TnFormSectionComponent', () => {
       const section = await loader.getHarness(TnFormSectionHarness);
       expect(await section.hasTooltip()).toBe(false);
 
-      host.tooltip = 'More info';
+      host.tooltip.set('More info');
       fixture.detectChanges();
       expect(await section.hasTooltip()).toBe(true);
     });

@@ -1,10 +1,21 @@
 import type { CollectionViewer } from '@angular/cdk/collections';
-import { fakeAsync, tick } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { TnNestedTreeDataSource } from './nested-tree-datasource';
 import { createFlatTreeControl } from './tree-control.factory';
 import type { TnTreeExpansion } from './tree-expansion.interface';
 import { TnTreeFlatDataSource, TnTreeFlattener } from './tree.component';
+
+/**
+ * The debounce these suites step over is `debounceTime(200)` in the data
+ * sources, which is RxJS's `asyncScheduler` and so an ordinary `setInterval` —
+ * nothing Angular. Jest's own fake timers reach it directly, which is why the
+ * #304 port of this file is a rename (`tick` → `advanceTimersByTime`) rather
+ * than a rewrite: there is no microtask in the path, so the one behaviour
+ * `fakeAsync` had that Jest's timers do not — draining promises alongside the
+ * clock — is not in use here.
+ */
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
 
 interface ExampleNode {
   name: string;
@@ -49,29 +60,29 @@ describe('TnNestedTreeDataSource', () => {
     expect(data[1].children?.map((node) => node.name)).toEqual(['alpha', 'zeta']);
   });
 
-  it('filters through filterPredicate with a debounce and clears when query is emptied', fakeAsync(() => {
+  it('filters through filterPredicate with a debounce and clears when query is emptied', () => {
     const dataSource = new TnNestedTreeDataSource(makeData());
     dataSource.filterPredicate = (data, query) => data.filter((node) => node.name.includes(query));
 
     dataSource.filter('app');
-    tick(200);
+    jest.advanceTimersByTime(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['apple']);
 
     dataSource.filter('');
-    tick(200);
+    jest.advanceTimersByTime(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['banana', 'apple']);
-  }));
+  });
 
-  it('keeps filtering functional after a disconnect/reconnect cycle', fakeAsync(() => {
+  it('keeps filtering functional after a disconnect/reconnect cycle', () => {
     const dataSource = new TnNestedTreeDataSource(makeData());
     dataSource.filterPredicate = (data, query) => data.filter((node) => node.name.includes(query));
 
     dataSource.disconnect();
 
     dataSource.filter('app');
-    tick(200);
+    jest.advanceTimersByTime(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['apple']);
-  }));
+  });
 });
 
 describe('TnTreeFlatDataSource', () => {
@@ -117,21 +128,21 @@ describe('TnTreeFlatDataSource', () => {
     expect(latest(dataSource).map((node) => node.name)).toEqual(['apple', 'banana']);
   });
 
-  it('filters through filterPredicate with a debounce', fakeAsync(() => {
+  it('filters through filterPredicate with a debounce', () => {
     const { dataSource } = makeDataSource();
     dataSource.data = makeData();
     dataSource.filterPredicate = (data, query) => data.filter((node) => node.name.includes(query));
 
     dataSource.filter('app');
-    tick(200);
+    jest.advanceTimersByTime(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['apple']);
 
     dataSource.filter('');
-    tick(200);
+    jest.advanceTimersByTime(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['banana', 'apple']);
-  }));
+  });
 
-  it('keeps filtering functional after a disconnect/reconnect cycle', fakeAsync(() => {
+  it('keeps filtering functional after a disconnect/reconnect cycle', () => {
     const { dataSource } = makeDataSource();
     dataSource.data = makeData();
     dataSource.filterPredicate = (data, query) => data.filter((node) => node.name.includes(query));
@@ -139,9 +150,9 @@ describe('TnTreeFlatDataSource', () => {
     dataSource.disconnect();
 
     dataSource.filter('app');
-    tick(200);
+    jest.advanceTimersByTime(200);
     expect(latest(dataSource).map((node) => node.name)).toEqual(['apple']);
-  }));
+  });
 
   it('accepts a tree control with a custom trackBy key type', () => {
     const treeControl = createFlatTreeControl<ExampleFlatNode, string>(

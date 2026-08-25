@@ -262,10 +262,16 @@ This library requires Angular 20:
   "@angular/platform-browser": "^20.0.0",
   "@angular/platform-browser-dynamic": "^20.0.0",
   "@angular/router": "^20.0.0",
-  "rxjs": "^7.5.0",
-  "zone.js": "^0.15.0"
+  "rxjs": "^7.5.0"
 }
 ```
+
+**No `zone.js`.** Nothing under `src/lib/` touches the `Zone` global, and
+`@angular/core` marks `zone.js` optional, so this library runs the same under
+zone-based and zoneless change detection: a component that injects `NgZone`
+gets the real one or `NoopNgZone`, and behaves identically either way. An
+application that still uses zone change detection keeps its own `zone.js` —
+this library neither requires nor forbids it.
 
 ## Distribution
 

@@ -67,9 +67,14 @@ describe('TnTreeVirtualScrollViewHarness', () => {
   let fixture: ComponentFixture<HostComponent>;
   let loader: HarnessLoader;
 
-  /** Flush the node stream (async `auditTime`) and let the DOM settle, as in the component spec. */
+  /**
+   * Flush the node stream (async `auditTime`) and let the DOM settle, as in the
+   * component spec — including the animation frame the stream emits from, which
+   * zoneless `whenStable()` does not wait for. See the fuller note there.
+   */
   async function settle(passes = 3): Promise<void> {
     for (let i = 0; i < passes; i++) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await fixture.whenStable();
       fixture.detectChanges();
     }

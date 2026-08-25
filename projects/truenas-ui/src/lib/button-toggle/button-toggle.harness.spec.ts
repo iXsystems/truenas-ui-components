@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TnButtonToggleGroupComponent } from './button-toggle-group.component';
@@ -388,18 +388,18 @@ describe('TnButtonToggleGroup — initial FormControl value with @for loop', () 
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-button-toggle-group
-      [checkedBg]="bg"
-      [checkedColor]="color"
-      [checkedBorder]="border">
+      [checkedBg]="bg()"
+      [checkedColor]="color()"
+      [checkedBorder]="border()">
       <tn-button-toggle value="a">A</tn-button-toggle>
       <tn-button-toggle value="b">B</tn-button-toggle>
     </tn-button-toggle-group>
   `,
 })
 class ButtonToggleCheckedStyleTestComponent {
-  bg: string | null = null;
-  color: string | null = null;
-  border: string | null = null;
+  bg = signal<string | null>(null);
+  color = signal<string | null>(null);
+  border = signal<string | null>(null);
 }
 
 describe('TnButtonToggleGroup — checked style inputs', () => {
@@ -424,9 +424,9 @@ describe('TnButtonToggleGroup — checked style inputs', () => {
   });
 
   it('should set the CSS custom properties from inputs', () => {
-    component.bg = '#71BF44';
-    component.color = '#ffffff';
-    component.border = '#5fa036';
+    component.bg.set('#71BF44');
+    component.color.set('#ffffff');
+    component.border.set('#5fa036');
     fixture.detectChanges();
 
     const groupEl = fixture.nativeElement.querySelector('tn-button-toggle-group') as HTMLElement;
@@ -436,7 +436,7 @@ describe('TnButtonToggleGroup — checked style inputs', () => {
   });
 
   it('should accept CSS var() references', () => {
-    component.bg = 'var(--tn-primary)';
+    component.bg.set('var(--tn-primary)');
     fixture.detectChanges();
 
     const groupEl = fixture.nativeElement.querySelector('tn-button-toggle-group') as HTMLElement;

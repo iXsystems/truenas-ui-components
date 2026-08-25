@@ -838,8 +838,20 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
     // wrong option if two tn-select instances with the same testId are open
     // simultaneously, and couples the component to a global).
     queueMicrotask(() => {
-      const el = overlayEl.querySelector<HTMLElement>(`#${CSS.escape(id)}`);
-      el?.scrollIntoView({ block: 'nearest' });
+      // Found by comparing the attribute rather than by building a `#id`
+      // selector, for the reason `a11y/accessible-name-testing.ts` already
+      // records: `CSS.escape` is the only safe way to compose one and `CSS` is
+      // not defined under jsdom, so the call throws `ReferenceError`. Zone
+      // swallowed that throw — it happened in a patched microtask — and #304
+      // took the zone away, which is how a latent break in every select spec
+      // that arrows through the options became visible.
+      const el = Array.from(overlayEl.querySelectorAll<HTMLElement>('[id]'))
+        .find((candidate) => candidate.id === id);
+      // jsdom implements no `scrollIntoView` either; same guard as
+      // `tn-autocomplete` and `tn-chip-input`.
+      if (el?.scrollIntoView) {
+        el.scrollIntoView({ block: 'nearest' });
+      }
     });
   }
 }
