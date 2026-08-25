@@ -1,7 +1,13 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { TN_THEME_DEFINITIONS } from './theme.constants';
-import { contrastRatio, formatRatio, meetsAa, themePalettes } from '../a11y/contrast-testing';
+import { AA_MINIMUM, contrastRatio, meetsAa } from '../a11y/contrast-testing';
+import type {
+  ContrastPairing} from '../a11y/palette-contrast-testing';
+import {
+  itDeclares,
+  itMeasuresEveryRegisteredPalette,
+  testEachPalette,
+} from '../a11y/palette-contrast-testing';
 
 /**
  * `--tn-primary` is tuned for the 3:1 non-text minimum — fills, borders and
@@ -24,13 +30,19 @@ import { contrastRatio, formatRatio, meetsAa, themePalettes } from '../a11y/cont
  * can honestly be made without a browser: it is about the palette rather than
  * about a rendered page. `yarn test-sb` is what checks the page.
  *
- * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197);
+ * The maths and the token lookup are `lib/a11y/contrast-testing.ts` (#197) and
+ * the per-palette harness is `lib/a11y/palette-contrast-testing.ts` (#295);
  * nothing is re-derived here. `error-text-contrast.spec.ts` is the same shape
  * for `--tn-error-text`.
  */
 
-const STYLES_DIR = join(__dirname, '../../styles');
 const LIB_DIR = join(__dirname, '..');
+
+/** Every surface the token guarantees, and what paints it. */
+const PAIRINGS: readonly ContrastPairing[] = [
+  { token: '--tn-primary-text', surface: '--tn-bg1', where: 'the page canvas' },
+  { token: '--tn-primary-text', surface: '--tn-bg2', where: 'the card and panel surface' },
+];
 
 /**
  * Declared by each theme itself, not inherited from `:root`. `--tn-primary-text`
@@ -104,82 +116,22 @@ function scssFiles(directory: string): string[] {
     .sort();
 }
 
-interface ThemeCase {
-  selector: string;
-  primaryText: string;
-  bg1: string;
-  bg2: string;
-  bg1Ratio: number;
-  bg2Ratio: number;
-  bg1RatioLabel: string;
-  bg2RatioLabel: string;
-}
-
 describe('--tn-primary-text contrast (#242)', () => {
-  const css = readFileSync(join(STYLES_DIR, 'themes.css'), 'utf8');
-  const palettes = themePalettes(css);
-
-  // Derived from the theme registry rather than hardcoded: a themed surface that
-  // stops being recognised — a renamed class, a block that drops `--tn-bg1` —
-  // would otherwise go unmeasured while every remaining case still passed.
-  const expectedSelectors = [':root', ...TN_THEME_DEFINITIONS.map((theme) => `.${theme.className}`)];
-
-  it('found every registered themed surface in themes.css', () => {
-    expect(palettes).toHaveLength(expectedSelectors.length);
-  });
-
-  it.each(expectedSelectors)('%s is a themed surface found in themes.css', (selector) => {
-    expect(palettes.map((palette) => palette.selector)).toContain(selector);
-  });
-
-  const declarations = palettes.map((palette) => ({
-    selector: palette.selector,
-    missing: REQUIRED_TOKENS.filter((token) => !palette.declares(token)),
-  }));
-
-  it.each(declarations)('$selector declares --tn-bg1, --tn-bg2 and --tn-primary-text itself', ({ missing }) => {
-    expect(missing).toEqual([]);
-  });
-
-  // Only the surfaces that passed the check above are measured — a palette
-  // missing a token has already failed, and measuring it would add a second
-  // failure saying the same thing in worse words. If that leaves nothing to
-  // measure, `it.each` errors on the empty array rather than reporting a suite
-  // with no contrast cases in it as green.
-  const cases: ThemeCase[] = palettes
-    .filter((palette) => REQUIRED_TOKENS.every((token) => palette.declares(token)))
-    .map((palette) => {
-      const bg1Ratio = palette.contrast('--tn-primary-text', '--tn-bg1');
-      const bg2Ratio = palette.contrast('--tn-primary-text', '--tn-bg2');
-      return {
-        selector: palette.selector,
-        primaryText: palette.color('--tn-primary-text'),
-        bg1: palette.color('--tn-bg1'),
-        bg2: palette.color('--tn-bg2'),
-        bg1Ratio,
-        bg2Ratio,
-        bg1RatioLabel: formatRatio(bg1Ratio),
-        bg2RatioLabel: formatRatio(bg2Ratio),
-      };
-    });
+  // Only the palettes that declare every required token are measured — one that
+  // does not has already failed inside `itDeclares`, and measuring it would add
+  // a second failure saying the same thing in worse words.
+  const measured = itDeclares(itMeasuresEveryRegisteredPalette(), REQUIRED_TOKENS);
 
   // `normal`, not `large`: the call sites are links, breadcrumbs, labels and
   // calendar dates at body size or smaller, so 4.5:1 applies rather than 3:1.
-  // The measured ratio is in each case's title, so a failure names the colour
-  // and the number it came to as well as the theme it belongs to.
-  it.each(cases)(
-    '$selector: $primaryText on --tn-bg1 ($bg1) measures $bg1RatioLabel',
-    ({ bg1Ratio }) => {
-      expect(meetsAa(bg1Ratio, 'normal')).toBe(true);
-    }
-  );
+  testEachPalette(measured, PAIRINGS, AA_MINIMUM.normal);
 
-  it.each(cases)(
-    '$selector: $primaryText on --tn-bg2 ($bg2) measures $bg2RatioLabel',
-    ({ bg2Ratio }) => {
-      expect(meetsAa(bg2Ratio, 'normal')).toBe(true);
-    }
-  );
+  it('the threshold those cases use is the AA one for normal text', () => {
+    // The number 4.5 appears in this file only through AA_MINIMUM, and this is
+    // what stops that indirection from hiding a change to it: a `normal` that
+    // moved would otherwise re-title every case above and still pass.
+    expect(AA_MINIMUM.normal).toBe(4.5);
+  });
 
   describe('the call sites that read it', () => {
     const files = scssFiles(LIB_DIR).map((file) => ({
