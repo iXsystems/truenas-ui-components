@@ -10,6 +10,11 @@
   @for (entry of entries.controls; track entry; let i = $index) {
     <tn-form-list-item label="address" [canDelete]="canDelete()" (delete)="removeEntry(i)">
       <tn-input [formControl]="entry" />
+
+      @if (entryActions()) {
+        <tn-button label="Test connection" (onClick)="testEntry(i)" />
+        <tn-icon-button name="cog" library="mdi" ariaLabel="Configure" (onClick)="testEntry(i)" />
+      }
     </tn-form-list-item>
   }
 </tn-form-list>

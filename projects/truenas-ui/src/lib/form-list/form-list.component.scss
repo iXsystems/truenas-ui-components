@@ -61,6 +61,11 @@
   gap: 0.75rem;
   min-width: 0;
 
+  // The visual half of a disabled list. The interactive half is `inert` on the same element in
+  // the template, and it is the half that matters: entries are projected content, so
+  // `pointer-events: none` alone dimmed them for the mouse while leaving every consumer control
+  // — the entry inputs and each `tn-form-list-item` remove button — in the tab order, where
+  // Enter still emitted `delete` against a list the consumer had marked read-only.
   &--disabled {
     opacity: var(--tn-disabled-opacity, 0.5);
     pointer-events: none;

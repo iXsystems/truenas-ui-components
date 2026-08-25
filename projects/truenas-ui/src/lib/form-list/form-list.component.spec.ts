@@ -7,11 +7,20 @@ import { FormArray, FormControl, ReactiveFormsModule, Validators } from '@angula
 import { TnFormListItemComponent } from './form-list-item.component';
 import { TnFormListComponent } from './form-list.component';
 import { TnFormListHarness } from './form-list.harness';
+import { TnButtonComponent } from '../button/button.component';
+import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnInputComponent } from '../input/input.component';
 
 @Component({
   selector: 'tn-form-list-host',
-  imports: [ReactiveFormsModule, TnFormListComponent, TnFormListItemComponent, TnInputComponent],
+  imports: [
+    ReactiveFormsModule,
+    TnButtonComponent,
+    TnFormListComponent,
+    TnFormListItemComponent,
+    TnIconButtonComponent,
+    TnInputComponent,
+  ],
   templateUrl: './test-hosts/form-list-host.component.html',
 })
 class HostComponent {
@@ -23,6 +32,14 @@ class HostComponent {
   readonly canDelete = signal(true);
   readonly disabled = signal(false);
   readonly empty = signal<boolean | undefined>(undefined);
+  /** Entry-level controls the consumer projects alongside the fields. */
+  readonly entryActions = signal(false);
+
+  readonly tested: number[] = [];
+
+  testEntry(index: number): void {
+    this.tested.push(index);
+  }
 
   addEntry(): void {
     this.entries.push(new FormControl(''));
@@ -125,6 +142,73 @@ describe('TnFormListComponent', () => {
       fixture.detectChanges();
 
       expect(host.entries.length).toBe(0);
+    });
+
+    it('takes the entries out of the tab order too, not just out of reach of the mouse', () => {
+      host.entries.push(new FormControl('first'));
+      host.disabled.set(true);
+      fixture.detectChanges();
+
+      // The entries are projected, so a guard inside this component cannot reach them: without
+      // `inert` a keyboard user still tabs into the field and onto the remove button, and Enter
+      // there deletes from a list the consumer said may not be edited.
+      const items: HTMLElement = fixture.nativeElement.querySelector('.tn-form-list__items');
+
+      expect(items.hasAttribute('inert')).toBe(true);
+
+      host.disabled.set(false);
+      fixture.detectChanges();
+
+      expect(items.hasAttribute('inert')).toBe(false);
+    });
+  });
+
+  describe('telling its own controls apart from the ones the consumer projects', () => {
+    beforeEach(() => {
+      host.entries.push(new FormControl('first'));
+      host.entryActions.set(true);
+    });
+
+    it('reports no remove button when the entry only projects other icon buttons', async () => {
+      host.canDelete.set(false);
+      fixture.detectChanges();
+
+      const [only] = await list.getItems();
+
+      expect(await only.canRemove()).toBe(false);
+      await expect(only.remove()).rejects.toThrow(/no remove button/);
+      expect(host.tested).toEqual([]);
+    });
+
+    it('removes through its own button, not the projected one', async () => {
+      fixture.detectChanges();
+
+      const [only] = await list.getItems();
+      await only.remove();
+      fixture.detectChanges();
+
+      expect(host.entries.length).toBe(0);
+      expect(host.tested).toEqual([]);
+    });
+
+    it('reports no Add when the header has none, whatever the entries project', async () => {
+      host.canAdd.set(false);
+      fixture.detectChanges();
+
+      expect(await list.canAdd()).toBe(false);
+      expect(await list.isAddDisabled()).toBe(false);
+      await expect(list.add()).rejects.toThrow(/no add button/);
+      expect(host.tested).toEqual([]);
+    });
+
+    it('adds through the header button, not an entry\'s', async () => {
+      fixture.detectChanges();
+
+      await list.add();
+      fixture.detectChanges();
+
+      expect(host.entries.length).toBe(2);
+      expect(host.tested).toEqual([]);
     });
   });
 

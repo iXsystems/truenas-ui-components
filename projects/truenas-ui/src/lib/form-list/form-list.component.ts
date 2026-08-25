@@ -78,7 +78,11 @@ export class TnFormListComponent {
   /** Whether the Add control renders. Turn it off at a maximum length. */
   canAdd = input<boolean>(true);
 
-  /** Dims the entries and disables Add, for a list the user may not edit yet. */
+  /**
+   * Locks the list, for one the user may not edit yet: Add is disabled and the entries are
+   * dimmed and made `inert`, so neither the mouse nor the keyboard reaches the projected
+   * fields or their remove buttons.
+   */
   disabled = input<boolean>(false);
 
   /** Text of the Add control. English by default — pass a translated string. */

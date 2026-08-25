@@ -28,7 +28,12 @@ export class TnFormListItemHarness extends ComponentHarness {
     return new HarnessPredicate(TnFormListItemHarness, options);
   }
 
-  private removeButton = this.locatorForOptional(TnIconButtonHarness);
+  // Scoped to the component's own control: an unscoped `TnIconButtonHarness` matches whatever the
+  // consumer projected into the entry too, so with `canDelete="false"` the first projected icon
+  // button would stand in for a remove button that is not there.
+  private removeButton = this.locatorForOptional(
+    TnIconButtonHarness.with({ selector: '.tn-form-list-item__remove' })
+  );
 
   /** Whether this entry offers a remove control. */
   async canRemove(): Promise<boolean> {
@@ -69,7 +74,11 @@ export class TnFormListHarness extends ComponentHarness {
   }
 
   private labelEl = this.locatorForOptional('.tn-form-list__label');
-  private addButton = this.locatorForOptional(TnButtonHarness);
+  // Scoped for the same reason as `removeButton` above — a `tn-button` projected into an entry
+  // must not answer for the header's Add.
+  private addButton = this.locatorForOptional(
+    TnButtonHarness.with({ selector: '.tn-form-list__add' })
+  );
   private emptyEl = this.locatorForOptional('.tn-form-list__empty');
 
   /** The list's label, or `''` when it has none. */

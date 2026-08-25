@@ -47,7 +47,11 @@
     <tn-form-errors [control]="control" [errorMessages]="errorMessages()" />
   }
 
-  <div class="tn-form-list__items" [class.tn-form-list__items--disabled]="disabled()">
+  <div
+    class="tn-form-list__items"
+    [class.tn-form-list__items--disabled]="disabled()"
+    [attr.inert]="disabled() ? '' : null"
+  >
     <ng-content />
 
     @if (isEmpty()) {

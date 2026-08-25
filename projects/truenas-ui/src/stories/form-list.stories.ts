@@ -78,7 +78,10 @@ Labels and messages are English by default (\`addLabel\`, \`emptyMessage\`, an i
     tooltip: { control: 'text', description: 'Help text shown from an icon beside the label.' },
     required: { control: 'boolean', description: 'Marks the list as needing at least one entry.' },
     canAdd: { control: 'boolean', description: 'Whether Add renders. Turn off at a maximum length.' },
-    disabled: { control: 'boolean', description: 'Dims the entries and disables Add.' },
+    disabled: {
+      control: 'boolean',
+      description: 'Disables Add and makes the entries inert — dimmed, and out of the tab order.',
+    },
     addLabel: { control: 'text', description: 'Text of the Add control.' },
     emptyMessage: { control: 'text', description: 'Shown while there are no entries.' },
     empty: {
