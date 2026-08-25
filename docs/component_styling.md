@@ -465,8 +465,9 @@ dark ink, and the chrome behind it is always `#282828`.
 
 The header of `projects/truenas-ui/src/styles/themes-storybook.css` lists the
 handful of roles no docs theme can reach, with what each measures and why it
-does or does not have a rule. `docs-theme-contrast.spec.ts` measures every
-colour in that file and fails if a new selector starts painting chrome.
+does or does not have a rule. `docs-theme-contrast.spec.ts` measures the theme
+keys Storybook draws as docs text and the literal colours that file ships, and
+fails if a new selector starts painting chrome.
 
 ## Animation & Transitions
 

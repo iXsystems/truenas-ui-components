@@ -77,8 +77,10 @@
        change deliberately does not reach.
    (2) reachable, but nothing here emits `span.frame` markup — a dead selector
        would be worse than a documented omission.
-   (3) `red2` is #9a050f in BOTH syntax palettes, the one entry the dark
-       palette did not retune. It has a stable hook — `.token.deleted` — and
+   (3) `red2` is #9a050f in BOTH syntax palettes — the dark one retuned every
+       entry it paints with and left this. (`blue2` is shared too, at #00009f,
+       and is not in this table because `create()` never references it, so it
+       paints nothing.) `red2` has a stable hook — `.token.deleted` — and
        still gets no rule: this Storybook registers eleven Prism grammars and
        `diff` is not among them, so no sample can emit that token and the
        selector would be dead by (2)'s own argument. Worse, forcing a colour
