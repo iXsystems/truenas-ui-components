@@ -51,8 +51,8 @@
    `theme.input.color` and `theme.input.background`, which is `inputTextColor`
    and `inputBg` in `truenasTheme.js`, #dedede on #1e1e1e at 12.39:1.
 
-   WHY THE OVERRIDE AT THE BOTTOM IS A CLOSED LIST OF ONE
-   ------------------------------------------------------
+   WHY THE OVERRIDES AT THE BOTTOM ARE A CLOSED LIST OF TWO
+   --------------------------------------------------------
    `convert()` in `storybook/theming` builds `theme.color` from
    `createColors()`, and only FOUR of those roles come from the theme object:
    `primary`, `secondary`, `defaultText` and `inverseText`. Every other role —
@@ -72,7 +72,7 @@
 
      role                      value     ratio   painted on            here?
      color.dark                #5C6570   2.49:1  h6, blockquote        yes
-                                                 argstable object      no (1)
+                                                 argstable object      yes
                                                  control
      color.darkest             #2E3338   1.16:1  span.frame caption    no (2)
      code red2                 #9a050f   1.69:1  `diff` syntax         no (3)
@@ -81,20 +81,21 @@
      transparentize(.6, text)  ~#717171  3.02:1  argstable section     no (1,4)
                                                  header, Typeset label
 
-   (1) inside `.docblock-argstable`, styled by emotion with a generated class.
-       These are DEFERRED, not unreachable, and the difference matters because
-       a rule this change deletes — `.docblock-argstable-body span` — was
-       exactly such a hook: an addon-docs class on the `tbody`, holding at
-       0,1,1 without `!important`. (`sb-unstyled` is orthogonal. It keeps
-       addon-docs' own typography off a RENDERED STORY; it does not stop a
-       hand-written selector matching inside the argstable, which is why that
-       rule worked.) What is missing is not a hook but a value: nothing here
-       writes `color:` with a literal hex on one, the way the override at the
-       bottom does for `h6`/`blockquote`, and the markup under the object
-       control is emotion-generated rather than a stable class. The argstable's
-       object control is the one of these that renders TODAY, on the six pages
-       declaring `control: 'object'`; it is the follow-up this change
-       deliberately does not reach.
+   (1) styled by emotion with a generated class, so there is no hand-written
+       selector to hold. Recorded rather than fixed, and neither renders on a
+       docs page here today: the required-arg marker needs an `argType` whose
+       `type.required` is set — `ArgRow` reads exactly that — and no story here
+       declares one, while the story-mount error renders only when a story
+       throws.
+
+       The argstable's object control was in this footnote until now and has
+       moved out, because its hook turned out to be a real one:
+       `.rejt-accordion-region` is a class addon-docs writes by hand in
+       `JsonNodeAccordion`, not an emotion hash. The rule this change deletes
+       looks like it already covered that control, and did not —
+       `.docblock-argstable-body span` carried no `!important`, and the
+       control's summary span carries its colour as an INLINE style, which no
+       selector beats without the flag. See the second override at the bottom.
    (2) reachable, but nothing here emits `span.frame` markup — a dead selector
        would be worse than a documented omission.
    (3) `red2` is #9a050f in BOTH syntax palettes — the dark one retuned every
@@ -119,7 +120,7 @@
    today; it is here rather than dismissed, by footnote (4)'s standard.
 
    `docs-theme-contrast.spec.ts` measures the two theme keys Storybook draws as
-   docs text and the literal colour below, and fails if a rule outside the
+   docs text and every literal colour below, and fails if a rule outside the
    canvas selectors starts painting chrome text from a `--tn-*` token again. It
    does NOT measure every colour in `truenasTheme.js` — most of those paint the
    manager UI, which is `manager.ts`'s half of that object.
@@ -183,13 +184,14 @@ h1, h2, h3, h4,
 }
 
 /* ================================
-   THE ONE ROLE `truenasTheme` CANNOT REACH AND A SELECTOR CAN
-   The table in the header is the full set; this is the only entry that both
-   renders here and has a hook that will still be there after a Storybook patch
-   release. Its value is the smallest hue-preserving lightness step off
-   Storybook's own that clears 4.5:1 on BOTH docs surfaces — the method
-   themes.css documents for `--tn-primary-text`. Ratios are against
-   `appContentBg` #282828 then `appBg` #1e1e1e.
+   THE ROLE `truenasTheme` CANNOT REACH AND A SELECTOR CAN
+   The table in the header is the full set; `color.dark` is the only entry that
+   both renders here and has a hook that will still be there after a Storybook
+   patch release, and it renders in two places. Its replacement value is the
+   smallest hue-preserving lightness step off Storybook's own that clears 4.5:1
+   on BOTH docs surfaces — the method themes.css documents for
+   `--tn-primary-text`. Ratios are against `appContentBg` #282828 then `appBg`
+   #1e1e1e.
    ================================ */
 
 /* `theme.color.dark`, #5C6570 at 2.49:1. Scoped to the docs content and out of
@@ -199,4 +201,25 @@ h1, h2, h3, h4,
    against the 0,1,0 of addon-docs' own `:where(h6:not(…))` rule. */
 .sbdocs-content :where(h6, blockquote):not(.sb-unstyled *) {
   color: #86909b; /* 4.55:1, 5.14:1 */
+}
+
+/* `theme.color.dark` again, on the argstable's object control: the `{...} 3
+   keys` summary a `control: 'object'` row shows at rest, since `JsonTree`'s
+   default `isCollapsed` is `(keyPath, deep) => deep !== -1` and the root is
+   depth 0. Six pages here declare that control — card, select, menu,
+   radio-group, form-field, table-pager — so this is the one entry in the
+   header's table that a reader hits today rather than one edit away.
+
+   `!important` is not a specificity choice and cannot be traded for a longer
+   selector. `react-editable-json-tree` renders that summary as
+   `<span style={collapsed}>`, taking the colour from addon-docs'
+   `getCustomStyleFunction`, and an inline style beats every selector without
+   the flag.
+
+   `:not(.rejt-not-collapsed-delimiter)` keeps this off the `[`/`]` and `{`/`}`
+   an EXPANDED node draws, which are the region's other direct children. Those
+   carry no inline colour, so they inherit `theme.color.defaultText` at 10.96:1
+   and repainting them would be a downgrade. */
+.sbdocs-content .rejt-accordion-region > span:not(.rejt-not-collapsed-delimiter) {
+  color: #86909b !important; /* 4.55:1, 5.14:1 */
 }

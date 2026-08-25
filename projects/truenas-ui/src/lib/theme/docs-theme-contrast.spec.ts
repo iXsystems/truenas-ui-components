@@ -58,8 +58,9 @@ import { AA_MINIMUM, contrastRatio, formatRatio } from '../a11y/contrast-testing
  * drawn on a surface the other does not supply.
  *
  * The roles Storybook paints from constants no theme can reach are enumerated
- * in `themes-storybook.css`'s header — one has a rule, the rest are recorded
- * with the reason each does not.
+ * in `themes-storybook.css`'s header — `color.dark` has a rule in each of the
+ * two places it renders, and the rest are recorded with the reason each does
+ * not.
  */
 
 const STORYBOOK_DIR = join(__dirname, '../../../.storybook');
@@ -386,10 +387,11 @@ describe('Storybook docs-page theming (#293)', () => {
     // fails this case until someone adds it here — which is the point: #293 was
     // a list of tag overrides that grew one noticed element at a time and could
     // not be told apart from a complete one by reading it. This is the reading.
-    it('only the canvas selectors and the one documented override paint anything', () => {
+    it('only the canvas selectors and the documented overrides paint anything', () => {
       expect(painters.map((rule) => rule.selector).sort()).toEqual([
         ...Object.keys(CANVAS_SELECTORS),
         '.sbdocs-content :where(h6, blockquote):not(.sb-unstyled *)',
+        '.sbdocs-content .rejt-accordion-region > span:not(.rejt-not-collapsed-delimiter)',
       ].sort());
     });
 
@@ -405,11 +407,12 @@ describe('Storybook docs-page theming (#293)', () => {
       }
     );
 
-    // The override for the one role no docs theme can reach and a selector can.
-    // Its value is literal hex precisely because the surface under it does not
-    // follow the switcher, so it is measured against every surface the theme
-    // declares. Written as a list rather than as that one case, so a second
-    // override added later is measured without anyone remembering to.
+    // The overrides for the one role no docs theme can reach and a selector
+    // can. Their values are literal hex precisely because the surface under
+    // them does not follow the switcher, so each is measured against every
+    // surface the theme declares. Written as a list rather than as one case
+    // per rule, so a third override added later is measured without anyone
+    // remembering to.
     const literals = rules.flatMap((rule) => rule.declarations
       .filter(({ property, value }) => PAINTING_PROPERTIES.includes(property)
         && /#[0-9a-f]{3,8}\b/i.test(value))
@@ -433,15 +436,18 @@ describe('Storybook docs-page theming (#293)', () => {
       }
     );
 
-    // The override is most of the reason this file still has rules at all after
-    // the theme was wired. If it were ever deleted, `literalCases` would be
-    // empty — and `it.each([])` throws rather than passing, so the suite would
-    // go red either way. What this case adds is WHICH claim broke: an
-    // unattributed `.each` called with an empty Array of table data reads as a
-    // fault in the spec, and this reads as the stylesheet having stopped
-    // shipping the thing the case above measures.
-    it('the documented override is still here to measure', () => {
-      expect(literals.length).toBeGreaterThan(0);
+    // The overrides are most of the reason this file still has rules at all
+    // after the theme was wired. Naming them is what makes the case above a
+    // claim about something: `literalCases` is built by mapping `literals`, so
+    // an override that stopped carrying a literal hex — swapped for a `var()`,
+    // or deleted — would simply contribute no cases and the `.each` would stay
+    // green over the ones that remain. Deleting BOTH is the only shape the
+    // arithmetic catches on its own, because `it.each([])` throws.
+    it('both documented overrides are still here to measure', () => {
+      expect(literals.map(({ selector }) => selector).sort()).toEqual([
+        '.sbdocs-content :where(h6, blockquote):not(.sb-unstyled *)',
+        '.sbdocs-content .rejt-accordion-region > span:not(.rejt-not-collapsed-delimiter)',
+      ].sort());
     });
   });
 });
