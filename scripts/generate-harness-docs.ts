@@ -13,6 +13,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
+import {
+  METHOD_TABLE_HEADER,
+  methodTableRow,
+  PROPERTY_TABLE_HEADER,
+  propertyTableRow,
+} from '../projects/truenas-ui/scripts/harness-docs/markdown-table';
 
 interface MethodInfo {
   name: string;
@@ -330,13 +336,10 @@ function generateMarkdown(info: HarnessInfo): string {
   // Methods table
   if (info.methods.length > 0) {
     md += `#### Methods\n\n`;
-    md += `| Method | Parameters | Returns | Description |\n`;
-    md += `|--------|------------|---------|-------------|\n`;
+    md += METHOD_TABLE_HEADER;
 
     info.methods.forEach(method => {
-      const desc = (method.description || '').replace(/\n+/g, ' ').trim();
-      const params = method.parameters ? `\`${method.parameters}\`` : '';
-      md += `| \`${method.name}()\` | ${params} | \`${method.returnType}\` | ${desc} |\n`;
+      md += methodTableRow(method);
     });
     md += `\n`;
   }
@@ -353,12 +356,10 @@ function generateMarkdown(info: HarnessInfo): string {
       }
 
       if (iface.properties.length > 0) {
-        md += `| Property | Type | Description |\n`;
-        md += `|----------|------|-------------|\n`;
+        md += PROPERTY_TABLE_HEADER;
 
         iface.properties.forEach(prop => {
-          const desc = (prop.description || '').replace(/\n+/g, ' ').trim();
-          md += `| \`${prop.name}\` | \`${prop.type}\` | ${desc} |\n`;
+          md += propertyTableRow(prop);
         });
         md += `\n`;
       }
