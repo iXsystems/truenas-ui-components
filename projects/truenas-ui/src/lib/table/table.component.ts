@@ -12,12 +12,14 @@ import {
   ElementRef,
   inject,
   Injector,
+  InjectionToken,
   input,
+  isSignal,
   model,
   output,
   signal,
 } from '@angular/core';
-import type { OnInit } from '@angular/core';
+import type { OnInit, Signal } from '@angular/core';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 import { TnEmptyComponent } from '../empty/empty.component';
 import { TnIconComponent } from '../icon/icon.component';
@@ -95,6 +97,46 @@ function getExpandDuration(): string {
   return '225ms cubic-bezier(0.4, 0.0, 0.2, 1)';
 }
 
+/**
+ * Chrome copy `tn-table` renders itself. These were baked into the template as English literals,
+ * which a consumer could not translate at all — there was no input to bind. Provide
+ * {@link TN_TABLE_LABELS} at the app root to wire them to an i18n service.
+ */
+export interface TnTableLabels {
+  /** Accessible name for the card-mode sort control. */
+  sortBy: string;
+  /** Card-mode sort option that clears the sort. */
+  unsorted: string;
+  /** Toggle that reveals the columns card mode collapsed. */
+  moreFields: string;
+  /** Card-mode button that opens a row's detail panel. */
+  details: string;
+  /** Visually-hidden name for the row expand control. */
+  expand: string;
+  /** Visually-hidden name for the row actions column. */
+  actions: string;
+}
+
+/** English defaults used when no `TN_TABLE_LABELS` provider is registered. */
+export const TN_TABLE_DEFAULT_LABELS: TnTableLabels = {
+  sortBy: 'Sort by',
+  unsorted: 'Unsorted',
+  moreFields: 'More fields',
+  details: 'Details',
+  expand: 'Expand',
+  actions: 'Actions',
+};
+
+/**
+ * DI token for app-wide table chrome labels. Provide either a static object or a
+ * `Signal<TnTableLabels>` — the latter lets every table react to language changes when the
+ * consumer wires it up to an i18n service.
+ */
+export const TN_TABLE_LABELS = new InjectionToken<TnTableLabels | Signal<TnTableLabels>>(
+  'TN_TABLE_LABELS',
+  { providedIn: 'root', factory: () => TN_TABLE_DEFAULT_LABELS },
+);
+
 @Component({
   selector: 'tn-table',
   standalone: true,
@@ -126,6 +168,16 @@ function getExpandDuration(): string {
   },
 })
 export class TnTableComponent<T = unknown> implements OnInit {
+  private readonly providedLabels = inject(TN_TABLE_LABELS);
+
+  /**
+   * Normalize the injected token into a Signal so consumers can supply either a plain object or
+   * a reactive signal (e.g. derived from a TranslateService's onLangChange).
+   */
+  protected readonly labels: Signal<TnTableLabels> = isSignal(this.providedLabels)
+    ? this.providedLabels
+    : signal(this.providedLabels).asReadonly();
+
   private destroyRef = inject(DestroyRef);
   private elementRef = inject(ElementRef<HTMLElement>);
   private injector = inject(Injector);

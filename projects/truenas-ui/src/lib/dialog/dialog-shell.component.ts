@@ -1,8 +1,39 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, computed, effect, input, signal, inject } from '@angular/core';
-import type { OnInit} from '@angular/core';
+import { Component, ElementRef, InjectionToken, computed, effect, input, isSignal, signal, inject } from '@angular/core';
+import type { OnInit, Signal } from '@angular/core';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+
+/**
+ * Chrome copy `tn-dialog-shell` renders itself. These were baked into the template as English
+ * literals, which a consumer could not translate at all — there was no input to bind. Provide
+ * {@link TN_DIALOG_LABELS} at the app root to wire them to an i18n service.
+ */
+export interface TnDialogLabels {
+  /** Accessible name for the header close (X) button. */
+  close: string;
+  /** Accessible name for the fullscreen toggle while the dialog is windowed. */
+  enterFullscreen: string;
+  /** Accessible name for the fullscreen toggle while the dialog is fullscreen. */
+  exitFullscreen: string;
+}
+
+/** English defaults used when no `TN_DIALOG_LABELS` provider is registered. */
+export const TN_DIALOG_DEFAULT_LABELS: TnDialogLabels = {
+  close: 'Close dialog',
+  enterFullscreen: 'Enter fullscreen',
+  exitFullscreen: 'Exit fullscreen',
+};
+
+/**
+ * DI token for app-wide dialog chrome labels. Provide either a static object or a
+ * `Signal<TnDialogLabels>` — the latter lets every dialog react to language changes when the
+ * consumer wires it up to an i18n service.
+ */
+export const TN_DIALOG_LABELS = new InjectionToken<TnDialogLabels | Signal<TnDialogLabels>>(
+  'TN_DIALOG_LABELS',
+  { providedIn: 'root', factory: () => TN_DIALOG_DEFAULT_LABELS },
+);
 
 let nextUniqueId = 0;
 
@@ -16,6 +47,21 @@ let nextUniqueId = 0;
   }
 })
 export class TnDialogShellComponent implements OnInit {
+  private readonly providedLabels = inject(TN_DIALOG_LABELS);
+
+  /**
+   * Normalize the injected token into a Signal so consumers can supply either a plain object or
+   * a reactive signal (e.g. derived from a TranslateService's onLangChange).
+   */
+  protected readonly labels: Signal<TnDialogLabels> = isSignal(this.providedLabels)
+    ? this.providedLabels
+    : signal(this.providedLabels).asReadonly();
+
+  /** Accessible name for the fullscreen toggle, following its current state. */
+  protected readonly fullscreenLabel = computed(
+    () => (this.isFullscreen() ? this.labels().exitFullscreen : this.labels().enterFullscreen),
+  );
+
   title = input<string>('');
   showFullscreenButton = input<boolean>(false);
   /**

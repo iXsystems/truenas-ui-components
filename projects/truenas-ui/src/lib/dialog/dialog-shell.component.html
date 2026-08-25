@@ -6,13 +6,13 @@
       class="tn-dialog__fullscreen"
       tnTestIdType="button"
       [tnTestId]="fullscreenTestId()"
-      [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+      [attr.aria-label]="fullscreenLabel()"
       (click)="toggleFullscreen()">
       <span class="tn-dialog__fullscreen-icon" aria-hidden="true">{{ isFullscreen() ? '⤓' : '⤢' }}</span>
     </button>
   }
   @if (showCloseButton()) {
-    <button type="button" class="tn-dialog__close" aria-label="Close dialog" tnTestIdType="button" [tnTestId]="closeTestId()" (click)="close()">
+    <button type="button" class="tn-dialog__close" tnTestIdType="button" [attr.aria-label]="labels().close" [tnTestId]="closeTestId()" (click)="close()">
       <span class="tn-dialog__close-icon" aria-hidden="true">✕</span>
     </button>
   }
