@@ -41,12 +41,12 @@ export class TnBannerActionHarness extends ComponentHarness {
    * Gets a `HarnessPredicate` that can be used to search for a banner action
    * with a specific label.
    *
-   * @param options Options for filtering which action instances are considered a match.
-   * @returns A `HarnessPredicate` configured with the given options.
-   *
    * Scope it to the action slot when composing a locator by hand — unscoped, it
    * matches any `[tnBannerAction]` element on the page, which is why
    * `TnBannerHarness` always passes an `ancestor`.
+   *
+   * @param options Options for filtering which action instances are considered a match.
+   * @returns A `HarnessPredicate` configured with the given options.
    *
    * @example
    * ```typescript

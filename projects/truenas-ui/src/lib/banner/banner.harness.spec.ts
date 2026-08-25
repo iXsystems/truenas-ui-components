@@ -53,6 +53,14 @@ class ActionHostComponent {
 
 // A control in the DEFAULT content slot alongside a real action. The default
 // slot only renders when neither heading nor message is set.
+//
+// The in-content button carries `tnBannerAction` ON PURPOSE, and removing it
+// would make this suite pass whether or not the harness scopes its lookups.
+// `ng-content select="[tnBannerAction]"` matches only top-level projected
+// nodes, so this one is nested a level down, falls through to the default
+// slot, and renders inside `.tn-banner__main` — a `[tnBannerAction]` element
+// that is not an action. Only the `ancestor: '.tn-banner__action'` filter
+// tells it apart; `TnBannerActionHarness.hostSelector` alone would match it.
 @Component({
   selector: 'tn-mixed-content-host',
   standalone: true,
@@ -61,7 +69,7 @@ class ActionHostComponent {
   template: `
     <tn-banner type="warning">
       <div>
-        <tn-button label="In Content" />
+        <tn-button tnBannerAction label="In Content" />
       </div>
       <tn-button tnBannerAction label="Real Action" />
     </tn-banner>
