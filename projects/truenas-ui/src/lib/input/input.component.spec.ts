@@ -566,22 +566,37 @@ describe('TnInputComponent', () => {
       expect(component['value']()).toBe('2 MiB');
     });
 
-    it('should re-sync the model to the canonicalized display on blur (lossy rounding)', () => {
+    it('should keep the exact typed byte count when the display rounds on blur', () => {
       const changeSpy = jest.fn();
       component.registerOnChange(changeSpy);
 
       const input = fixture.nativeElement.querySelector('input');
-      // 1.755 GiB does not round-trip through a 2-decimal display.
-      input.value = '1.755 GiB';
+      // 1500 MiB does not round-trip through a 2-decimal display: it renders as
+      // '1.46 GiB', which parses back ~5 MB short. The model must stay exact.
+      input.value = '1500M';
       input.dispatchEvent(new Event('input'));
       input.dispatchEvent(new Event('blur'));
 
-      const display = component['value']();
-      const model = changeSpy.mock.calls.at(-1)![0];
-      // The invariant that matters: re-parsing what the user sees yields the model.
-      expect(parseSize(display, 'MiB', 'iec')).toBe(model);
-      // ...and the display is itself the canonical render of that model (stable).
-      expect(display).toBe(component['value']());
+      expect(component['value']()).toBe('1.46 GiB');
+      expect(changeSpy.mock.calls.at(-1)![0]).toBe(1500 * 1024 ** 2);
+      // Nothing is emitted from the rounded display — the only emit is the one
+      // the keystroke produced.
+      expect(changeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not drift when a rounded display is blurred again without an edit', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '1500M';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(component['value']()).toBe('1.46 GiB');
+      expect(changeSpy).toHaveBeenCalledTimes(1);
+      expect(changeSpy.mock.calls.at(-1)![0]).toBe(1500 * 1024 ** 2);
     });
 
     it('should not emit on blur when a pre-filled value is unchanged (no spurious dirty)', () => {
@@ -1053,15 +1068,19 @@ describe('TnInputComponent size type with FormControl', () => {
     expect(hostComponent.control.value).toBeNull();
   });
 
-  it('should keep the form model in lockstep with the canonicalized display on blur', () => {
+  it('should submit the exact byte count that was typed, not a re-read of the rounded display', () => {
     const input = fixture.nativeElement.querySelector('input');
-    input.value = '1.755 GiB';
+    input.value = '1500M';
     input.dispatchEvent(new Event('input'));
     input.dispatchEvent(new Event('blur'));
     // Flush the [value] binding so the DOM reflects the canonicalized display.
     fixture.detectChanges();
 
-    // What the user sees parses back to exactly what's stored — no divergence.
-    expect(parseSize(input.value, 'MiB', 'iec')).toBe(hostComponent.control.value);
+    // The display rounds for readability...
+    expect(input.value).toBe('1.46 GiB');
+    // ...but the model keeps every byte the user asked for. Re-parsing the display
+    // would have stored 1_567_663_063 — ~5 MB short.
+    expect(hostComponent.control.value).toBe(1500 * 1024 ** 2);
+    expect(parseSize(input.value, 'MiB', 'iec')).not.toBe(hostComponent.control.value);
   });
 });
