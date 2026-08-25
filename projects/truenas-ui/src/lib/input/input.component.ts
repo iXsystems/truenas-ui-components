@@ -121,6 +121,10 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
   /**
    * Decimal places used when formatting a `Size` field's value for display
    * (e.g. `1.5 GiB`). Ignored unless `inputType` is `Size`.
+   *
+   * Display only: the form model always holds the exact byte count the typed
+   * text denotes, and is never re-read from the rounded display. Typing
+   * `1500M` stores 1 572 864 000 even though the field then shows `1.46 GiB`.
    */
   sizeRound = input<number>(2);
 
@@ -319,23 +323,22 @@ export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueA
 
   protected onBlur(): void {
     if (this.isSize() && this.value() !== '') {
-      // Canonicalize the display on blur: "2048 KiB" -> "2 MiB", "200tib" -> "200 TiB".
+      // Canonicalize the DISPLAY on blur: "2048 KiB" -> "2 MiB", "200tib" -> "200 TiB".
       // Leave unparseable text in place so the consumer's validators can flag it.
+      //
+      // The model is deliberately NOT re-emitted from the canonicalized text. The
+      // byte count `onValueChange` already emitted is the exact value of what the
+      // user typed; re-parsing the rounded display would quietly overwrite it with
+      // whatever `sizeRound` decimal places can express — e.g. typing "1500M" would
+      // be stored as 1.46 GiB = 1_567_663_063 instead of the 1_572_864_000 asked
+      // for, ~5 MB off. The model is the source of truth and stays exact; the
+      // display is a rounded, human-readable rendering of it (the same contract
+      // `writeValue` already applies to a value arriving from the server).
       const bytes = parseSize(this.value(), this.sizeDefaultUnit(), this.sizeStandard());
       if (bytes !== null) {
-        const canonical = formatSize(bytes, this.sizeStandard(), this.sizeRound());
-        // Only rewrite + re-emit when the canonical form actually differs from what
-        // the user left in the field. This both:
-        //  (a) skips a no-op onChange that would mark an untouched, pre-filled
-        //      control dirty (falsely tripping "unsaved changes" guards), and
-        //  (b) still re-syncs the model when rounding is lossy — e.g. an edited
-        //      "1.755 GiB" canonicalizes to a different string, so it emits the
-        //      byte count parsed back from the rounded display, keeping
-        //      parseSize(display) === model.
-        if (canonical !== this.value()) {
-          this.value.set(canonical);
-          this.onChange(parseSize(canonical, this.sizeDefaultUnit(), this.sizeStandard()));
-        }
+        // A no-op for a pre-filled control the user merely tabbed through: the
+        // signal already holds that exact string, so nothing repaints.
+        this.value.set(formatSize(bytes, this.sizeStandard(), this.sizeRound()));
       }
     }
     this.onTouched();

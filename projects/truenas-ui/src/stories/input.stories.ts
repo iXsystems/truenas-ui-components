@@ -74,7 +74,7 @@ const meta: Meta<TnInputComponent> = {
     },
     sizeRound: {
       control: 'number',
-      description: 'Size type: decimal places used when formatting the value for display.',
+      description: 'Size type: decimal places used when formatting the value for display. Display only — the model keeps the exact byte count that was typed.',
     },
     showPasswordToggle: {
       control: 'boolean',
@@ -307,6 +307,11 @@ export const NumberDecimal: Story = {
  * **Size mode.** The form model holds a raw byte count; the field displays and
  * accepts a human-readable string (`2 GiB`, `500M`, `2 TB`). Bare numbers use
  * `sizeDefaultUnit`. The display canonicalizes on blur (`2048 KiB` → `2 MiB`).
+ *
+ * The model is the source of truth and always holds the exact byte count the
+ * typed text denotes; the display is a `sizeRound`-decimal rendering of it and
+ * is never read back into the model. Typing `1500M` stores 1 572 864 000 bytes
+ * even though the field then reads `1.46 GiB`.
  */
 export const Size: Story = {
   render: (args) => ({
