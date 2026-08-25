@@ -566,22 +566,74 @@ describe('TnInputComponent', () => {
       expect(component['value']()).toBe('2 MiB');
     });
 
-    it('should re-sync the model to the canonicalized display on blur (lossy rounding)', () => {
+    it('should keep the typed unit on blur when the natural one cannot state the value', () => {
       const changeSpy = jest.fn();
       component.registerOnChange(changeSpy);
 
       const input = fixture.nativeElement.querySelector('input');
-      // 1.755 GiB does not round-trip through a 2-decimal display.
-      input.value = '1.755 GiB';
+      // 1500 MiB has no exact 2-decimal rendering in GiB — '1.46 GiB' parses back
+      // ~5 MB short — so the display stays in the unit that does state it.
+      input.value = '1500M';
       input.dispatchEvent(new Event('input'));
       input.dispatchEvent(new Event('blur'));
 
-      const display = component['value']();
-      const model = changeSpy.mock.calls.at(-1)![0];
-      // The invariant that matters: re-parsing what the user sees yields the model.
-      expect(parseSize(display, 'MiB', 'iec')).toBe(model);
-      // ...and the display is itself the canonical render of that model (stable).
-      expect(display).toBe(component['value']());
+      expect(component['value']()).toBe('1500 MiB');
+      expect(changeSpy.mock.calls.at(-1)![0]).toBe(1500 * 1024 ** 2);
+      // Nothing is emitted from the canonicalized display — the only emit is the
+      // one the keystroke produced.
+      expect(changeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep the typed number when no unit at all states the value', () => {
+      const input = fixture.nativeElement.querySelector('input');
+      // 1.755 GiB is exact in no unit above bytes, and '1567663063 B' helps
+      // nobody — so the number and unit the user wrote are what stays.
+      input.value = '1.755gib';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(component['value']()).toBe('1.755 GiB');
+    });
+
+    it('should leave the display denoting exactly what the model holds', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '1500M';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+
+      // The whole point of canonicalizing this way: re-reading the field cannot
+      // change the value, so a later edit has nothing to drift from.
+      expect(parseSize(component['value'](), 'MiB', 'iec')).toBe(changeSpy.mock.calls.at(-1)![0]);
+    });
+
+    it('should not drift when a canonicalized display is blurred again without an edit', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+
+      const input = fixture.nativeElement.querySelector('input');
+      input.value = '1500M';
+      input.dispatchEvent(new Event('input'));
+      input.dispatchEvent(new Event('blur'));
+      input.dispatchEvent(new Event('blur'));
+
+      expect(component['value']()).toBe('1500 MiB');
+      expect(changeSpy).toHaveBeenCalledTimes(1);
+      expect(changeSpy.mock.calls.at(-1)![0]).toBe(1500 * 1024 ** 2);
+    });
+
+    it('should show a model value in a unit that states it exactly', () => {
+      component.writeValue(1500 * 1024 ** 2);
+      expect(component['value']()).toBe('1500 MiB');
+    });
+
+    it('should round a model value no unit can state, for readability', () => {
+      // A size read back from the server owes nothing to a unit the user picked,
+      // and '1567663063 B' is not a size anyone reads.
+      component.writeValue(1567663063);
+      expect(component['value']()).toBe('1.46 GiB');
     });
 
     it('should not emit on blur when a pre-filled value is unchanged (no spurious dirty)', () => {
@@ -1053,15 +1105,19 @@ describe('TnInputComponent size type with FormControl', () => {
     expect(hostComponent.control.value).toBeNull();
   });
 
-  it('should keep the form model in lockstep with the canonicalized display on blur', () => {
+  it('should submit the exact byte count that was typed', () => {
     const input = fixture.nativeElement.querySelector('input');
-    input.value = '1.755 GiB';
+    input.value = '1500M';
     input.dispatchEvent(new Event('input'));
     input.dispatchEvent(new Event('blur'));
     // Flush the [value] binding so the DOM reflects the canonicalized display.
     fixture.detectChanges();
 
-    // What the user sees parses back to exactly what's stored — no divergence.
+    // The display is tidied into the unit that states the value exactly...
+    expect(input.value).toBe('1500 MiB');
+    // ...so the model keeps every byte the user asked for AND the field agrees
+    // with it. Rounding to '1.46 GiB' would have shown a value 5 MB short of it.
+    expect(hostComponent.control.value).toBe(1500 * 1024 ** 2);
     expect(parseSize(input.value, 'MiB', 'iec')).toBe(hostComponent.control.value);
   });
 });
