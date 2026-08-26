@@ -1,27 +1,9 @@
 
 import { Component, input, ChangeDetectionStrategy, computed } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { injectTnFallbackName } from '../a11y/fallback-labels';
 
 export type ProgressBarMode = 'determinate' | 'indeterminate' | 'buffer';
-
-/**
- * The accessible name a bar falls back to when the caller names neither
- * `ariaLabel` nor `ariaLabelledby` (#202).
- *
- * Deliberately generic, and deliberately not silent: the host carries
- * `role="progressbar"` unconditionally, so without a fallback the default
- * rendering is a progressbar assistive technology announces with no name at all
- * — "progress bar, 40%", with nothing to say what is progressing. The
- * alternative fix, withholding the role until there is a name for it, trades
- * that for no announcement whatever, which is worse: a screen reader would not
- * learn that anything is in progress, and on a determinate bar it would lose
- * the value too.
- *
- * A generic name is still a poor one, so it is paired with the dev-mode warning
- * `tnAccessibleName` raises. Exported so specs assert against it by name rather
- * than by a copied string literal.
- */
-export const TN_PROGRESS_BAR_DEFAULT_LABEL = 'Progress';
 
 @Component({
   selector: 'tn-progress-bar',
@@ -50,6 +32,8 @@ export class TnProgressBarComponent {
   ariaLabel = input<string | null>(null);
   ariaLabelledby = input<string | null>(null);
 
+  private readonly fallbackName = injectTnFallbackName('progressBar');
+
   /**
    * The name to render, or `null` to render no `aria-label` attribute — and the
    * dev-mode warning when the caller named neither input.
@@ -65,7 +49,8 @@ export class TnProgressBarComponent {
    */
   resolvedAriaLabel = tnAccessibleName({
     selector: 'tn-progress-bar',
-    fallback: TN_PROGRESS_BAR_DEFAULT_LABEL,
+    fallback: this.fallbackName.label,
+    fallbackIsConfigured: this.fallbackName.configured,
     activity: 'progressing',
     ariaLabel: this.ariaLabel,
     ariaLabelledby: this.ariaLabelledby

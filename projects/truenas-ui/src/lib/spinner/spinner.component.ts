@@ -1,23 +1,9 @@
 
 import { Component, input, ChangeDetectionStrategy, ViewEncapsulation, computed } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { injectTnFallbackName } from '../a11y/fallback-labels';
 
 export type SpinnerMode = 'determinate' | 'indeterminate';
-
-/**
- * The accessible name a spinner falls back to when the caller names neither
- * `ariaLabel` nor `ariaLabelledby` (#202). Same reasoning as
- * `TN_PROGRESS_BAR_DEFAULT_LABEL`, and the case is sharper here: the spinner
- * defaults to indeterminate mode, so its unnamed default rendering reached
- * assistive technology as a progressbar with neither a name nor a value.
- *
- * `branded-spinner.component.ts` in this folder already fell back this way —
- * `ariaLabel() || "Loading..."` inline — so a fallback is the shape this
- * library had already settled on; what it lacked was the warning. It has both
- * since #206, through the same `tnAccessibleName` this component uses, which is
- * why the two constants sit side by side and differ.
- */
-export const TN_SPINNER_DEFAULT_LABEL = 'Loading';
 
 @Component({
   selector: 'tn-spinner',
@@ -47,6 +33,8 @@ export class TnSpinnerComponent {
   ariaLabel = input<string | null>(null);
   ariaLabelledby = input<string | null>(null);
 
+  private readonly fallbackName = injectTnFallbackName('spinner');
+
   /**
    * The name to render, or `null` to render no `aria-label` attribute — and the
    * dev-mode warning when the caller named neither input.
@@ -60,7 +48,8 @@ export class TnSpinnerComponent {
    */
   resolvedAriaLabel = tnAccessibleName({
     selector: 'tn-spinner',
-    fallback: TN_SPINNER_DEFAULT_LABEL,
+    fallback: this.fallbackName.label,
+    fallbackIsConfigured: this.fallbackName.configured,
     activity: 'loading',
     ariaLabel: this.ariaLabel,
     ariaLabelledby: this.ariaLabelledby

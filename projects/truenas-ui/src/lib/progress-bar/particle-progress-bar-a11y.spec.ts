@@ -1,11 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import {
-  TnParticleProgressBarComponent,
-  TN_PARTICLE_PROGRESS_BAR_DEFAULT_LABEL
-} from './particle-progress-bar.component';
+import { TnParticleProgressBarComponent } from './particle-progress-bar.component';
 import { axeResult } from '../a11y/axe-testing';
+import { TN_PARTICLE_PROGRESS_BAR_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * #209: the fourth component in this library shaped like a progress bar, and

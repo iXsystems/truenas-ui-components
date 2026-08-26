@@ -1,9 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TnSpinnerComponent, TN_SPINNER_DEFAULT_LABEL } from './spinner.component';
+import { TnSpinnerComponent } from './spinner.component';
 import type { SpinnerMode } from './spinner.component';
 import { axeResult } from '../a11y/axe-testing';
+import { TN_SPINNER_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * The spinner half of #202. Same defect as `../progress-bar/progress-bar-a11y.spec.ts`

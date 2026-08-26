@@ -1,7 +1,8 @@
 import { DialogRef } from '@angular/cdk/dialog';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TN_DIALOG_SHELL_DEFAULT_LABEL, TnDialogShellComponent } from './dialog-shell.component';
+import { TnDialogShellComponent } from './dialog-shell.component';
+import { TN_DIALOG_SHELL_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * Guards `tn-dialog-shell` against being rendered OUTSIDE an open dialog.

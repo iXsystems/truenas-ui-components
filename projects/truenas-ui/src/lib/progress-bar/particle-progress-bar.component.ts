@@ -11,20 +11,7 @@ import {
   ChangeDetectionStrategy
 } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
-
-/**
- * The accessible name this bar falls back to when the caller names neither
- * `ariaLabel` nor `ariaLabelledby` (#209).
- *
- * The same string and the same reasoning as `TN_PROGRESS_BAR_DEFAULT_LABEL`
- * next door, and deliberately a separate constant rather than an import of it:
- * `tnAccessibleName` takes a fallback PER COMPONENT because the least-bad
- * generic name differs by what the component is ("Progress" for a bar,
- * "Loading" for a spinner), and sharing the binding would make a future
- * divergence in one a silent change to the other. Exported so specs assert
- * against it by name rather than by a copied string literal.
- */
-export const TN_PARTICLE_PROGRESS_BAR_DEFAULT_LABEL = 'Progress';
+import { injectTnFallbackName } from '../a11y/fallback-labels';
 
 /**
  * The gap in px between the edge of the SVG and each end of the track, on both
@@ -117,6 +104,8 @@ export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy 
   /** Exposed to the template so the rects and the ARIA value share one inset. */
   readonly trackInset = TRACK_INSET;
 
+  private readonly fallbackName = injectTnFallbackName('particleProgressBar');
+
   /**
    * The name to render, or `null` to render no `aria-label` at all — and the
    * dev-mode warning when the caller named neither input.
@@ -134,7 +123,8 @@ export class TnParticleProgressBarComponent implements AfterViewInit, OnDestroy 
    */
   resolvedAriaLabel = tnAccessibleName({
     selector: 'tn-particle-progress-bar',
-    fallback: TN_PARTICLE_PROGRESS_BAR_DEFAULT_LABEL,
+    fallback: this.fallbackName.label,
+    fallbackIsConfigured: this.fallbackName.configured,
     activity: 'progressing',
     ariaLabel: this.ariaLabel,
     ariaLabelledby: this.ariaLabelledby

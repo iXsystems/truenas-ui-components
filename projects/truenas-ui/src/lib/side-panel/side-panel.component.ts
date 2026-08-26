@@ -10,32 +10,13 @@ import { mdiClose } from '@mdi/js';
 import { take } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { injectTnFallbackName } from '../a11y/fallback-labels';
 import { tnFocusOnOpen } from '../a11y/initial-focus';
 import { TN_SCROLLABLE_REGION_TOLERANCE_PX, tnScrollableRegion } from '../a11y/scrollable-region';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { tnTransitionLifecycle } from '../utils/transition-lifecycle';
-
-/**
- * The accessible name an open panel falls back to when it has no `title` and the
- * caller named neither `ariaLabel` nor `ariaLabelledby` (#214).
- *
- * `title` defaults to `''`, so the DEFAULT rendering of this component was a
- * `role="dialog"` with `aria-labelledby` pointing at an empty `<h2>` — measured
- * as an `aria-dialog-name` violation, alongside `empty-heading`. A dialog with no
- * name is announced as "dialog" and nothing else, which is the whole of what a
- * screen-reader user gets told about a surface that just covered the page.
- *
- * Withholding `role="dialog"` until there is a name would be the other way to
- * clear the rule, and it is worse: the panel traps focus either way, so a
- * listener would be moved into a region with no announcement that anything had
- * opened. A generic name is still a poor one, so it is paired with the dev-mode
- * warning `tnAccessibleName` raises.
- *
- * Exported so specs assert against it by name rather than by a copied literal.
- */
-export const TN_SIDE_PANEL_DEFAULT_LABEL = 'Side panel';
 
 /**
  * The name given to the scrolling content region once it becomes focusable
@@ -265,6 +246,8 @@ export class TnSidePanelComponent implements OnDestroy {
     () => (this.hasTitle() ? this.titleId : this.ariaLabelledby())
   );
 
+  private readonly fallbackName = injectTnFallbackName('sidePanel');
+
   /**
    * The name to render as `aria-label`, or `null` to render none — and the
    * dev-mode warning when the panel has no name from any route.
@@ -276,7 +259,8 @@ export class TnSidePanelComponent implements OnDestroy {
    */
   protected resolvedAriaLabel = tnAccessibleName({
     selector: 'tn-side-panel',
-    fallback: TN_SIDE_PANEL_DEFAULT_LABEL,
+    fallback: this.fallbackName.label,
+    fallbackIsConfigured: this.fallbackName.configured,
     activity: 'open',
     hint: 'On this component the usual route is title, which is also the visible heading.',
     ariaLabel: this.ariaLabel,

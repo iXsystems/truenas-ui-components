@@ -1,8 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TN_SIDE_PANEL_DEFAULT_LABEL, TnSidePanelComponent } from './side-panel.component';
+import { TnSidePanelComponent } from './side-panel.component';
 import { axeResult } from '../a11y/axe-testing';
+import { TN_SIDE_PANEL_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * Guards the ARIA structure given to `tn-side-panel` in #214.

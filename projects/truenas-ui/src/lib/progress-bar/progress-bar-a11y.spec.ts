@@ -1,9 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TnProgressBarComponent, TN_PROGRESS_BAR_DEFAULT_LABEL } from './progress-bar.component';
+import { TnProgressBarComponent } from './progress-bar.component';
 import type { ProgressBarMode } from './progress-bar.component';
 import { axeResult } from '../a11y/axe-testing';
+import { TN_PROGRESS_BAR_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * Guards the naming fixed for #202: the host carried `role="progressbar"` with
