@@ -288,26 +288,22 @@ describe('TnRadioGroupComponent', () => {
   });
 
   describe('test ids', () => {
-    it('scopes each option id with the group base', () => {
-      expect(fixture.nativeElement.querySelector('[data-testid="radio-button-letter-alpha"]')).toBeTruthy();
-      expect(fixture.nativeElement.querySelector('[data-testid="radio-button-letter-beta"]')).toBeTruthy();
-    });
-
-    it('puts the base on the group root too', () => {
-      expect(fixture.nativeElement.querySelector('[data-testid="radio-group-letter"]')).toBeTruthy();
-    });
-
-    // The group/option pair is what automation selects on, and a `radio-group-x` whose members were
-    // `radio-x-*` read as a different control. `radio-button` also keeps the pair aligned with
-    // `button-toggle-group`/`button-toggle`, and with the `mat-radio-group`/`mat-radio-button` ids
-    // consumers migrate off — so a migrated group needs no per-option compensation.
-    it('names an option after the group it belongs to, not after the element', () => {
+    // Options are named after the group they belong to, not after the element: a `radio-group-x`
+    // whose members were `radio-x-*` reads as a different control. `radio-button` also keeps the
+    // pair aligned with `button-toggle-group`/`button-toggle`, and with the
+    // `mat-radio-group`/`mat-radio-button` ids consumers migrate off — so a migrated group needs no
+    // per-option compensation.
+    it('scopes each option id with the group base, under the radio-button prefix', () => {
       const optionIds = Array.from(
         fixture.nativeElement.querySelectorAll('[data-testid^="radio-button-letter-"]') as NodeListOf<HTMLElement>,
       ).map((element) => element.getAttribute('data-testid'));
 
       expect(optionIds).toEqual(['radio-button-letter-alpha', 'radio-button-letter-beta']);
       expect(fixture.nativeElement.querySelector('[data-testid="radio-letter-alpha"]')).toBeNull();
+    });
+
+    it('puts the base on the group root too', () => {
+      expect(fixture.nativeElement.querySelector('[data-testid="radio-group-letter"]')).toBeTruthy();
     });
   });
 

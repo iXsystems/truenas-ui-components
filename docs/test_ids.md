@@ -139,15 +139,20 @@ This keeps the harness API stable regardless of which attribute the consumer con
 
 ## Value-string conventions
 
-The library is **unopinionated** about value content. `testId` is a raw string the library renders verbatim — no automatic prefixing, no kebab-casing.
-
-That means consumers using a convention like `button-foo-bar` (e.g. webui's `[ixTest]`-style auto-prefix) should include the prefix themselves when they set a library `testId`:
+**The library owns the element-type prefix; the consumer supplies only the semantic base.** Each component declares its own type through `tnTestIdType`, and `composeTestId` assembles `<type>-<base>`, kebab-casing every segment:
 
 ```html
-<tn-button testId="button-save-changes" />
+<tn-button testId="save-changes" />   <!-- button-save-changes -->
 ```
 
-This deliberately puts the value-shape decision in the consumer's hands so different applications can keep their existing automation conventions.
+Pass the bare base — `"save-changes"`, not `"button-save-changes"`. A base may be a single token or an ordered array (`[testId]="['username', option.value]"`), and falsy segments drop out.
+
+Two behaviours are worth knowing:
+
+- **Idempotent guard.** A base that already starts with the component's own prefix is not prefixed twice (`composeTestId('button', 'button-save')` → `button-save`). This exists so a migration can land prefix-by-prefix, not as a way to hand-write ids. It only absorbs the component's *current* prefix, so a base carrying a stale one is compounded rather than absorbed — after the `radio` → `radio-button` change, `<tn-radio testId="radio-email" />` yields `radio-button-radio-email`.
+- **Kebab-casing is not identical to lodash.** camelCase and separators split (`sshPort` → `ssh-port`, `addr_trtype` → `addr-trtype`), but a letter↔digit boundary does not (`nvme0n1` stays `nvme0n1` where lodash would give `nvme-0n1`). Normalize dynamic values consumer-side if an existing convention depends on that split.
+
+Element types follow the control they name, and a grouped control pairs the container with the thing inside it: `radio-group`/`radio-button`, `button-toggle-group`/`button-toggle`, `select`/`option`. The declared type lives in each component's template — grep `tnTestIdType` for the full list.
 
 ## Coverage
 
