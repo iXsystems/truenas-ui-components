@@ -1,4 +1,4 @@
-import { computed, effect, isDevMode } from '@angular/core';
+import { computed, effect, isDevMode, isSignal } from '@angular/core';
 import type { Signal } from '@angular/core';
 
 /**
@@ -74,6 +74,13 @@ import type { Signal } from '@angular/core';
  * That is an exception with a reason rather than an invitation. A caller
  * reaching for this function should be able to say which of the two — an axe
  * name rule, or the warning below — catches it when it ends up unnamed.
+ *
+ * Half of that exception is now available to any caller, as
+ * `fallbackIsConfigured`: the pager's second reason — a fallback the CONSUMER
+ * designed is not a name someone forgot — is what every caller here meets once
+ * an app provides `TN_FALLBACK_LABELS`. They still call this function, and
+ * still take the withholding branch beside an `ariaLabelledby`; only the
+ * warning stands down. `fallback-labels.ts` sets that out in full.
  */
 
 /** What a component needs to tell this function about itself. */
@@ -88,8 +95,25 @@ export interface TnAccessibleNameConfig {
    * The name to render when the caller supplies neither input. Per component
    * rather than shared: a generic name is a poor one, and the least-bad generic
    * name differs — "Progress" for a bar, "Loading" for a spinner.
+   *
+   * A Signal where the fallback is a consumer-configurable one — every caller
+   * here reads theirs from `TN_FALLBACK_LABELS`, which a consumer may provide
+   * as a Signal so a language switch re-renders the name live.
    */
-  fallback: string;
+  fallback: string | Signal<string>;
+  /**
+   * Whether `fallback` is a name the CONSUMER configured rather than this
+   * library's own English default — which suppresses the warning below.
+   *
+   * The exception `tn-table-pager` already has, generalized: a configured name
+   * is a DESIGNED one, so warning about it fires on the ordinary case and
+   * teaches readers to ignore the warning where it means something.
+   * `fallback-labels.ts` sets out the whole of the reasoning. Nothing else about
+   * this function changes with it — an explicit `ariaLabel` still always
+   * survives, and the fallback is still withheld beside an `ariaLabelledby`, so
+   * a dangling IDREF still fails its axe name rule rather than being masked.
+   */
+  fallbackIsConfigured?: boolean;
   /**
    * Completes "Assistive technology cannot say WHAT is …" in the warning.
    * `'progressing'` for a progress bar, `'loading'` for a spinner.
@@ -129,21 +153,23 @@ export function tnAccessibleName(config: TnAccessibleNameConfig): Signal<string 
   // raises the warning rather than being treated as an answer.
   const hasLabelledby = computed(() => (config.ariaLabelledby() ?? '').trim() !== '');
   const named = computed(() => (config.ariaLabel() ?? '').trim() !== '' || hasLabelledby());
+  const fallback = config.fallback;
+  const fallbackName = computed(() => (isSignal(fallback) ? fallback() : fallback));
 
   const resolved = computed(() => {
     const label = config.ariaLabel();
     if ((label ?? '').trim() !== '') {
       return label;
     }
-    return hasLabelledby() ? null : config.fallback;
+    return hasLabelledby() ? null : fallbackName();
   });
 
-  if (isDevMode()) {
+  if (isDevMode() && !config.fallbackIsConfigured) {
     effect(() => {
       if (!named()) {
         console.warn(
           `[${config.selector}] No ariaLabel or ariaLabelledby was set, so it falls back to `
-          + `"${config.fallback}". Assistive technology cannot say WHAT is ${config.activity} `
+          + `"${fallbackName()}". Assistive technology cannot say WHAT is ${config.activity} `
           + `— pass ariaLabel, or ariaLabelledby pointing at visible text.`
           + (config.hint ? ` ${config.hint}` : '')
         );

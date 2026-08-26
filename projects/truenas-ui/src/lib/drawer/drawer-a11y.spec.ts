@@ -3,8 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnDrawerContainerComponent } from './drawer-container.component';
 import { TnDrawerContentComponent } from './drawer-content.component';
-import { TN_DRAWER_DEFAULT_LABEL, TnDrawerComponent } from './drawer.component';
+import { TnDrawerComponent } from './drawer.component';
 import { axeResult } from '../a11y/axe-testing';
+import { TN_DRAWER_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * Guards the ARIA structure of the drawer family after #214.

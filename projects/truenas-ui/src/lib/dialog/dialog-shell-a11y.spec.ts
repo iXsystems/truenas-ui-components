@@ -4,9 +4,10 @@ import { Component, inject, signal } from '@angular/core';
 import type { WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TN_DIALOG_SHELL_DEFAULT_LABEL, TnDialogShellComponent } from './dialog-shell.component';
+import { TnDialogShellComponent } from './dialog-shell.component';
 import { TnDialog } from './dialog.service';
 import { axeResult } from '../a11y/axe-testing';
+import { TN_DIALOG_SHELL_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * Guards the accessible name of `tn-dialog-shell` (#219).

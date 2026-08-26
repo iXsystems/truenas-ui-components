@@ -1,8 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { TnBrandedSpinnerComponent, TN_BRANDED_SPINNER_DEFAULT_LABEL } from './branded-spinner.component';
+import { TnBrandedSpinnerComponent } from './branded-spinner.component';
 import { axeResult } from '../a11y/axe-testing';
+import { TN_BRANDED_SPINNER_DEFAULT_LABEL } from '../a11y/fallback-labels';
 
 /**
  * The third progressbar (#206). `tn-progress-bar` and `tn-spinner` were fixed by

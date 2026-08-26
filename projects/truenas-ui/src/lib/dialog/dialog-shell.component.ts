@@ -3,6 +3,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, InjectionToken, computed, effect, input, signal, inject } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
+import { injectTnFallbackName } from '../a11y/fallback-labels';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { injectTnLabels } from '../utils/inject-labels';
 
@@ -42,28 +43,6 @@ export const TN_DIALOG_CHROME_LABELS = new InjectionToken<TnDialogChromeLabels |
 );
 
 let nextUniqueId = 0;
-
-/**
- * The accessible name a dialog falls back to when it renders no `title` and the
- * caller named it through neither this component nor the `DialogConfig` (#219).
- *
- * `title` defaults to `''`, so the DEFAULT rendering of this component put an
- * empty `<h2>` in the header and left the CDK container with no naming
- * attribute at all — measured as `empty-heading` on the heading and
- * `aria-dialog-name` on the dialog. A dialog with no name is announced as
- * "dialog" and nothing else, which is the whole of what a screen-reader user is
- * told about a surface that just took over the page and trapped their focus.
- *
- * "Dialog" is a poor name, and says almost exactly what the role already says.
- * It is still better than the two alternatives: leaving the surface unnamed, or
- * withholding `role="dialog"` until there is a name — the latter would move a
- * listener into a focus trap with no announcement that anything had opened. So
- * it is paired with the dev-mode warning `tnAccessibleName` raises, which is
- * what keeps the fallback from becoming a quiet way to ship a nameless dialog.
- *
- * Exported so specs assert against it by name rather than by a copied literal.
- */
-export const TN_DIALOG_SHELL_DEFAULT_LABEL = 'Dialog';
 
 /**
  * The first value that is a name, or `null` if none of them is one.
@@ -211,6 +190,8 @@ export class TnDialogShellComponent implements OnInit {
     () => firstNonBlank(this.ariaLabel(), this.ref.config?.ariaLabel)
   );
 
+  private readonly fallbackName = injectTnFallbackName('dialog');
+
   /**
    * The name to render as `aria-label`, or `null` to render none — and the
    * dev-mode warning when the dialog has no name from any route.
@@ -222,7 +203,8 @@ export class TnDialogShellComponent implements OnInit {
    */
   private resolvedAriaLabel = tnAccessibleName({
     selector: 'tn-dialog-shell',
-    fallback: TN_DIALOG_SHELL_DEFAULT_LABEL,
+    fallback: this.fallbackName.label,
+    fallbackIsConfigured: this.fallbackName.configured,
     activity: 'open',
     hint: 'On this component the usual route is title, which is also the visible heading.',
     ariaLabel: this.explicitAriaLabel,

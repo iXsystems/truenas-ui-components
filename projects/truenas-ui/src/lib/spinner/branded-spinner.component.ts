@@ -1,21 +1,7 @@
 import type { OnInit, OnDestroy, AfterViewInit} from '@angular/core';
 import { ElementRef, Component, input, ViewEncapsulation, ChangeDetectionStrategy, inject } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
-
-/**
- * The name this spinner falls back to when the caller names neither `ariaLabel`
- * nor `ariaLabelledby`. Same reasoning as `TN_SPINNER_DEFAULT_LABEL` and
- * `TN_PROGRESS_BAR_DEFAULT_LABEL`.
- *
- * It differs from `TN_SPINNER_DEFAULT_LABEL` — `"Loading..."` against
- * `"Loading"` — only because this is the string the component already rendered,
- * inline in its host binding, before #206 gave it the shared resolver. Aligning
- * the two would change what a screen reader announces for every unnamed branded
- * spinner already in the wild, which is a louder change than the consistency
- * fix it would be part of. Exported so specs assert against it by name rather
- * than by a copied string literal.
- */
-export const TN_BRANDED_SPINNER_DEFAULT_LABEL = 'Loading...';
+import { injectTnFallbackName } from '../a11y/fallback-labels';
 
 @Component({
   selector: 'tn-branded-spinner',
@@ -35,6 +21,8 @@ export class TnBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
   ariaLabel = input<string | null>(null);
   ariaLabelledby = input<string | null>(null);
 
+  private readonly fallbackName = injectTnFallbackName('brandedSpinner');
+
   /**
    * The name to render, or `null` to render no `aria-label` attribute — and the
    * dev-mode warning when the caller named neither input.
@@ -48,7 +36,8 @@ export class TnBrandedSpinnerComponent implements OnInit, OnDestroy, AfterViewIn
    */
   resolvedAriaLabel = tnAccessibleName({
     selector: 'tn-branded-spinner',
-    fallback: TN_BRANDED_SPINNER_DEFAULT_LABEL,
+    fallback: this.fallbackName.label,
+    fallbackIsConfigured: this.fallbackName.configured,
     activity: 'loading',
     ariaLabel: this.ariaLabel,
     ariaLabelledby: this.ariaLabelledby
