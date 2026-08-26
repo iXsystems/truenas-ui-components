@@ -197,7 +197,8 @@ export const KeyboardNavigation: Story = {
 /**
  * **Test IDs.** The base lands on the group root under the `radio-group-` prefix and is scoped by
  * each option's label for the options themselves: `testId="color"` → `radio-group-color` plus
- * `radio-color-red`, `radio-color-blue`, … With no `testId`, the bound control name is used.
+ * `radio-button-color-red`, `radio-button-color-blue`, … With no `testId`, the bound control name
+ * is used.
  */
 export const TestIds: Story = {
   args: { testId: 'color', options: colorOptions, ariaLabel: 'Favorite color' },

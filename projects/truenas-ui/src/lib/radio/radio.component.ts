@@ -36,6 +36,12 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
   name = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   required = input<boolean>(false);
+  /**
+   * Test-id base. The element type this composes with is `radio-button`, not `radio`: the id
+   * identifies one radio BUTTON within a `radio-group`, matching the `radio-group`/`radio-button`
+   * pair every other grouped control in this library uses (`button-toggle-group`/`button-toggle`).
+   * So `testId="email"` yields `radio-button-email`.
+   */
   testId = input<TnTestIdValue>(undefined);
   /** Test-id base, falling back to the bound control name when `testId` is unset. */
   protected resolvedTestId = controlTestId(this.testId);

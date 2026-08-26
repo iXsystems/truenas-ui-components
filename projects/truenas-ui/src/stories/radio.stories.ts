@@ -148,10 +148,12 @@ export const ComponentHarness: Story = {
 };
 
 /**
- * **Test IDs (default).** `tn-radio` emits the `radio-` prefix on its visible
- * `<label>` — the native `<input type="radio">` is hidden, so the label is the
- * real hit target. `testId="email"` → `radio-email` (under `data-testid` by
- * default / `data-test`). With no `testId`, nothing is emitted. Table read live.
+ * **Test IDs (default).** `tn-radio` emits the `radio-button-` prefix on its
+ * visible `<label>` — the native `<input type="radio">` is hidden, so the label
+ * is the real hit target. `testId="email"` → `radio-button-email` (under
+ * `data-testid` by default / `data-test`). The prefix names one button within a
+ * `radio-group`, mirroring `button-toggle-group`/`button-toggle`. With no
+ * `testId`, nothing is emitted. Table read live.
  */
 export const TestIds: Story = {
   args: { testId: 'email' },
@@ -168,7 +170,7 @@ export const TestIds: Story = {
 
 /**
  * **Scoped test id.** An array base namespaces the id —
- * `[testId]="['contact','email']"` → `radio-contact-email`.
+ * `[testId]="['contact','email']"` → `radio-button-contact-email`.
  */
 export const ScopedTestIds: Story = {
   args: { testId: ['contact', 'email'] },

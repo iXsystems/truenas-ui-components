@@ -116,7 +116,7 @@ export class TnRadioGroupComponent<T = unknown> implements ControlValueAccessor,
   /**
    * Test-id base for the group and, scoped by the option label, for every option rendered from
    * `options`: base `encryption` yields `radio-group-encryption` on the group and
-   * `radio-encryption-passphrase` on its options. Falls back to the bound control name.
+   * `radio-button-encryption-passphrase` on its options. Falls back to the bound control name.
    *
    * Projected `<tn-radio>` children keep their own test-id resolution — the group does not reach
    * into content it did not render — so give each one a `testId` of its own.

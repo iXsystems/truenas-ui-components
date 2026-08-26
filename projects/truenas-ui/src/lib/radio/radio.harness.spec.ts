@@ -55,7 +55,7 @@ describe('TnRadioHarness', () => {
     });
 
     it('should find radio by testId', async () => {
-      const radio = await loader.getHarness(TnRadioHarness.with({ testId: 'radio-a' }));
+      const radio = await loader.getHarness(TnRadioHarness.with({ testId: 'radio-button-a' }));
       expect(await radio.getLabelText()).toBe('Option A');
     });
 
@@ -100,7 +100,7 @@ describe('TnRadioHarness', () => {
   describe('getTestId()', () => {
     it('should return the test ID', async () => {
       const radio = await loader.getHarness(TnRadioHarness.with({ label: 'Option A' }));
-      expect(await radio.getTestId()).toBe('radio-a');
+      expect(await radio.getTestId()).toBe('radio-button-a');
     });
 
     it('should return null when no test ID is set', async () => {
