@@ -173,7 +173,7 @@ Every interactive component listed below supports `testId`:
 | `tn-icon-button` | `testId` input | inner `<button>` |
 | `tn-input` | `testId` input | inner `<input>` / `<textarea>` |
 | `tn-menu` | `TnMenuItem.testId` per item | each item's `<button>` |
-| `tn-radio` | `testId` input | inner `<input>` |
+| `tn-radio` | `testId` input | visible `<label>` (the native `<input>` is hidden, so the label is the hit target) |
 | `tn-select` | `testId` input | `.tn-select-container` |
 | `tn-selection-list` | `hostDirectives` | host element |
 | `tn-side-panel` | `testId` input + `closeButtonTestId` input | panel root + close `<button>` |
