@@ -1,0 +1,29 @@
+.tn-checkbox-group-host {
+  display: block;
+}
+
+.tn-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tn-checkbox-group-gap, 8px);
+
+  &--inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: var(--tn-checkbox-group-inline-gap, 16px);
+
+    // Equal columns rather than options hugging their labels: a multi-select list is read down a
+    // column, and ragged widths make an option easy to miss.
+    .tn-checkbox-group__option {
+      flex: 1 1 var(--tn-checkbox-group-inline-basis, 50%);
+      box-sizing: border-box;
+    }
+
+    // Columns of half a narrow viewport are too tight for a label of any length.
+    @media (max-width: 768px) {
+      .tn-checkbox-group__option {
+        flex-basis: 100%;
+      }
+    }
+  }
+}
