@@ -1,0 +1,32 @@
+<div
+  class="tn-checkbox-group"
+  role="group"
+  tnTestIdType="checkbox-group"
+  [class.tn-checkbox-group--inline]="inline()"
+  [attr.aria-label]="resolvedAriaLabel()"
+  [attr.aria-labelledby]="labelledBy()"
+  [attr.aria-describedby]="fieldAria.describedby()"
+  [attr.aria-invalid]="fieldAria.invalid()"
+  [attr.aria-disabled]="isDisabled() ? true : null"
+  [tnTestId]="resolvedTestId()"
+  (focusout)="onFocusOut()"
+>
+  @for (option of options(); track option.value) {
+    <tn-checkbox
+      class="tn-checkbox-group__option"
+      [label]="option.label"
+      [checked]="isSelected(option.value)"
+      [disabled]="isDisabled() || !!option.disabled"
+      [testId]="optionTestId(option)"
+      (change)="toggle(option.value, $event)"
+    />
+  }
+</div>
+
+<!-- The required-ness rides in the group's accessible NAME, because `role="group"` does not
+     support `aria-required` — see the `required` input's docblock. It sits OUTSIDE the group so
+     the text is not also read as group content on the way past the options; `aria-labelledby`
+     resolves ids document-wide, so it names the group from here just the same. -->
+@if (ariaRequired()) {
+  <span class="cdk-visually-hidden" [attr.id]="requiredTextId">required</span>
+}

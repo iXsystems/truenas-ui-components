@@ -1,0 +1,54 @@
+.tn-checkbox-group-host {
+  display: block;
+}
+
+.tn-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tn-checkbox-group-gap, 8px);
+
+  &--inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: var(--tn-checkbox-group-inline-gap, 16px);
+
+    // Equal columns rather than options hugging their labels: a multi-select list is read down a
+    // column, and ragged widths make an option easy to miss.
+    //
+    // The gap has to come OUT of the basis. Gaps count toward the space a flex line needs, so a
+    // bare `flex-basis: 50%` makes two options plus the gap exceed the container and the second
+    // wraps — silently collapsing the whole thing to one column, which is the opposite of what
+    // asking for `inline` means. Subtracting a full gap per option leaves a line of two at
+    // `100% - 16px` and pushes a third onto the next line; `flex-grow: 1` then shares the
+    // remainder back out so the columns stay equal.
+    .tn-checkbox-group__option {
+      flex: 1 1 calc(
+        var(--tn-checkbox-group-inline-basis, 50%) - var(--tn-checkbox-group-inline-gap, 16px)
+      );
+      box-sizing: border-box;
+    }
+
+    // Columns of half a narrow viewport are too tight for a label of any length.
+    @media (max-width: 768px) {
+      .tn-checkbox-group__option {
+        flex-basis: 100%;
+      }
+    }
+  }
+}
+
+// Screen-reader-only text. `.cdk-visually-hidden` comes from the CDK's global a11y stylesheet,
+// which this library does not ship; without a local definition the group's "required" name
+// fragment renders as visible text under the options. Same local copy the stepper, table and
+// calendar components keep.
+.cdk-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

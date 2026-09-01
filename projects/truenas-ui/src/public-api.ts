@@ -31,6 +31,8 @@ export * from './lib/expansion-panel/expansion-panel.component';
 export * from './lib/expansion-panel/expansion-panel.harness';
 export * from './lib/checkbox/checkbox.component';
 export * from './lib/checkbox/checkbox.harness';
+export * from './lib/checkbox/checkbox-group.component';
+export * from './lib/checkbox/checkbox-group.harness';
 export * from './lib/radio/radio.component';
 export * from './lib/radio/radio.harness';
 export * from './lib/radio/radio-group.component';
