@@ -12,6 +12,7 @@ import { TnFormFieldComponent } from '../form-field/form-field.component';
 
 interface ObjectValue {
   id: number;
+  name?: string;
 }
 
 @Component({
@@ -39,6 +40,8 @@ interface ObjectValue {
     <tn-form-field label="Required letters">
       <tn-checkbox-group testId="required" [formControl]="requiredControl" [options]="options" />
     </tn-form-field>
+
+    <tn-checkbox-group testId="standalone-required" ariaLabel="Standalone" [required]="true" [options]="options" />
   `,
 })
 class TestHostComponent {
@@ -189,11 +192,22 @@ describe('TnCheckboxGroupComponent', () => {
     expect(await group.isDisabled()).toBe(true);
   });
 
-  it('marks the control touched when focus leaves the group', async () => {
+  it('marks the control touched on toggle', async () => {
     expect(host.control.touched).toBe(false);
 
     const group = await letters();
     await group.toggle('Beta');
+
+    expect(host.control.touched).toBe(true);
+  });
+
+  // Toggling touches the control on its own, so this has to blur the group for real to cover
+  // `onFocusOut` — a harness toggle dispatches mousedown/mouseup/click and moves no focus.
+  it('marks the control touched when focus leaves the group', () => {
+    expect(host.control.touched).toBe(false);
+
+    const root = fixture.nativeElement.querySelector('.tn-checkbox-group') as HTMLElement;
+    root.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
 
     expect(host.control.touched).toBe(true);
   });
@@ -207,6 +221,21 @@ describe('TnCheckboxGroupComponent', () => {
 
     await group.toggle('First');
     expect(host.objectControl.value).toEqual([{ id: 1 }, { id: 2 }]);
+  });
+
+  // Only newly checked options contribute the option's own value; an already-selected one is
+  // re-emitted as the object the consumer wrote, so properties outside `compareWith`'s reach
+  // survive an unrelated toggle.
+  it('keeps the selected value objects the consumer wrote', async () => {
+    const loaded: ObjectValue = { id: 2, name: 'usb-cam' };
+    host.objectControl.setValue([loaded]);
+    fixture.detectChanges();
+
+    const group = await loader.getHarness(TnCheckboxGroupHarness.with({ ariaLabel: 'Objects' }));
+    await group.toggle('First');
+
+    expect(host.objectControl.value).toEqual([{ id: 1 }, loaded]);
+    expect(host.objectControl.value?.[1]).toBe(loaded);
   });
 
   it('lays the options out in a wrapping row when inline', async () => {
@@ -237,11 +266,28 @@ describe('TnCheckboxGroupComponent', () => {
       expect(await group.getAriaLabelledBy()).toBeTruthy();
     });
 
-    it('announces the field-inferred required state', async () => {
+    // `role="group"` supports only the globals plus aria-activedescendant/aria-disabled, so an
+    // `aria-required` there would be dropped by assistive tech: the state rides in the name.
+    it('folds the field-inferred required state into the accessible name', () => {
       const root = fixture.nativeElement.querySelector(
         '[data-testid="checkbox-group-required"]'
       ) as HTMLElement;
-      expect(root.getAttribute('aria-required')).toBe('true');
+
+      expect(root.getAttribute('aria-required')).toBeNull();
+
+      const ids = root.getAttribute('aria-labelledby')?.split(' ') ?? [];
+      const name = ids.map((id) => document.getElementById(id)?.textContent?.trim()).join(' ');
+      expect(name).toBe('Required letters required');
+    });
+
+    it('folds the required state into an explicit ariaLabel when standalone', () => {
+      const root = fixture.nativeElement.querySelector(
+        '[data-testid="checkbox-group-standalone-required"]'
+      ) as HTMLElement;
+
+      expect(root.getAttribute('aria-required')).toBeNull();
+      expect(root.getAttribute('aria-labelledby')).toBeNull();
+      expect(root.getAttribute('aria-label')).toBe('Standalone required');
     });
 
     // Native `required` on a checkbox demands that checkbox, not one of the set — see the

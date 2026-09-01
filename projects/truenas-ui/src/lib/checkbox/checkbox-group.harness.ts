@@ -10,8 +10,9 @@ import { TnCheckboxHarness } from './checkbox.harness';
  * @example
  * ```typescript
  * const group = await loader.getHarness(TnCheckboxGroupHarness.with({ testId: 'checkbox-group-trains' }));
- * await group.setValue(['stable', 'enterprise']);
- * expect(await group.getValue()).toEqual(['stable', 'enterprise']);
+ * // Labels, not option values — the DOM only carries what the user can read.
+ * await group.setValue(['Stable', 'Enterprise']);
+ * expect(await group.getValue()).toEqual(['Stable', 'Enterprise']);
  * ```
  */
 export class TnCheckboxGroupHarness extends ComponentHarness {

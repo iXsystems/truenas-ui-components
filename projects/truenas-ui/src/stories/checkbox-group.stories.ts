@@ -77,7 +77,8 @@ same checked set always produces the same array however the user got there.
     required: {
       control: 'boolean',
       description:
-        'Announced via `aria-required`. Deliberately NOT propagated to the options\' native '
+        'Announced as a "required" suffix on the group\'s accessible name — `role="group"` does '
+        + 'not support `aria-required`. Deliberately NOT propagated to the options\' native '
         + '`required`, which would have the browser demand every box rather than one of the set.',
     },
     ariaLabel: {

@@ -6,6 +6,8 @@ import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnTestIdDirective, controlTestId, scopeTestId } from '../test-id';
 import type { TnTestIdValue } from '../test-id';
 
+let nextId = 0;
+
 /** One option of a `tn-checkbox-group`, rendered as a single `tn-checkbox`. */
 export interface TnCheckboxOption<T = unknown> {
   value: T;
@@ -80,6 +82,9 @@ export class TnCheckboxGroupComponent<T = unknown> implements ControlValueAccess
    * Explicit accessible name for the group. Inside a `tn-form-field` with a label this is
    * unnecessary — the field names the group automatically — but a group with neither is announced
    * as an unlabeled group.
+   *
+   * A required group appends "required" to whatever this says, since that is the only channel
+   * `role="group"` leaves open for it — see the `required` input.
    */
   ariaLabel = input<string | undefined>(undefined);
 
@@ -92,7 +97,13 @@ export class TnCheckboxGroupComponent<T = unknown> implements ControlValueAccess
    * choice `tn-radio-group` makes — and the difference is in the HTML, not in taste. A required
    * radio is satisfied by any one option in the `name` group; a required checkbox is satisfied
    * only by ITSELF being checked, so propagating it here would have the browser demand every box.
-   * "At least one" is a validator's job, and the group reports it through `aria-required` alone.
+   * "At least one" is a validator's job.
+   *
+   * Nor does it become `aria-required`, which is the OTHER place `tn-radio-group` cannot be
+   * copied: WAI-ARIA 1.2 supports only the globals plus `aria-activedescendant`/`aria-disabled`
+   * on `role="group"`, so an `aria-required` there is dropped by assistive tech and flagged by
+   * axe, whereas `role="radiogroup"` genuinely supports it. The state instead rides in the
+   * group's accessible NAME, as a "required" suffix — see {@link labelledBy}.
    */
   required = input<boolean>(false);
 
@@ -144,11 +155,42 @@ export class TnCheckboxGroupComponent<T = unknown> implements ControlValueAccess
   /** Whether the group announces itself as required: its own input, or the field's inferred state. */
   protected readonly ariaRequired = computed(() => this.required() || this.fieldAria.required() === true);
 
+  /** Id of the visually hidden "required" text this group contributes to its own name. */
+  protected readonly requiredTextId = `tn-checkbox-group-required-${nextId++}`;
+
+  /**
+   * `aria-label` for the group: the `ariaLabel` input with the required-ness folded in, since
+   * `role="group"` gives it nowhere else to go (see the `required` input).
+   */
+  protected readonly resolvedAriaLabel = computed(() => {
+    const label = this.ariaLabel();
+    if (!label) {
+      return null;
+    }
+    return this.ariaRequired() ? `${label} required` : label;
+  });
+
+  /**
+   * `aria-labelledby` for the group: the enclosing field's label, plus this group's own hidden
+   * "required" text when required. A multi-id `aria-labelledby` concatenates, so the field keeps
+   * naming the group and the required-ness reaches a screen reader as part of that name.
+   *
+   * Null when the name comes from `ariaLabel` instead — that path carries the suffix itself,
+   * because `aria-labelledby` would otherwise win over the very label it is meant to extend.
+   */
+  protected readonly labelledBy = computed(() => {
+    const fieldLabel = this.fieldAria.labelledby();
+    if (!fieldLabel) {
+      return null;
+    }
+    return this.ariaRequired() ? `${fieldLabel} ${this.requiredTextId}` : fieldLabel;
+  });
+
   private onChange: (value: T[]) => void = () => {};
   private onTouched: () => void = () => {};
 
   /** Whether `value` is among the currently selected values. */
-  isSelected(value: T): boolean {
+  protected isSelected(value: T): boolean {
     const comparator = this.compareWith();
     if (comparator) {
       return this.selectedValues().some((selected) => comparator(selected, value));
@@ -162,6 +204,11 @@ export class TnCheckboxGroupComponent<T = unknown> implements ControlValueAccess
    * The emitted array is rebuilt in `options` order rather than appended to in click order, so the
    * value a given set of checked boxes produces is the same however the user got there — which is
    * what makes a payload diff (and a spec asserting one) stable.
+   *
+   * Ordering is all the rebuild changes: an already-selected value is re-emitted as the object the
+   * consumer wrote, not as the equal-under-`compareWith` object the option holds. A control loaded
+   * with `{ id: 2, name: 'usb-cam' }` against an option of `{ id: 2 }` keeps its `name` when an
+   * unrelated box is toggled; only a newly checked option contributes the option's own value.
    */
   protected toggle(value: T, checked: boolean): void {
     const isCurrentlySelected = this.isSelected(value);
@@ -171,7 +218,8 @@ export class TnCheckboxGroupComponent<T = unknown> implements ControlValueAccess
 
     const next = this.options()
       .map((option) => option.value)
-      .filter((optionValue) => (this.matches(optionValue, value) ? checked : this.isSelected(optionValue)));
+      .filter((optionValue) => (this.matches(optionValue, value) ? checked : this.isSelected(optionValue)))
+      .map((optionValue) => this.selectedValues().find((selected) => this.matches(optionValue, selected)) ?? optionValue);
 
     // Values written by the consumer that no longer correspond to an option are kept: a control
     // loaded with a device that has since been unplugged would otherwise be silently pruned by an
