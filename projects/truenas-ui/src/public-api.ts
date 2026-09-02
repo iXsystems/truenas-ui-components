@@ -159,3 +159,4 @@ export * from './lib/test-id';
 export * from './lib/theme/theme.service';
 export * from './lib/theme/theme.interface';
 export * from './lib/theme/theme.constants';
+export * from './lib/user-directory';

@@ -1,0 +1,12 @@
+<!-- Shared by tn-user-chips and tn-group-chips. -->
+<tn-chip-input
+  [dataSource]="optionsSource"
+  [dataSourceDebounce]="debounce()"
+  [placeholder]="resolvedPlaceholder()"
+  [disabled]="disabled()"
+  [allowCustomValue]="allowCustomValue()"
+  [maxChips]="maxChips()"
+  [testId]="resolvedTestId()"
+  [ariaLabel]="ariaLabel()"
+  (dataSourceError)="directoryError.emit($event)"
+/>
