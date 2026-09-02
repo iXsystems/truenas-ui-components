@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { Observable } from 'rxjs';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnAutocompleteComponent, type TnAutocompleteOption } from '../lib/autocomplete/autocomplete.component';
@@ -466,6 +467,99 @@ export const AsyncOptions: Story = {
       </tn-form-field>
       @if (value()) {
         <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ value() }}</code></p>
+      }
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, ReactiveFormsModule],
+    },
+  }),
+  parameters: {
+    controls: { disable: true },
+  },
+};
+
+/**
+ * **The same picker, as a `[dataSource]`.** Everything the story above wires by
+ * hand — priming on open, debouncing the search, cancelling the in-flight
+ * request, tracking the page, holding `loading`, and recovering from a failed
+ * query — is done by the component when you bind a `(query, page)` function
+ * instead. Compare the two `props` blocks: the whole state machine collapses to
+ * one fetch.
+ *
+ * `[pageSize]` is how exhaustion is detected: a page shorter than it is the last
+ * one, and scrolling past it stops querying. `[actionOption]` pins a row above
+ * the results that runs a command rather than selecting a value — it survives
+ * filtering, and choosing it emits `actionSelected` **without** committing
+ * anything to the control, so no placeholder value can be submitted.
+ *
+ * Same simulated backend: 600 ms, 100 entries, pages of 20. Every fifth search
+ * fails, to show that an error reports once and leaves the field usable.
+ */
+export const DataSource: Story = {
+  render: () => ({
+    props: (() => {
+      const control = new FormControl<string | null>(null);
+      const value = signal<string | null>(null);
+      const lastError = signal<string | null>(null);
+      const added = signal<string[]>([]);
+      control.valueChanges.subscribe((committed) => value.set(committed));
+
+      let searches = 0;
+      const pageSize = 20;
+      const all = Array.from({ length: 100 }, (unused, i) => `device-${String(i).padStart(3, '0')}`);
+
+      return {
+        control,
+        value,
+        lastError,
+        added,
+        pageSize,
+        addNew: { label: 'Add a device…', value: '__add__' },
+        // The whole data layer: one function of (query, page).
+        devices: (query: string, page: number) => new Observable<TnAutocompleteOption<string>[]>((subscriber) => {
+          searches++;
+          const timer = setTimeout(() => {
+            if (searches % 5 === 0) {
+              subscriber.error(new Error(`Lookup failed for "${query}"`));
+              return;
+            }
+            const matches = all.filter((name) => name.includes(query));
+            subscriber.next(
+              matches.slice(page * pageSize, (page + 1) * pageSize)
+                .map((name) => ({ label: name, value: name })),
+            );
+            subscriber.complete();
+          }, 600);
+          return () => clearTimeout(timer);
+        }),
+        onError: (error: unknown) => lastError.set((error as Error).message),
+        onAddNew: () => {
+          const name = `device-custom-${added().length + 1}`;
+          added.update((current) => [...current, name]);
+          control.setValue(name);
+        },
+      };
+    })(),
+    template: `
+      <tn-form-field
+        label="Device"
+        hint="Scroll the open list to page in more; every fifth lookup fails on purpose">
+        <tn-autocomplete
+          [formControl]="control"
+          [dataSource]="devices"
+          [pageSize]="pageSize"
+          [actionOption]="addNew"
+          [requireSelection]="true"
+          placeholder="Type to search devices..."
+          (actionSelected)="onAddNew()"
+          (dataSourceError)="onError($event)">
+        </tn-autocomplete>
+      </tn-form-field>
+      @if (value()) {
+        <p style="margin-top: 1rem; font-size: 0.875rem;">Committed value: <code>{{ value() }}</code></p>
+      }
+      @if (lastError()) {
+        <p style="margin-top: 0.5rem; font-size: 0.875rem;">Last error: <code>{{ lastError() }}</code></p>
       }
     `,
     moduleMetadata: {

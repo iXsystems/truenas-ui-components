@@ -23,6 +23,7 @@ import type { TnSelectOption } from '../select/select.component';
 import {
   TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue,
 } from '../test-id';
+import { createTnOptionsDataSource, type TnOptionsFetchFn } from '../utils/options-data-source';
 
 /**
  * Option shape for `tn-chip-input`'s value mode — the `label` is displayed on
@@ -148,6 +149,28 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   options = input<TnChipInputOption<T>[]>([]);
 
   /**
+   * Server-driven suggestions: a function of `(query, page)` returning the
+   * matches for `query`. Binding it hands the component the debounce,
+   * request cancellation, loading state and error recovery that a consumer
+   * otherwise writes by hand around `(searchChange)`, and it supersedes both
+   * `suggestions` and `options`.
+   *
+   * The chip dropdown is not paged, so `page` is always 0 — the parameter is
+   * there only so one source function can feed both this and `tn-autocomplete`.
+   *
+   * The first query runs when the field is first focused, not on init.
+   *
+   * @example
+   * ```html
+   * <tn-chip-input [dataSource]="groupOptions" />
+   * ```
+   */
+  dataSource = input<TnOptionsFetchFn<TnChipInputOption<T>> | undefined>(undefined);
+
+  /** Debounce applied to typing before `dataSource` is queried, in ms. */
+  dataSourceDebounce = input<number>(250);
+
+  /**
    * Comparator for value equality — used for de-duplication, display resolution
    * and the selected-set. Defaults to identity (`===`), correct for primitives;
    * provide this when values are objects (e.g. `(a, b) => a?.id === b?.id`).
@@ -206,6 +229,13 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    */
   searchChange = output<string>();
 
+  /**
+   * Emits once per failed `dataSource` request. The component recovers on its
+   * own — the stream stays alive and the failed term stays retryable — so this
+   * is purely for the app to report the failure the way it reports others.
+   */
+  dataSourceError = output<unknown>();
+
   private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
   private readonly inputEl = viewChild.required<ElementRef<HTMLInputElement>>('inputEl');
   private readonly dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
@@ -237,11 +267,25 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     return max === undefined || this.values().length < max;
   });
 
+  /** Async engine backing `dataSource`; idle while no source is bound. */
+  private readonly asyncOptions = createTnOptionsDataSource<TnChipInputOption<T>>({
+    source: this.dataSource,
+    debounceMs: this.dataSourceDebounce,
+    // The dropdown is not paged, so nothing ever asks for page 1 and this
+    // only decides an `exhausted` flag no one reads.
+    pageSize: computed(() => Number.POSITIVE_INFINITY),
+    identity: (option) => option.value,
+    onError: (error) => this.dataSourceError.emit(error),
+  });
+
   /**
-   * Unified option list. Value-mode `options` win; otherwise string-mode
-   * `suggestions` are lifted into `{ label: s, value: s }`.
+   * Unified option list. A bound `dataSource` wins; then value-mode `options`;
+   * otherwise string-mode `suggestions` lifted into `{ label: s, value: s }`.
    */
   protected optionList = computed<TnChipInputOption<T>[]>(() => {
+    if (this.dataSource()) {
+      return this.asyncOptions.options();
+    }
     const opts = this.options();
     if (opts.length) {
       return opts;
@@ -252,11 +296,14 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   /** Options matching the typed text and not already selected. */
   protected filteredSuggestions = computed<TnChipInputOption<T>[]>(() => {
     const term = this.inputValue().trim().toLowerCase();
+    // A `dataSource` already applied the query server-side; filtering again on
+    // the label would hide rows it matched on some other field.
+    const isPreFiltered = !!this.dataSource();
     return this.optionList().filter((option) => {
       if (this.valuesIncludes(option.value)) {
         return false;
       }
-      return term === '' || option.label.toLowerCase().includes(term);
+      return isPreFiltered || term === '' || option.label.toLowerCase().includes(term);
     });
   });
 
@@ -276,8 +323,14 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     effect(() => {
       const hasMatches = this.filteredSuggestions().length > 0;
       untracked(() => {
+        // With a `dataSource`, the first page is fetched on focus with an
+        // empty term — so an empty field is still "searching" and its results
+        // should drop the panel open, the way a static suggestion list does
+        // on focus. Typed-term-only would leave that first page invisible
+        // until the user typed something.
+        const searchingEmpty = !!this.dataSource();
         const activelySearching = this.focused()
-          && this.inputValue().trim() !== ''
+          && (searchingEmpty || this.inputValue().trim() !== '')
           && this.canAddMore()
           && !this.isDisabled();
         if (hasMatches && activelySearching) {
@@ -327,6 +380,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   protected onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.inputValue.set(value);
+    this.asyncOptions.search(value);
     this.searchChange.emit(value);
     this.highlightedIndex.set(-1);
     this.syncDropdown();
@@ -334,6 +388,9 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
 
   protected onFocus(): void {
     this.focused.set(true);
+    // Fetch the first page the first time the field is used, so a form of
+    // chip inputs costs nothing until one is focused. A no-op thereafter.
+    this.asyncOptions.prime();
     this.syncDropdown();
   }
 
