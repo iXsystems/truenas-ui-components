@@ -2,7 +2,7 @@ import { DestroyRef, inject, signal, type Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, of, timer } from 'rxjs';
 import type { Observable } from 'rxjs';
-import { catchError, debounce, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounce, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 
 /**
  * Fetches one page of options for a server-driven dropdown.
@@ -115,9 +115,11 @@ export interface TnAsyncOptionsHost {
  *   the page that errored rather than stepping over those rows. The cursor
  *   tracks the *next* page to ask for rather than the last one loaded, so page 0
  *   rolls back like every other page instead of being silently skipped.
- * - **A late page cannot contaminate a newer search.** Pages carry the
- *   generation they were requested in and are dropped if a search has since
- *   started.
+ * - **A late page cannot contaminate a newer search.** Every response carries
+ *   the generation it was requested in and is dropped if a search — or a
+ *   {@link TnOptionsDataSource.refresh} — has since started. Cancellation is
+ *   not enough on its own: `refresh` invalidates without issuing a request, so
+ *   there is nothing for `switchMap` to unsubscribe the old one in favour of.
  */
 export function createTnOptionsDataSource<O>(
   config: TnOptionsDataSourceConfig<O>,
@@ -182,29 +184,46 @@ export function createTnOptionsDataSource<O>(
         loading.set(true);
       }),
       switchMap((request) => {
+        // Stamped with the generation it was asked for in, the way `loadMore`
+        // stamps its pages: `refresh` retires a request in flight without
+        // pushing anything through this subject, so `switchMap` alone never
+        // cancels it and its rows would otherwise land as if still current.
+        const requestedGeneration = generation;
         const fetch = config.source();
         if (!fetch) {
-          return of<O[]>([]);
+          return of({ rows: [] as O[], failed: false, requestedGeneration });
         }
         return fetch(request.query, 0).pipe(
+          map((rows) => ({ rows, failed: false, requestedGeneration })),
           catchError((error: unknown) => {
-            lastRequestFailed = true;
             config.onError(error);
-            return of<O[]>([]);
+            return of({ rows: [] as O[], failed: true, requestedGeneration });
           }),
         );
       }),
       takeUntilDestroyed(destroyRef),
     )
-    .subscribe((rows) => {
+    .subscribe(({ rows, failed, requestedGeneration }) => {
+      // No other request can be outstanding — a newer one through this subject
+      // would have unsubscribed this response — so the flag is released either
+      // way, stale or not.
       loading.set(false);
+      if (requestedGeneration !== generation) {
+        // Fetched under a configuration `refresh` has since retired. Latching
+        // `primed` on it would answer the next `prime` from the invalidated
+        // pages for good, which is the exact failure `refresh` exists to
+        // prevent; `lastRequestFailed` is left alone for the same reason.
+        config.onSettled?.();
+        return;
+      }
+      lastRequestFailed = failed;
       // An empty page from a failure is not evidence that the source is
       // exhausted — leave paging open so a retry can still reach page 1.
-      exhausted.set(lastRequestFailed ? false : rows.length < config.pageSize());
+      exhausted.set(failed ? false : rows.length < config.pageSize());
       // A failed page 0 leaves the cursor on 0, so the next `loadMore` retries
       // it; `primed` likewise only latches on a request that arrived.
-      nextPage = lastRequestFailed ? 0 : 1;
-      primed = primed || !lastRequestFailed;
+      nextPage = failed ? 0 : 1;
+      primed = primed || !failed;
       options.set(rows);
       config.onSettled?.();
     });

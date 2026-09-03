@@ -561,6 +561,32 @@ describe('tn-autocomplete [dataSource]', () => {
       expect(requests).toEqual([{ query: '', page: 0 }]);
     });
 
+    it('drops a page that was already in flight when the configuration changed', () => {
+      // `refresh` issues no request of its own, so `switchMap` has nothing to
+      // cancel the outstanding one in favour of. Landing unguarded, that page
+      // re-latched `prime` and the field served the retired configuration's
+      // rows for good — only a keystroke recovered it.
+      const inFlight = new Subject<Option[]>();
+      responder = () => inFlight;
+      focus();
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      responder = () => of([{ label: 'narrowed', value: 'narrowed' }]);
+      component().refreshOptions();
+      fixture.detectChanges();
+
+      inFlight.next(pageOf('', 0, 2));
+      inFlight.complete();
+      fixture.detectChanges();
+      requests = [];
+
+      focus();
+
+      expect(requests).toEqual([{ query: '', page: 0 }]);
+      expect(renderedOptions()).toEqual(['narrowed']);
+    });
+
     it('defers to the next open when the panel is closed, and is not suppressed there', () => {
       focus();
       input().dispatchEvent(new Event('blur'));

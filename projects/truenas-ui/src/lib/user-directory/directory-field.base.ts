@@ -1,5 +1,6 @@
 import { DestroyRef, Directive, Injector, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { AsyncValidatorFn, ControlValueAccessor, ValidationErrors } from '@angular/forms';
 import { NgControl } from '@angular/forms';
 import { Observable, of, timer } from 'rxjs';
@@ -65,7 +66,7 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
   protected readonly ngControl = inject(NgControl, { optional: true, self: true });
 
   private readonly injector = inject(Injector);
-  private readonly destroyRef = inject(DestroyRef);
+  protected readonly destroyRef = inject(DestroyRef);
 
   /**
    * Modifiers handed to the directory verbatim — how the app narrows the list
@@ -98,6 +99,11 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
    * For a value the search cannot produce but the field must still name: an id
    * already on the record, resolved to its display name elsewhere. Without it
    * such a field shows the raw id until the user happens to search for it.
+   *
+   * They reach the display two ways, because the directory's first page is not
+   * fetched until the field is focused: pinned ahead of that page once it is,
+   * and handed to the chips fields as known labels straight away, so a chip on
+   * an edit form reads its name without anyone touching the field.
    */
   readonly extraOptions = input<TnPrincipalOption[]>([]);
 
@@ -144,6 +150,13 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
     return rows$.pipe(map((rows) => {
       // Only ahead of the FIRST page: later pages append, and re-inserting
       // these each time would push duplicates through the paging dedupe.
+      //
+      // The pinned rows do inflate the length the engine measures exhaustion
+      // by, so a genuinely-last first page topped up to `pageSize` reads as a
+      // full one and costs a page-1 request that can only come back empty. The
+      // alternative is holding server rows back to make room, which loses them
+      // for good — the paging is by page index, so the next page starts past
+      // them. One wasted round trip, after which exhaustion latches correctly.
       const extra = page === 0 ? this.extraOptions() : [];
       if (extra.length === 0) {
         return rows;
@@ -503,7 +516,15 @@ export abstract class TnDirectoryAutocompleteBase extends TnDirectoryFieldBase i
    * a dismissed dialog leaves the previous selection exactly as it was.
    */
   protected onCreate(): void {
-    this.directory.createUser?.(this.directoryOptions()).pipe(first()).subscribe((created) => {
+    // Tied to the field's lifetime like everything else here, and here it is
+    // load-bearing rather than tidiness: a create flow is the one call that can
+    // stay open for minutes, so a parent `@if` or a stepper page can tear the
+    // field down while the dialog is still up — after which this would write
+    // and dirty a control on behalf of a field nobody can see.
+    this.directory.createUser?.(this.directoryOptions()).pipe(
+      first(),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((created) => {
       if (!created) {
         return;
       }

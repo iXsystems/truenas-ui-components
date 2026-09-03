@@ -405,6 +405,19 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     return kept ? [...fetched, kept] : fetched;
   });
 
+  /**
+   * The rows a value may be resolved to a label FROM — everything in
+   * {@link resolvedOptions} except the synthetic kept row.
+   *
+   * That row exists to keep a committed value listed, and its label is the
+   * display text itself: `String(value)` for a value nothing has named yet.
+   * Resolving against it therefore always "succeeds", which would report the
+   * raw fallback as a resolved label and leave it on screen for good.
+   */
+  private readonly resolvableOptions = computed<TnAutocompleteOption<T>[]>(
+    () => (this.dataSource() ? this.asyncOptions.options() : this.options()),
+  );
+
   /** Loading state: the `loading` input OR-ed with the async engine's. */
   protected readonly resolvedLoading = computed(() => this.loading() || this.asyncOptions.loading());
 
@@ -489,27 +502,47 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Guards the object-without-compareWith warning so it fires only once. */
   private warnedAboutObjectCompare = false;
 
+  /**
+   * Whether the text on screen is the raw `String(value)` fallback rather than
+   * an option's label — i.e. the value has never resolved and the user has not
+   * typed over it.
+   *
+   * The upgrade effect otherwise leaves an open panel alone, on the grounds
+   * that the text belongs to the user's search. With a `dataSource` that never
+   * holds: rows only ever arrive while the panel is open, so a written value
+   * would keep the fallback as its display text for good — and
+   * `allowCustomValue` would then commit that text back over the real value on
+   * blur. This says the text is nobody's draft, so upgrading it is safe.
+   */
+  private displayIsFallback = false;
+
   constructor() {
     // A value written before its option loaded displays as the raw fallback —
     // once options arrive (or are relabeled, e.g. a locale change), upgrade
     // the text to the option's label. UPGRADE-ONLY: when no option matches
     // (e.g. a server-search picker replaced `options` after a selection), the
     // current text is left alone rather than downgraded back to the raw
-    // value. Skipped while the panel is open so active typing isn't clobbered.
+    // value. While the panel is open the text is the user's search and is left
+    // alone — unless it is still the untouched fallback, which is the only
+    // state a `dataSource` field's rows can ever reach it in.
+    // `isOpen` is a dependency rather than an `untracked` read so that closing
+    // the panel re-runs the resolution over whatever the search left behind.
     effect(() => {
       this.resolvedOptions();
       this.compareWith();
+      this.isOpen();
       untracked(() => {
-        if (this.isOpen()) {
+        if (this.isOpen() && !this.displayIsFallback) {
           return;
         }
         const value = this.selectedValue();
         if (value === null || value === undefined) {
           return;
         }
-        const match = this.resolvedOptions().find((opt) => this.valueMatches(opt.value, value));
+        const match = this.resolvableOptions().find((opt) => this.valueMatches(opt.value, value));
         if (match) {
           this.searchTerm.set(match.label);
+          this.displayIsFallback = false;
         }
       });
     });
@@ -571,11 +604,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // remembered one so `keepSelectedOption` doesn't relabel the new value
     // with the previous selection's text.
     this.selectedLabel.set(null);
-    if (value !== null && value !== undefined) {
-      this.searchTerm.set(this.displayValue(value));
-    } else {
-      this.searchTerm.set('');
-    }
+    this.setDisplayFromValue(value);
   }
 
   registerOnChange(fn: (value: T | null) => void): void {
@@ -626,6 +655,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
+    this.displayIsFallback = false;
   }
 
   // ── Event handlers ──
@@ -633,6 +663,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
+    // The text is the user's now, whatever it was before this keystroke.
+    this.displayIsFallback = false;
     // A new term is a new pagination context — don't hold back its first page.
     this.loadMorePending = false;
     this.autoFillCount = 0;
@@ -676,10 +708,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       } else {
         // Revert to last valid selection or clear
         const current = this.selectedValue();
-        if (current !== null && current !== undefined) {
-          this.searchTerm.set(this.displayValue(current));
-        } else {
-          this.searchTerm.set('');
+        this.setDisplayFromValue(current);
+        if (current === null || current === undefined) {
           this.onChange(null);
         }
       }
@@ -712,10 +742,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * row — that draft must not survive as a value.
    */
   private runAction(): void {
-    const current = this.selectedValue();
-    this.searchTerm.set(
-      current !== null && current !== undefined ? this.displayValue(current) : ''
-    );
+    this.setDisplayFromValue(this.selectedValue());
     this.close();
     this.actionSelected.emit();
   }
@@ -765,10 +792,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         if (this.allowCustomValue()) {
           // Escape means "cancel the draft": revert to the committed value's
           // text so the upcoming blur doesn't commit the abandoned term.
-          const current = this.selectedValue();
-          this.searchTerm.set(
-            current !== null && current !== undefined ? this.displayValue(current) : ''
-          );
+          this.setDisplayFromValue(this.selectedValue());
         }
         this.close();
         break;
@@ -939,12 +963,26 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   }
 
   /**
-   * Resolves a committed value back to its option's display label, falling
-   * back to the raw value's string until the matching option is available.
+   * Show `value`'s label and record whether that text is a real label or the
+   * raw `String(value)` fallback, so {@link displayIsFallback} — and with it
+   * the upgrade effect — can tell a resolved display from an unresolved one.
+   * Every path that re-derives the text from the committed value goes through
+   * here, so the two can never disagree.
+   *
+   * A label remembered from the option the value was picked from counts as
+   * resolved: it is the same text the option would give, and the row carrying
+   * it may well have been paged away since.
    */
-  private displayValue(value: T): string {
-    const match = this.resolvedOptions().find((opt) => this.valueMatches(opt.value, value));
-    return match ? match.label : String(value);
+  private setDisplayFromValue(value: T | null): void {
+    if (value === null || value === undefined) {
+      this.searchTerm.set('');
+      this.displayIsFallback = false;
+      return;
+    }
+    const match = this.resolvableOptions().find((opt) => this.valueMatches(opt.value, value));
+    const remembered = this.selectedLabel();
+    this.searchTerm.set(match?.label ?? remembered ?? String(value));
+    this.displayIsFallback = !match && remembered === null;
   }
 
   /**
@@ -981,6 +1019,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
+    this.displayIsFallback = false;
     this.onChange(option.value);
     this.optionSelected.emit(option);
     this.close();

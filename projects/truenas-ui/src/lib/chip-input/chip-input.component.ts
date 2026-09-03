@@ -176,6 +176,9 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * Value-mode option list (`{ label, value }`). When non-empty, chips display
    * the resolved `label` while the form model holds `value`s. Takes precedence
    * over `suggestions`. For async sources, update in response to `(searchChange)`.
+   *
+   * A bound `dataSource` supersedes these as the *suggestions*, but they are
+   * still read when labelling a chip — see {@link labelOptions}.
    */
   options = input<TnChipInputOption<T>[]>([]);
 
@@ -184,7 +187,9 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * matches for `query`. Binding it hands the component the debounce,
    * request cancellation, loading state and error recovery that a consumer
    * otherwise writes by hand around `(searchChange)`, and it supersedes both
-   * `suggestions` and `options`.
+   * `suggestions` and `options` as the source of the dropdown's rows —
+   * `options` is still consulted when labelling a chip, so a host can name a
+   * value the fetched pages have not produced.
    *
    * The chip dropdown is not paged, so `page` is always 0 — the parameter is
    * there only so one source function can feed both this and `tn-autocomplete`.
@@ -345,6 +350,26 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
       return opts;
     }
     return this.suggestions().map((suggestion) => ({ label: suggestion, value: suggestion as unknown as T }));
+  });
+
+  /**
+   * The rows a chip's label and test id may be resolved from: the suggestions,
+   * plus — with a `dataSource` bound — the `options` input.
+   *
+   * Those two lists are the same thing without a `dataSource`. With one, the
+   * fetched pages are the only source of labels, and the first of them does not
+   * exist until the field is focused: a form loaded with ids would render every
+   * chip as its raw id until someone clicked into it. `options` is how a host
+   * names values it already knows the labels for, so it stays part of the
+   * lookup even where it is not part of the dropdown.
+   *
+   * Deliberately not deduplicated: fetched rows come first, and both readers
+   * take the first match, so a value in both lists resolves to the server's row.
+   */
+  private readonly labelOptions = computed<TnChipInputOption<T>[]>(() => {
+    const list = this.optionList();
+    const pinned = this.dataSource() ? this.options() : [];
+    return pinned.length ? [...list, ...pinned] : list;
   });
 
   /** Options matching the typed text and not already selected. */
@@ -702,7 +727,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   private optionFor(value: T): TnChipInputOption<T> | undefined {
     const comparator = this.compareWith();
     if (comparator) {
-      return this.optionList().find((option) => comparator(option.value, value));
+      return this.labelOptions().find((option) => comparator(option.value, value));
     }
     return this.optionIndex().get(value);
   }
@@ -715,7 +740,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    */
   private optionIndex = computed<Map<T, TnChipInputOption<T>>>(() => {
     const index = new Map<T, TnChipInputOption<T>>();
-    for (const option of this.optionList()) {
+    for (const option of this.labelOptions()) {
       if (!index.has(option.value)) {
         index.set(option.value, option);
       }

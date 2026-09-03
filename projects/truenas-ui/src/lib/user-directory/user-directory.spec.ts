@@ -13,6 +13,7 @@ import { TnGroupChipsHarness } from './group-chips.harness';
 import { TnUserAutocompleteComponent } from './user-autocomplete.component';
 import { TnUserAutocompleteHarness } from './user-autocomplete.harness';
 import { TnUserChipsComponent } from './user-chips.component';
+import { TnUserChipsHarness } from './user-chips.harness';
 import {
   TN_USER_DIRECTORY,
   type TnDirectoryQuery,
@@ -102,7 +103,7 @@ class StubDirectory implements TnUserDirectory {
       </tn-form-field>
 
       <tn-form-field label="Users">
-        <tn-user-chips formControlName="userList" [debounce]="0" />
+        <tn-user-chips formControlName="userList" [extraOptions]="extraOptions()" [debounce]="0" />
       </tn-form-field>
 
       <tn-form-field label="Groups">
@@ -246,6 +247,43 @@ describe('tn-user-* / tn-group-* directory fields', () => {
       await owner.focus();
 
       expect(await owner.getOptions()).toEqual(['archived-user', 'root', 'operator', 'admin']);
+    });
+
+    it('upgrades a written id to its pinned name, and does not commit the id back as text', async () => {
+      // The whole point of the input: a record holding an id renders it as a
+      // name. The display starts as the raw id — nothing can resolve it before
+      // the first page is fetched — and the first page only ever lands with the
+      // panel OPEN, which is exactly when the field leaves its text alone. Left
+      // un-upgraded, `allowCustomValue` then committed that text on blur and
+      // the numeric id became the string "4242".
+      host.extraOptions.set([{ label: 'archived-user', value: 4242 }]);
+      host.owner.setValue(4242 as unknown as string);
+      fixture.detectChanges();
+
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      expect(await owner.getInputValue()).toBe('4242');
+
+      await owner.focus();
+      await settle();
+      expect(await owner.getInputValue()).toBe('archived-user');
+
+      await owner.blur();
+      await settle();
+
+      expect(host.owner.value).toBe(4242);
+    });
+
+    it('names a chip for a value the chips field has never fetched', async () => {
+      // The chips field resolves a chip's text from the options it has, and
+      // with a `[dataSource]` those arrive no earlier than the first focus — so
+      // an edit form rendered every pinned id raw until someone clicked it.
+      host.extraOptions.set([{ label: 'archived-user', value: 4242 }]);
+      host.form.controls.userList.setValue([4242 as unknown as string]);
+      await settle();
+
+      const userList = await loader.getHarness(TnUserChipsHarness);
+
+      expect(await userList.getChips()).toEqual(['archived-user']);
     });
 
     it('lists a pinned option that arrives after the first page', async () => {
