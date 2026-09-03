@@ -548,9 +548,13 @@ export const LongTitle: Story = {
     const close = panel.querySelector('.tn-dialog__close') as HTMLElement;
 
     try {
-      // The heading wrapped rather than widening the header: no horizontal
-      // overflow anywhere on the panel, at the width the bug was filed against.
+      // Precondition, not the guard: the dialog is at the width the bug was
+      // filed against. It held on the broken CSS too — the heading overflowed
+      // the panel rather than widening it.
       await expect(Math.round(panel.getBoundingClientRect().width)).toBe(400);
+
+      // The guard. The heading wrapped instead of pushing the header wider, so
+      // the panel has no horizontal overflow to scroll: 400, against 677 before.
       await expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
 
       // And so nothing scrolls the panel sideways. `autoFocus` has already put
