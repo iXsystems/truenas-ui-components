@@ -946,18 +946,26 @@ tn-dialog-shell {
     down the same line. Tabbing to a control near the left edge scrolled it back
     and the dialog abruptly looked correct, which is how the bug was reported.
 
-    Both declarations are load-bearing, and neither fixes it alone — measured on
-    that dialog at 400px, `scrollWidth` / `scrollLeft` after focusing close:
-      neither          677 / 277   the reported bug
-      min-width only   629 /   0   heading shrinks, but its unbroken word still
-                                   spills out of the heading box and across the
-                                   close button
-      break-word only  677 / 277   nothing breaks: at 613px the word already
-                                   fits its own line, so there is nothing to wrap
-      both             400 /   0
+    `anywhere` and not `break-word`, which is the difference between one
+    declaration and two: `anywhere` contributes its break opportunities to
+    MIN-CONTENT sizing, so the `auto` floor lands at the widest character rather
+    than the widest word and the heading is free to shrink. `break-word` does
+    not, and leaves the floor at 613px — where the word already fits its own
+    line and there is nothing to wrap — so it needs an explicit `min-width: 0`
+    beside it to reach the same place. Neither touches max-content, so a dialog
+    opened without an explicit width still sizes itself to its title as before.
+
+    Measured on that dialog at 400px, `scrollWidth` / `scrollLeft` after
+    focusing close:
+      none                       677 / 277   the reported bug
+      break-word                 677 / 277   nothing breaks (see above)
+      min-width: 0               629 /   0   heading shrinks, but its unbroken
+                                             word still spills out of the
+                                             heading box and across the ✕
+      min-width: 0 + break-word  400 /   0
+      anywhere                   400 /   0   what ships
   */
-  min-width: 0;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* Close button */

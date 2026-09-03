@@ -557,17 +557,11 @@ export const LongTitle: Story = {
       // the panel has no horizontal overflow to scroll: 400, against 677 before.
       await expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
 
-      // A re-enactment of the reported symptom rather than a second guard: with
-      // no overflow left to scroll, the maximum `scrollLeft` is already 0 and
-      // the line above has thrown on any CSS where it is not. Kept for what it
-      // documents — the step that used to open the dialog at `scrollLeft: 277`
-      // was CDK's `autoFocus` landing on the close button. Hence the `blur()`:
-      // focusing an already-focused element scrolls nothing, so without it this
-      // would not re-enact anything.
-      close.blur();
-      panel.scrollLeft = 0;
-      close.focus();
-      await expect(panel.scrollLeft).toBe(0);
+      // What the user saw is one step further on and needs no assertion of its
+      // own: with no overflow the maximum `scrollLeft` is 0, so the line above
+      // has already thrown on any CSS where the next part could go wrong. It
+      // was CDK's `autoFocus` landing on the close button, and the browser
+      // scrolling it into view, that opened the dialog at `scrollLeft: 277`.
 
       // The body copy carries the same path, and is clipped by `overflow-x:
       // hidden` rather than scrollable — so it has to wrap on its own.
