@@ -557,10 +557,13 @@ export const LongTitle: Story = {
       // the panel has no horizontal overflow to scroll: 400, against 677 before.
       await expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
 
-      // And so nothing scrolls the panel sideways. `autoFocus` has already put
-      // focus on the close button once — the step that used to open the dialog
-      // at `scrollLeft: 277` — so blur first, or re-focusing a focused element
-      // scrolls nothing and this passes on the broken CSS too.
+      // A re-enactment of the reported symptom rather than a second guard: with
+      // no overflow left to scroll, the maximum `scrollLeft` is already 0 and
+      // the line above has thrown on any CSS where it is not. Kept for what it
+      // documents — the step that used to open the dialog at `scrollLeft: 277`
+      // was CDK's `autoFocus` landing on the close button. Hence the `blur()`:
+      // focusing an already-focused element scrolls nothing, so without it this
+      // would not re-enact anything.
       close.blur();
       panel.scrollLeft = 0;
       close.focus();
