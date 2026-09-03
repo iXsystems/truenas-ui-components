@@ -222,8 +222,6 @@ export const ExistenceValidation: Story = {
 export const FailingLookup: Story = {
   render: () => ({
     props: (() => {
-      const directory = new FakeUserDirectory();
-      directory.failNextQuery = true;
       const lastError = signal<string | null>(null);
       return {
         control: new FormControl<string | null>(null),

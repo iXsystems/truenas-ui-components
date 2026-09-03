@@ -61,6 +61,37 @@ export interface TnOptionsDataSource<O> {
   prime(): void;
   /** Append the next page. No-op while loading, when exhausted, or with no source. */
   loadMore(): void;
+  /**
+   * Declare everything fetched so far out of date, without fetching anything.
+   *
+   * The other half of the stable-source contract. A host whose `[dataSource]`
+   * is a fixed function reading live configuration — the shape that keeps a
+   * source from being swapped out from under a search in flight — has nothing
+   * here observing that configuration, so a change to it would otherwise take
+   * effect only on the next keystroke. This is how the host says it changed.
+   *
+   * Clears {@link TnOptionsDataSource.prime}'s latch and rolls paging back to
+   * page 0, so the next `prime` refetches instead of being answered from the
+   * previous configuration's rows — and is not suppressed for repeating the
+   * term already on screen. Deliberately does NOT issue a request itself: only
+   * the host knows whether its panel is open, and a field nobody has touched
+   * should not query the server because a sibling input moved. A host with rows
+   * on screen calls `prime` straight after this.
+   */
+  refresh(): void;
+}
+
+/**
+ * The part of a host component (`tn-autocomplete`, `tn-chip-input`) that an
+ * outer component wrapping it drives directly.
+ *
+ * The engine is private to the host, so a composite field — one that builds the
+ * `[dataSource]` itself and binds it once — needs this to invalidate what the
+ * host has fetched when its own inputs move.
+ */
+export interface TnAsyncOptionsHost {
+  /** See {@link TnOptionsDataSource.refresh}. */
+  refreshOptions(): void;
 }
 
 /**
@@ -122,6 +153,13 @@ export function createTnOptionsDataSource<O>(
    * generation is discarded rather than appended to a different result set.
    */
   let generation = 0;
+  /**
+   * Set by `refresh`, cleared when the request it queued starts. Read by the
+   * `distinctUntilChanged` comparator, the same way `lastRequestFailed` is: a
+   * refresh re-asks the term already on screen, which is exactly the shape that
+   * comparator exists to suppress.
+   */
+  let refreshRequested = false;
 
   const requests$ = new Subject<{ query: string; immediate: boolean }>();
 
@@ -131,12 +169,15 @@ export function createTnOptionsDataSource<O>(
       // should be on screen as the panel opens, not a quarter-second later.
       debounce((request) => (request.immediate ? of(0) : timer(config.debounceMs()))),
       distinctUntilChanged(
-        (previous, current) => previous.query === current.query && !lastRequestFailed,
+        (previous, current) => previous.query === current.query
+          && !lastRequestFailed
+          && !refreshRequested,
       ),
       tap((request) => {
         query = request.query;
         nextPage = 0;
         lastRequestFailed = false;
+        refreshRequested = false;
         generation++;
         loading.set(true);
       }),
@@ -232,6 +273,24 @@ export function createTnOptionsDataSource<O>(
             config.onSettled?.();
           },
         });
+    },
+
+    refresh(): void {
+      primed = false;
+      nextPage = 0;
+      exhausted.set(false);
+      // Any page still in flight was asked for under the old configuration —
+      // bump the generation so it is dropped rather than appended to whatever
+      // the next request produces.
+      generation++;
+      // The refetch re-asks the term already on screen, which is exactly what
+      // the duplicate-term guard suppresses. Left armed until a request
+      // actually starts, so a host that refreshes while closed is still not
+      // suppressed when it primes on its next open.
+      refreshRequested = true;
+      // `options` is deliberately left alone: a panel that is open keeps
+      // showing the previous rows until the replacements land, rather than
+      // blinking empty for a round trip.
     },
   };
 }

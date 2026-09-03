@@ -25,7 +25,7 @@ import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 import { injectTnLabels } from '../utils/inject-labels';
-import { createTnOptionsDataSource, type TnOptionsFetchFn } from '../utils/options-data-source';
+import { createTnOptionsDataSource, type TnAsyncOptionsHost, type TnOptionsFetchFn } from '../utils/options-data-source';
 
 /**
  * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
@@ -86,7 +86,7 @@ export const TN_AUTOCOMPLETE_LABELS = new InjectionToken<TnAutocompleteLabels | 
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
 })
-export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
+export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, TnAsyncOptionsHost, OnDestroy {
   private readonly elementRef = inject(ElementRef);
   private readonly overlay = inject(Overlay);
   private readonly viewContainerRef = inject(ViewContainerRef);
@@ -588,6 +588,44 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   setDisabledState(isDisabled: boolean): void {
     this.formDisabled.set(isDisabled);
+  }
+
+  // ── Async options ──
+
+  /**
+   * Discard the pages fetched from `dataSource` and re-query the current term.
+   *
+   * For a caller whose `[dataSource]` is a fixed function reading live
+   * configuration — the shape that keeps the source from being swapped out
+   * from under a search in flight — this is how a change to that configuration
+   * takes effect, rather than waiting for the next keystroke to notice.
+   */
+  refreshOptions(): void {
+    // Both latches belong to the result set being thrown away; left set, they
+    // would suppress the first `loadMore` of the one replacing it.
+    this.loadMorePending = false;
+    this.autoFillCount = 0;
+    this.asyncOptions.refresh();
+    if (this.isOpen()) {
+      // Rows are on screen and clickable right now, so they have to be
+      // replaced at once. A closed panel refetches when it next opens — the
+      // `prime` there is no longer answered from the invalidated pages.
+      this.asyncOptions.prime();
+    }
+  }
+
+  /**
+   * Commit an option programmatically, its label included.
+   *
+   * `writeValue` deliberately forgets the label — the forms layer hands over a
+   * value and nothing else — so a value the host picked itself would render as
+   * `String(value)` until a search happened to return the row carrying it.
+   * This is the path for a caller that already holds the option.
+   */
+  setSelectedOption(option: TnAutocompleteOption<T>): void {
+    this.selectedValue.set(option.value);
+    this.selectedLabel.set(option.label);
+    this.searchTerm.set(option.label);
   }
 
   // ── Event handlers ──

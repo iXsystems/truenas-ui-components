@@ -23,8 +23,14 @@ const FIRST_NAMES = [
   'quinn', 'rob', 'sophie', 'tim', 'ursula', 'vint', 'wendy', 'xavier',
 ];
 
-/** 120 users, so the dropdown pages more than twice at the default page size. */
-const USERS: string[] = [
+/**
+ * 120 users, so the dropdown pages more than twice at the default page size.
+ *
+ * Read-only: `createUser` keeps its inventions on the instance instead of
+ * unshifting them here, so one story's create flow does not grow the directory
+ * every other story in the session searches.
+ */
+const USERS: readonly string[] = [
   'root',
   ...FIRST_NAMES.flatMap((name) => [name, `${name}.admin`, `${name}.svc`, `ACME\\${name}`, `${name}2`]),
 ].slice(0, 120);
@@ -48,7 +54,12 @@ function delayed<T>(value: T, ms = LATENCY): Observable<T> {
   });
 }
 
-function page(names: string[], search: string, pageIndex: number, pageSize: number): TnPrincipalOption[] {
+function page(
+  names: readonly string[],
+  search: string,
+  pageIndex: number,
+  pageSize: number,
+): TnPrincipalOption[] {
   const term = search.trim().toLowerCase();
   const matches = term ? names.filter((name) => name.toLowerCase().includes(term)) : names;
   return matches
@@ -67,14 +78,15 @@ export class FakeUserDirectory implements TnUserDirectory {
   /** Flipped by the stories that demonstrate a failing lookup. */
   failNextQuery = false;
 
-  private created = 0;
+  /** Names this instance invented, listed ahead of the fixed set. */
+  private readonly createdUsers: string[] = [];
 
   queryUsers(search: string, pageIndex: number): Observable<TnPrincipalOption[]> {
     if (this.failNextQuery) {
       this.failNextQuery = false;
       return this.failure(search);
     }
-    return delayed(page(USERS, search, pageIndex, this.pageSize));
+    return delayed(page(this.users(), search, pageIndex, this.pageSize));
   }
 
   queryGroups(search: string, pageIndex: number): Observable<TnPrincipalOption[]> {
@@ -86,7 +98,7 @@ export class FakeUserDirectory implements TnUserDirectory {
   }
 
   userExists(username: string): Observable<boolean> {
-    return delayed(USERS.includes(username), 200);
+    return delayed(this.users().includes(username), 200);
   }
 
   groupExists(groupName: string): Observable<boolean> {
@@ -94,10 +106,13 @@ export class FakeUserDirectory implements TnUserDirectory {
   }
 
   createUser(_options: TnDirectoryQuery): Observable<TnPrincipalOption | null> {
-    this.created += 1;
-    const username = `new.user${this.created}`;
-    USERS.unshift(username);
+    const username = `new.user${this.createdUsers.length + 1}`;
+    this.createdUsers.unshift(username);
     return delayed({ label: username, value: username }, 800);
+  }
+
+  private users(): readonly string[] {
+    return this.createdUsers.length ? [...this.createdUsers, ...USERS] : USERS;
   }
 
   private failure(search: string): Observable<TnPrincipalOption[]> {

@@ -247,6 +247,20 @@ describe('tn-user-* / tn-group-* directory fields', () => {
 
       expect(await owner.getOptions()).toEqual(['archived-user', 'root', 'operator', 'admin']);
     });
+
+    it('lists a pinned option that arrives after the first page', async () => {
+      // The documented use is "an id already on the record, resolved to its
+      // display name elsewhere", and that resolution normally lands
+      // asynchronously — after the panel has already fetched its first page.
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      await owner.focus();
+      expect(await owner.getOptions()).toEqual(users);
+
+      host.extraOptions.set([{ label: 'archived-user', value: 4242 }]);
+      await settle();
+
+      expect(await owner.getOptions()).toEqual(['archived-user', ...users]);
+    });
   });
 
   describe('directoryOptions', () => {
@@ -257,6 +271,38 @@ describe('tn-user-* / tn-group-* directory fields', () => {
       await (await loader.getHarness(TnUserAutocompleteHarness)).focus();
 
       expect(directory.seenOptions).toContainEqual({ localOnly: true, valueField: 'id' });
+    });
+
+    it('re-queries when the bag changes, rather than waiting for a keystroke', async () => {
+      // The source function reads the bag at call time, which keeps it from
+      // being swapped out mid-search — but nothing calls it again on its own,
+      // so the panel used to keep serving the previous narrowing's results and
+      // a pick could commit a value the new one was meant to exclude.
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      await owner.focus();
+      expect(await owner.getOptions()).toEqual(users);
+
+      directory.queryUsersImpl = () => of([{ label: 'privileged', value: 'privileged' }]);
+      host.directoryOptions.set({ localOnly: true });
+      await settle();
+
+      expect(directory.seenOptions).toContainEqual({ localOnly: true });
+      expect(await owner.getOptions()).toEqual(['privileged']);
+    });
+
+    it('refetches on the next open when the bag changed while the field was closed', async () => {
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      await owner.focus();
+      await owner.blur();
+      await settle();
+
+      directory.queryUsersImpl = () => of([{ label: 'privileged', value: 'privileged' }]);
+      host.directoryOptions.set({ localOnly: true });
+      await settle();
+
+      await owner.focus();
+
+      expect(await owner.getOptions()).toEqual(['privileged']);
     });
   });
 
@@ -416,6 +462,23 @@ describe('tn-user-* / tn-group-* directory fields', () => {
       await settle();
 
       expect(host.owner.value).toBe('newbie');
+    });
+
+    it('shows the created principal by name, not by the id it was given', async () => {
+      // `writeValue` cannot know a label, so committing the value alone left an
+      // id-valued directory displaying the raw id until the user happened to
+      // search for the user they had just created.
+      host.allowCreate.set(true);
+      directory.createUserImpl = () => of({ label: 'newbie', value: 1234 });
+      fixture.detectChanges();
+
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      await owner.focus();
+      await owner.selectOption('Add New');
+      await settle();
+
+      expect(host.owner.value).toBe(1234);
+      expect(await owner.getInputValue()).toBe('newbie');
     });
 
     it('leaves the previous selection alone when the create flow is dismissed', async () => {

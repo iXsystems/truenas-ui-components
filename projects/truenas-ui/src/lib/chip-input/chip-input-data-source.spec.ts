@@ -196,6 +196,64 @@ describe('tn-chip-input [dataSource]', () => {
     expect(loadingRow()).toBeNull();
   });
 
+  it('leaves the panel closed after a chip is committed', () => {
+    // Committing changes the suggestion list — the chosen row drops out — which
+    // re-runs the effect that re-opens the panel when results arrive. With a
+    // `dataSource` bound the field counts as "actively searching" even on an
+    // empty input, so the panel sprang straight back open against a blank
+    // field, still listing the rows of the term just committed. The static
+    // path never did this: there, the empty input ends the search.
+    focus();
+    type('a');
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts']);
+
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+
+    expect(host.control.value).toEqual(['a']);
+    expect(renderedSuggestions()).toEqual([]);
+  });
+
+  it('re-opens on the next keystroke after a commit', () => {
+    focus();
+    type('a');
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+
+    type('b');
+
+    expect(renderedSuggestions()).toEqual(['builders']);
+  });
+
+  describe('refreshOptions()', () => {
+    function component(): TnChipInputComponent<string> {
+      return fixture.debugElement.children[0].componentInstance as TnChipInputComponent<string>;
+    }
+
+    it('re-queries the current term instead of being suppressed as a duplicate', () => {
+      focus();
+      type('a');
+      queries = [];
+      responder = () => of([{ label: 'narrowed', value: 'narrowed' }]);
+
+      component().refreshOptions();
+      fixture.detectChanges();
+
+      expect(queries).toEqual(['a']);
+      expect(renderedSuggestions()).toEqual(['narrowed']);
+    });
+
+    it('does not query for a field that has never been focused', () => {
+      component().refreshOptions();
+      fixture.detectChanges();
+      expect(queries).toEqual([]);
+
+      focus();
+
+      expect(queries).toEqual(['']);
+    });
+  });
+
   it('reports a failure and keeps the field usable', () => {
     let failing = true;
     responder = (query) => (failing

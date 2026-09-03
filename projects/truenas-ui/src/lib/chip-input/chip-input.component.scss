@@ -55,6 +55,13 @@
   // The max-height is declared here and inherits, so it bounds the panel as a
   // whole AND the listbox inside it — the listbox scrolls, and the status row
   // below it stays outside the scrolling area.
+  //
+  // The column is what makes both of those true at once: the loading row is a
+  // SIBLING of the listbox, so a cap on the listbox alone lets the two of them
+  // together push past the panel's own max-height and paint below its border.
+  // Mirrors tn-autocomplete, where the same split lives.
+  display: flex;
+  flex-direction: column;
   max-height: var(--tn-chip-input-panel-max-height, 320px);
   background-color: var(--tn-bg1, #ffffff);
   border: 1px solid var(--tn-lines, #d1d5db);
@@ -66,6 +73,10 @@
 .tn-chip-input__listbox {
   max-height: inherit;
   overflow-y: auto;
+  // A flex item floors at its content height. Without this the listbox refuses
+  // to shrink for the loading row and pushes it past the panel's max-height,
+  // outside the bordered box.
+  min-height: 0;
 }
 
 .tn-chip-input__loading {

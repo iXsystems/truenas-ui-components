@@ -1,4 +1,4 @@
-import { DestroyRef, Directive, Injector, computed, effect, inject, input, output, signal } from '@angular/core';
+import { DestroyRef, Directive, Injector, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import type { AsyncValidatorFn, ControlValueAccessor, ValidationErrors } from '@angular/forms';
 import { NgControl } from '@angular/forms';
@@ -15,7 +15,7 @@ import {
 } from './user-directory';
 import { controlTestId, type TnTestIdValue } from '../test-id';
 import { injectTnLabels } from '../utils/inject-labels';
-import type { TnOptionsFetchFn } from '../utils/options-data-source';
+import type { TnAsyncOptionsHost, TnOptionsFetchFn } from '../utils/options-data-source';
 
 /** Which side of the directory a field reads. */
 export type TnPrincipalKind = 'user' | 'group';
@@ -56,7 +56,7 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
    * `undefined` forever — every field renders, and nothing a user does ever
    * reaches the form control.
    */
-  protected abstract readonly innerControl: Signal<ControlValueAccessor | undefined>;
+  protected abstract readonly innerControl: Signal<TnDirectoryInnerControl | undefined>;
 
   protected readonly directory = injectUserDirectory();
   protected readonly labels = injectTnLabels(TN_USER_DIRECTORY_LABELS);
@@ -129,6 +129,11 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
    * The `[dataSource]` the inner control consumes. A stable function identity —
    * it reads `directoryOptions()` when called rather than closing over it, so
    * changing that input does not swap the source out from under a live search.
+   *
+   * Stability alone is only half of it: nothing inside the inner control
+   * observes these inputs, so a change to them would take effect no earlier
+   * than the next keystroke. The effect in the constructor, keyed on
+   * {@link directoryQueryKey}, is the other half.
    */
   protected readonly optionsSource: TnOptionsFetchFn<TnPrincipalOption> = (search, page) => {
     const options = this.directoryOptions();
@@ -147,6 +152,12 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
       return [...extra, ...rows.filter((row) => !pinned.has(row.value))];
     }));
   };
+
+  /**
+   * The {@link directoryQueryKey} the inner control's current pages were
+   * fetched under. `undefined` until the first one is recorded.
+   */
+  private lastQueryKey: string | null | undefined;
 
   // ── CVA forwarding ──
 
@@ -187,6 +198,32 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
       const control = this.innerControl();
       if (control) {
         this.registerInner(control);
+      }
+    });
+
+    // `[directoryOptions]` / `[extraOptions]` are signal inputs and neither is
+    // init-only, so a value that flips after init — `[directoryOptions]="{
+    // withRoles: showPrivileged() }"` — has to reach the rows on screen. The
+    // source function reads them at call time, but nothing calls it until the
+    // user types again, so without this the panel keeps serving the previous
+    // narrowing's results and a pick commits a value it was meant to exclude.
+    effect(() => {
+      const control = this.innerControl();
+      const key = directoryQueryKey(this.directoryOptions(), this.extraOptions());
+      if (!control) {
+        return;
+      }
+      // A `null` key is one that could not be compared — treated as a change,
+      // so an unserializable bag costs a redundant refetch rather than going
+      // unnoticed.
+      const unchanged = key !== null && key === this.lastQueryKey;
+      const isFirstKey = this.lastQueryKey === undefined;
+      this.lastQueryKey = key;
+      // Untracked because `refreshOptions` reads the inner control's own option
+      // and loading signals; tracking those would make every page that lands
+      // re-run this effect — and refresh again.
+      if (!unchanged && !isFirstKey) {
+        untracked(() => control.refreshOptions());
       }
     });
   }
@@ -471,6 +508,11 @@ export abstract class TnDirectoryAutocompleteBase extends TnDirectoryFieldBase i
         return;
       }
       this.writeValueAndNotify(created.value);
+      // The value alone reaches the inner control through `writeValue`, which
+      // has no way to know the label and drops the remembered one. Handing the
+      // whole option over keeps the field showing the new user's NAME rather
+      // than the id it was just given, for an id-valued directory.
+      this.innerControl()?.setSelectedOption?.(created);
       this.created.emit(created);
     });
   }
@@ -495,6 +537,44 @@ export abstract class TnDirectoryChipsBase extends TnDirectoryFieldBase implemen
 
   /** Emits a failed directory lookup; the field recovers on its own. */
   readonly directoryError = output<unknown>();
+}
+
+/**
+ * Identity of everything `optionsSource` reads, so a change to any of it can
+ * invalidate what the inner control has already fetched.
+ *
+ * Serialized rather than compared by reference on purpose: a template that
+ * rebuilds the bag each cycle — `[directoryOptions]="buildQuery()"`, a getter —
+ * would otherwise read as a change on every tick and re-query the directory
+ * forever. These are a handful of fields and a few pinned options; stringifying
+ * them is far cheaper than the request it prevents.
+ *
+ * `TnDirectoryQuery` is `Record<string, unknown>` and the app fills it, so it
+ * can hold something JSON refuses — a cycle, a BigInt. Returning `null` there
+ * costs a redundant refetch; letting the throw out of an effect would break the
+ * field for good.
+ */
+function directoryQueryKey(
+  query: TnDirectoryQuery,
+  extraOptions: readonly TnPrincipalOption[],
+): string | null {
+  try {
+    return JSON.stringify([query, extraOptions]);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What a directory field needs from the `tn-autocomplete` / `tn-chip-input` it
+ * wraps, beyond the `ControlValueAccessor` contract it forwards.
+ */
+interface TnDirectoryInnerControl extends ControlValueAccessor, TnAsyncOptionsHost {
+  /**
+   * Commit an option, label included. Present on `tn-autocomplete` only — a
+   * chips field has no single selection to label.
+   */
+  setSelectedOption?(option: TnPrincipalOption): void;
 }
 
 /**

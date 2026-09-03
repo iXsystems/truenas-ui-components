@@ -503,4 +503,82 @@ describe('tn-autocomplete [dataSource]', () => {
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
     });
   });
+
+  describe('refreshOptions()', () => {
+    /**
+     * A `[dataSource]` is usually a fixed function reading live configuration —
+     * that is what keeps it from being swapped out from under a request in
+     * flight. Nothing in here observes that configuration, so this is how the
+     * caller says it moved.
+     */
+    function component(): TnAutocompleteComponent<string> {
+      return fixture.debugElement.children[0].componentInstance as TnAutocompleteComponent<string>;
+    }
+
+    it('re-queries the current term instead of being suppressed as a duplicate', () => {
+      focus();
+      type('ann');
+      requests = [];
+
+      component().refreshOptions();
+      fixture.detectChanges();
+
+      expect(requests).toEqual([{ query: 'ann', page: 0 }]);
+    });
+
+    it('replaces the rows on screen with the new configuration\'s', () => {
+      focus();
+      expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
+
+      responder = () => of([{ label: 'narrowed', value: 'narrowed' }]);
+      component().refreshOptions();
+      fixture.detectChanges();
+
+      expect(renderedOptions()).toEqual(['narrowed']);
+    });
+
+    it('restarts paging, so the next scroll asks for page 1 of the new results', () => {
+      focus();
+      responder = (query, page) => of(pageOf(query, page, 5));
+      component().refreshOptions();
+      fixture.detectChanges();
+      requests = [];
+
+      scrollToEnd();
+
+      expect(requests).toEqual([{ query: '', page: 1 }]);
+    });
+
+    it('does not query for a panel that has never been opened', () => {
+      // A field nobody has touched must not reach the server because some
+      // sibling input moved. The first open is what fetches, as it always was.
+      component().refreshOptions();
+      fixture.detectChanges();
+      expect(requests).toEqual([]);
+
+      focus();
+
+      expect(requests).toEqual([{ query: '', page: 0 }]);
+    });
+
+    it('defers to the next open when the panel is closed, and is not suppressed there', () => {
+      focus();
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      responder = () => of([{ label: 'narrowed', value: 'narrowed' }]);
+      component().refreshOptions();
+      fixture.detectChanges();
+      expect(requests).toHaveLength(1);
+
+      focus();
+
+      // `prime` latches once a query succeeds, and the term has not changed —
+      // without the refresh clearing that latch AND arming the duplicate-term
+      // guard, reopening would re-list the previous configuration's rows and
+      // never ask again.
+      expect(requests).toHaveLength(2);
+      expect(renderedOptions()).toEqual(['narrowed']);
+    });
+  });
 });

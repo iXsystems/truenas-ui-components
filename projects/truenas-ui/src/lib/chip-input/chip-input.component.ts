@@ -26,7 +26,7 @@ import {
   TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue,
 } from '../test-id';
 import { injectTnLabels } from '../utils/inject-labels';
-import { createTnOptionsDataSource, type TnOptionsFetchFn } from '../utils/options-data-source';
+import { createTnOptionsDataSource, type TnAsyncOptionsHost, type TnOptionsFetchFn } from '../utils/options-data-source';
 
 /**
  * Option shape for `tn-chip-input`'s value mode — the `label` is displayed on
@@ -120,7 +120,7 @@ let nextId = 0;
   templateUrl: './chip-input.component.html',
   styleUrl: './chip-input.component.scss',
 })
-export class TnChipInputComponent<T = string> implements ControlValueAccessor, OnDestroy {
+export class TnChipInputComponent<T = string> implements ControlValueAccessor, TnAsyncOptionsHost, OnDestroy {
   private readonly overlay = inject(Overlay);
   private readonly viewContainerRef = inject(ViewContainerRef);
 
@@ -367,6 +367,19 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   private overlayRef?: OverlayRef;
   private overlaySubs: Subscription[] = [];
 
+  /**
+   * Set when the panel was closed by a commit rather than by the user, and read
+   * by the re-open effect below.
+   *
+   * Committing a chip changes the suggestion list — the chosen row is now
+   * excluded — which re-runs that effect. On the static path the empty input
+   * makes `activelySearching` false and the close stands; with a `dataSource`
+   * bound, `searchingEmpty` holds regardless, so the panel sprang back open
+   * against an empty field, still listing the rows of the term just committed.
+   * Cleared by the next thing that is genuinely a search.
+   */
+  private closedByCommit = false;
+
   constructor() {
     // Async suggestions: when the user types, onInput runs syncDropdown()
     // against the still-stale list and leaves the panel closed; results land a
@@ -387,7 +400,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
           && (searchingEmpty || this.inputValue().trim() !== '')
           && this.canAddMore()
           && !this.isDisabled();
-        if (hasMatches && activelySearching) {
+        if (hasMatches && activelySearching && !this.closedByCommit) {
           this.open();
         }
       });
@@ -396,6 +409,26 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
 
   ngOnDestroy(): void {
     this.detachOverlay();
+  }
+
+  // ── Async options ──
+
+  /**
+   * Discard the pages fetched from `dataSource` and re-query the current term.
+   *
+   * For a caller whose `[dataSource]` is a fixed function reading live
+   * configuration — the shape that keeps the source from being swapped out
+   * from under a search in flight — this is how a change to that configuration
+   * takes effect, rather than waiting for the next keystroke to notice.
+   */
+  refreshOptions(): void {
+    this.asyncOptions.refresh();
+    if (this.focused()) {
+      // Suggestions are on screen (or one keystroke from it), so they have to
+      // be replaced at once. An unfocused field refetches on its next focus —
+      // the `prime` there is no longer answered from the invalidated pages.
+      this.asyncOptions.prime();
+    }
   }
 
   // ── ControlValueAccessor ──
@@ -434,6 +467,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   protected onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.inputValue.set(value);
+    this.closedByCommit = false;
     this.asyncOptions.search(value);
     this.searchChange.emit(value);
     this.highlightedIndex.set(-1);
@@ -442,6 +476,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
 
   protected onFocus(): void {
     this.focused.set(true);
+    this.closedByCommit = false;
     // Fetch the first page the first time the field is used, so a form of
     // chip inputs costs nothing until one is focused. A no-op thereafter.
     this.asyncOptions.prime();
@@ -700,6 +735,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   private clearInput(): void {
     this.inputValue.set('');
     this.inputEl().nativeElement.value = '';
+    this.closedByCommit = true;
     this.close();
   }
 
