@@ -1,7 +1,7 @@
 <tn-dialog-shell [title]="'Delete zvol ' + path">
   <p>The {{ path }} zvol and all snapshots stored with it will be permanently deleted.</p>
   <p>Enter {{ path }} below to confirm.</p>
-  <tn-form-field>
+  <tn-form-field label="Confirm name">
     <tn-input name="confirmName" [(ngModel)]="confirmName" />
   </tn-form-field>
 
