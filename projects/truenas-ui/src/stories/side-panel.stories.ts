@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expect } from 'storybook/test';
 import { expectOpeningMovesFocusInside } from './focus-capture';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
@@ -22,6 +23,9 @@ const textareaStyle = 'width: 100%; padding: 10px 12px; border: 1px solid var(--
  * child of it. `focus-capture.ts` holds the assertion, shared with `tn-drawer`.
  */
 const SIDE_PANEL_DIALOG = '.tn-side-panel__overlay';
+
+/** A dataset path long enough to overflow a 400px panel unbroken (NAS-142530). */
+const LONG_DATASET_PATH = 'dozer/TEST_ANOTHER_DATASET_WITH_A_LONG_NAME';
 
 const meta: Meta<TnSidePanelComponent> = {
   title: 'Components/Side Panel',
@@ -814,4 +818,30 @@ export const TestIds: Story = {
     `,
     moduleMetadata: { imports: [TnSidePanelComponent] },
   }),
+};
+
+/**
+ * **A path too long for the panel.** The body's copy names datasets in full, and
+ * `.tn-side-panel__content` is `overflow-x: hidden` — so before NAS-142530 a path
+ * wider than the panel was simply cut off mid-name, with no scrollbar and no
+ * ellipsis to say anything was missing. It wraps now. The heading is the other
+ * half of the same question and answers it differently, on purpose: a panel
+ * header cannot grow, so `.tn-side-panel__title` ellipsises instead.
+ */
+export const LongPath: Story = {
+  render: () => ({
+    props: { path: LONG_DATASET_PATH },
+    template: `
+      <tn-side-panel [open]="true" width="400px" [title]="'Delete ' + path">
+        <p>The {{ path }} dataset and all snapshots stored with it will be permanently deleted.</p>
+      </tn-side-panel>
+    `,
+    moduleMetadata: { imports: [TnSidePanelComponent] },
+  }),
+  // Wrapping is layout, which jsdom cannot do — the guard has to be in a browser.
+  play: async () => {
+    // The panel is portaled to <body>, so it is out of `canvasElement`.
+    const content = document.querySelector('.tn-side-panel__content') as HTMLElement;
+    await expect(content.scrollWidth).toBeLessThanOrEqual(content.clientWidth);
+  },
 };
