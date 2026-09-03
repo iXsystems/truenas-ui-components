@@ -95,6 +95,52 @@ function findHarnessFiles(): string[] {
 }
 
 /**
+ * Shared harness base classes, which live in `*.harness-base.ts` rather than
+ * `*.harness.ts` precisely so they do not claim a registry entry of their own —
+ * the key is the file's basename, and a base sitting beside its subclasses would
+ * document an internal class instead of the public one.
+ *
+ * They are still parsed, so a harness that extends one is documented with the
+ * methods it actually offers rather than an empty table.
+ */
+function findHarnessBaseFiles(): string[] {
+  const libDir = path.join(projectRoot, 'projects/truenas-ui/src/lib');
+  return findFilesRecursive(libDir, /\.harness-base\.ts$/);
+}
+
+/** Methods a base class contributes to anything extending it, by class name. */
+const harnessBaseMethods = new Map<string, MethodInfo[]>();
+
+/** Records every class in `filePath` so subclasses elsewhere can inherit its methods. */
+function collectHarnessBases(filePath: string): void {
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    fs.readFileSync(filePath, 'utf-8'),
+    ts.ScriptTarget.Latest,
+    true
+  );
+
+  sourceFile.forEachChild(node => {
+    if (!ts.isClassDeclaration(node) || !node.name) {
+      return;
+    }
+    const methods: MethodInfo[] = [];
+    node.members.forEach(member => {
+      if (ts.isMethodDeclaration(member) && member.name) {
+        const isPublic = !member.modifiers?.some(
+          mod => mod.kind === ts.SyntaxKind.PrivateKeyword ||
+                 mod.kind === ts.SyntaxKind.ProtectedKeyword
+        );
+        if (isPublic && member.name.getText() !== 'constructor') {
+          methods.push(getMethodSignature(member));
+        }
+      }
+    });
+    harnessBaseMethods.set(node.name.text, methods);
+  });
+}
+
+/**
  * Flatten a JSDoc description into plain text.
  *
  * TypeScript models a description as a plain `string` only while it contains no inline tag. One
@@ -254,7 +300,13 @@ function parseHarnessFile(filePath: string): HarnessInfo | null {
         clause => clause.token === ts.SyntaxKind.ExtendsKeyword
       );
 
-      if (extendsClause && extendsClause.types[0]?.expression.getText() === 'ComponentHarness') {
+      const baseName = extendsClause?.types[0]?.expression.getText();
+      // A harness either extends ComponentHarness directly, or a shared base that
+      // does. Without the second case any harness sharing code is skipped entirely
+      // and its file is reported as having no harness at all.
+      const inheritedMethods = baseName ? harnessBaseMethods.get(baseName) : undefined;
+
+      if (extendsClause && (baseName === 'ComponentHarness' || inheritedMethods)) {
         const description = getJSDocComment(node);
         const classExamples = getJSDocExamples(node);
         let hostSelector = '';
@@ -283,12 +335,19 @@ function parseHarnessFile(filePath: string): HarnessInfo | null {
           }
         });
 
+        // The subclass's own methods win, so an override is documented once.
+        const ownNames = new Set(methods.map(method => method.name));
+        const merged = [
+          ...methods,
+          ...(inheritedMethods ?? []).filter(method => !ownNames.has(method.name)),
+        ];
+
         harnessInfo = {
           className,
           description,
           hostSelector,
           classExamples,
-          methods,
+          methods: merged,
           interfaces: [], // Will be populated later
         };
       }
@@ -389,6 +448,10 @@ function main() {
       console.log('⚠️  No harness files found');
       return;
     }
+
+    // Shared bases first: a harness that extends one needs its methods available
+    // before that harness is parsed.
+    findHarnessBaseFiles().forEach(collectHarnessBases);
 
     // Process each harness file
     console.log('\n🔍 Processing harness files...\n');

@@ -9,7 +9,9 @@ import { of, throwError } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { TnGroupAutocompleteComponent } from './group-autocomplete.component';
 import { TnGroupChipsComponent } from './group-chips.component';
+import { TnGroupChipsHarness } from './group-chips.harness';
 import { TnUserAutocompleteComponent } from './user-autocomplete.component';
+import { TnUserAutocompleteHarness } from './user-autocomplete.harness';
 import { TnUserChipsComponent } from './user-chips.component';
 import {
   TN_USER_DIRECTORY,
@@ -17,10 +19,6 @@ import {
   type TnPrincipalOption,
   type TnUserDirectory,
 } from './user-directory';
-import {
-  TnGroupChipsHarness,
-  TnUserAutocompleteHarness,
-} from './user-directory.harness';
 import { TnFormFieldComponent } from '../form-field/form-field.component';
 
 /**

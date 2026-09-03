@@ -4,22 +4,14 @@ import { TnAutocompleteHarness } from '../autocomplete/autocomplete.harness';
 import { TnChipInputHarness } from '../chip-input/chip-input.harness';
 
 /**
- * Harness for `tn-user-autocomplete` / `tn-group-autocomplete`.
+ * Shared by the two single-valued field harnesses.
  *
- * The field is a thin shell over `tn-autocomplete`, so this exposes the inner
- * harness rather than re-implementing it — `await field.autocomplete()` gives
- * the full API (`getOptions`, `selectOption`, `isLoading`, …). The shortcuts
- * below cover what a form spec actually reaches for.
- *
- * @example
- * ```ts
- * const owner = await loader.getHarness(TnUserAutocompleteHarness);
- * await owner.focus();
- * expect(await owner.getOptions()).toEqual(['root', 'operator']);
- * await owner.selectOption('operator');
- * ```
+ * Deliberately NOT in a `*.harness.ts` file: the harness-doc generator keys one
+ * class per such file, so a base living beside its subclasses would take their
+ * place in the Storybook registry and document an internal class instead of the
+ * four public ones.
  */
-class TnDirectoryAutocompleteHarnessBase extends ComponentHarness {
+export class TnDirectoryAutocompleteHarnessBase extends ComponentHarness {
   private inner = this.locatorFor(TnAutocompleteHarness);
 
   /**
@@ -41,7 +33,6 @@ class TnDirectoryAutocompleteHarnessBase extends ComponentHarness {
     return new HarnessPredicate(this, options);
   }
 
-
   /** The underlying `tn-autocomplete` harness, for anything not shortcut here. */
   async autocomplete(): Promise<TnAutocompleteHarness> {
     return this.inner();
@@ -52,7 +43,7 @@ class TnDirectoryAutocompleteHarnessBase extends ComponentHarness {
     return (await this.inner()).focus();
   }
 
-  /** Blurs the field. */
+  /** Blurs the field, committing a typed value when custom values are allowed. */
   async blur(): Promise<void> {
     return (await this.inner()).blur();
   }
@@ -88,49 +79,17 @@ class TnDirectoryAutocompleteHarnessBase extends ComponentHarness {
   }
 }
 
-/** Harness for `tn-user-autocomplete`. */
-export class TnUserAutocompleteHarness extends TnDirectoryAutocompleteHarnessBase {
-  static hostSelector = 'tn-user-autocomplete';
-}
-
-/** Harness for `tn-group-autocomplete`. */
-export class TnGroupAutocompleteHarness extends TnDirectoryAutocompleteHarnessBase {
-  static hostSelector = 'tn-group-autocomplete';
-}
-
-/**
- * Harness for `tn-user-chips` / `tn-group-chips`, a thin shell over
- * `tn-chip-input`.
- *
- * @example
- * ```ts
- * const groups = await loader.getHarness(TnGroupChipsHarness);
- * await groups.addChip('builtin_administrators');
- * expect(await groups.getChips()).toEqual(['builtin_administrators']);
- * ```
- */
-class TnDirectoryChipsHarnessBase extends ComponentHarness {
+/** Shared by the two list-valued field harnesses. See the note above. */
+export class TnDirectoryChipsHarnessBase extends ComponentHarness {
   private inner = this.locatorFor(TnChipInputHarness);
 
-  /**
-   * Narrows to one field among several, by any base filter — most usefully
-   * `selector`, so a form with four of these can address each by the control it
-   * is bound to rather than by DOM order.
-   *
-   * @example
-   * ```ts
-   * loader.getHarness(
-   *   TnUserAutocompleteHarness.with({ selector: '[formControlName="maproot_user"]' }),
-   * );
-   * ```
-   */
+  /** Narrows to one field among several — see {@link TnDirectoryAutocompleteHarnessBase.with}. */
   static with<T extends ComponentHarness>(
     this: ComponentHarnessConstructor<T>,
     options: BaseHarnessFilters = {},
   ): HarnessPredicate<T> {
     return new HarnessPredicate(this, options);
   }
-
 
   /** The underlying `tn-chip-input` harness, for anything not shortcut here. */
   async chipInput(): Promise<TnChipInputHarness> {
@@ -171,14 +130,4 @@ class TnDirectoryChipsHarnessBase extends ComponentHarness {
   async isDisabled(): Promise<boolean> {
     return (await this.inner()).isDisabled();
   }
-}
-
-/** Harness for `tn-user-chips`. */
-export class TnUserChipsHarness extends TnDirectoryChipsHarnessBase {
-  static hostSelector = 'tn-user-chips';
-}
-
-/** Harness for `tn-group-chips`. */
-export class TnGroupChipsHarness extends TnDirectoryChipsHarnessBase {
-  static hostSelector = 'tn-group-chips';
 }
