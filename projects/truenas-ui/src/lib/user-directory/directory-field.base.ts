@@ -1,4 +1,4 @@
-import { Directive, computed, effect, inject, input, output, signal } from '@angular/core';
+import { DestroyRef, Directive, Injector, computed, effect, inject, input, output, signal } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import type { AsyncValidatorFn, ControlValueAccessor, ValidationErrors } from '@angular/forms';
 import { NgControl } from '@angular/forms';
@@ -63,6 +63,9 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
 
   /** The `NgControl` this field is bound to, when it is in a form at all. */
   protected readonly ngControl = inject(NgControl, { optional: true, self: true });
+
+  private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * Modifiers handed to the directory verbatim — how the app narrows the list
@@ -256,18 +259,59 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
   // ── Existence validation ──
 
   /**
-   * Attaches the existence validator to the bound control.
+   * Keeps the existence validator on the bound control in step with
+   * {@link validateExistence}, for as long as this field exists.
    *
-   * `updateValueAndValidity` is deliberately NOT called: an edit form would
-   * otherwise open with every loaded value already flagged, before the user has
-   * touched anything. Validation runs on the first change, or on submit.
+   * Mirrored rather than attached once, because the control is not this field's
+   * to keep:
+   *
+   * - `[validateExistence]` is a signal input, so a value that flips after init
+   *   — `[validateExistence]="showAdvanced()"` — has to take effect. Attaching
+   *   once from `ngOnInit` silently ignored every later value, and nothing in
+   *   the API surface said the input was init-only.
+   * - The control outlives the field whenever a parent `@if` (or a stepper
+   *   page) re-creates it. Each re-creation added another validator to the same
+   *   control — N duplicate directory lookups per validation pass — while the
+   *   validator from the destroyed instance kept flagging a value from a
+   *   component nobody can see or correct.
+   *
+   * On attach, `updateValueAndValidity` is deliberately NOT called: an edit
+   * form would otherwise open with every loaded value already flagged, before
+   * the user has touched anything. Validation runs on the first change, or on
+   * submit. On detach it *is* called, so a verdict — or a PENDING state — from
+   * a validator that is gone does not outlive it.
    */
   protected attachExistenceValidator(): void {
     const control = this.ngControl?.control;
-    if (!control || !this.validateExistence()) {
+    if (!control) {
       return;
     }
-    control.addAsyncValidators(this.existenceValidator());
+
+    let attached: AsyncValidatorFn | undefined;
+
+    const detach = (): void => {
+      if (!attached) {
+        return;
+      }
+      control.removeAsyncValidators(attached);
+      attached = undefined;
+      control.updateValueAndValidity({ emitEvent: false });
+    };
+
+    effect(() => {
+      const wanted = this.validateExistence();
+      if (wanted === !!attached) {
+        return;
+      }
+      if (wanted) {
+        attached = this.existenceValidator();
+        control.addAsyncValidators(attached);
+        return;
+      }
+      detach();
+    }, { injector: this.injector });
+
+    this.destroyRef.onDestroy(detach);
   }
 
   private existenceValidator(): AsyncValidatorFn {
@@ -285,7 +329,10 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
         switchMap(() => {
           // The value can move while the timer runs; a verdict about a name the
           // control no longer holds would be a stale error.
-          if (this.namesToCheck(control.value).join(' ') !== names.join(' ')) {
+          // Compared as JSON rather than joined on a separator: any separator
+          // is a character some name could contain, and the NUL this used had
+          // the side effect of making the whole file read as binary to grep.
+          if (JSON.stringify(this.namesToCheck(control.value)) !== JSON.stringify(names)) {
             return of<ValidationErrors | null>(null);
           }
           return this.findMissing(names).pipe(
@@ -307,6 +354,16 @@ export abstract class TnDirectoryFieldBase implements ControlValueAccessor {
 
   private findMissing(names: string[]): Observable<string[]> {
     const checks = names.map((name) => this.exists(name).pipe(
+      // `first()` on this pipe rather than only inside `forkJoinCompat`, so the
+      // one-name branch below gets it too: Angular wraps even a single async
+      // validator in `forkJoin`, which emits only when its source COMPLETES. An
+      // adapter answering `userExists` from a cache — a BehaviorSubject,
+      // `toObservable(someSignal)`, a shareReplay'd subject, all of which
+      // TnUserDirectory's own docs invite — never completes, so a single-name
+      // check would park the control in PENDING forever and any submit button
+      // gated on validity would stay disabled. Ahead of `catchError` so an
+      // empty completion is caught as "cannot say" too.
+      first(),
       // A lookup that fails is not evidence the name is wrong — treat the
       // transport error as "cannot say" rather than flagging a real user.
       catchError(() => of(true)),

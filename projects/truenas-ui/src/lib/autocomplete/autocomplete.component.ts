@@ -363,6 +363,32 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   });
 
   /**
+   * The synthetic row that keeps a committed value listed while the pages
+   * fetched so far do not contain it, or `undefined`.
+   *
+   * Held separately from {@link resolvedOptions} so {@link filteredOptions} can
+   * recognize it and pin it past the `maxResults` cap, the way the action row
+   * is pinned. Appended and then sliced with everything else, a full page
+   * filled the cap and cut off the one row this exists to guarantee.
+   */
+  private readonly keptSelectedOption = computed<TnAutocompleteOption<T> | undefined>(() => {
+    if (!this.dataSource() || !this.keepSelectedOption()) {
+      return undefined;
+    }
+
+    const value = this.selectedValue();
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+    if (this.asyncOptions.options().some((option) => this.valueMatches(option.value, value))) {
+      return undefined;
+    }
+    // The committed value is not on the current page — keep it listed so the
+    // field shows its label rather than rendering blank.
+    return { label: this.selectedLabel() ?? String(value), value };
+  });
+
+  /**
    * The rows to work from: the async engine's when `dataSource` is bound,
    * the `options` input otherwise. Everything that resolves a value to a
    * label, matches typed text, or counts rows reads this rather than
@@ -375,20 +401,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
 
     const fetched = this.asyncOptions.options();
-    if (!this.keepSelectedOption()) {
-      return fetched;
-    }
-
-    const value = this.selectedValue();
-    if (value === null || value === undefined) {
-      return fetched;
-    }
-    if (fetched.some((option) => this.valueMatches(option.value, value))) {
-      return fetched;
-    }
-    // The committed value is not on the current page — keep it listed so the
-    // field shows its label rather than rendering blank.
-    return [...fetched, { label: this.selectedLabel() ?? String(value), value }];
+    const kept = this.keptSelectedOption();
+    return kept ? [...fetched, kept] : fetched;
   });
 
   /** Loading state: the `loading` input OR-ed with the async engine's. */
@@ -417,7 +431,14 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       filtered = all.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
     }
 
-    const capped = filtered.slice(0, max);
+    // `maxResults` caps the rows the source returned, not the two rows that are
+    // there by construction: the action row is pinned on top after the slice,
+    // and the kept-selected row — always last, appended by `resolvedOptions` —
+    // is held back across it.
+    const kept = this.keptSelectedOption();
+    const capped = kept && filtered.at(-1) === kept
+      ? [...filtered.slice(0, -1).slice(0, max), kept]
+      : filtered.slice(0, max);
     return action ? [action, ...capped] : capped;
   });
 

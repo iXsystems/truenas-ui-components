@@ -367,14 +367,59 @@ describe('tn-autocomplete [dataSource]', () => {
       expect(renderedOptions()).toEqual(pageOf('bob', 0, 2).map((o) => o.label));
     });
 
-    it('does not treat a failed page as an exhausted source', () => {
+    it('re-requests the page that failed rather than stepping over it', () => {
+      // Two halves: a failed page must not read as an exhausted source (which
+      // would drop the request entirely), and the cursor must roll back to the
+      // page that failed. Page 0 is the case a "last page loaded" cursor gets
+      // wrong — it reads 0 both before anything has landed and after page 0
+      // succeeded, so the retry asked for page 1 and the first page of matches
+      // was silently skipped.
       responder = () => throwError(() => new Error('boom'));
       focus();
       requests = [];
 
       scrollToEnd();
 
-      expect(requests).toEqual([{ query: '', page: 1 }]);
+      expect(requests).toEqual([{ query: '', page: 0 }]);
+    });
+
+    it('retries the first page when the panel is reopened after it failed', () => {
+      // `prime` is a no-op once a query has run, so latching it on a request
+      // that *failed* left a click-to-open field permanently empty: reopening
+      // issued no request at all, and only typing could ever recover it.
+      let failing = true;
+      responder = (query, page) => (failing
+        ? throwError(() => new Error('boom'))
+        : of(pageOf(query, page, 2)));
+
+      focus();
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      failing = false;
+      focus();
+
+      expect(renderedOptions()).toEqual(pageOf('', 0, 2).map((option) => option.label));
+    });
+
+    it('re-primes with the term the field holds, not an empty one', () => {
+      // The retry path replays the current query: re-priming with '' would
+      // answer 'bob' with the whole directory, which is not what is typed.
+      let failing = true;
+      responder = (query, page) => (failing
+        ? throwError(() => new Error('boom'))
+        : of(pageOf(query, page, 2)));
+
+      focus();
+      type('bob');
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      failing = false;
+      requests = [];
+      focus();
+
+      expect(requests).toEqual([{ query: 'bob', page: 0 }]);
     });
   });
 

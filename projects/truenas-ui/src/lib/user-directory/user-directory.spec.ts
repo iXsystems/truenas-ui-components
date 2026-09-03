@@ -5,7 +5,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { TnGroupAutocompleteComponent } from './group-autocomplete.component';
 import { TnGroupChipsComponent } from './group-chips.component';
@@ -85,14 +85,17 @@ class StubDirectory implements TnUserDirectory {
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <form [formGroup]="form">
-      <tn-form-field label="Owner">
-        <tn-user-autocomplete
-          formControlName="owner"
-          [allowCreate]="allowCreate()"
-          [directoryOptions]="directoryOptions()"
-          [extraOptions]="extraOptions()"
-          [debounce]="0" />
-      </tn-form-field>
+      @if (showOwner()) {
+        <tn-form-field label="Owner">
+          <tn-user-autocomplete
+            formControlName="owner"
+            [allowCreate]="allowCreate()"
+            [directoryOptions]="directoryOptions()"
+            [extraOptions]="extraOptions()"
+            [validateExistence]="validateOwner()"
+            [debounce]="0" />
+        </tn-form-field>
+      }
 
       <tn-form-field label="Group">
         <tn-group-autocomplete formControlName="group" [debounce]="0" />
@@ -122,6 +125,9 @@ class DirectoryHostComponent {
   allowCreate = signal(false);
   directoryOptions = signal<TnDirectoryQuery>({});
   extraOptions = signal<TnPrincipalOption[]>([]);
+  /** Lets a spec destroy the owner field while its control stays in the form. */
+  showOwner = signal(true);
+  validateOwner = signal(true);
 }
 
 describe('tn-user-* / tn-group-* directory fields', () => {
@@ -303,6 +309,75 @@ describe('tn-user-* / tn-group-* directory fields', () => {
       expect(host.groupList.errors?.groupsDoNotExist).toEqual({
         message: 'The following groups do not exist: ghost-a, ghost-b',
       });
+    });
+
+    it('settles a single-name check against a directory that never completes', async () => {
+      // Angular composes async validators with `forkJoin`, which emits only
+      // when its source COMPLETES — even when there is exactly one of them. A
+      // `userExists` answering from a cache (a BehaviorSubject, a signal turned
+      // observable, a shareReplay'd subject — all of which TnUserDirectory's
+      // docs invite) never completes, so without a `first()` on the one-name
+      // branch the control parks in PENDING and any submit gated on validity
+      // stays disabled forever. The chips path was unaffected, which is what
+      // made this hard to spot.
+      jest.spyOn(directory, 'userExists').mockReturnValue(new BehaviorSubject(false));
+
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      await owner.focus();
+      await owner.setInputValue('ghost');
+      await owner.blur();
+      await settle();
+
+      expect(host.owner.status).not.toBe('PENDING');
+      expect(host.owner.errors?.userDoesNotExist).toBeDefined();
+    });
+
+    it('honours [validateExistence] flipping on and off after init', async () => {
+      // A signal input whose later values were ignored: attached once from
+      // ngOnInit, `[validateExistence]="showAdvanced()"` starting false never
+      // attached anything, and a typo passed validation for the life of the
+      // form.
+      host.validateOwner.set(false);
+      fixture.detectChanges();
+
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      await owner.focus();
+      await owner.setInputValue('ghost');
+      await owner.blur();
+      await settle();
+      expect(host.owner.errors).toBeNull();
+
+      host.validateOwner.set(true);
+      fixture.detectChanges();
+      host.owner.updateValueAndValidity();
+      await settle();
+      expect(host.owner.errors?.userDoesNotExist).toBeDefined();
+
+      host.validateOwner.set(false);
+      fixture.detectChanges();
+      await settle();
+      expect(host.owner.errors).toBeNull();
+    });
+
+    it('takes its validator off a control that outlives the field', async () => {
+      // The control is the form's, not the field's: a field inside an @if (or a
+      // stepper page) is destroyed and re-created while the control stays put.
+      // Left attached, the validator from the destroyed instance keeps flagging
+      // a value from a component nobody can see or correct — and the re-created
+      // instance adds a second validator, so every pass runs N duplicate
+      // directory lookups.
+      const owner = await loader.getHarness(TnUserAutocompleteHarness);
+      await owner.focus();
+      await owner.setInputValue('ghost');
+      await owner.blur();
+      await settle();
+      expect(host.owner.errors?.userDoesNotExist).toBeDefined();
+
+      host.showOwner.set(false);
+      await settle();
+
+      expect(host.owner.errors).toBeNull();
+      expect(host.owner.asyncValidator).toBeNull();
     });
 
     it('does not flag a name when the existence lookup itself fails', async () => {

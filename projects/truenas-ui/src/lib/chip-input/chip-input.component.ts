@@ -1,8 +1,9 @@
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import type { ElementRef, OnDestroy, TemplateRef } from '@angular/core';
+import type { ElementRef, OnDestroy, Signal, TemplateRef } from '@angular/core';
 import {
   Component,
+  InjectionToken,
   ViewContainerRef,
   computed,
   effect,
@@ -20,9 +21,11 @@ import type { Subscription } from 'rxjs';
 import { TnChipComponent } from '../chip/chip.component';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
+import { TnSpinnerComponent } from '../spinner/spinner.component';
 import {
   TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue,
 } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 import { createTnOptionsDataSource, type TnOptionsFetchFn } from '../utils/options-data-source';
 
 /**
@@ -32,6 +35,34 @@ import { createTnOptionsDataSource, type TnOptionsFetchFn } from '../utils/optio
  * feed all three.
  */
 export type TnChipInputOption<T = unknown> = TnSelectOption<T>;
+
+/**
+ * Copy rendered inside `tn-chip-input` that is the same for every instance in
+ * an app. Provide {@link TN_CHIP_INPUT_LABELS} at the app root rather than
+ * repeating the identical string on each call site; the matching input on
+ * `<tn-chip-input>` still wins where one instance needs its own wording.
+ */
+export interface TnChipInputLabels {
+  /** Text shown next to the spinner while a `dataSource` request is in flight. */
+  loading: string;
+}
+
+/** English defaults used when no {@link TN_CHIP_INPUT_LABELS} provider is registered. */
+export const TN_CHIP_INPUT_DEFAULT_LABELS: TnChipInputLabels = {
+  loading: 'Loading...',
+};
+
+/**
+ * DI token for app-wide default labels. Provide either a static object or a
+ * `Signal<TnChipInputLabels>` — the latter lets every chip input react to
+ * language changes when the consumer wires it up to an i18n service.
+ *
+ * Explicit input bindings on `<tn-chip-input>` still win over these defaults.
+ */
+export const TN_CHIP_INPUT_LABELS = new InjectionToken<TnChipInputLabels | Signal<TnChipInputLabels>>(
+  'TN_CHIP_INPUT_LABELS',
+  { providedIn: 'root', factory: () => TN_CHIP_INPUT_DEFAULT_LABELS },
+);
 
 let nextId = 0;
 
@@ -78,7 +109,7 @@ let nextId = 0;
 @Component({
   selector: 'tn-chip-input',
   standalone: true,
-  imports: [TnChipComponent, TnTestIdDirective],
+  imports: [TnChipComponent, TnSpinnerComponent, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -171,6 +202,12 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   dataSourceDebounce = input<number>(250);
 
   /**
+   * Text shown next to the spinner while a `dataSource` request is in flight.
+   * Falls back to {@link TN_CHIP_INPUT_LABELS}.
+   */
+  loadingText = input<string | undefined>(undefined);
+
+  /**
    * Comparator for value equality — used for de-duplication, display resolution
    * and the selected-set. Defaults to identity (`===`), correct for primitives;
    * provide this when values are objects (e.g. `(a, b) => a?.id === b?.id`).
@@ -236,6 +273,12 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    */
   dataSourceError = output<unknown>();
 
+  private readonly defaultLabels = injectTnLabels(TN_CHIP_INPUT_LABELS);
+
+  protected readonly resolvedLoadingText = computed(
+    () => this.loadingText() ?? this.defaultLabels().loading,
+  );
+
   private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
   private readonly inputEl = viewChild.required<ElementRef<HTMLInputElement>>('inputEl');
   private readonly dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
@@ -277,6 +320,17 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     identity: (option) => option.value,
     onError: (error) => this.dataSourceError.emit(error),
   });
+
+  /**
+   * Whether a `dataSource` request is in flight.
+   *
+   * Surfaced in the dropdown because with a `dataSource` bound the rows are NOT
+   * re-filtered on the label — the server already applied the query — so the
+   * panel keeps showing the *previous* term's matches, clickable and looking
+   * current, for the debounce plus the round trip. Without a cue that is
+   * indistinguishable from "these are your results".
+   */
+  protected readonly loading = computed(() => this.asyncOptions.loading());
 
   /**
    * Unified option list. A bound `dataSource` wins; then value-mode `options`;
@@ -534,6 +588,11 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    */
   protected suggestionTestId(option: TnChipInputOption<T>): TnTestIdValue {
     return this.discriminatedTestId(optionTestId(this.resolvedTestId(), option, this.optionTestIdKey()));
+  }
+
+  /** Test-id parts for the dropdown's status row. Mirrors `tn-autocomplete`. */
+  protected statusTestIdParts(status: 'loading'): (string | number | null | undefined)[] {
+    return scopeTestId(this.resolvedTestId(), status);
   }
 
   /**

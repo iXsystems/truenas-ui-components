@@ -52,9 +52,11 @@ export interface TnOptionsDataSource<O> {
   /** Run a fresh (debounced) search, resetting paging to page 0. */
   search(query: string): void;
   /**
-   * Fetch page 0 immediately if nothing has been fetched yet. For click-to-open
-   * pickers, where `search` never fires until the user types. A no-op once any
-   * query has run, so reopening the panel does not refetch.
+   * Fetch page 0 for the current term immediately if nothing has been fetched
+   * yet. For click-to-open pickers, where `search` never fires until the user
+   * types. A no-op once a query has run *successfully*, so reopening the panel
+   * does not refetch — but a request that failed is retried, as it is on the
+   * `search` path.
    */
   prime(): void;
   /** Append the next page. No-op while loading, when exhausted, or with no source. */
@@ -79,7 +81,9 @@ export interface TnOptionsDataSource<O> {
  *   failed query as a change, so reopening a picker after an error refetches
  *   instead of being suppressed as a duplicate.
  * - **A failed page does not advance the cursor**, so the next scroll re-requests
- *   the page that errored rather than stepping over those rows.
+ *   the page that errored rather than stepping over those rows. The cursor
+ *   tracks the *next* page to ask for rather than the last one loaded, so page 0
+ *   rolls back like every other page instead of being silently skipped.
  * - **A late page cannot contaminate a newer search.** Pages carry the
  *   generation they were requested in and are dropped if a search has since
  *   started.
@@ -95,9 +99,18 @@ export function createTnOptionsDataSource<O>(
 
   /** Current query, replayed by `loadMore` so a page matches what is on screen. */
   let query = '';
-  /** Index of the last page successfully loaded for `query`. */
-  let page = 0;
-  /** Whether any query has run — gates {@link prime}. */
+  /**
+   * Index of the next page to request for `query`.
+   *
+   * Deliberately "next to request" rather than "last loaded": those two only
+   * differ on page 0, which is exactly where the difference bites. A fresh
+   * search resets the cursor *before* anything has landed, so a "last loaded"
+   * counter reads 0 both for "page 0 is on screen" and for "page 0 failed" —
+   * and the next `loadMore` would step over the first page of matches instead
+   * of retrying it.
+   */
+  let nextPage = 0;
+  /** Whether a query has run successfully — gates {@link prime}. */
   let primed = false;
   /**
    * Set when a request fails, cleared when the next one starts. Read by the
@@ -122,8 +135,7 @@ export function createTnOptionsDataSource<O>(
       ),
       tap((request) => {
         query = request.query;
-        page = 0;
-        primed = true;
+        nextPage = 0;
         lastRequestFailed = false;
         generation++;
         loading.set(true);
@@ -148,6 +160,10 @@ export function createTnOptionsDataSource<O>(
       // An empty page from a failure is not evidence that the source is
       // exhausted — leave paging open so a retry can still reach page 1.
       exhausted.set(lastRequestFailed ? false : rows.length < config.pageSize());
+      // A failed page 0 leaves the cursor on 0, so the next `loadMore` retries
+      // it; `primed` likewise only latches on a request that arrived.
+      nextPage = lastRequestFailed ? 0 : 1;
+      primed = primed || !lastRequestFailed;
       options.set(rows);
       config.onSettled?.();
     });
@@ -162,10 +178,17 @@ export function createTnOptionsDataSource<O>(
     },
 
     prime(): void {
-      if (primed || !config.source()) {
+      // `lastRequestFailed` is what makes a failed term retryable on the
+      // `search` path; without it here, one transient failure would empty a
+      // click-to-open picker for the life of the field — reopening the panel
+      // would issue no request at all.
+      if ((primed && !lastRequestFailed) || !config.source()) {
         return;
       }
-      requests$.next({ query: '', immediate: true });
+      // The current term, not `''`: on the retry path the field may already
+      // hold the text whose lookup failed, and re-priming with an empty query
+      // would answer it with a list that does not match what is typed.
+      requests$.next({ query, immediate: true });
     },
 
     loadMore(): void {
@@ -174,7 +197,7 @@ export function createTnOptionsDataSource<O>(
         return;
       }
 
-      const requestedPage = page + 1;
+      const requestedPage = nextPage;
       const requestedGeneration = generation;
       loading.set(true);
 
@@ -189,7 +212,8 @@ export function createTnOptionsDataSource<O>(
             }
             loading.set(false);
             // Only a page that arrived counts as read — see the error branch.
-            page = requestedPage;
+            nextPage = requestedPage + 1;
+            primed = true;
             exhausted.set(rows.length < config.pageSize());
             options.update((current) => {
               const seen = new Set(current.map(config.identity));
@@ -202,7 +226,7 @@ export function createTnOptionsDataSource<O>(
               return;
             }
             loading.set(false);
-            // `page` deliberately not advanced: the next scroll re-requests
+            // `nextPage` deliberately not advanced: the next scroll re-requests
             // this page instead of skipping the rows it would have held.
             config.onError(error);
             config.onSettled?.();

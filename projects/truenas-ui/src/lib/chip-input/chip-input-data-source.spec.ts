@@ -3,7 +3,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { TnChipInputComponent } from './chip-input.component';
 import type { TnChipInputOption } from './chip-input.component';
@@ -61,6 +61,14 @@ describe('tn-chip-input [dataSource]', () => {
   function renderedSuggestions(): string[] {
     return Array.from(overlayEl.querySelectorAll('.tn-chip-input__option'))
       .map((option) => option.textContent?.trim() ?? '');
+  }
+
+  function listbox(): HTMLElement | null {
+    return overlayEl.querySelector('.tn-chip-input__listbox');
+  }
+
+  function loadingRow(): HTMLElement | null {
+    return overlayEl.querySelector('.tn-chip-input__loading');
   }
 
   function focus(): void {
@@ -160,6 +168,32 @@ describe('tn-chip-input [dataSource]', () => {
     focus();
 
     expect(renderedSuggestions()).toEqual(['analysts', 'builders']);
+  });
+
+  it('marks the dropdown busy while a request is in flight', () => {
+    // With a `dataSource` the rows are NOT re-filtered on the label, so between
+    // the keystroke and the response the panel is showing the PREVIOUS term's
+    // matches — clickable, and indistinguishable from a result set. The
+    // autocomplete has said so with a spinner and `aria-busy` since it grew a
+    // `dataSource`; this had no equivalent.
+    const pending = new Subject<Option[]>();
+    focus();
+    expect(loadingRow()).toBeNull();
+
+    responder = () => pending;
+    type('ana');
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+    expect(listbox()?.getAttribute('aria-busy')).toBe('true');
+    expect(loadingRow()?.textContent).toContain('Loading...');
+
+    pending.next([{ label: 'analysts', value: 'analysts' }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(renderedSuggestions()).toEqual(['analysts']);
+    expect(listbox()?.getAttribute('aria-busy')).toBeNull();
+    expect(loadingRow()).toBeNull();
   });
 
   it('reports a failure and keeps the field usable', () => {

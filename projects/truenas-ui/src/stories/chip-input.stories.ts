@@ -231,6 +231,11 @@ export const AsyncSuggestions: Story = {
  * The chip dropdown is not paged, so `page` is always 0 — the parameter exists
  * only so one source function can feed this and `tn-autocomplete` alike.
  *
+ * The 350 ms latency is deliberate: it makes the in-flight state visible. While
+ * a lookup is out, the panel keeps showing the previous term's rows — a
+ * `dataSource` is trusted to have applied the query, so they are not re-filtered
+ * on the label — and says so with a spinner row and `aria-busy` on the listbox.
+ *
  * Every fourth lookup fails on purpose, to show the field stays usable.
  */
 export const DataSource: Story = {
