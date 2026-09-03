@@ -100,6 +100,13 @@
   overflow-x: hidden;
   padding: var(--tn-content-padding, 24px);
   -webkit-overflow-scrolling: touch;
+  // The same body area as `.tn-dialog__content`, and the same quiet failure
+  // (NAS-142530): `overflow-x: hidden` means a dataset path too long for the
+  // panel is simply CUT OFF mid-name — no scrollbar, no ellipsis. The heading
+  // above never had it (`.tn-side-panel__title` ellipsises), so only the copy
+  // needs this. `overflow-wrap` only breaks a word that cannot fit a line on
+  // its own, so ordinary prose wraps exactly as before.
+  overflow-wrap: break-word;
 }
 
 // Fixed footer actions

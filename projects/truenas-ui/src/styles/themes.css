@@ -929,6 +929,43 @@ tn-dialog-shell {
   line-height: 1.5;
   color: var(--tn-fg1, #000000);
   flex: 1; /* Take up remaining space */
+  /*
+    A title as long as a ZFS path has to WRAP, and `flex: 1` alone does not let
+    it (NAS-142530). A flex item's `min-width` defaults to `auto`, which floors
+    it at the widest unbreakable run of text inside it — for webui's delete-zvol
+    dialog, `dozer/TEST_ANOTHER_ZVOL_WITH_A_LONG_NAME` measures 613px against
+    the 320px the 400px-wide dialog's header can give it. The heading kept its
+    613px, and the header and `.tn-dialog-panel` with it.
+
+    That overflow is not the harmless kind. `.tn-dialog-panel` sets
+    `overflow: hidden`, which clips but stays SCROLLABLE programmatically, and
+    the shell's close button — the first tabbable element in the dialog — is the
+    one CDK's `autoFocus` focuses on open. The browser scrolled it into view, so
+    every dialog with a long title opened at `scrollLeft: 277` with its whole
+    left edge cut off: heading, body copy, fields and footer buttons all sliced
+    down the same line. Tabbing to a control near the left edge scrolled it back
+    and the dialog abruptly looked correct, which is how the bug was reported.
+
+    `anywhere` and not `break-word`, which is the difference between one
+    declaration and two: `anywhere` contributes its break opportunities to
+    MIN-CONTENT sizing, so the `auto` floor lands at the widest character rather
+    than the widest word and the heading is free to shrink. `break-word` does
+    not, and leaves the floor at 613px — where the word already fits its own
+    line and there is nothing to wrap — so it needs an explicit `min-width: 0`
+    beside it to reach the same place. Neither touches max-content, so a dialog
+    opened without an explicit width still sizes itself to its title as before.
+
+    Measured on that dialog at 400px, `scrollWidth` / `scrollLeft` after
+    focusing close:
+      none                       677 / 277   the reported bug
+      break-word                 677 / 277   nothing breaks (see above)
+      min-width: 0               629 /   0   heading shrinks, but its unbroken
+                                             word still spills out of the
+                                             heading box and across the ✕
+      min-width: 0 + break-word  400 /   0
+      anywhere                   400 /   0   what ships
+  */
+  overflow-wrap: anywhere;
 }
 
 /* Close button */
@@ -988,6 +1025,19 @@ tn-dialog-shell {
   overflow-x: hidden;
   box-sizing: border-box;
   padding: var(--tn-content-padding, 16px);
+  /*
+    The body's half of NAS-142530, and a quieter failure than the heading's: the
+    same dataset paths appear in the copy under the title, and `overflow-x:
+    hidden` means a path too long for the dialog is simply CUT OFF mid-name with
+    nothing on screen to say so — no scrollbar, no ellipsis. Unlike the header
+    this never reached `.tn-dialog-panel` (a scroll container contains its own
+    overflow), so it cost no layout, only the end of the name the dialog is
+    asking the user to confirm.
+
+    `overflow-wrap` rather than `word-break: break-all`: it only breaks a word
+    that cannot fit a line on its own, so ordinary prose wraps exactly as before.
+  */
+  overflow-wrap: break-word;
 }
 
 /* Dialog actions */

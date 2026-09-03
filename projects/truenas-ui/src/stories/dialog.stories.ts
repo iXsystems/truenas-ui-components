@@ -3,6 +3,7 @@ import { JsonPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnDialogShellComponent } from '../lib/dialog/dialog-shell.component';
@@ -476,4 +477,98 @@ export const ChromeInputs: Story = {
     moduleMetadata: { imports: [DialogJobDemoComponent] },
     template: '<tn-dialog-job-demo />',
   }),
+};
+/**
+ * The dataset path from NAS-142530, and the one measurement that matters about
+ * it: unbroken it is 613px wide, against the 320px a 400px-wide dialog's header
+ * can give its heading.
+ */
+const LONG_ZVOL_PATH = 'dozer/TEST_ANOTHER_ZVOL_WITH_A_LONG_NAME';
+
+/**
+ * webui's delete-zvol dialog, reduced to the parts NAS-142530 turned on: a
+ * heading the width of a ZFS path, the same path again in the body copy, and a
+ * text field after the header's close button in tab order.
+ */
+@Component({
+  selector: 'tn-dialog-long-title',
+  standalone: true,
+  imports: [TnDialogShellComponent, TnButtonComponent, TnFormFieldComponent, TnInputComponent, FormsModule],
+  // 400px is webui's delete-dataset dialog — the width the report was filed against.
+  styles: [':host { display: block; width: 400px; }'],
+  templateUrl: './dialog-6.stories.html',
+})
+class DialogLongTitleComponent {
+  readonly ref = inject(DialogRef<string>);
+  readonly path = LONG_ZVOL_PATH;
+  confirmName = '';
+}
+
+@Component({
+  selector: 'tn-dialog-long-title-demo',
+  standalone: true,
+  imports: [TnButtonComponent],
+  template: `<tn-button type="button" label="Delete zvol" (click)="open()" />`,
+})
+class DialogLongTitleDemoComponent {
+  private dialog = inject(TnDialog);
+  open(): void {
+    this.dialog.open(DialogLongTitleComponent);
+  }
+}
+
+/**
+ * **A title too long for the dialog.** Dialogs are named after the thing they
+ * act on, and in TrueNAS that is routinely a full ZFS path. The heading wraps
+ * onto as many lines as it needs and the dialog keeps its width; nothing about
+ * it moves when focus does.
+ *
+ * It did not always: see the `.tn-dialog__title` block in `themes.css` for what
+ * `min-width: auto` on a flex item cost here (NAS-142530), and why the fix is
+ * two declarations rather than either one.
+ */
+export const LongTitle: Story = {
+  render: () => ({
+    moduleMetadata: { imports: [DialogLongTitleDemoComponent] },
+    template: '<tn-dialog-long-title-demo />',
+  }),
+  // Wrapping is layout, which jsdom cannot do — the unit specs next door can say
+  // nothing about it, so the guard has to live in a browser.
+  play: async ({ canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole('button', { name: 'Delete zvol' }));
+
+    // The dialog is portaled to <body>, so it is out of `canvasElement`.
+    const panel = await waitFor(() => {
+      const found = document.querySelector('.tn-dialog-panel') as HTMLElement | null;
+      if (!found) {
+        throw new Error('dialog did not open');
+      }
+      return found;
+    });
+    const close = panel.querySelector('.tn-dialog__close') as HTMLElement;
+
+    try {
+      // Precondition, not the guard: the dialog is at the width the bug was
+      // filed against. It held on the broken CSS too — the heading overflowed
+      // the panel rather than widening it.
+      await expect(Math.round(panel.getBoundingClientRect().width)).toBe(400);
+
+      // The guard. The heading wrapped instead of pushing the header wider, so
+      // the panel has no horizontal overflow to scroll: 400, against 677 before.
+      await expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
+
+      // What the user saw is one step further on and needs no assertion of its
+      // own: with no overflow the maximum `scrollLeft` is 0, so the line above
+      // has already thrown on any CSS where the next part could go wrong. It
+      // was CDK's `autoFocus` landing on the close button, and the browser
+      // scrolling it into view, that opened the dialog at `scrollLeft: 277`.
+
+      // The body copy carries the same path, and is clipped by `overflow-x:
+      // hidden` rather than scrollable — so it has to wrap on its own.
+      const content = panel.querySelector('.tn-dialog__content') as HTMLElement;
+      await expect(content.scrollWidth).toBeLessThanOrEqual(content.clientWidth);
+    } finally {
+      close.click();
+    }
+  },
 };
