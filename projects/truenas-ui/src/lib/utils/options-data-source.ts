@@ -133,6 +133,19 @@ export function createTnOptionsDataSource<O>(
   /** Current query, replayed by `loadMore` so a page matches what is on screen. */
   let query = '';
   /**
+   * Latest term handed to {@link search}, whether or not its request has been
+   * dispatched yet — what {@link prime} re-asks with.
+   *
+   * `query` is only assigned once a request survives the debounce, so it lags
+   * the field by up to `debounceMs`. That gap matters because `prime` emits
+   * `immediate: true`: a prime landing inside a pending search's debounce
+   * window cancels that search outright, and priming with `query` would then
+   * fetch the *previous* term while the input holds the newer one — rows that
+   * do not match what is typed, with nothing left to re-query them. Priming
+   * with the pending term promotes the cancelled search instead of losing it.
+   */
+  let pendingQuery = '';
+  /**
    * Index of the next page to request for `query`.
    *
    * Deliberately "next to request" rather than "last loaded": those two only
@@ -234,6 +247,7 @@ export function createTnOptionsDataSource<O>(
     exhausted: exhausted.asReadonly(),
 
     search(next: string): void {
+      pendingQuery = next;
       requests$.next({ query: next, immediate: false });
     },
 
@@ -245,10 +259,11 @@ export function createTnOptionsDataSource<O>(
       if ((primed && !lastRequestFailed) || !config.source()) {
         return;
       }
-      // The current term, not `''`: on the retry path the field may already
-      // hold the text whose lookup failed, and re-priming with an empty query
-      // would answer it with a list that does not match what is typed.
-      requests$.next({ query, immediate: true });
+      // The latest term the field asked for, not `''` and not the last one
+      // dispatched: on the retry path the field may already hold the text whose
+      // lookup failed, and a term still inside the debounce window is cancelled
+      // by this emission — see `pendingQuery`.
+      requests$.next({ query: pendingQuery, immediate: true });
     },
 
     loadMore(): void {

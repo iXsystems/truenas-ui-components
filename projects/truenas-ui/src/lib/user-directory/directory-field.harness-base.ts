@@ -126,6 +126,11 @@ export class TnDirectoryChipsHarnessBase extends ComponentHarness {
     return (await this.inner()).getSuggestions();
   }
 
+  /** Whether a directory lookup is in flight. */
+  async isLoading(): Promise<boolean> {
+    return (await this.inner()).isLoading();
+  }
+
   /** Whether the field is disabled. */
   async isDisabled(): Promise<boolean> {
     return (await this.inner()).isDisabled();

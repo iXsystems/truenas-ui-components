@@ -461,11 +461,15 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /**
    * Whether the query matched anything selectable. Distinct from
    * {@link hasResults} so a search that found nothing still says so, rather
-   * than being masked by a pinned action row.
+   * than being masked by a pinned action row — or by the kept-selected row,
+   * which is held on screen for the committed value regardless of the query.
    */
-  protected hasMatches = computed(
-    () => this.filteredOptions().some((option) => !this.isActionOption(option)),
-  );
+  protected hasMatches = computed(() => {
+    const kept = this.keptSelectedOption();
+    return this.filteredOptions().some(
+      (option) => !this.isActionOption(option) && option !== kept,
+    );
+  });
 
   private onChange = (_value: T | null) => {};
   private onTouched = () => {};

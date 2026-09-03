@@ -494,6 +494,22 @@ describe('tn-autocomplete [dataSource]', () => {
       expect(input().value).toBe('bob');
     });
 
+    it('still reports no results when only the kept row is listed', () => {
+      // The kept row is there for the committed value, not because the query
+      // matched it. Counting it as a match hid "No results found" for every
+      // search made with a value committed, and the panel then showed that
+      // value's label as though the server had returned it.
+      host.control.setValue('bob');
+      fixture.detectChanges();
+      focus();
+
+      responder = () => of([]);
+      type('zzz');
+
+      expect(renderedOptions()).toEqual(['bob']);
+      expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeTruthy();
+    });
+
     it('drops the synthetic row once a page carries the real option', () => {
       host.control.setValue('all-p0-0');
       fixture.detectChanges();
@@ -547,6 +563,29 @@ describe('tn-autocomplete [dataSource]', () => {
       scrollToEnd();
 
       expect(requests).toEqual([{ query: '', page: 1 }]);
+    });
+
+    it('primes with the term still inside the debounce window, not the last dispatched one', () => {
+      // `prime` emits immediately, which cancels whatever the debounce is
+      // holding. Priming with the last *dispatched* term therefore threw the
+      // pending keystroke away entirely: the panel listed the previous term's
+      // rows while the input read the newer one, and nothing re-queried until
+      // the next keystroke — so picking a row committed a value the typed term
+      // had never matched.
+      focus();
+      type('al');
+      requests = [];
+
+      input().value = 'ali';
+      input().dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      component().refreshOptions();
+      fixture.detectChanges();
+      jest.advanceTimersByTime(250);
+      fixture.detectChanges();
+
+      expect(requests).toEqual([{ query: 'ali', page: 0 }]);
+      expect(renderedOptions()).toEqual(['ali-p0-0', 'ali-p0-1']);
     });
 
     it('does not query for a panel that has never been opened', () => {

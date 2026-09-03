@@ -63,9 +63,11 @@ export interface TnUserDirectory {
    * Whether a user of exactly this name exists.
    *
    * Called on every validation pass of a field that accepts free text, so an
-   * adapter should answer from a cache where it can. Errors are treated as
-   * "does not exist"; an adapter that would rather not fail closed on a
-   * transport error should catch and return `true` itself.
+   * adapter should answer from a cache where it can. The fields already fail
+   * open on a transport error — a lookup that errors, or completes without
+   * emitting, is read as "cannot say" and the name is left unflagged — so an
+   * adapter needs no `catchError` of its own to avoid rejecting a real user.
+   * Only an emitted `false` marks a name as missing.
    */
   userExists(username: string): Observable<boolean>;
 
