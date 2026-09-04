@@ -278,6 +278,25 @@ describe('tn-chip-input [dataSource]', () => {
     });
   });
 
+  it('closes the panel when a search comes back with nothing', () => {
+    // With a source bound the rows are NOT re-filtered on the label, so
+    // `onInput` runs its sync against the previous term's rows — still there,
+    // still matching — and leaves the panel open. Nothing then retracted it
+    // when the response landed empty: a bordered box with an empty
+    // `role="listbox"` stayed attached under `aria-expanded="true"` until the
+    // next keystroke or blur. `tn-autocomplete` renders a no-results row
+    // instead; this has no equivalent, so it has to close.
+    focus();
+    type('a');
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts']);
+
+    responder = () => of([]);
+    type('zzz');
+
+    expect(listbox()).toBeNull();
+    expect(input().getAttribute('aria-expanded')).toBe('false');
+  });
+
   it('reports a failure and keeps the field usable', () => {
     let failing = true;
     responder = (query) => (failing

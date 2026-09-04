@@ -324,6 +324,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     pageSize: computed(() => Number.POSITIVE_INFINITY),
     identity: (option) => option.value,
     onError: (error) => this.dataSourceError.emit(error),
+    onSettled: () => this.syncDropdownAfterFetch(),
   });
 
   /**
@@ -770,6 +771,28 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     this.asyncOptions.search('');
     this.closedByCommit = true;
     this.close();
+  }
+
+  /**
+   * Re-decide the panel once a `dataSource` response lands.
+   *
+   * The constructor effect only ever OPENS — it must not fight Escape, blur or
+   * the post-commit close — and with a source bound `onInput` runs
+   * `syncDropdown()` against the PREVIOUS term's rows, which are still there,
+   * so it leaves the panel open too. Nothing was left to retract it: a search
+   * that matched nothing kept a bordered, empty `role="listbox"` attached,
+   * `aria-expanded="true"` over it, until the next keystroke or blur. The
+   * static path never reaches that state, because there the label filter has
+   * already emptied the list by the time `syncDropdown()` reads it.
+   *
+   * Both guards are the post-commit and blur closes: this must not reopen a
+   * panel either of them just shut.
+   */
+  private syncDropdownAfterFetch(): void {
+    if (this.closedByCommit || !this.focused()) {
+      return;
+    }
+    this.syncDropdown();
   }
 
   /**

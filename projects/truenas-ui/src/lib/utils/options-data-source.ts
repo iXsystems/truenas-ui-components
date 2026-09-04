@@ -175,6 +175,19 @@ export function createTnOptionsDataSource<O>(
    * comparator exists to suppress.
    */
   let refreshRequested = false;
+  /**
+   * Whether a page-0 request is outstanding — i.e. whether the search pipeline
+   * owns {@link loading} right now.
+   *
+   * Read by {@link TnOptionsDataSource.loadMore}'s stale-generation branches.
+   * Those bail without touching the flag on the premise that a newer request
+   * owns it, which is true when the generation was bumped by the `tap` below
+   * (it sets `loading` in the same block) and false when `refresh` bumped it
+   * without issuing anything: blur a panel with a page in flight, refresh it,
+   * and `loading` would stay `true` for good — with `loadMore` a no-op behind
+   * it — until the next open happened to prime.
+   */
+  let searchInFlight = false;
 
   const requests$ = new Subject<{ query: string; immediate: boolean }>();
 
@@ -207,6 +220,7 @@ export function createTnOptionsDataSource<O>(
         lastRequestFailed = false;
         refreshRequested = false;
         generation++;
+        searchInFlight = true;
         loading.set(true);
       }),
       switchMap((request) => {
@@ -245,6 +259,7 @@ export function createTnOptionsDataSource<O>(
       // No other request can be outstanding — a newer one through this subject
       // would have unsubscribed this response — so the flag is released either
       // way, stale or not.
+      searchInFlight = false;
       loading.set(false);
       if (skipped) {
         // Nothing was asked, so nothing may be latched. `onSettled` in
@@ -271,6 +286,16 @@ export function createTnOptionsDataSource<O>(
       options.set(rows);
       config.onSettled?.();
     });
+
+  /**
+   * Release {@link loading} for a page whose result set has been retired,
+   * unless a search is genuinely in flight and owns the flag.
+   */
+  function releaseStaleLoading(): void {
+    if (!searchInFlight) {
+      loading.set(false);
+    }
+  }
 
   return {
     options: options.asReadonly(),
@@ -312,8 +337,10 @@ export function createTnOptionsDataSource<O>(
         .subscribe({
           next: (rows) => {
             if (requestedGeneration !== generation) {
-              // A fresh search started while this page was in flight; its
-              // result set is already on screen and owns `loading`.
+              // This page belongs to a result set that has been retired. A
+              // fresh SEARCH owns `loading` and will release it; a `refresh`
+              // issued nothing, so this is the only thing that can.
+              releaseStaleLoading();
               return;
             }
             loading.set(false);
@@ -329,6 +356,7 @@ export function createTnOptionsDataSource<O>(
           },
           error: (error: unknown) => {
             if (requestedGeneration !== generation) {
+              releaseStaleLoading();
               return;
             }
             loading.set(false);
