@@ -492,6 +492,11 @@ export const AsyncOptions: Story = {
  * filtering, and choosing it emits `actionSelected` **without** committing
  * anything to the control, so no placeholder value can be submitted.
  *
+ * `setSelectedOption()` is the other half of that handoff: the host creates the
+ * entity and hands the row straight back, which commits the value AND carries
+ * the label. `control.setValue()` alone would not — a programmatic write has no
+ * label attached, and no search will ever return this row to supply one.
+ *
  * Same simulated backend: 600 ms, 100 entries, pages of 20. Every fifth search
  * fails, to show that an error reports once and leaves the field usable.
  */
@@ -533,10 +538,10 @@ export const DataSource: Story = {
           return () => clearTimeout(timer);
         }),
         onError: (error: unknown) => lastError.set((error as Error).message),
-        onAddNew: () => {
+        onAddNew: (field: TnAutocompleteComponent<string>) => {
           const name = `device-custom-${added().length + 1}`;
           added.update((current) => [...current, name]);
-          control.setValue(name);
+          field.setSelectedOption({ label: name, value: name });
         },
       };
     })(),
@@ -545,13 +550,14 @@ export const DataSource: Story = {
         label="Device"
         hint="Scroll the open list to page in more; every fifth lookup fails on purpose">
         <tn-autocomplete
+          #deviceField
           [formControl]="control"
           [dataSource]="devices"
           [pageSize]="pageSize"
           [actionOption]="addNew"
           [requireSelection]="true"
           placeholder="Type to search devices..."
-          (actionSelected)="onAddNew()"
+          (actionSelected)="onAddNew(deviceField)"
           (dataSourceError)="onError($event)">
         </tn-autocomplete>
       </tn-form-field>

@@ -326,6 +326,43 @@ describe('tn-chip-input [dataSource]', () => {
     expect(queries).toEqual([]);
   });
 
+  it('leaves the panel dismissed when Escape lands mid-request', () => {
+    // Escape is a third deliberate close, alongside blur and the post-commit
+    // one, and it was the only one nothing guarded: the response landing after
+    // it reached `syncDropdownAfterFetch`, which OPENS. Focus stays in the
+    // field, so this put the panel back under the user and defeated Escape for
+    // the whole in-flight window. The ARIA combobox pattern is that Escape
+    // dismisses the popup and it stays dismissed.
+    const pending = new Subject<Option[]>();
+    focus();
+    responder = () => pending;
+
+    input().value = 'an';
+    input().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(listbox()).toBeNull();
+
+    jest.advanceTimersByTime(250);
+    pending.next([{ label: 'analysts', value: 'analysts' }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(listbox()).toBeNull();
+  });
+
+  it('re-arms the panel on the next keystroke after Escape', () => {
+    // The dismissal is until the term next changes, not for good.
+    focus();
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    type('a');
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts']);
+  });
+
   it('reports a failure and keeps the field usable', () => {
     let failing = true;
     responder = (query) => (failing

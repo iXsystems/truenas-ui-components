@@ -194,6 +194,16 @@ export function createTnOptionsDataSource<O>(
    * it — until the next open happened to prime.
    */
   let searchInFlight = false;
+  /**
+   * How many `loadMore` pages are outstanding.
+   *
+   * The companion to {@link searchInFlight}: that one tracks only the search
+   * pipeline, so a page retired by an OLDER generation could release `loading`
+   * out from under a newer `loadMore` that had genuinely set it — issue page A,
+   * type (its search settles and clears the flag), scroll for page B, then let
+   * A finally arrive, and the spinner vanished for the rest of B's round trip.
+   */
+  let loadMoreInFlight = 0;
 
   const requests$ = new Subject<{ query: string; immediate: boolean }>();
 
@@ -339,10 +349,10 @@ export function createTnOptionsDataSource<O>(
 
   /**
    * Release {@link loading} for a page whose result set has been retired,
-   * unless a search is genuinely in flight and owns the flag.
+   * unless a search or a later `loadMore` is in flight and owns the flag.
    */
   function releaseStaleLoading(): void {
-    if (!searchInFlight) {
+    if (!searchInFlight && loadMoreInFlight === 0) {
       loading.set(false);
     }
   }
@@ -374,11 +384,13 @@ export function createTnOptionsDataSource<O>(
       const requestedPage = nextPage;
       const requestedGeneration = generation;
       loading.set(true);
+      loadMoreInFlight++;
 
       fetch(query, requestedPage)
         .pipe(takeUntilDestroyed(destroyRef))
         .subscribe({
           next: (rows) => {
+            loadMoreInFlight--;
             if (requestedGeneration !== generation) {
               // This page belongs to a result set that has been retired. A
               // fresh SEARCH owns `loading` and will release it; a `refresh`
@@ -398,6 +410,7 @@ export function createTnOptionsDataSource<O>(
             config.onSettled?.();
           },
           error: (error: unknown) => {
+            loadMoreInFlight--;
             if (requestedGeneration !== generation) {
               releaseStaleLoading();
               return;

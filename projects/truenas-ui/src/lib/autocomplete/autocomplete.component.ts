@@ -705,13 +705,29 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * `writeValue` deliberately forgets the label — the forms layer hands over a
    * value and nothing else — so a value the host picked itself would render as
    * `String(value)` until a search happened to return the row carrying it.
-   * This is the path for a caller that already holds the option.
+   * This is the path for a caller that already holds the option: the
+   * `actionOption` handoff, where `(actionSelected)` creates an entity and the
+   * host hands the new row straight back.
+   *
+   * It COMMITS, form control included. Updating only the display left the
+   * field showing the new label, marking that row selected, and the bound
+   * control still holding the previous value — which is what a submit then
+   * sent. (With `requireSelection` and `keepSelectedOption` together, blur
+   * happened to find the label on the synthetic kept row and reconcile it
+   * through `selectOption`; on the default path nothing ever did.)
+   *
+   * `optionSelected` deliberately does NOT fire: that output means the user
+   * picked a row, and this is the host telling the component what the host
+   * already decided — echoing it back to the caller that made the call would
+   * be noise. A host keeping a side model in sync updates it where it calls
+   * this, not from the output.
    */
   setSelectedOption(option: TnAutocompleteOption<T>): void {
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
     this.displayIsFallback = false;
+    this.onChange(option.value);
   }
 
   // ── Event handlers ──

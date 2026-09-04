@@ -406,25 +406,37 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   private overlaySubs: Subscription[] = [];
 
   /**
-   * Set when the panel was closed by a commit rather than by the user, and read
-   * by the re-open effect below.
+   * Set when the panel was closed deliberately — by committing a chip, or by
+   * Escape — and read by everything that would otherwise re-open it.
    *
-   * Committing a chip changes the suggestion list — the chosen row is now
-   * excluded — which re-runs that effect. On the static path the empty input
-   * makes `activelySearching` false and the close stands; with a `dataSource`
-   * bound, `searchingEmpty` holds regardless, so the panel sprang back open
-   * against an empty field, still listing the rows of the term just committed.
-   * Cleared by the next thing that is genuinely a search.
+   * Committing changes the suggestion list, since the chosen row is now
+   * excluded, which re-runs the effect below. On the static path the empty
+   * input makes `activelySearching` false and the close stands; with a
+   * `dataSource` bound, `searchingEmpty` holds regardless, so the panel sprang
+   * back open against an empty field, still listing the rows of the term just
+   * committed.
+   *
+   * Escape is here for the same reason and one more: a response landing after
+   * it reaches `syncDropdownAfterFetch`, which OPENS. Typing `an`, pressing
+   * Escape inside the 250 ms debounce, and waiting put the panel straight back
+   * with focus still in the field — Escape defeated for the whole in-flight
+   * window. The ARIA combobox pattern is that Escape dismisses the popup and it
+   * stays dismissed, so that was a keyboard and AT regression, not a cosmetic
+   * one.
+   *
+   * Cleared by the next thing that is genuinely a search, so typing re-arms the
+   * panel immediately.
    */
-  private closedByCommit = false;
+  private closedByUser = false;
 
   constructor() {
     // Async suggestions: when the user types, onInput runs syncDropdown()
     // against the still-stale list and leaves the panel closed; results land a
     // tick later via [suggestions]/[options]. Re-open the panel once fresh
     // matches arrive while the field is focused and actively searching. This
-    // only ever opens (never closes), so it doesn't fight Escape, blur, or the
-    // post-commit close — those stay shut until the option set next changes.
+    // only ever opens (never closes), so it doesn't fight blur — and the
+    // `closedByUser` latch is what keeps it off Escape and the post-commit
+    // close, which would otherwise re-open on the next option-set change.
     effect(() => {
       const hasMatches = this.filteredSuggestions().length > 0;
       untracked(() => {
@@ -438,7 +450,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
           && (searchingEmpty || this.inputValue().trim() !== '')
           && this.canAddMore()
           && !this.isDisabled();
-        if (hasMatches && activelySearching && !this.closedByCommit) {
+        if (hasMatches && activelySearching && !this.closedByUser) {
           this.open();
         }
       });
@@ -505,7 +517,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   protected onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.inputValue.set(value);
-    this.closedByCommit = false;
+    this.closedByUser = false;
     this.asyncOptions.search(value);
     this.searchChange.emit(value);
     this.highlightedIndex.set(-1);
@@ -514,7 +526,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
 
   protected onFocus(): void {
     this.focused.set(true);
-    this.closedByCommit = false;
+    this.closedByUser = false;
     // Fetch the first page the first time the field is used, so a form of
     // chip inputs costs nothing until one is focused. A no-op thereafter.
     this.asyncOptions.prime();
@@ -563,6 +575,9 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     if (event.key === 'Escape') {
       if (this.isOpen()) {
         event.preventDefault();
+        // Latched, so neither the re-open effect nor a `dataSource` response
+        // still in flight can undo the dismissal. See {@link closedByUser}.
+        this.closedByUser = true;
         this.close();
       }
       return;
@@ -774,14 +789,14 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     this.inputValue.set('');
     this.inputEl().nativeElement.value = '';
     // The engine has to be told the term is gone too, or it keeps the
-    // committed term's query and rows. `closedByCommit` hides that for the
+    // committed term's query and rows. `closedByUser` hides that for the
     // immediate re-open, but not for the next focus: blur, refocus, and the
     // panel opens on the PREVIOUS term's matches against an empty field. An
     // empty input means "show everything" on the static path, and this is what
     // makes the async path agree. One request, not one per chip — it goes
     // through the same debounce as typing.
     this.asyncOptions.search('');
-    this.closedByCommit = true;
+    this.closedByUser = true;
     this.close();
   }
 
@@ -797,11 +812,12 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * static path never reaches that state, because there the label filter has
    * already emptied the list by the time `syncDropdown()` reads it.
    *
-   * Both guards are the post-commit and blur closes: this must not reopen a
-   * panel either of them just shut.
+   * The guards are every deliberate close: {@link closedByUser} covers the
+   * post-commit close and Escape, `focused()` covers blur. This must not reopen
+   * a panel any of them just shut.
    */
   private syncDropdownAfterFetch(): void {
-    if (this.closedByCommit || !this.focused()) {
+    if (this.closedByUser || !this.focused()) {
       return;
     }
     this.syncDropdown();

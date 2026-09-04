@@ -45,6 +45,7 @@ function pageOf(query: string, page: number, count: number): Option[] {
       [actionOption]="actionOption()"
       (actionSelected)="actionCount = actionCount + 1"
       (loadMore)="loadMoreCount = loadMoreCount + 1"
+      (optionSelected)="selectedEvents.push($event)"
       (dataSourceError)="errors.push($event)" />
   `,
 })
@@ -56,6 +57,7 @@ class DataSourceHostComponent {
   source = signal<TnOptionsFetchFn<Option> | undefined>(undefined);
   actionCount = 0;
   loadMoreCount = 0;
+  selectedEvents: Option[] = [];
   errors: unknown[] = [];
 }
 
@@ -566,6 +568,53 @@ describe('tn-autocomplete [dataSource]', () => {
 
       expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeTruthy();
       expect(renderedOptions()).toEqual(['Add New']);
+    });
+
+    describe('setSelectedOption(), the other half of the handoff', () => {
+      /** The row the host creates and hands back after `(actionSelected)`. */
+      const created: Option = { label: 'freshly-made', value: 'made-42' };
+
+      function component(): TnAutocompleteComponent<string> {
+        return fixture.debugElement.children[0].componentInstance as TnAutocompleteComponent<string>;
+      }
+
+      it('commits the option to the bound control, not just to the display', () => {
+        // The advertised flow: the action row creates something, and the host
+        // hands the new row back because `writeValue` cannot carry a label.
+        // Updating only the display left the field showing the new name, that
+        // row marked selected, and the control still on its old value — which
+        // is the value a submit then sent.
+        focus();
+        (overlayEl.querySelector('.tn-autocomplete__option') as HTMLElement).click();
+        fixture.detectChanges();
+        expect(host.control.value).toBeNull();
+
+        component().setSelectedOption(created);
+        fixture.detectChanges();
+
+        expect(host.control.value).toBe('made-42');
+        expect(input().value).toBe('freshly-made');
+      });
+
+      it('shows the label rather than the raw value, with no search to resolve it', () => {
+        // The reason the method exists: nothing the source returns carries
+        // this row, so `writeValue` alone would render `String(value)`.
+        component().setSelectedOption(created);
+        fixture.detectChanges();
+
+        expect(input().value).toBe('freshly-made');
+        expect(requests).toEqual([]);
+      });
+
+      it('does not emit optionSelected — the host already knows', () => {
+        // That output means the USER picked a row. This is the host telling
+        // the component what the host decided, so echoing it back to the
+        // caller that made the call would be noise.
+        component().setSelectedOption(created);
+        fixture.detectChanges();
+
+        expect(host.selectedEvents).toEqual([]);
+      });
     });
   });
 

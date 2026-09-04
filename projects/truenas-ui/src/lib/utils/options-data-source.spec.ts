@@ -105,6 +105,38 @@ describe('createTnOptionsDataSource', () => {
       expect(engine.loading()).toBe(false);
     });
 
+    it('leaves the flag to a newer loadMore that genuinely owns it', () => {
+      // `searchInFlight` tracks only the SEARCH pipeline, so a page retired by
+      // an older generation could clear a flag a later page had set: issue A,
+      // type (its search settles and clears the flag), scroll for B, then let
+      // A finally land — the spinner vanished for the rest of B's round trip.
+      loadFirstPage();
+      const pageA = new Subject<Row[]>();
+      responder = () => pageA;
+      engine.loadMore();
+
+      // A search retires A's generation, and settles.
+      responder = () => of(page(pageSize));
+      engine.search('zzz');
+      jest.advanceTimersByTime(250);
+      expect(engine.loading()).toBe(false);
+
+      const pageB = new Subject<Row[]>();
+      responder = () => pageB;
+      engine.loadMore();
+      expect(engine.loading()).toBe(true);
+
+      pageA.next(page(pageSize));
+      pageA.complete();
+
+      expect(engine.loading()).toBe(true);
+
+      pageB.next(page(1));
+      pageB.complete();
+
+      expect(engine.loading()).toBe(false);
+    });
+
     it('releases the flag when a retired page fails rather than answers', () => {
       loadFirstPage();
       const inFlight = new Subject<Row[]>();
