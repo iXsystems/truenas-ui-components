@@ -235,6 +235,8 @@ export const AsyncSuggestions: Story = {
  * a lookup is out, the panel keeps showing the previous term's rows — a
  * `dataSource` is trusted to have applied the query, so they are not re-filtered
  * on the label — and says so with a spinner row and `aria-busy` on the listbox.
+ * `[loadingText]` is what that row says; left unset it reads "Loading...", or
+ * whatever an app-wide `TN_CHIP_INPUT_LABELS` provider supplies.
  *
  * Every fourth lookup fails on purpose, to show the field stays usable.
  */
@@ -278,6 +280,7 @@ export const DataSource: Story = {
           [formControl]="control"
           [dataSource]="languages"
           placeholder="Search languages…"
+          loadingText="Searching languages…"
           (dataSourceError)="onError($event)" />
       </tn-form-field>
       @if (lastError()) {

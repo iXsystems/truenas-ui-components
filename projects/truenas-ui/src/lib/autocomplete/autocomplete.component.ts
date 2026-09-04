@@ -182,6 +182,12 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * `maxResults` cap, and choosing it emits {@link actionSelected} and closes
    * the panel **without** touching the form control, so no placeholder
    * sentinel is ever committed to the value.
+   *
+   * **Must be a stable reference.** The row is recognized by identity, so the
+   * obvious call site — `[actionOption]="{ label: 'Add ' + term, value: null }"`
+   * — builds a new object on every change-detection pass, re-firing the input,
+   * invalidating the filtered rows and marking the component dirty again. Hold
+   * it in a field, or derive it with `computed()`.
    */
   actionOption = input<TnAutocompleteOption<T> | undefined>(undefined);
 
@@ -303,9 +309,15 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /**
    * Emits when the open dropdown is scrolled near its bottom — append the
    * next page to `options` (and use `loading` while it fetches). Suppressed
-   * until the `options` COUNT changes so a slow consumer is not spammed —
-   * which also means replacing the array with a same-length page (e.g. a
-   * fixed-size window) does not re-arm the emitter; pagination must append.
+   * until the row COUNT changes so a slow consumer is not spammed — which also
+   * means replacing the array with a same-length page (e.g. a fixed-size
+   * window) does not re-arm the emitter; pagination must append.
+   *
+   * With a `[dataSource]` bound the count read is the resolved one (the
+   * fetched pages), and the latch is also released when a request settles, so
+   * a page that FAILED does not leave scrolling dead. The output still fires
+   * either way: it is for a host paging `options` itself, so do not wire both
+   * — the source already pages, and the two together fetch each page twice.
    */
   loadMore = output<void>();
 

@@ -2,7 +2,7 @@ import { DestroyRef, inject, signal, type Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, of, timer } from 'rxjs';
 import type { Observable } from 'rxjs';
-import { catchError, debounce, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounce, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 
 /**
  * Fetches one page of options for a server-driven dropdown.
@@ -180,6 +180,19 @@ export function createTnOptionsDataSource<O>(
 
   requests$
     .pipe(
+      // A request made with no source bound is not a request. Every latch
+      // below — `primed`, the cursor, `onSettled` — describes a round trip,
+      // and answering this with an empty success made all three fire for one
+      // that never happened: a `[dataSource]` that arrives after the user has
+      // typed once found `primed` already latched and never fetched at all,
+      // and a host with no source at all had its paging latch released on a
+      // timer, which is enough to page the same rows twice from one scroll.
+      //
+      // Dropped ahead of the duplicate-term guard on purpose: that operator
+      // remembers whatever passes THROUGH it, so a term filtered out later
+      // would still become the "previous" one and suppress the identical term
+      // once a source finally is bound.
+      filter(() => !!config.source()),
       // `prime` must not sit behind the typing debounce — an empty first page
       // should be on screen as the panel opens, not a quarter-second later.
       debounce((request) => (request.immediate ? of(0) : timer(config.debounceMs()))),
@@ -204,23 +217,41 @@ export function createTnOptionsDataSource<O>(
         const requestedGeneration = generation;
         const fetch = config.source();
         if (!fetch) {
-          return of({ rows: [] as O[], failed: false, requestedGeneration });
+          // The source went away inside the debounce window, past the filter
+          // above. Tagged rather than answered: `failed` would make the term
+          // look retryable-because-broken, and a plain success would latch the
+          // state of a fetch that never ran.
+          return of({
+            rows: [] as O[], failed: false, skipped: true, requestedGeneration,
+          });
         }
         return fetch(request.query, 0).pipe(
-          map((rows) => ({ rows, failed: false, requestedGeneration })),
+          map((rows) => ({
+            rows, failed: false, skipped: false, requestedGeneration,
+          })),
           catchError((error: unknown) => {
             config.onError(error);
-            return of({ rows: [] as O[], failed: true, requestedGeneration });
+            return of({
+              rows: [] as O[], failed: true, skipped: false, requestedGeneration,
+            });
           }),
         );
       }),
       takeUntilDestroyed(destroyRef),
     )
-    .subscribe(({ rows, failed, requestedGeneration }) => {
+    .subscribe(({
+      rows, failed, skipped, requestedGeneration,
+    }) => {
       // No other request can be outstanding — a newer one through this subject
       // would have unsubscribed this response — so the flag is released either
       // way, stale or not.
       loading.set(false);
+      if (skipped) {
+        // Nothing was asked, so nothing may be latched. `onSettled` in
+        // particular is the host's paging latch: releasing it here hands a
+        // consumer a second `loadMore` for a page still in flight.
+        return;
+      }
       if (requestedGeneration !== generation) {
         // Fetched under a configuration `refresh` has since retired. Latching
         // `primed` on it would answer the next `prime` from the invalidated

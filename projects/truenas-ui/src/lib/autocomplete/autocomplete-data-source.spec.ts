@@ -44,6 +44,7 @@ function pageOf(query: string, page: number, count: number): Option[] {
       [options]="staticOptions()"
       [actionOption]="actionOption()"
       (actionSelected)="actionCount = actionCount + 1"
+      (loadMore)="loadMoreCount = loadMoreCount + 1"
       (dataSourceError)="errors.push($event)" />
   `,
 })
@@ -54,6 +55,7 @@ class DataSourceHostComponent {
   actionOption = signal<Option | undefined>(undefined);
   source = signal<TnOptionsFetchFn<Option> | undefined>(undefined);
   actionCount = 0;
+  loadMoreCount = 0;
   errors: unknown[] = [];
 }
 
@@ -215,13 +217,68 @@ describe('tn-autocomplete [dataSource]', () => {
       expect(renderedOptions()).toEqual(['ACME\\jsmith']);
     });
 
-    it('ignores [options] while a data source is bound', () => {
+    it('leaves [options] out of the dropdown while a data source is bound', () => {
       host.staticOptions.set([{ label: 'static', value: 'static' }]);
       fixture.detectChanges();
 
       focus();
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
+    });
+  });
+
+  describe('no source bound', () => {
+    it('fetches a source that arrives after the user has already typed', () => {
+      // A request made with no source used to be answered with an empty
+      // SUCCESS, which latched `primed` off a fetch that never happened. Every
+      // later open then bailed on that latch and issued no request at all, so
+      // the panel read "No results found" for the life of the field. The
+      // `| undefined` input type invites exactly this shape — a source that
+      // depends on a sibling field, or on a resolver.
+      host.source.set(undefined);
+      fixture.detectChanges();
+
+      focus();
+      type('ali');
+      expect(requests).toEqual([]);
+
+      host.source.set(source);
+      fixture.detectChanges();
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      focus();
+
+      expect(requests).toEqual([{ query: 'ali', page: 0 }]);
+    });
+
+    it('does not release the paging latch of a host that pages [options] itself', () => {
+      // `onSettled` is what clears `loadMorePending`, and the empty "success"
+      // fired it roughly one debounce after every keystroke — even with NO
+      // source bound at all. Type, flick-scroll the open panel to the bottom
+      // inside that window, and the latch was dropped while the consumer's
+      // page was still in flight: the next scroll event of the same inertial
+      // scroll asked for it a second time.
+      host.source.set(undefined);
+      host.staticOptions.set(pageOf('', 0, 5));
+      fixture.detectChanges();
+
+      focus();
+
+      // A keystroke legitimately resets the latch — a new term is a new
+      // pagination context — so the scroll below is what arms it.
+      input().value = 'a';
+      input().dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      scrollToEnd();
+      expect(host.loadMoreCount).toBe(1);
+
+      // The non-request used to land here.
+      jest.advanceTimersByTime(250);
+      fixture.detectChanges();
+      scrollToEnd();
+
+      expect(host.loadMoreCount).toBe(1);
     });
   });
 

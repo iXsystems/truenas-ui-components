@@ -214,6 +214,30 @@ describe('tn-chip-input [dataSource]', () => {
     expect(renderedSuggestions()).toEqual([]);
   });
 
+  it('re-queries with an empty term once a chip is committed', () => {
+    // Committing cleared the text but not the ENGINE's term, so the rows on
+    // hand stayed the committed term's. Blur and refocus and the panel opened
+    // on those rows against an empty field — where the static path shows
+    // everything. One request per commit, not one per keystroke: it goes
+    // through the same debounce as typing.
+    focus();
+    type('a');
+    queries = [];
+
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+    jest.advanceTimersByTime(250);
+    fixture.detectChanges();
+
+    expect(queries).toEqual(['']);
+
+    input().dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    focus();
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+  });
+
   it('re-opens on the next keystroke after a commit', () => {
     focus();
     type('a');

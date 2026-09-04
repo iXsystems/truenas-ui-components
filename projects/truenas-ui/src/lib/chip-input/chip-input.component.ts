@@ -760,6 +760,14 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   private clearInput(): void {
     this.inputValue.set('');
     this.inputEl().nativeElement.value = '';
+    // The engine has to be told the term is gone too, or it keeps the
+    // committed term's query and rows. `closedByCommit` hides that for the
+    // immediate re-open, but not for the next focus: blur, refocus, and the
+    // panel opens on the PREVIOUS term's matches against an empty field. An
+    // empty input means "show everything" on the static path, and this is what
+    // makes the async path agree. One request, not one per chip — it goes
+    // through the same debounce as typing.
+    this.asyncOptions.search('');
     this.closedByCommit = true;
     this.close();
   }
