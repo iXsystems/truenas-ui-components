@@ -42,6 +42,8 @@ function pageOf(query: string, page: number, count: number): Option[] {
       [dataSourceDebounce]="250"
       [pageSize]="pageSize()"
       [options]="staticOptions()"
+      [allowCustomValue]="allowCustomValue()"
+      [requireSelection]="requireSelection()"
       [actionOption]="actionOption()"
       (actionSelected)="actionCount = actionCount + 1"
       (loadMore)="loadMoreCount = loadMoreCount + 1"
@@ -53,6 +55,8 @@ class DataSourceHostComponent {
   control = new FormControl<string | null>(null);
   pageSize = signal(5);
   staticOptions = signal<Option[]>([]);
+  allowCustomValue = signal(false);
+  requireSelection = signal(false);
   actionOption = signal<Option | undefined>(undefined);
   source = signal<TnOptionsFetchFn<Option> | undefined>(undefined);
   actionCount = 0;
@@ -662,9 +666,90 @@ describe('tn-autocomplete [dataSource]', () => {
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
     });
+
+    it('commits the pinned value when its label is typed under allowCustomValue', () => {
+      // The paint/read asymmetry, from the custom-value side: the field is
+      // willing to render `g-7` as `admins`, so it has to accept `admins`
+      // back. Matching only the fetched pages committed the raw string over
+      // the id it names — a second, wrong value for the same record.
+      host.allowCustomValue.set(true);
+      host.staticOptions.set([{ label: 'admins', value: 'g-7' }]);
+      fixture.detectChanges();
+
+      focus();
+      type('admins');
+      expect(renderedOptions()).not.toContain('admins');
+
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      expect(host.control.value).toBe('g-7');
+      expect(input().value).toBe('admins');
+    });
+
+    it('resolves the pinned label instead of reverting under requireSelection', () => {
+      // The milder half of the same root: unrecognised text is reverted, so
+      // typing the exact name the field itself displays threw the term away.
+      host.requireSelection.set(true);
+      host.staticOptions.set([{ label: 'admins', value: 'g-7' }]);
+      fixture.detectChanges();
+
+      focus();
+      type('admins');
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      expect(host.control.value).toBe('g-7');
+      expect(input().value).toBe('admins');
+    });
+
+    it('still reverts text no listed or pinned row carries', () => {
+      // Widening the match list must not make `requireSelection` accept
+      // anything the field never offered.
+      host.requireSelection.set(true);
+      host.staticOptions.set([{ label: 'admins', value: 'g-7' }]);
+      fixture.detectChanges();
+
+      focus();
+      type('nobody');
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      expect(host.control.value).toBeNull();
+      expect(input().value).toBe('');
+    });
   });
 
   describe('[keepSelectedOption]', () => {
+    it('reads back the kept row rather than committing its label as free text', () => {
+      // The kept row is listed and clickable, and its label may be one
+      // remembered from the option the value was picked from — so it has to be
+      // matchable too. Restricting the match to the label-resolution list (the
+      // one that rightly drops this row, since resolving a VALUE against its
+      // `String(value)` fallback always "succeeds") would turn "type the text
+      // you can see, then blur" into a free-text commit of that text over the
+      // id it stands for — the same bug from the other side.
+      host.allowCustomValue.set(true);
+      responder = () => of([{ label: 'archived-user', value: '4242' }]);
+      fixture.detectChanges();
+
+      focus();
+      (overlayEl.querySelector('.tn-autocomplete__option') as HTMLElement).click();
+      fixture.detectChanges();
+      expect(host.control.value).toBe('4242');
+
+      // Page the real row away, so only the synthetic one carries the label.
+      responder = () => of([]);
+      type('archived');
+      type('archived-user');
+      expect(renderedOptions()).toEqual(['archived-user']);
+
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+
+      expect(host.control.value).toBe('4242');
+    });
+
     it('keeps the committed value listed when the page does not contain it', () => {
       // A preset value sorted past the first page, or one just created that the
       // query does not match yet. Without this the field renders blank for a

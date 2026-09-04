@@ -427,6 +427,12 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * label is supplied, so it stays part of the LOOKUP even where it is not
    * part of the dropdown. `tn-chip-input` treats its own `options` the same
    * way, and the asymmetry was a bug rather than a design.
+   *
+   * Reached through {@link resolvableOptions} for display and
+   * {@link matchableOptions} for matching, so `commitCustomValue` and the
+   * `requireSelection` branch of `onBlur` recognise a pinned label too.
+   * Painting from a list wider than the one it reads back is the bug this
+   * shape exists to avoid.
    */
   private readonly pinnedOptions = computed<TnAutocompleteOption<T>[]>(
     () => (this.dataSource() ? this.options() : []),
@@ -450,8 +456,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   });
 
   /**
-   * The rows a value may be resolved to a label FROM — everything in
-   * {@link resolvedOptions} except the synthetic kept row.
+   * The rows a value may be resolved to a label FROM — the fetched pages plus
+   * the host-pinned {@link pinnedOptions}, and never the synthetic kept row.
+   * {@link matchableOptions} is the other direction.
    *
    * That row exists to keep a committed value listed, and its label is the
    * display text itself: `String(value)` for a value nothing has named yet.
@@ -468,6 +475,36 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const pinned = this.pinnedOptions();
     const fetched = this.asyncOptions.options();
     return pinned.length ? [...fetched, ...pinned] : fetched;
+  });
+
+  /**
+   * The rows typed text may be matched BACK to a value by: every label this
+   * field puts in front of the user, so that anything it PAINTS it also READS.
+   *
+   * {@link resolvableOptions} for the labels a value can be resolved from,
+   * plus the synthetic kept row — which the two lists on either side each drop
+   * for a reason that does not apply here:
+   *
+   * - {@link resolvedOptions} omits the host-pinned rows, since the dropdown
+   *   under a source is the server's to fill. But a pinned row is exactly how a
+   *   host names a value the pages do not carry, so matching without it painted
+   *   `g-7` as `admins` and then committed the raw string `'admins'` over the
+   *   id it names. That is the asymmetry `tn-chip-input` closed by pointing
+   *   `commitText` at its `labelOptions`.
+   * - {@link resolvableOptions} omits the kept row, because resolving a VALUE
+   *   against it always "succeeds" and would report its `String(value)`
+   *   fallback as a real label. Matching a LABEL against it is the opposite
+   *   case: the row is listed, the user can click it, and its label may be one
+   *   remembered from the option the value was picked from. Dropping it would
+   *   turn "type the text you can see, then blur" into a free-text commit of
+   *   that text over the value it stands for.
+   *
+   * Order is the usual precedence — the server's rows, then the host's, then
+   * the synthetic one — and every reader takes the first match.
+   */
+  private readonly matchableOptions = computed<TnAutocompleteOption<T>[]>(() => {
+    const kept = this.keptSelectedOption();
+    return kept ? [...this.resolvableOptions(), kept] : this.resolvableOptions();
   });
 
   /** Loading state: the `loading` input OR-ed with the async engine's. */
@@ -771,7 +808,12 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
     if (this.requireSelection()) {
       const term = this.searchTerm();
-      const match = this.resolvedOptions().find(
+      // {@link matchableOptions}, not {@link resolvedOptions}: the labels the
+      // field is willing to PAINT are the ones it has to read back. Matching
+      // the narrower list left a host-pinned label unrecognised, so typing the
+      // exact name the field itself displays reverted the term instead of
+      // resolving it.
+      const match = this.matchableOptions().find(
         (opt) => !opt.disabled && opt.label.toLowerCase() === term.toLowerCase()
       );
 
@@ -1010,11 +1052,18 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * display match (case-insensitive, same as the requireSelection path)
    * commits the matching option instead, so picking an existing entry by
    * typing its full text behaves like clicking it.
+   *
+   * Matched against {@link matchableOptions} so the host-pinned rows count:
+   * with `[dataSource]` + `[options]` the field painted `g-7` as `admins` and
+   * then, on a page that did not carry that row, committed the raw string
+   * `'admins'` over the id it names — a label it would not read back. Same
+   * asymmetry `tn-chip-input` closed by pointing `commitText` at its
+   * `labelOptions`.
    */
   private commitCustomValue(): void {
     const term = this.searchTerm();
     const lowerTerm = term.toLowerCase();
-    const match = this.resolvedOptions().find(
+    const match = this.matchableOptions().find(
       (opt) => !opt.disabled && opt.label.toLowerCase() === lowerTerm
     );
     if (match) {
@@ -1023,7 +1072,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
     // Best-effort guard: silent when options haven't loaded yet (the common
     // async + allowCustomValue case), where the value type can't be known.
-    if (isDevMode() && term !== '' && this.resolvedOptions().some((opt) => typeof opt.value !== 'string')) {
+    if (isDevMode() && term !== '' && this.matchableOptions().some((opt) => typeof opt.value !== 'string')) {
       console.warn(
         '[tn-autocomplete] allowCustomValue committed free text into a control whose option '
         + 'values are not strings — custom values are only sound for string-valued autocompletes.'
