@@ -376,8 +376,14 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * names values it already knows the labels for, so it stays part of the
    * lookup even where it is not part of the dropdown.
    *
-   * Deliberately not deduplicated: fetched rows come first, and both readers
-   * take the first match, so a value in both lists resolves to the server's row.
+   * Deliberately not deduplicated: fetched rows come first, and every reader
+   * takes the first match, so a value in both lists resolves to the server's row.
+   *
+   * Read by {@link commitText} as well, so the labels the field paints and the
+   * labels it accepts back are one set. Deliberately NOT read by
+   * {@link filteredSuggestions}: with a source bound the rows are shown as the
+   * server ordered and filtered them, and splicing the pinned rows in would
+   * append the same entries to every term's results, matching or not.
    */
   private readonly labelOptions = computed<TnChipInputOption<T>[]>(() => {
     const list = this.optionList();
@@ -439,6 +445,12 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     // close, which would otherwise re-open on the next option-set change.
     effect(() => {
       const hasMatches = this.filteredSuggestions().length > 0;
+      // A debounced search reaches the wire a quarter-second after the
+      // keystroke that called `syncDropdown`, so on a term whose predecessor
+      // matched nothing the panel is shut by the time the request goes out.
+      // Tracking `loading` here is what puts the in-flight cue on screen in
+      // that case; like everything else in this effect it only ever opens.
+      const busy = this.loading();
       untracked(() => {
         // With a `dataSource`, the first page is fetched on focus with an
         // empty term — so an empty field is still "searching" and its results
@@ -450,7 +462,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
           && (searchingEmpty || this.inputValue().trim() !== '')
           && this.canAddMore()
           && !this.isDisabled();
-        if (hasMatches && activelySearching && !this.closedByUser) {
+        if ((hasMatches || busy) && activelySearching && !this.closedByUser) {
           this.open();
         }
       });
@@ -708,13 +720,23 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     return event.key === 'Enter' || this.separatorKeys().includes(event.key);
   }
 
-  /** Commits typed text: resolve it to an option's value, else accept as custom. */
+  /**
+   * Commits typed text: resolve it to an option's value, else accept as custom.
+   *
+   * Matched against {@link labelOptions}, not the dropdown rows, so that every
+   * label the field is willing to PAINT it is also willing to READ back. With a
+   * `dataSource` bound, `options` names values the host already knows the
+   * labels for; a chip rendered as `admins` that this method did not recognise
+   * when `admins` was typed was silently dropped under
+   * `allowCustomValue="false"` and committed as the raw string under the
+   * default `true` — a second chip beside the one it duplicates.
+   */
   private commitText(raw: string): void {
     const text = (raw ?? '').trim();
     if (!text) {
       return;
     }
-    const match = this.optionList().find((option) => option.label.toLowerCase() === text.toLowerCase());
+    const match = this.labelOptions().find((option) => option.label.toLowerCase() === text.toLowerCase());
     if (match) {
       this.commitValue(match.value);
       return;
@@ -827,9 +849,17 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * Opens the dropdown when there is something to show, closes it otherwise.
    * Stays closed once the chip cap is reached — suggesting rows that
    * `commitValue()` would reject is misleading.
+   *
+   * A request in flight counts as something to show even with no rows behind
+   * it: the loading row is the only in-flight cue this field has, and the
+   * fetch most likely to be slow is the COLD one on first focus, where there
+   * is nothing to keep the panel open on its own. Without this the panel was
+   * detached for that whole round trip — no spinner, no `aria-busy` — and the
+   * empty listbox that carries the loading row cost no height.
    */
   private syncDropdown(): void {
-    if (this.filteredSuggestions().length > 0 && this.canAddMore() && !this.isDisabled()) {
+    const hasSomethingToShow = this.filteredSuggestions().length > 0 || this.loading();
+    if (hasSomethingToShow && this.canAddMore() && !this.isDisabled()) {
       this.open();
     } else {
       this.close();

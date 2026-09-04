@@ -41,6 +41,34 @@ class ChipDataSourceHostComponent {
   errors: unknown[] = [];
 }
 
+/**
+ * `[options]` bound ALONGSIDE `[dataSource]`: how a host names the values it
+ * already holds, so a form loaded with ids paints names before anything has
+ * been fetched. `allowCustomValue` is false because that is what the docs tell
+ * value-mode callers to use — and the setting under which failing to match a
+ * pinned label loses the text outright.
+ */
+@Component({
+  selector: 'tn-chip-pinned-labels-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-chip-input
+      [formControl]="control"
+      [dataSource]="source"
+      [dataSourceDebounce]="250"
+      [options]="pinned"
+      [allowCustomValue]="false" />
+  `,
+})
+class ChipPinnedLabelsHostComponent {
+  control = new FormControl<string[]>(['g-7']);
+  readonly pinned: Option[] = [{ label: 'admins', value: 'g-7' }];
+  responder: () => Observable<Option[]> = () => of([]);
+  readonly source: TnOptionsFetchFn<Option> = () => this.responder();
+}
+
 describe('tn-chip-input [dataSource]', () => {
   let fixture: ComponentFixture<ChipDataSourceHostComponent>;
   let host: ChipDataSourceHostComponent;
@@ -363,6 +391,62 @@ describe('tn-chip-input [dataSource]', () => {
     expect(renderedSuggestions()).toEqual(['admins', 'analysts']);
   });
 
+  it('shows the loading row on the cold first fetch, with no rows behind it', () => {
+    // The first fetch is the one most likely to be slow, and it was the one
+    // with no cue at all: `onFocus` primes and then syncs against a suggestion
+    // list that is still empty, so the panel closed and stayed detached for
+    // the whole round trip — no spinner, no `aria-busy`, nothing.
+    const pending = new Subject<Option[]>();
+    responder = () => pending;
+
+    focus();
+
+    expect(renderedSuggestions()).toEqual([]);
+    expect(loadingRow()?.textContent).toContain('Loading...');
+    expect(listbox()?.getAttribute('aria-busy')).toBe('true');
+
+    pending.next([{ label: 'admins', value: 'admins' }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(renderedSuggestions()).toEqual(['admins']);
+    expect(loadingRow()).toBeNull();
+  });
+
+  it('retracts the loading-only panel when the cold fetch lands empty', () => {
+    // Holding the panel open for the round trip must not resurrect the empty
+    // bordered box: once the request settles with nothing, it closes as it
+    // does for any other empty result.
+    const pending = new Subject<Option[]>();
+    responder = () => pending;
+    focus();
+    expect(loadingRow()).not.toBeNull();
+
+    pending.next([]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(listbox()).toBeNull();
+    expect(input().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('shows the loading row for a term typed after one that matched nothing', () => {
+    // The panel is shut when the keystroke lands, so `onInput`'s sync cannot
+    // open it; the request only goes out a debounce later. Without the
+    // re-open effect tracking `loading`, that second search ran uncued too.
+    focus();
+    responder = () => of([]);
+    type('zzz');
+    expect(listbox()).toBeNull();
+
+    const pending = new Subject<Option[]>();
+    responder = () => pending;
+    type('zzzz');
+
+    expect(renderedSuggestions()).toEqual([]);
+    expect(loadingRow()?.textContent).toContain('Loading...');
+  });
+
   it('reports a failure and keeps the field usable', () => {
     let failing = true;
     responder = (query) => (failing
@@ -376,5 +460,77 @@ describe('tn-chip-input [dataSource]', () => {
     type('ops');
 
     expect(renderedSuggestions()).toEqual(['ops']);
+  });
+});
+
+describe('tn-chip-input [dataSource] with pinned [options]', () => {
+  let fixture: ComponentFixture<ChipPinnedLabelsHostComponent>;
+  let overlayEl: HTMLElement;
+
+  function input(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('input') as HTMLInputElement;
+  }
+
+  function chipLabels(): string[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.tn-chip__label'))
+      .map((label) => (label as HTMLElement).textContent?.trim() ?? '');
+  }
+
+  function commit(text: string): void {
+    input().value = text;
+    input().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    jest.advanceTimersByTime(250);
+    fixture.detectChanges();
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ChipPinnedLabelsHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ChipPinnedLabelsHostComponent);
+    overlayEl = TestBed.inject(OverlayContainer).getContainerElement();
+    fixture.detectChanges();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    TestBed.inject(OverlayContainer).ngOnDestroy();
+  });
+
+  it('paints a pinned label before anything has been fetched', () => {
+    expect(chipLabels()).toEqual(['admins']);
+  });
+
+  it('reads back a label it painted, even with no page holding that row', () => {
+    // The asymmetry this closes: the field rendered `g-7` as `admins`, then
+    // refused to recognise `admins` when it was typed. Under
+    // `allowCustomValue="false"` the text was dropped on the floor; under the
+    // default `true` it was committed raw, next to the chip it duplicates.
+    input().dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    fixture.componentInstance.control.setValue([]);
+    fixture.detectChanges();
+
+    commit('admins');
+
+    expect(fixture.componentInstance.control.value).toEqual(['g-7']);
+    expect(chipLabels()).toEqual(['admins']);
+  });
+
+  it('keeps the pinned rows out of the dropdown', () => {
+    // They are labels for values the host already holds, not results: the
+    // server ordered and filtered what the panel shows, and splicing these in
+    // would append the same entries to every term.
+    fixture.componentInstance.responder = () => of([{ label: 'builders', value: 'g-9' }]);
+    input().dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+
+    expect(Array.from(overlayEl.querySelectorAll('.tn-chip-input__option'))
+      .map((option) => option.textContent?.trim())).toEqual(['builders']);
   });
 });

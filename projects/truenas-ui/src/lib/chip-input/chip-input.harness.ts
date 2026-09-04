@@ -113,9 +113,10 @@ export class TnChipInputHarness extends ComponentHarness {
 
   /**
    * Whether the dropdown is showing its loading row, i.e. a `[dataSource]`
-   * request is in flight. The rows on screen while this is true belong to the
+   * request is in flight. Any rows on screen while this is true belong to the
    * previous term — a `dataSource` is trusted to have applied the query, so
-   * they are not re-filtered as the user types.
+   * they are not re-filtered as the user types. On the first focus there are
+   * no rows yet and the panel holds the loading row alone.
    *
    * @example
    * ```typescript

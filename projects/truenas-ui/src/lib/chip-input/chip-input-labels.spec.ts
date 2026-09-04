@@ -15,8 +15,8 @@ import type { TnOptionsFetchFn } from '../utils/options-data-source';
  * a signal-valued token re-renders when the app switches language.
  *
  * `loading` is the only label the chip input has, and it is on screen only
- * while a `dataSource` request is in flight — so every case here opens the
- * panel on a page that lands, then leaves a second request hanging.
+ * while a `dataSource` request is in flight — so every case here leaves a
+ * request hanging rather than answering it.
  */
 
 type Option = TnChipInputOption<string>;
@@ -54,7 +54,8 @@ describe('TnChipInputComponent labels', () => {
 
   /**
    * Open the panel on a page that lands, then type into a request that never
-   * answers — which is the only state the loading row is rendered in.
+   * answers — one of the states the loading row is rendered in, and the one
+   * that exercises the label against rows already on screen.
    */
   function loadingText(): string {
     const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
