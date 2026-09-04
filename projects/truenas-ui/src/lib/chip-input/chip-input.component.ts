@@ -1,8 +1,9 @@
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import type { ElementRef, OnDestroy, TemplateRef } from '@angular/core';
+import type { ElementRef, OnDestroy, Signal, TemplateRef } from '@angular/core';
 import {
   Component,
+  InjectionToken,
   ViewContainerRef,
   computed,
   effect,
@@ -20,9 +21,12 @@ import type { Subscription } from 'rxjs';
 import { TnChipComponent } from '../chip/chip.component';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import type { TnSelectOption } from '../select/select.component';
+import { TnSpinnerComponent } from '../spinner/spinner.component';
 import {
   TnTestIdDirective, composeTestId, controlTestId, optionTestId, scopeTestId, type TnTestIdValue,
 } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
+import { createTnOptionsDataSource, type TnAsyncOptionsHost, type TnOptionsFetchFn } from '../utils/options-data-source';
 
 /**
  * Option shape for `tn-chip-input`'s value mode — the `label` is displayed on
@@ -31,6 +35,34 @@ import {
  * feed all three.
  */
 export type TnChipInputOption<T = unknown> = TnSelectOption<T>;
+
+/**
+ * Copy rendered inside `tn-chip-input` that is the same for every instance in
+ * an app. Provide {@link TN_CHIP_INPUT_LABELS} at the app root rather than
+ * repeating the identical string on each call site; the matching input on
+ * `<tn-chip-input>` still wins where one instance needs its own wording.
+ */
+export interface TnChipInputLabels {
+  /** Text shown next to the spinner while a `dataSource` request is in flight. */
+  loading: string;
+}
+
+/** English defaults used when no {@link TN_CHIP_INPUT_LABELS} provider is registered. */
+export const TN_CHIP_INPUT_DEFAULT_LABELS: TnChipInputLabels = {
+  loading: 'Loading...',
+};
+
+/**
+ * DI token for app-wide default labels. Provide either a static object or a
+ * `Signal<TnChipInputLabels>` — the latter lets every chip input react to
+ * language changes when the consumer wires it up to an i18n service.
+ *
+ * Explicit input bindings on `<tn-chip-input>` still win over these defaults.
+ */
+export const TN_CHIP_INPUT_LABELS = new InjectionToken<TnChipInputLabels | Signal<TnChipInputLabels>>(
+  'TN_CHIP_INPUT_LABELS',
+  { providedIn: 'root', factory: () => TN_CHIP_INPUT_DEFAULT_LABELS },
+);
 
 let nextId = 0;
 
@@ -77,7 +109,7 @@ let nextId = 0;
 @Component({
   selector: 'tn-chip-input',
   standalone: true,
-  imports: [TnChipComponent, TnTestIdDirective],
+  imports: [TnChipComponent, TnSpinnerComponent, TnTestIdDirective],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -88,7 +120,7 @@ let nextId = 0;
   templateUrl: './chip-input.component.html',
   styleUrl: './chip-input.component.scss',
 })
-export class TnChipInputComponent<T = string> implements ControlValueAccessor, OnDestroy {
+export class TnChipInputComponent<T = string> implements ControlValueAccessor, TnAsyncOptionsHost, OnDestroy {
   private readonly overlay = inject(Overlay);
   private readonly viewContainerRef = inject(ViewContainerRef);
 
@@ -144,8 +176,48 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    * Value-mode option list (`{ label, value }`). When non-empty, chips display
    * the resolved `label` while the form model holds `value`s. Takes precedence
    * over `suggestions`. For async sources, update in response to `(searchChange)`.
+   *
+   * A bound `dataSource` supersedes these as the *suggestions*, but they are
+   * still read when labelling a chip — see {@link labelOptions}.
    */
   options = input<TnChipInputOption<T>[]>([]);
+
+  /**
+   * Server-driven suggestions: a function of `(query, page)` returning the
+   * matches for `query`. Binding it hands the component the debounce,
+   * request cancellation, loading state and error recovery that a consumer
+   * otherwise writes by hand around `(searchChange)`, and it supersedes both
+   * `suggestions` and `options` as the source of the dropdown's rows —
+   * `options` is still consulted when labelling a chip, so a host can name a
+   * value the fetched pages have not produced.
+   *
+   * The chip dropdown is not paged, so `page` is always 0 — the parameter is
+   * there only so one source function can feed both this and `tn-autocomplete`.
+   *
+   * The first query runs when the field is first focused, not on init. Binding
+   * a source that is `undefined` at that moment is fine — the field fetches as
+   * soon as one arrives, open panel included.
+   *
+   * Swapping one source function for ANOTHER is not a signal to refetch: a
+   * source is expected to be a stable function reading live configuration,
+   * which is what keeps it from being replaced out from under a request in
+   * flight. Call `refreshOptions()` when that configuration moves.
+   *
+   * @example
+   * ```html
+   * <tn-chip-input [dataSource]="groupOptions" />
+   * ```
+   */
+  dataSource = input<TnOptionsFetchFn<TnChipInputOption<T>> | undefined>(undefined);
+
+  /** Debounce applied to typing before `dataSource` is queried, in ms. */
+  dataSourceDebounce = input<number>(250);
+
+  /**
+   * Text shown next to the spinner while a `dataSource` request is in flight.
+   * Falls back to {@link TN_CHIP_INPUT_LABELS}.
+   */
+  loadingText = input<string | undefined>(undefined);
 
   /**
    * Comparator for value equality — used for de-duplication, display resolution
@@ -206,6 +278,19 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    */
   searchChange = output<string>();
 
+  /**
+   * Emits once per failed `dataSource` request. The component recovers on its
+   * own — the stream stays alive and the failed term stays retryable — so this
+   * is purely for the app to report the failure the way it reports others.
+   */
+  dataSourceError = output<unknown>();
+
+  private readonly defaultLabels = injectTnLabels(TN_CHIP_INPUT_LABELS);
+
+  protected readonly resolvedLoadingText = computed(
+    () => this.loadingText() ?? this.defaultLabels().loading,
+  );
+
   private readonly container = viewChild.required<ElementRef<HTMLElement>>('container');
   private readonly inputEl = viewChild.required<ElementRef<HTMLInputElement>>('inputEl');
   private readonly dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
@@ -237,11 +322,42 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     return max === undefined || this.values().length < max;
   });
 
+  /** Async engine backing `dataSource`; idle while no source is bound. */
+  private readonly asyncOptions = createTnOptionsDataSource<TnChipInputOption<T>>({
+    source: this.dataSource,
+    debounceMs: this.dataSourceDebounce,
+    // The dropdown is not paged, so nothing ever asks for page 1 and this
+    // only decides an `exhausted` flag no one reads.
+    pageSize: computed(() => Number.POSITIVE_INFINITY),
+    identity: (option) => option.value,
+    onError: (error) => this.dataSourceError.emit(error),
+    onSettled: () => this.syncDropdownAfterFetch(),
+  });
+
   /**
-   * Unified option list. Value-mode `options` win; otherwise string-mode
-   * `suggestions` are lifted into `{ label: s, value: s }`.
+   * Whether a `dataSource` request is in flight.
+   *
+   * Surfaced in the dropdown because with a `dataSource` bound the rows are NOT
+   * re-filtered on the label — the server already applied the query — so the
+   * panel keeps showing the *previous* term's matches, clickable and looking
+   * current, for the debounce plus the round trip. Without a cue that is
+   * indistinguishable from "these are your results".
+   *
+   * It covers the ROUND TRIP only. The debounce window before it is
+   * deliberately left uncued: a spinner appearing and vanishing on every
+   * keystroke of a term that is still being typed is noise, and the request it
+   * would announce may never be sent.
+   */
+  protected readonly loading = computed(() => this.asyncOptions.loading());
+
+  /**
+   * Unified option list. A bound `dataSource` wins; then value-mode `options`;
+   * otherwise string-mode `suggestions` lifted into `{ label: s, value: s }`.
    */
   protected optionList = computed<TnChipInputOption<T>[]>(() => {
+    if (this.dataSource()) {
+      return this.asyncOptions.options();
+    }
     const opts = this.options();
     if (opts.length) {
       return opts;
@@ -249,14 +365,43 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     return this.suggestions().map((suggestion) => ({ label: suggestion, value: suggestion as unknown as T }));
   });
 
+  /**
+   * The rows a chip's label and test id may be resolved from: the suggestions,
+   * plus — with a `dataSource` bound — the `options` input.
+   *
+   * Those two lists are the same thing without a `dataSource`. With one, the
+   * fetched pages are the only source of labels, and the first of them does not
+   * exist until the field is focused: a form loaded with ids would render every
+   * chip as its raw id until someone clicked into it. `options` is how a host
+   * names values it already knows the labels for, so it stays part of the
+   * lookup even where it is not part of the dropdown.
+   *
+   * Deliberately not deduplicated: fetched rows come first, and every reader
+   * takes the first match, so a value in both lists resolves to the server's row.
+   *
+   * Read by {@link commitText} as well, so the labels the field paints and the
+   * labels it accepts back are one set. Deliberately NOT read by
+   * {@link filteredSuggestions}: with a source bound the rows are shown as the
+   * server ordered and filtered them, and splicing the pinned rows in would
+   * append the same entries to every term's results, matching or not.
+   */
+  private readonly labelOptions = computed<TnChipInputOption<T>[]>(() => {
+    const list = this.optionList();
+    const pinned = this.dataSource() ? this.options() : [];
+    return pinned.length ? [...list, ...pinned] : list;
+  });
+
   /** Options matching the typed text and not already selected. */
   protected filteredSuggestions = computed<TnChipInputOption<T>[]>(() => {
     const term = this.inputValue().trim().toLowerCase();
+    // A `dataSource` already applied the query server-side; filtering again on
+    // the label would hide rows it matched on some other field.
+    const isPreFiltered = !!this.dataSource();
     return this.optionList().filter((option) => {
       if (this.valuesIncludes(option.value)) {
         return false;
       }
-      return term === '' || option.label.toLowerCase().includes(term);
+      return isPreFiltered || term === '' || option.label.toLowerCase().includes(term);
     });
   });
 
@@ -266,21 +411,58 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   private overlayRef?: OverlayRef;
   private overlaySubs: Subscription[] = [];
 
+  /**
+   * Set when the panel was closed deliberately — by committing a chip, or by
+   * Escape — and read by everything that would otherwise re-open it.
+   *
+   * Committing changes the suggestion list, since the chosen row is now
+   * excluded, which re-runs the effect below. On the static path the empty
+   * input makes `activelySearching` false and the close stands; with a
+   * `dataSource` bound, `searchingEmpty` holds regardless, so the panel sprang
+   * back open against an empty field, still listing the rows of the term just
+   * committed.
+   *
+   * Escape is here for the same reason and one more: a response landing after
+   * it reaches `syncDropdownAfterFetch`, which OPENS. Typing `an`, pressing
+   * Escape inside the 250 ms debounce, and waiting put the panel straight back
+   * with focus still in the field — Escape defeated for the whole in-flight
+   * window. The ARIA combobox pattern is that Escape dismisses the popup and it
+   * stays dismissed, so that was a keyboard and AT regression, not a cosmetic
+   * one.
+   *
+   * Cleared by the next thing that is genuinely a search, so typing re-arms the
+   * panel immediately.
+   */
+  private closedByUser = false;
+
   constructor() {
     // Async suggestions: when the user types, onInput runs syncDropdown()
     // against the still-stale list and leaves the panel closed; results land a
     // tick later via [suggestions]/[options]. Re-open the panel once fresh
     // matches arrive while the field is focused and actively searching. This
-    // only ever opens (never closes), so it doesn't fight Escape, blur, or the
-    // post-commit close — those stay shut until the option set next changes.
+    // only ever opens (never closes), so it doesn't fight blur — and the
+    // `closedByUser` latch is what keeps it off Escape and the post-commit
+    // close, which would otherwise re-open on the next option-set change.
     effect(() => {
       const hasMatches = this.filteredSuggestions().length > 0;
+      // A debounced search reaches the wire a quarter-second after the
+      // keystroke that called `syncDropdown`, so on a term whose predecessor
+      // matched nothing the panel is shut by the time the request goes out.
+      // Tracking `loading` here is what puts the in-flight cue on screen in
+      // that case; like everything else in this effect it only ever opens.
+      const busy = this.loading();
       untracked(() => {
+        // With a `dataSource`, the first page is fetched on focus with an
+        // empty term — so an empty field is still "searching" and its results
+        // should drop the panel open, the way a static suggestion list does
+        // on focus. Typed-term-only would leave that first page invisible
+        // until the user typed something.
+        const searchingEmpty = !!this.dataSource();
         const activelySearching = this.focused()
-          && this.inputValue().trim() !== ''
+          && (searchingEmpty || this.inputValue().trim() !== '')
           && this.canAddMore()
           && !this.isDisabled();
-        if (hasMatches && activelySearching) {
+        if ((hasMatches || busy) && activelySearching && !this.closedByUser) {
           this.open();
         }
       });
@@ -289,6 +471,26 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
 
   ngOnDestroy(): void {
     this.detachOverlay();
+  }
+
+  // ── Async options ──
+
+  /**
+   * Discard the pages fetched from `dataSource` and re-query the current term.
+   *
+   * For a caller whose `[dataSource]` is a fixed function reading live
+   * configuration — the shape that keeps the source from being swapped out
+   * from under a search in flight — this is how a change to that configuration
+   * takes effect, rather than waiting for the next keystroke to notice.
+   */
+  refreshOptions(): void {
+    this.asyncOptions.refresh();
+    if (this.focused()) {
+      // Suggestions are on screen (or one keystroke from it), so they have to
+      // be replaced at once. An unfocused field refetches on its next focus —
+      // the `prime` there is no longer answered from the invalidated pages.
+      this.asyncOptions.prime();
+    }
   }
 
   // ── ControlValueAccessor ──
@@ -327,6 +529,8 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   protected onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.inputValue.set(value);
+    this.closedByUser = false;
+    this.asyncOptions.search(value);
     this.searchChange.emit(value);
     this.highlightedIndex.set(-1);
     this.syncDropdown();
@@ -334,6 +538,10 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
 
   protected onFocus(): void {
     this.focused.set(true);
+    this.closedByUser = false;
+    // Fetch the first page the first time the field is used, so a form of
+    // chip inputs costs nothing until one is focused. A no-op thereafter.
+    this.asyncOptions.prime();
     this.syncDropdown();
   }
 
@@ -379,6 +587,9 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     if (event.key === 'Escape') {
       if (this.isOpen()) {
         event.preventDefault();
+        // Latched, so neither the re-open effect nor a `dataSource` response
+        // still in flight can undo the dismissal. See {@link closedByUser}.
+        this.closedByUser = true;
         this.close();
       }
       return;
@@ -479,6 +690,11 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     return this.discriminatedTestId(optionTestId(this.resolvedTestId(), option, this.optionTestIdKey()));
   }
 
+  /** Test-id parts for the dropdown's status row. Mirrors `tn-autocomplete`. */
+  protected statusTestIdParts(status: 'loading'): (string | number | null | undefined)[] {
+    return scopeTestId(this.resolvedTestId(), status);
+  }
+
   /**
    * Keeps a scoped id only when both halves of it survive normalization.
    *
@@ -504,13 +720,23 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
     return event.key === 'Enter' || this.separatorKeys().includes(event.key);
   }
 
-  /** Commits typed text: resolve it to an option's value, else accept as custom. */
+  /**
+   * Commits typed text: resolve it to an option's value, else accept as custom.
+   *
+   * Matched against {@link labelOptions}, not the dropdown rows, so that every
+   * label the field is willing to PAINT it is also willing to READ back. With a
+   * `dataSource` bound, `options` names values the host already knows the
+   * labels for; a chip rendered as `admins` that this method did not recognise
+   * when `admins` was typed was silently dropped under
+   * `allowCustomValue="false"` and committed as the raw string under the
+   * default `true` — a second chip beside the one it duplicates.
+   */
   private commitText(raw: string): void {
     const text = (raw ?? '').trim();
     if (!text) {
       return;
     }
-    const match = this.optionList().find((option) => option.label.toLowerCase() === text.toLowerCase());
+    const match = this.labelOptions().find((option) => option.label.toLowerCase() === text.toLowerCase());
     if (match) {
       this.commitValue(match.value);
       return;
@@ -551,7 +777,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   private optionFor(value: T): TnChipInputOption<T> | undefined {
     const comparator = this.compareWith();
     if (comparator) {
-      return this.optionList().find((option) => comparator(option.value, value));
+      return this.labelOptions().find((option) => comparator(option.value, value));
     }
     return this.optionIndex().get(value);
   }
@@ -564,7 +790,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
    */
   private optionIndex = computed<Map<T, TnChipInputOption<T>>>(() => {
     const index = new Map<T, TnChipInputOption<T>>();
-    for (const option of this.optionList()) {
+    for (const option of this.labelOptions()) {
       if (!index.has(option.value)) {
         index.set(option.value, option);
       }
@@ -584,16 +810,56 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, O
   private clearInput(): void {
     this.inputValue.set('');
     this.inputEl().nativeElement.value = '';
+    // The engine has to be told the term is gone too, or it keeps the
+    // committed term's query and rows. `closedByUser` hides that for the
+    // immediate re-open, but not for the next focus: blur, refocus, and the
+    // panel opens on the PREVIOUS term's matches against an empty field. An
+    // empty input means "show everything" on the static path, and this is what
+    // makes the async path agree. One request, not one per chip — it goes
+    // through the same debounce as typing.
+    this.asyncOptions.search('');
+    this.closedByUser = true;
     this.close();
+  }
+
+  /**
+   * Re-decide the panel once a `dataSource` response lands.
+   *
+   * The constructor effect only ever OPENS — it must not fight Escape, blur or
+   * the post-commit close — and with a source bound `onInput` runs
+   * `syncDropdown()` against the PREVIOUS term's rows, which are still there,
+   * so it leaves the panel open too. Nothing was left to retract it: a search
+   * that matched nothing kept a bordered, empty `role="listbox"` attached,
+   * `aria-expanded="true"` over it, until the next keystroke or blur. The
+   * static path never reaches that state, because there the label filter has
+   * already emptied the list by the time `syncDropdown()` reads it.
+   *
+   * The guards are every deliberate close: {@link closedByUser} covers the
+   * post-commit close and Escape, `focused()` covers blur. This must not reopen
+   * a panel any of them just shut.
+   */
+  private syncDropdownAfterFetch(): void {
+    if (this.closedByUser || !this.focused()) {
+      return;
+    }
+    this.syncDropdown();
   }
 
   /**
    * Opens the dropdown when there is something to show, closes it otherwise.
    * Stays closed once the chip cap is reached — suggesting rows that
    * `commitValue()` would reject is misleading.
+   *
+   * A request in flight counts as something to show even with no rows behind
+   * it: the loading row is the only in-flight cue this field has, and the
+   * fetch most likely to be slow is the COLD one on first focus, where there
+   * is nothing to keep the panel open on its own. Without this the panel was
+   * detached for that whole round trip — no spinner, no `aria-busy` — and the
+   * empty listbox that carries the loading row cost no height.
    */
   private syncDropdown(): void {
-    if (this.filteredSuggestions().length > 0 && this.canAddMore() && !this.isDisabled()) {
+    const hasSomethingToShow = this.filteredSuggestions().length > 0 || this.loading();
+    if (hasSomethingToShow && this.canAddMore() && !this.isDisabled()) {
       this.open();
     } else {
       this.close();

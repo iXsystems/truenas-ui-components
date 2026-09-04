@@ -1,0 +1,536 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Subject, of, throwError } from 'rxjs';
+import type { Observable } from 'rxjs';
+import { TnChipInputComponent } from './chip-input.component';
+import type { TnChipInputOption } from './chip-input.component';
+import type { TnOptionsFetchFn } from '../utils/options-data-source';
+
+/**
+ * `[dataSource]` — server-driven suggestions for `tn-chip-input`.
+ *
+ * The same engine `tn-autocomplete` uses, minus paging: the chip dropdown shows
+ * one page. What it removes from consumers is the `(searchChange)` → subject →
+ * `debounceTime` → `switchMap` → `catchError` → `shareReplay` pipeline that
+ * every user/group chip field in the app had written out by hand.
+ */
+
+type Option = TnChipInputOption<string>;
+
+@Component({
+  selector: 'tn-chip-data-source-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-chip-input
+      [formControl]="control"
+      [dataSource]="source()"
+      [dataSourceDebounce]="250"
+      [suggestions]="staticSuggestions()"
+      (dataSourceError)="errors.push($event)" />
+  `,
+})
+class ChipDataSourceHostComponent {
+  control = new FormControl<string[]>([]);
+  staticSuggestions = signal<string[]>([]);
+  source = signal<TnOptionsFetchFn<Option> | undefined>(undefined);
+  errors: unknown[] = [];
+}
+
+/**
+ * `[options]` bound ALONGSIDE `[dataSource]`: how a host names the values it
+ * already holds, so a form loaded with ids paints names before anything has
+ * been fetched. `allowCustomValue` is false because that is what the docs tell
+ * value-mode callers to use — and the setting under which failing to match a
+ * pinned label loses the text outright.
+ */
+@Component({
+  selector: 'tn-chip-pinned-labels-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-chip-input
+      [formControl]="control"
+      [dataSource]="source"
+      [dataSourceDebounce]="250"
+      [options]="pinned"
+      [allowCustomValue]="false" />
+  `,
+})
+class ChipPinnedLabelsHostComponent {
+  control = new FormControl<string[]>(['g-7']);
+  readonly pinned: Option[] = [{ label: 'admins', value: 'g-7' }];
+  responder: () => Observable<Option[]> = () => of([]);
+  readonly source: TnOptionsFetchFn<Option> = () => this.responder();
+}
+
+describe('tn-chip-input [dataSource]', () => {
+  let fixture: ComponentFixture<ChipDataSourceHostComponent>;
+  let host: ChipDataSourceHostComponent;
+  let overlayEl: HTMLElement;
+
+  let queries: string[];
+  let responder: (query: string) => Observable<Option[]>;
+
+  const source: TnOptionsFetchFn<Option> = (query) => {
+    queries.push(query);
+    return responder(query);
+  };
+
+  function input(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('input') as HTMLInputElement;
+  }
+
+  function renderedSuggestions(): string[] {
+    return Array.from(overlayEl.querySelectorAll('.tn-chip-input__option'))
+      .map((option) => option.textContent?.trim() ?? '');
+  }
+
+  function listbox(): HTMLElement | null {
+    return overlayEl.querySelector('.tn-chip-input__listbox');
+  }
+
+  function loadingRow(): HTMLElement | null {
+    return overlayEl.querySelector('.tn-chip-input__loading');
+  }
+
+  function focus(): void {
+    input().dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+  }
+
+  function type(text: string): void {
+    input().value = text;
+    input().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    jest.advanceTimersByTime(250);
+    fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
+    queries = [];
+    responder = (query) => of(
+      ['admins', 'analysts', 'builders']
+        .filter((name) => name.startsWith(query))
+        .map((name) => ({ label: name, value: name })),
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [ChipDataSourceHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ChipDataSourceHostComponent);
+    host = fixture.componentInstance;
+    overlayEl = TestBed.inject(OverlayContainer).getContainerElement();
+    host.source.set(source);
+    fixture.detectChanges();
+
+    // The library is zoneless, so `fakeAsync`/`tick` are unavailable.
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    TestBed.inject(OverlayContainer).ngOnDestroy();
+  });
+
+  it('does not query until the field is first focused', () => {
+    expect(queries).toEqual([]);
+
+    focus();
+
+    expect(queries).toEqual(['']);
+  });
+
+  it('opens the panel on the first page fetched at focus', () => {
+    // A static suggestion list drops the panel open on focus; an async one has
+    // nothing to show at that instant, so it has to open when the page lands.
+    focus();
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+  });
+
+  it('debounces typing into a single query for the final term', () => {
+    focus();
+    queries = [];
+
+    input().value = 'a';
+    input().dispatchEvent(new Event('input'));
+    jest.advanceTimersByTime(100);
+    input().value = 'an';
+    input().dispatchEvent(new Event('input'));
+    jest.advanceTimersByTime(250);
+    fixture.detectChanges();
+
+    expect(queries).toEqual(['an']);
+  });
+
+  it('renders the fetched page without filtering it again on the label', () => {
+    // The server already applied the query; a second client-side pass would
+    // drop rows it matched on some other field.
+    responder = () => of([{ label: 'ACME\\ops', value: 'ops' }]);
+    focus();
+    type('ops');
+
+    expect(renderedSuggestions()).toEqual(['ACME\\ops']);
+  });
+
+  it('supersedes [suggestions] while bound', () => {
+    host.staticSuggestions.set(['static']);
+    fixture.detectChanges();
+
+    focus();
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+  });
+
+  it('still hides an option already committed as a chip', () => {
+    host.control.setValue(['admins']);
+    fixture.detectChanges();
+
+    focus();
+
+    expect(renderedSuggestions()).toEqual(['analysts', 'builders']);
+  });
+
+  it('marks the dropdown busy while a request is in flight', () => {
+    // With a `dataSource` the rows are NOT re-filtered on the label, so between
+    // the keystroke and the response the panel is showing the PREVIOUS term's
+    // matches — clickable, and indistinguishable from a result set. The
+    // autocomplete has said so with a spinner and `aria-busy` since it grew a
+    // `dataSource`; this had no equivalent.
+    const pending = new Subject<Option[]>();
+    focus();
+    expect(loadingRow()).toBeNull();
+
+    responder = () => pending;
+    type('ana');
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+    expect(listbox()?.getAttribute('aria-busy')).toBe('true');
+    expect(loadingRow()?.textContent).toContain('Loading...');
+
+    pending.next([{ label: 'analysts', value: 'analysts' }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(renderedSuggestions()).toEqual(['analysts']);
+    expect(listbox()?.getAttribute('aria-busy')).toBeNull();
+    expect(loadingRow()).toBeNull();
+  });
+
+  it('leaves the panel closed after a chip is committed', () => {
+    // Committing changes the suggestion list — the chosen row drops out — which
+    // re-runs the effect that re-opens the panel when results arrive. With a
+    // `dataSource` bound the field counts as "actively searching" even on an
+    // empty input, so the panel sprang straight back open against a blank
+    // field, still listing the rows of the term just committed. The static
+    // path never did this: there, the empty input ends the search.
+    focus();
+    type('a');
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts']);
+
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+
+    expect(host.control.value).toEqual(['a']);
+    expect(renderedSuggestions()).toEqual([]);
+  });
+
+  it('re-queries with an empty term once a chip is committed', () => {
+    // Committing cleared the text but not the ENGINE's term, so the rows on
+    // hand stayed the committed term's. Blur and refocus and the panel opened
+    // on those rows against an empty field — where the static path shows
+    // everything. One request per commit, not one per keystroke: it goes
+    // through the same debounce as typing.
+    focus();
+    type('a');
+    queries = [];
+
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+    jest.advanceTimersByTime(250);
+    fixture.detectChanges();
+
+    expect(queries).toEqual(['']);
+
+    input().dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    focus();
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+  });
+
+  it('re-opens on the next keystroke after a commit', () => {
+    focus();
+    type('a');
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+
+    type('b');
+
+    expect(renderedSuggestions()).toEqual(['builders']);
+  });
+
+  describe('refreshOptions()', () => {
+    function component(): TnChipInputComponent<string> {
+      return fixture.debugElement.children[0].componentInstance as TnChipInputComponent<string>;
+    }
+
+    it('re-queries the current term instead of being suppressed as a duplicate', () => {
+      focus();
+      type('a');
+      queries = [];
+      responder = () => of([{ label: 'narrowed', value: 'narrowed' }]);
+
+      component().refreshOptions();
+      fixture.detectChanges();
+
+      expect(queries).toEqual(['a']);
+      expect(renderedSuggestions()).toEqual(['narrowed']);
+    });
+
+    it('does not query for a field that has never been focused', () => {
+      component().refreshOptions();
+      fixture.detectChanges();
+      expect(queries).toEqual([]);
+
+      focus();
+
+      expect(queries).toEqual(['']);
+    });
+  });
+
+  it('closes the panel when a search comes back with nothing', () => {
+    // With a source bound the rows are NOT re-filtered on the label, so
+    // `onInput` runs its sync against the previous term's rows — still there,
+    // still matching — and leaves the panel open. Nothing then retracted it
+    // when the response landed empty: a bordered box with an empty
+    // `role="listbox"` stayed attached under `aria-expanded="true"` until the
+    // next keystroke or blur. `tn-autocomplete` renders a no-results row
+    // instead; this has no equivalent, so it has to close.
+    focus();
+    type('a');
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts']);
+
+    responder = () => of([]);
+    type('zzz');
+
+    expect(listbox()).toBeNull();
+    expect(input().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('fetches a source that binds while the panel is already open', () => {
+    // `prime` is only called on focus, so a source arriving late — a resolver,
+    // a sibling field's signal — left an open field with nothing to ask. The
+    // chip input reaches a worse state than the autocomplete here: it renders
+    // no no-results row, so the empty bordered `role="listbox"` just stays
+    // attached under `aria-expanded="true"`.
+    host.source.set(undefined);
+    fixture.detectChanges();
+
+    focus();
+    expect(queries).toEqual([]);
+
+    host.source.set(source);
+    fixture.detectChanges();
+
+    expect(queries).toEqual(['']);
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+  });
+
+  it('still issues nothing for a field nobody has focused', () => {
+    host.source.set(undefined);
+    fixture.detectChanges();
+
+    host.source.set(source);
+    fixture.detectChanges();
+
+    expect(queries).toEqual([]);
+  });
+
+  it('leaves the panel dismissed when Escape lands mid-request', () => {
+    // Escape is a third deliberate close, alongside blur and the post-commit
+    // one, and it was the only one nothing guarded: the response landing after
+    // it reached `syncDropdownAfterFetch`, which OPENS. Focus stays in the
+    // field, so this put the panel back under the user and defeated Escape for
+    // the whole in-flight window. The ARIA combobox pattern is that Escape
+    // dismisses the popup and it stays dismissed.
+    const pending = new Subject<Option[]>();
+    focus();
+    responder = () => pending;
+
+    input().value = 'an';
+    input().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(listbox()).toBeNull();
+
+    jest.advanceTimersByTime(250);
+    pending.next([{ label: 'analysts', value: 'analysts' }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(listbox()).toBeNull();
+  });
+
+  it('re-arms the panel on the next keystroke after Escape', () => {
+    // The dismissal is until the term next changes, not for good.
+    focus();
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    type('a');
+
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts']);
+  });
+
+  it('shows the loading row on the cold first fetch, with no rows behind it', () => {
+    // The first fetch is the one most likely to be slow, and it was the one
+    // with no cue at all: `onFocus` primes and then syncs against a suggestion
+    // list that is still empty, so the panel closed and stayed detached for
+    // the whole round trip — no spinner, no `aria-busy`, nothing.
+    const pending = new Subject<Option[]>();
+    responder = () => pending;
+
+    focus();
+
+    expect(renderedSuggestions()).toEqual([]);
+    expect(loadingRow()?.textContent).toContain('Loading...');
+    expect(listbox()?.getAttribute('aria-busy')).toBe('true');
+
+    pending.next([{ label: 'admins', value: 'admins' }]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(renderedSuggestions()).toEqual(['admins']);
+    expect(loadingRow()).toBeNull();
+  });
+
+  it('retracts the loading-only panel when the cold fetch lands empty', () => {
+    // Holding the panel open for the round trip must not resurrect the empty
+    // bordered box: once the request settles with nothing, it closes as it
+    // does for any other empty result.
+    const pending = new Subject<Option[]>();
+    responder = () => pending;
+    focus();
+    expect(loadingRow()).not.toBeNull();
+
+    pending.next([]);
+    pending.complete();
+    fixture.detectChanges();
+
+    expect(listbox()).toBeNull();
+    expect(input().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('shows the loading row for a term typed after one that matched nothing', () => {
+    // The panel is shut when the keystroke lands, so `onInput`'s sync cannot
+    // open it; the request only goes out a debounce later. Without the
+    // re-open effect tracking `loading`, that second search ran uncued too.
+    focus();
+    responder = () => of([]);
+    type('zzz');
+    expect(listbox()).toBeNull();
+
+    const pending = new Subject<Option[]>();
+    responder = () => pending;
+    type('zzzz');
+
+    expect(renderedSuggestions()).toEqual([]);
+    expect(loadingRow()?.textContent).toContain('Loading...');
+  });
+
+  it('reports a failure and keeps the field usable', () => {
+    let failing = true;
+    responder = (query) => (failing
+      ? throwError(() => new Error('boom'))
+      : of([{ label: query, value: query }]));
+
+    focus();
+    expect(host.errors).toHaveLength(1);
+
+    failing = false;
+    type('ops');
+
+    expect(renderedSuggestions()).toEqual(['ops']);
+  });
+});
+
+describe('tn-chip-input [dataSource] with pinned [options]', () => {
+  let fixture: ComponentFixture<ChipPinnedLabelsHostComponent>;
+  let overlayEl: HTMLElement;
+
+  function input(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('input') as HTMLInputElement;
+  }
+
+  function chipLabels(): string[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.tn-chip__label'))
+      .map((label) => (label as HTMLElement).textContent?.trim() ?? '');
+  }
+
+  function commit(text: string): void {
+    input().value = text;
+    input().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    jest.advanceTimersByTime(250);
+    fixture.detectChanges();
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ChipPinnedLabelsHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ChipPinnedLabelsHostComponent);
+    overlayEl = TestBed.inject(OverlayContainer).getContainerElement();
+    fixture.detectChanges();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    TestBed.inject(OverlayContainer).ngOnDestroy();
+  });
+
+  it('paints a pinned label before anything has been fetched', () => {
+    expect(chipLabels()).toEqual(['admins']);
+  });
+
+  it('reads back a label it painted, even with no page holding that row', () => {
+    // The asymmetry this closes: the field rendered `g-7` as `admins`, then
+    // refused to recognise `admins` when it was typed. Under
+    // `allowCustomValue="false"` the text was dropped on the floor; under the
+    // default `true` it was committed raw, next to the chip it duplicates.
+    input().dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    fixture.componentInstance.control.setValue([]);
+    fixture.detectChanges();
+
+    commit('admins');
+
+    expect(fixture.componentInstance.control.value).toEqual(['g-7']);
+    expect(chipLabels()).toEqual(['admins']);
+  });
+
+  it('keeps the pinned rows out of the dropdown', () => {
+    // They are labels for values the host already holds, not results: the
+    // server ordered and filtered what the panel shows, and splicing these in
+    // would append the same entries to every term.
+    fixture.componentInstance.responder = () => of([{ label: 'builders', value: 'g-9' }]);
+    input().dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+
+    expect(Array.from(overlayEl.querySelectorAll('.tn-chip-input__option'))
+      .map((option) => option.textContent?.trim())).toEqual(['builders']);
+  });
+});

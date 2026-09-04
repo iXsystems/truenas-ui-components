@@ -111,6 +111,24 @@ export class TnChipInputHarness extends ComponentHarness {
     return texts;
   }
 
+  /**
+   * Whether the dropdown is showing its loading row, i.e. a `[dataSource]`
+   * request is in flight. Any rows on screen while this is true belong to the
+   * previous term — a `dataSource` is trusted to have applied the query, so
+   * they are not re-filtered as the user types. On the first focus there are
+   * no rows yet and the panel holds the loading row alone.
+   *
+   * @example
+   * ```typescript
+   * const chips = await loader.getHarness(TnChipInputHarness);
+   * await chips.focus();
+   * expect(await chips.isLoading()).toBe(true);
+   * ```
+   */
+  async isLoading(): Promise<boolean> {
+    return (await this.documentRoot.locatorForOptional('.tn-chip-input__loading')()) !== null;
+  }
+
   async isDisabled(): Promise<boolean> {
     const input = await this._input();
     return (await input.getProperty('disabled')) === true;
