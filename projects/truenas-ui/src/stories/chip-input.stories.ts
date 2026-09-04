@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { Observable } from 'rxjs';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnChipInputComponent } from '../lib/chip-input/chip-input.component';
@@ -213,6 +214,75 @@ export const AsyncSuggestions: Story = {
           placeholder="Search languages…"
           (searchChange)="onSearch($event)" />
       </tn-form-field>
+    `,
+    moduleMetadata: { imports: [TnFormFieldComponent, ReactiveFormsModule] },
+  }),
+  parameters: { controls: { disable: true } },
+};
+
+/**
+ * **The same suggestions, as a `[dataSource]`.** Binding a `(query, page)`
+ * function replaces the story above's subject-and-timer entirely: the component
+ * owns the debounce, cancels the in-flight request when the term changes, and
+ * recovers from a failure without the field going dead. Unlike the hand-rolled
+ * version it also primes on focus, so an empty field already shows the first
+ * page rather than waiting for a keystroke.
+ *
+ * The chip dropdown is not paged, so `page` is always 0 — the parameter exists
+ * only so one source function can feed this and `tn-autocomplete` alike.
+ *
+ * The 350 ms latency is deliberate: it makes the in-flight state visible. While
+ * a lookup is out, the panel keeps showing the previous term's rows — a
+ * `dataSource` is trusted to have applied the query, so they are not re-filtered
+ * on the label — and says so with a spinner row and `aria-busy` on the listbox.
+ *
+ * Every fourth lookup fails on purpose, to show the field stays usable.
+ */
+export const DataSource: Story = {
+  render: () => ({
+    props: (() => {
+      const control = new FormControl<string[]>([]);
+      const lastError = signal<string | null>(null);
+      let lookups = 0;
+      const all = [
+        'JavaScript', 'TypeScript', 'Python', 'Rust', 'Go', 'Java', 'Kotlin',
+        'Swift', 'Ruby', 'Scala', 'Elixir', 'Haskell', 'Clojure', 'C#', 'C++',
+        'Dart', 'Lua', 'Perl', 'PHP', 'Zig',
+      ];
+
+      return {
+        control,
+        lastError,
+        languages: (query: string) => new Observable<{ label: string; value: string }[]>((subscriber) => {
+          lookups++;
+          const timer = setTimeout(() => {
+            if (lookups % 4 === 0) {
+              subscriber.error(new Error(`Lookup failed for "${query}"`));
+              return;
+            }
+            const term = query.trim().toLowerCase();
+            subscriber.next(
+              all.filter((name) => name.toLowerCase().includes(term))
+                .map((name) => ({ label: name, value: name })),
+            );
+            subscriber.complete();
+          }, 350);
+          return () => clearTimeout(timer);
+        }),
+        onError: (error: unknown) => lastError.set((error as Error).message),
+      };
+    })(),
+    template: `
+      <tn-form-field label="Languages" hint="Focus to see the first page; every fourth lookup fails">
+        <tn-chip-input
+          [formControl]="control"
+          [dataSource]="languages"
+          placeholder="Search languages…"
+          (dataSourceError)="onError($event)" />
+      </tn-form-field>
+      @if (lastError()) {
+        <p style="margin-top: 0.5rem; font-size: 0.875rem;">Last error: <code>{{ lastError() }}</code></p>
+      }
     `,
     moduleMetadata: { imports: [TnFormFieldComponent, ReactiveFormsModule] },
   }),

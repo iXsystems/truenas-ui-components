@@ -347,9 +347,9 @@ const PAINTS_UNTUNED: Readonly<Record<string, { fills: number; text: number; why
   },
   'chip-input/chip-input.component.scss': {
     fills: 2,
-    text: 3,
+    text: 4,
     why: 'the highlighted option fills --tn-bg3 under --tn-fg1; the disabled field fill is under '
-      + 'an opacity',
+      + 'an opacity; the dropdown loading row is --tn-fg2 on the panel\'s own --tn-bg1',
   },
   'chip/chip.component.scss': {
     fills: 3,

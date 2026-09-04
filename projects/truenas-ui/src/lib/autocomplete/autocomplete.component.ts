@@ -25,6 +25,7 @@ import type { TnSelectOption } from '../select/select.component';
 import { TnSpinnerComponent } from '../spinner/spinner.component';
 import { TnTestIdDirective, controlTestId, optionTestId, scopeTestId, type TnTestIdValue } from '../test-id';
 import { injectTnLabels } from '../utils/inject-labels';
+import { createTnOptionsDataSource, type TnAsyncOptionsHost, type TnOptionsFetchFn } from '../utils/options-data-source';
 
 /**
  * Option shape for `tn-autocomplete` — the `label` is displayed, the `value`
@@ -85,7 +86,7 @@ export const TN_AUTOCOMPLETE_LABELS = new InjectionToken<TnAutocompleteLabels | 
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
 })
-export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
+export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, TnAsyncOptionsHost, OnDestroy {
   private readonly elementRef = inject(ElementRef);
   private readonly overlay = inject(Overlay);
   private readonly viewContainerRef = inject(ViewContainerRef);
@@ -98,6 +99,12 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * to the form control. A written value is resolved back to its option's
    * label for display — falling back to `String(value)` until the matching
    * option is available, and upgraded once an async option load lands.
+   *
+   * With a `[dataSource]` bound these are not listed in the dropdown, which is
+   * the source's, but they still NAME a value: pass the options a host already
+   * holds labels for — the ids on the record being edited — and the field
+   * reads them as names from the moment it renders, rather than as raw numbers
+   * until someone opens it.
    */
   options = input<TnAutocompleteOption<T>[]>([]);
 
@@ -133,8 +140,63 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   allowCustomValue = input<boolean>(false);
 
   /**
+   * Server-driven options: a function of `(query, page)` returning one page of
+   * matches. Binding it hands the component the whole async lifecycle —
+   * debounced search, request cancellation, the paging cursor, exhaustion,
+   * error recovery and the loading state — so a consumer no longer writes a
+   * `searchChange` → subject → `switchMap` → `options` pipeline of its own.
+   *
+   * While set, the source is the only origin of DROPDOWN rows and the
+   * client-side filter is skipped, since the server already filtered — pass an
+   * explicit `[filterFn]` to filter the fetched page on top. `[options]` stays
+   * a source of LABELS, for values the host can already name before the first
+   * page is fetched; see {@link options}.
+   *
+   * The first page is fetched when the panel first opens, not on init, so a
+   * form full of pickers issues no queries until one is actually used.
+   *
+   * @example
+   * ```html
+   * <tn-autocomplete [dataSource]="userOptions" [pageSize]="50" />
+   * ```
+   * ```ts
+   * userOptions: TnOptionsFetchFn<string> =
+   *   (query, page) => this.api.searchUsers(query, page * 50);
+   * ```
+   */
+  dataSource = input<TnOptionsFetchFn<TnAutocompleteOption<T>> | undefined>(undefined);
+
+  /** Debounce applied to typing before `dataSource` is queried, in ms. */
+  dataSourceDebounce = input<number>(250);
+
+  /**
+   * Rows `dataSource` returns per page. Used to detect exhaustion — a short
+   * page is the last one — so scrolling past the end stops querying rather
+   * than issuing requests at a growing offset that can only return nothing.
+   */
+  pageSize = input<number>(50);
+
+  /**
+   * A row pinned above the results that performs an action instead of
+   * selecting a value — "Add New…" and friends. It survives filtering and the
+   * `maxResults` cap, and choosing it emits {@link actionSelected} and closes
+   * the panel **without** touching the form control, so no placeholder
+   * sentinel is ever committed to the value.
+   */
+  actionOption = input<TnAutocompleteOption<T> | undefined>(undefined);
+
+  /**
+   * Keep the committed value listed even when the page on screen does not
+   * contain it — a value sorted past the first page, or one just created that
+   * the query does not match yet. Without it such a field renders blank for a
+   * perfectly valid value. Only applies with `dataSource` bound.
+   */
+  keepSelectedOption = input<boolean>(true);
+
+  /**
    * Show a loading row in the dropdown panel while options are being fetched.
-   * Pair with `searchChange`/`loadMore` for server-driven options.
+   * Pair with `searchChange`/`loadMore` for server-driven options. Redundant
+   * with `dataSource`, which drives this state itself; the two are OR-ed.
    */
   loading = input<boolean>(false);
 
@@ -225,6 +287,20 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   searchChange = output<string>();
 
   /**
+   * Emits when {@link actionOption} is chosen. No value is committed and the
+   * panel closes; the consumer runs whatever the row promises (typically
+   * opening a create form) and can then write the new value to the control.
+   */
+  actionSelected = output<void>();
+
+  /**
+   * Emits once per failed `dataSource` request. The component recovers on its
+   * own — the stream stays alive and the failed term stays retryable — so this
+   * is purely for the app to report the failure the way it reports others.
+   */
+  dataSourceError = output<unknown>();
+
+  /**
    * Emits when the open dropdown is scrolled near its bottom — append the
    * next page to `options` (and use `loading` while it fetches). Suppressed
    * until the `options` COUNT changes so a slow consumer is not spammed —
@@ -264,33 +340,170 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** The currently committed value (an option's `value`, or a custom-typed one) */
   private selectedValue = signal<T | null>(null);
 
+  /**
+   * Label of the option the value was chosen from, remembered so
+   * `keepSelectedOption` can re-list it with its real text after a search
+   * replaced the page it came from. Null for a programmatic write, whose
+   * label is not known until an option carrying it arrives.
+   */
+  private selectedLabel = signal<string | null>(null);
+
   /** CVA disabled state from the form */
   private formDisabled = signal(false);
 
   /** Combined disabled state */
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  /** Filtered and capped options */
-  protected filteredOptions = computed(() => {
-    const term = this.searchTerm();
-    const all = this.options();
-    const customFilter = this.filterFn();
-    const max = this.maxResults();
-
-    if (!term) {
-      return all.slice(0, max);
-    }
-
-    const lowerTerm = term.toLowerCase();
-    const filtered = customFilter
-      ? all.filter((opt) => customFilter(opt, term))
-      : all.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
-
-    return filtered.slice(0, max);
+  /** Async engine backing `dataSource`; idle while no source is bound. */
+  private readonly asyncOptions = createTnOptionsDataSource<TnAutocompleteOption<T>>({
+    source: this.dataSource,
+    debounceMs: this.dataSourceDebounce,
+    pageSize: this.pageSize,
+    identity: (option) => option.value,
+    onError: (error) => this.dataSourceError.emit(error),
+    // Release the paging latch on every round trip. The count-change re-arm
+    // below cannot do it for a page that FAILED — no rows arrive, so the count
+    // never moves and every later scroll would be suppressed, leaving the
+    // field unable to retry the page it just lost.
+    onSettled: () => {
+      this.loadMorePending = false;
+    },
   });
 
-  /** Whether there are any results to show */
+  /**
+   * The synthetic row that keeps a committed value listed while the pages
+   * fetched so far do not contain it, or `undefined`.
+   *
+   * Held separately from {@link resolvedOptions} so {@link filteredOptions} can
+   * recognize it and pin it past the `maxResults` cap, the way the action row
+   * is pinned. Appended and then sliced with everything else, a full page
+   * filled the cap and cut off the one row this exists to guarantee.
+   */
+  private readonly keptSelectedOption = computed<TnAutocompleteOption<T> | undefined>(() => {
+    if (!this.dataSource() || !this.keepSelectedOption()) {
+      return undefined;
+    }
+
+    const value = this.selectedValue();
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+    if (this.asyncOptions.options().some((option) => this.valueMatches(option.value, value))) {
+      return undefined;
+    }
+    // The committed value is not on the current page — keep it listed so the
+    // field shows its label rather than rendering blank. A host-pinned row can
+    // name it even before the first page lands, which is the whole point of
+    // `options` alongside a source.
+    const pinned = this.pinnedOptions().find((option) => this.valueMatches(option.value, value));
+    return { label: pinned?.label ?? this.selectedLabel() ?? String(value), value };
+  });
+
+  /**
+   * Rows the host named itself, honoured even while a `dataSource` is bound.
+   *
+   * With a source the dropdown is the server's to fill — but its first page is
+   * not fetched until the field is focused, so a value the host already holds
+   * the label for renders as its raw `String(value)` until someone opens the
+   * panel. An edit form bound to an id shows the number. `options` is how that
+   * label is supplied, so it stays part of the LOOKUP even where it is not
+   * part of the dropdown. `tn-chip-input` treats its own `options` the same
+   * way, and the asymmetry was a bug rather than a design.
+   */
+  private readonly pinnedOptions = computed<TnAutocompleteOption<T>[]>(
+    () => (this.dataSource() ? this.options() : []),
+  );
+
+  /**
+   * The rows to work from: the async engine's when `dataSource` is bound,
+   * the `options` input otherwise. Everything that resolves a value to a
+   * label, matches typed text, or counts rows reads this rather than
+   * `options` — the action row is deliberately absent, since it carries no
+   * selectable value.
+   */
+  private readonly resolvedOptions = computed<TnAutocompleteOption<T>[]>(() => {
+    if (!this.dataSource()) {
+      return this.options();
+    }
+
+    const fetched = this.asyncOptions.options();
+    const kept = this.keptSelectedOption();
+    return kept ? [...fetched, kept] : fetched;
+  });
+
+  /**
+   * The rows a value may be resolved to a label FROM — everything in
+   * {@link resolvedOptions} except the synthetic kept row.
+   *
+   * That row exists to keep a committed value listed, and its label is the
+   * display text itself: `String(value)` for a value nothing has named yet.
+   * Resolving against it therefore always "succeeds", which would report the
+   * raw fallback as a resolved label and leave it on screen for good.
+   */
+  private readonly resolvableOptions = computed<TnAutocompleteOption<T>[]>(() => {
+    if (!this.dataSource()) {
+      return this.options();
+    }
+    // Fetched rows first: every reader takes the FIRST match, so a value in
+    // both lists resolves to the server's row rather than the host's, which
+    // may be a stale name the record was saved with.
+    const pinned = this.pinnedOptions();
+    const fetched = this.asyncOptions.options();
+    return pinned.length ? [...fetched, ...pinned] : fetched;
+  });
+
+  /** Loading state: the `loading` input OR-ed with the async engine's. */
+  protected readonly resolvedLoading = computed(() => this.loading() || this.asyncOptions.loading());
+
+  /** Filtered and capped options, with {@link actionOption} pinned on top. */
+  protected filteredOptions = computed(() => {
+    const term = this.searchTerm();
+    const all = this.resolvedOptions();
+    const customFilter = this.filterFn();
+    const max = this.maxResults();
+    const action = this.actionOption();
+
+    // A server-driven source already applied the query; filtering again on the
+    // label would hide rows matched on some other field, and would drop the
+    // action row the moment the user typed.
+    const isPreFiltered = !!this.dataSource() && !customFilter;
+
+    let filtered: TnAutocompleteOption<T>[];
+    if (!term || isPreFiltered) {
+      filtered = all;
+    } else if (customFilter) {
+      filtered = all.filter((opt) => customFilter(opt, term));
+    } else {
+      const lowerTerm = term.toLowerCase();
+      filtered = all.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
+    }
+
+    // `maxResults` caps the rows the source returned, not the two rows that are
+    // there by construction: the action row is pinned on top after the slice,
+    // and the kept-selected row — always last, appended by `resolvedOptions` —
+    // is held back across it.
+    const kept = this.keptSelectedOption();
+    const capped = kept && filtered.at(-1) === kept
+      ? [...filtered.slice(0, -1).slice(0, max), kept]
+      : filtered.slice(0, max);
+    return action ? [action, ...capped] : capped;
+  });
+
+  /** Whether there are any rows to render (the action row counts). */
   protected hasResults = computed(() => this.filteredOptions().length > 0);
+
+  /**
+   * Whether the query matched anything selectable. Distinct from
+   * {@link hasResults} so a search that found nothing still says so, rather
+   * than being masked by a pinned action row — or by the kept-selected row,
+   * which is held on screen for the committed value regardless of the query.
+   */
+  protected hasMatches = computed(() => {
+    const kept = this.keptSelectedOption();
+    return this.filteredOptions().some(
+      (option) => !this.isActionOption(option) && option !== kept,
+    );
+  });
 
   private onChange = (_value: T | null) => {};
   private onTouched = () => {};
@@ -311,8 +524,35 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /** Scroll distance (px) from the panel bottom that triggers `loadMore`. */
   private static readonly loadMoreThresholdPx = 48;
 
+  /**
+   * Cap on how many pages the underfill check may request without the user
+   * scrolling, per search. The check re-arms whenever the option count
+   * changes, which a `dataSource` answering synchronously does within the same
+   * change-detection pass — so an inexhaustible source would spin the tab
+   * rather than yield between rounds. Well beyond any real panel's capacity
+   * (20 × a 50-row page), so it only ever trips on a misbehaving source.
+   */
+  private static readonly maxAutoFillPages = 20;
+
+  /** Underfill-driven pages requested since the last search or panel open. */
+  private autoFillCount = 0;
+
   /** Guards the object-without-compareWith warning so it fires only once. */
   private warnedAboutObjectCompare = false;
+
+  /**
+   * Whether the text on screen is the raw `String(value)` fallback rather than
+   * an option's label — i.e. the value has never resolved and the user has not
+   * typed over it.
+   *
+   * The upgrade effect otherwise leaves an open panel alone, on the grounds
+   * that the text belongs to the user's search. With a `dataSource` that never
+   * holds: rows only ever arrive while the panel is open, so a written value
+   * would keep the fallback as its display text for good — and
+   * `allowCustomValue` would then commit that text back over the real value on
+   * blur. This says the text is nobody's draft, so upgrading it is safe.
+   */
+  private displayIsFallback = false;
 
   constructor() {
     // A value written before its option loaded displays as the raw fallback —
@@ -320,21 +560,27 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // the text to the option's label. UPGRADE-ONLY: when no option matches
     // (e.g. a server-search picker replaced `options` after a selection), the
     // current text is left alone rather than downgraded back to the raw
-    // value. Skipped while the panel is open so active typing isn't clobbered.
+    // value. While the panel is open the text is the user's search and is left
+    // alone — unless it is still the untouched fallback, which is the only
+    // state a `dataSource` field's rows can ever reach it in.
+    // `isOpen` is a dependency rather than an `untracked` read so that closing
+    // the panel re-runs the resolution over whatever the search left behind.
     effect(() => {
-      this.options();
+      this.resolvedOptions();
       this.compareWith();
+      this.isOpen();
       untracked(() => {
-        if (this.isOpen()) {
+        if (this.isOpen() && !this.displayIsFallback) {
           return;
         }
         const value = this.selectedValue();
         if (value === null || value === undefined) {
           return;
         }
-        const match = this.options().find((opt) => this.valueMatches(opt.value, value));
+        const match = this.resolvableOptions().find((opt) => this.valueMatches(opt.value, value));
         if (match) {
           this.searchTerm.set(match.label);
+          this.displayIsFallback = false;
         }
       });
     });
@@ -351,9 +597,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // underfill check would be skipped (checkUnderfill bails while loading)
     // and never re-run.
     effect(() => {
-      const count = this.options().length;
+      const count = this.resolvedOptions().length;
       this.isOpen();
-      this.loading();
+      this.resolvedLoading();
       untracked(() => {
         if (count !== this.lastOptionsCount) {
           this.lastOptionsCount = count;
@@ -367,7 +613,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // event; nudge CDK so the anchored position tracks the new height.
     effect(() => {
       this.filteredOptions();
-      this.loading();
+      this.resolvedLoading();
       this.overlayRef?.updatePosition();
     });
 
@@ -392,11 +638,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   writeValue(value: T | null): void {
     this.selectedValue.set(value);
-    if (value !== null && value !== undefined) {
-      this.searchTerm.set(this.displayValue(value));
-    } else {
-      this.searchTerm.set('');
-    }
+    // A programmatic write says nothing about the option's label — drop the
+    // remembered one so `keepSelectedOption` doesn't relabel the new value
+    // with the previous selection's text.
+    this.selectedLabel.set(null);
+    this.setDisplayFromValue(value);
   }
 
   registerOnChange(fn: (value: T | null) => void): void {
@@ -411,13 +657,56 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.formDisabled.set(isDisabled);
   }
 
+  // ── Async options ──
+
+  /**
+   * Discard the pages fetched from `dataSource` and re-query the current term.
+   *
+   * For a caller whose `[dataSource]` is a fixed function reading live
+   * configuration — the shape that keeps the source from being swapped out
+   * from under a search in flight — this is how a change to that configuration
+   * takes effect, rather than waiting for the next keystroke to notice.
+   */
+  refreshOptions(): void {
+    // Both latches belong to the result set being thrown away; left set, they
+    // would suppress the first `loadMore` of the one replacing it.
+    this.loadMorePending = false;
+    this.autoFillCount = 0;
+    this.asyncOptions.refresh();
+    if (this.isOpen()) {
+      // Rows are on screen and clickable right now, so they have to be
+      // replaced at once. A closed panel refetches when it next opens — the
+      // `prime` there is no longer answered from the invalidated pages.
+      this.asyncOptions.prime();
+    }
+  }
+
+  /**
+   * Commit an option programmatically, its label included.
+   *
+   * `writeValue` deliberately forgets the label — the forms layer hands over a
+   * value and nothing else — so a value the host picked itself would render as
+   * `String(value)` until a search happened to return the row carrying it.
+   * This is the path for a caller that already holds the option.
+   */
+  setSelectedOption(option: TnAutocompleteOption<T>): void {
+    this.selectedValue.set(option.value);
+    this.selectedLabel.set(option.label);
+    this.searchTerm.set(option.label);
+    this.displayIsFallback = false;
+  }
+
   // ── Event handlers ──
 
   onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
+    // The text is the user's now, whatever it was before this keystroke.
+    this.displayIsFallback = false;
     // A new term is a new pagination context — don't hold back its first page.
     this.loadMorePending = false;
+    this.autoFillCount = 0;
+    this.asyncOptions.search(value);
     this.searchChange.emit(value);
 
     if (!this.isOpen()) {
@@ -448,7 +737,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
     if (this.requireSelection()) {
       const term = this.searchTerm();
-      const match = this.options().find(
+      const match = this.resolvedOptions().find(
         (opt) => !opt.disabled && opt.label.toLowerCase() === term.toLowerCase()
       );
 
@@ -457,10 +746,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       } else {
         // Revert to last valid selection or clear
         const current = this.selectedValue();
-        if (current !== null && current !== undefined) {
-          this.searchTerm.set(this.displayValue(current));
-        } else {
-          this.searchTerm.set('');
+        this.setDisplayFromValue(current);
+        if (current === null || current === undefined) {
           this.onChange(null);
         }
       }
@@ -474,7 +761,28 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     if (option.disabled) {
       return;
     }
+    if (this.isActionOption(option)) {
+      this.runAction();
+      return;
+    }
     this.selectOption(option);
+  }
+
+  /** Whether `option` is the pinned {@link actionOption} row rather than a value. */
+  private isActionOption(option: TnAutocompleteOption<T>): boolean {
+    return option === this.actionOption();
+  }
+
+  /**
+   * The action row was chosen: close the panel and hand off, leaving the
+   * committed value and the text exactly as they were. Restoring the text
+   * matters because the user has usually typed a partial term to find the
+   * row — that draft must not survive as a value.
+   */
+  private runAction(): void {
+    this.setDisplayFromValue(this.selectedValue());
+    this.close();
+    this.actionSelected.emit();
   }
 
   onKeydown(event: KeyboardEvent): void {
@@ -509,7 +817,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         event.preventDefault();
         const idx = this.highlightedIndex();
         if (this.isOpen() && idx >= 0 && idx < options.length && !options[idx].disabled) {
-          this.selectOption(options[idx]);
+          this.onOptionClick(options[idx]);
         } else if (this.allowCustomValue()) {
           this.commitCustomValue();
           this.close();
@@ -522,10 +830,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         if (this.allowCustomValue()) {
           // Escape means "cancel the draft": revert to the committed value's
           // text so the upcoming blur doesn't commit the abandoned term.
-          const current = this.selectedValue();
-          this.searchTerm.set(
-            current !== null && current !== undefined ? this.displayValue(current) : ''
-          );
+          this.setDisplayFromValue(this.selectedValue());
         }
         this.close();
         break;
@@ -540,7 +845,10 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * opens), emit once more if the panel has no scrollbar.
    */
   private checkUnderfill(): void {
-    if (!this.isOpen() || this.loading() || this.loadMorePending) {
+    if (!this.isOpen() || this.resolvedLoading() || this.loadMorePending) {
+      return;
+    }
+    if (this.autoFillCount >= TnAutocompleteComponent.maxAutoFillPages) {
       return;
     }
     // No rows to measure, or rendering is capped by maxResults — more data
@@ -560,23 +868,33 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const panel = this.overlayRef?.overlayElement
       ?.querySelector<HTMLElement>('.tn-autocomplete__listbox');
     if (panel && panel.scrollHeight <= panel.clientHeight) {
-      this.loadMorePending = true;
-      this.loadMore.emit();
+      this.autoFillCount++;
+      this.requestMore();
     }
+  }
+
+  /**
+   * Ask for another page: the internal engine when `dataSource` is bound, the
+   * consumer via `loadMore` otherwise. Both are notified — an app can page a
+   * `dataSource` and still observe the event.
+   */
+  private requestMore(): void {
+    this.loadMorePending = true;
+    this.asyncOptions.loadMore();
+    this.loadMore.emit();
   }
 
   onPanelScroll(event: Event): void {
     // While loading, the rendered rows belong to the previous page/term —
     // scrolling them must not request a page of data that hasn't landed yet.
-    if (this.loadMorePending || this.loading()) {
+    if (this.loadMorePending || this.resolvedLoading()) {
       return;
     }
     const el = event.target as HTMLElement;
     const nearBottom = el.scrollTop + el.clientHeight
       >= el.scrollHeight - TnAutocompleteComponent.loadMoreThresholdPx;
     if (nearBottom) {
-      this.loadMorePending = true;
-      this.loadMore.emit();
+      this.requestMore();
     }
   }
 
@@ -662,7 +980,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   private commitCustomValue(): void {
     const term = this.searchTerm();
     const lowerTerm = term.toLowerCase();
-    const match = this.options().find(
+    const match = this.resolvedOptions().find(
       (opt) => !opt.disabled && opt.label.toLowerCase() === lowerTerm
     );
     if (match) {
@@ -671,7 +989,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
     // Best-effort guard: silent when options haven't loaded yet (the common
     // async + allowCustomValue case), where the value type can't be known.
-    if (isDevMode() && term !== '' && this.options().some((opt) => typeof opt.value !== 'string')) {
+    if (isDevMode() && term !== '' && this.resolvedOptions().some((opt) => typeof opt.value !== 'string')) {
       console.warn(
         '[tn-autocomplete] allowCustomValue committed free text into a control whose option '
         + 'values are not strings — custom values are only sound for string-valued autocompletes.'
@@ -683,12 +1001,26 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   }
 
   /**
-   * Resolves a committed value back to its option's display label, falling
-   * back to the raw value's string until the matching option is available.
+   * Show `value`'s label and record whether that text is a real label or the
+   * raw `String(value)` fallback, so {@link displayIsFallback} — and with it
+   * the upgrade effect — can tell a resolved display from an unresolved one.
+   * Every path that re-derives the text from the committed value goes through
+   * here, so the two can never disagree.
+   *
+   * A label remembered from the option the value was picked from counts as
+   * resolved: it is the same text the option would give, and the row carrying
+   * it may well have been paged away since.
    */
-  private displayValue(value: T): string {
-    const match = this.options().find((opt) => this.valueMatches(opt.value, value));
-    return match ? match.label : String(value);
+  private setDisplayFromValue(value: T | null): void {
+    if (value === null || value === undefined) {
+      this.searchTerm.set('');
+      this.displayIsFallback = false;
+      return;
+    }
+    const match = this.resolvableOptions().find((opt) => this.valueMatches(opt.value, value));
+    const remembered = this.selectedLabel();
+    this.searchTerm.set(match?.label ?? remembered ?? String(value));
+    this.displayIsFallback = !match && remembered === null;
   }
 
   /**
@@ -723,7 +1055,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   private selectOption(option: TnAutocompleteOption<T>): void {
     this.selectedValue.set(option.value);
+    this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
+    this.displayIsFallback = false;
     this.onChange(option.value);
     this.optionSelected.emit(option);
     this.close();
@@ -734,6 +1068,12 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       return;
     }
     this.isOpen.set(true);
+    this.autoFillCount = 0;
+    // Fetch the first page the first time the panel is shown. Deferring to
+    // here (rather than init) means a form of pickers costs nothing until one
+    // is used; `prime` is a no-op on every later open, so reopening does not
+    // refetch what is already listed.
+    this.asyncOptions.prime();
     // Seed the keyboard cursor on the committed option so ArrowDown resumes
     // from the current value (and it scrolls into view). -1 when nothing is
     // committed or the value has no visible, enabled option — e.g. a custom

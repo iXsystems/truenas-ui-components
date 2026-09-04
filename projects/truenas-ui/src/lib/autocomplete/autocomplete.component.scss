@@ -100,6 +100,16 @@
     cursor: not-allowed;
     opacity: 0.6;
   }
+
+  // The pinned action row is not one of the results — separate it from them
+  // and carry the accent so it reads as a command, not a match. The accent is
+  // `--tn-primary-text`, not `--tn-primary`: this is text, and the panel is
+  // `--tn-bg2`, which is exactly the surface that token guarantees 4.5:1 on.
+  &--action {
+    border-bottom: 1px solid var(--tn-lines, #dee2e6);
+    color: var(--tn-primary-text, var(--tn-primary, #0074a7));
+    font-weight: 500;
+  }
 }
 
 .tn-autocomplete__no-results {
