@@ -153,7 +153,13 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * page is fetched; see {@link options}.
    *
    * The first page is fetched when the panel first opens, not on init, so a
-   * form full of pickers issues no queries until one is actually used.
+   * form full of pickers issues no queries until one is actually used. Binding
+   * a source that is `undefined` at that moment is fine — the field fetches as
+   * soon as one arrives, open panel included.
+   *
+   * Swapping one source function for ANOTHER is not a signal to refetch, since
+   * a source is expected to be a stable function reading live configuration.
+   * Call {@link refreshOptions} when that configuration moves.
    *
    * @example
    * ```html

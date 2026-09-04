@@ -252,6 +252,39 @@ describe('tn-autocomplete [dataSource]', () => {
       expect(requests).toEqual([{ query: 'ali', page: 0 }]);
     });
 
+    it('fetches without waiting for a reopen when the panel is already open', () => {
+      // The harder half of the same shape, and the one that sticks: `prime` is
+      // only called from open/focus, so a source that binds while the panel is
+      // UP had nothing left to ask. The panel sat on "No results found" — with
+      // the user looking straight at it — until they typed or closed and
+      // reopened the field.
+      host.source.set(undefined);
+      fixture.detectChanges();
+
+      focus();
+      expect(requests).toEqual([]);
+      expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeTruthy();
+
+      host.source.set(source);
+      fixture.detectChanges();
+
+      expect(requests).toEqual([{ query: '', page: 0 }]);
+      expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
+    });
+
+    it('still issues nothing for a field nobody has opened', () => {
+      // The transition must not become a back door around "a form of pickers
+      // costs nothing until one is used": only a host that already asked and
+      // was turned away is owed a page.
+      host.source.set(undefined);
+      fixture.detectChanges();
+
+      host.source.set(source);
+      fixture.detectChanges();
+
+      expect(requests).toEqual([]);
+    });
+
     it('does not release the paging latch of a host that pages [options] itself', () => {
       // `onSettled` is what clears `loadMorePending`, and the empty "success"
       // fired it roughly one debounce after every keystroke — even with NO

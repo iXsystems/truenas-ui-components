@@ -194,7 +194,14 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * The chip dropdown is not paged, so `page` is always 0 — the parameter is
    * there only so one source function can feed both this and `tn-autocomplete`.
    *
-   * The first query runs when the field is first focused, not on init.
+   * The first query runs when the field is first focused, not on init. Binding
+   * a source that is `undefined` at that moment is fine — the field fetches as
+   * soon as one arrives, open panel included.
+   *
+   * Swapping one source function for ANOTHER is not a signal to refetch: a
+   * source is expected to be a stable function reading live configuration,
+   * which is what keeps it from being replaced out from under a request in
+   * flight. Call `refreshOptions()` when that configuration moves.
    *
    * @example
    * ```html
@@ -335,6 +342,11 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * panel keeps showing the *previous* term's matches, clickable and looking
    * current, for the debounce plus the round trip. Without a cue that is
    * indistinguishable from "these are your results".
+   *
+   * It covers the ROUND TRIP only. The debounce window before it is
+   * deliberately left uncued: a spinner appearing and vanishing on every
+   * keystroke of a term that is still being typed is noise, and the request it
+   * would announce may never be sent.
    */
   protected readonly loading = computed(() => this.asyncOptions.loading());
 

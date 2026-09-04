@@ -1,4 +1,4 @@
-import { DestroyRef, inject, signal, type Signal } from '@angular/core';
+import { DestroyRef, effect, inject, signal, untracked, type Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, of, timer } from 'rxjs';
 import type { Observable } from 'rxjs';
@@ -159,6 +159,12 @@ export function createTnOptionsDataSource<O>(
   /** Whether a query has run successfully — gates {@link prime}. */
   let primed = false;
   /**
+   * Whether the host has ever asked for a first page, i.e. whether its panel
+   * has been opened. Set by `prime` even on the calls it declines to issue,
+   * which is what tells the late-source effect below that a page is owed.
+   */
+  let primeRequested = false;
+  /**
    * Set when a request fails, cleared when the next one starts. Read by the
    * `distinctUntilChanged` comparator so the same term can be retried.
    */
@@ -288,6 +294,50 @@ export function createTnOptionsDataSource<O>(
     });
 
   /**
+   * Issue page 0 for the current term, unless one has already been fetched
+   * successfully or there is no source to fetch from.
+   *
+   * `lastRequestFailed` is what makes a failed term retryable on the `search`
+   * path; without it here, one transient failure would empty a click-to-open
+   * picker for the life of the field — reopening the panel would issue no
+   * request at all.
+   */
+  function primeNow(): void {
+    if ((primed && !lastRequestFailed) || !config.source()) {
+      return;
+    }
+    // The latest term the field asked for, not `''` and not the last one
+    // dispatched: on the retry path the field may already hold the text whose
+    // lookup failed, and a term still inside the debounce window is cancelled
+    // by this emission — see `pendingQuery`.
+    requests$.next({ query: pendingQuery, immediate: true });
+  }
+
+  // A source that binds LATE — a resolver, or a sibling field's signal, both
+  // shapes the `| undefined` input type invites — issues nothing by itself:
+  // `source` is only read from inside the request pipeline, and the filter
+  // above dropped whatever was asked while it was undefined. A closed panel
+  // recovers on its next open, which primes. An OPEN one had nothing left to
+  // ask, and sat on "No results found" (or, for the chip input, an empty
+  // attached listbox) until the user typed or closed and reopened it.
+  //
+  // Gated on `primeRequested` so this cannot break the rule that a field
+  // nobody has opened issues no query: the transition only fetches for a host
+  // that already asked and was turned away.
+  //
+  // `untracked` because emitting runs the pipeline synchronously, which reads
+  // `source` and `debounceMs` — tracked here, those would re-run this effect
+  // on every debounce change and on its own writes.
+  effect(() => {
+    const hasSource = !!config.source();
+    untracked(() => {
+      if (hasSource && primeRequested) {
+        primeNow();
+      }
+    });
+  });
+
+  /**
    * Release {@link loading} for a page whose result set has been retired,
    * unless a search is genuinely in flight and owns the flag.
    */
@@ -308,18 +358,11 @@ export function createTnOptionsDataSource<O>(
     },
 
     prime(): void {
-      // `lastRequestFailed` is what makes a failed term retryable on the
-      // `search` path; without it here, one transient failure would empty a
-      // click-to-open picker for the life of the field — reopening the panel
-      // would issue no request at all.
-      if ((primed && !lastRequestFailed) || !config.source()) {
-        return;
-      }
-      // The latest term the field asked for, not `''` and not the last one
-      // dispatched: on the retry path the field may already hold the text whose
-      // lookup failed, and a term still inside the debounce window is cancelled
-      // by this emission — see `pendingQuery`.
-      requests$.next({ query: pendingQuery, immediate: true });
+      // Recorded before the guards: a prime declined for want of a source is
+      // still the host saying it wants a first page, and the effect above is
+      // what honours it once one arrives.
+      primeRequested = true;
+      primeNow();
     },
 
     loadMore(): void {

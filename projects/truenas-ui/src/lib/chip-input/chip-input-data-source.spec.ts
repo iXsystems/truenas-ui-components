@@ -297,6 +297,35 @@ describe('tn-chip-input [dataSource]', () => {
     expect(input().getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('fetches a source that binds while the panel is already open', () => {
+    // `prime` is only called on focus, so a source arriving late — a resolver,
+    // a sibling field's signal — left an open field with nothing to ask. The
+    // chip input reaches a worse state than the autocomplete here: it renders
+    // no no-results row, so the empty bordered `role="listbox"` just stays
+    // attached under `aria-expanded="true"`.
+    host.source.set(undefined);
+    fixture.detectChanges();
+
+    focus();
+    expect(queries).toEqual([]);
+
+    host.source.set(source);
+    fixture.detectChanges();
+
+    expect(queries).toEqual(['']);
+    expect(renderedSuggestions()).toEqual(['admins', 'analysts', 'builders']);
+  });
+
+  it('still issues nothing for a field nobody has focused', () => {
+    host.source.set(undefined);
+    fixture.detectChanges();
+
+    host.source.set(source);
+    fixture.detectChanges();
+
+    expect(queries).toEqual([]);
+  });
+
   it('reports a failure and keeps the field usable', () => {
     let failing = true;
     responder = (query) => (failing
