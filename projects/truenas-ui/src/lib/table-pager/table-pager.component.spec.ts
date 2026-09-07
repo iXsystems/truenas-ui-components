@@ -436,6 +436,25 @@ describe('TnTablePagerComponent — dataProvider mode', () => {
     expect(setPaginationSpy).toHaveBeenCalledWith({ pageNumber: 1, pageSize: 20 });
   });
 
+  it('should follow a page the provider changed in place', () => {
+    const { provider, emit } = createProvider({ totalRows: 100 });
+    fixture.componentRef.setInput('dataProvider', provider);
+    fixture.componentRef.setInput('pageSize', 20);
+    fixture.detectChanges();
+
+    component.goToPage(3);
+    expect(component.currentPage()).toBe(3);
+
+    // A provider that re-paginates in place — a filter resetting to page 1, say — mutates
+    // the very object the pager handed it. While the echo guard aliased that object, the
+    // provider's own change read back as the pager's push, and the label sat on page 3
+    // over page 1's rows.
+    provider.pagination.pageNumber = 1;
+    emit();
+
+    expect(component.currentPage()).toBe(1);
+  });
+
   it('should not loop on provider-driven sync (guard flag)', () => {
     const { provider, setPaginationSpy } = createProvider({ totalRows: 100 });
     fixture.componentRef.setInput('dataProvider', provider);

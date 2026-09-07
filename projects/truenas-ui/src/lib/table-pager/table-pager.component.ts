@@ -497,6 +497,11 @@ export class TnTablePagerComponent {
       pageSize: this.pageSize(),
     };
     this.lastPushedPagination = pagination;
-    provider.setPagination(pagination);
+    // The provider gets its OWN object. Handing it this one aliases the echo guard to
+    // the provider's live pagination, and a provider that re-paginates in place — a
+    // filter that resets to page 1, say — silently rewrites what we think we pushed.
+    // The guard then reads the provider's own change back as our echo and leaves the
+    // pager showing a page the provider is no longer serving.
+    provider.setPagination({ ...pagination });
   }
 }
