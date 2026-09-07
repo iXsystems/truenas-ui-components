@@ -332,11 +332,18 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
       },
     ];
 
+    // Rigid dimensions, like tn-select and tn-file-picker. With flexible
+    // dimensions on, CDK sizes the bounding box to the whole space between the
+    // trigger and the viewport edge and lets the pane grow into it, so the
+    // calendar (a block whose month table is `width: 100%`) stretched across
+    // the screen. Rigid + push keeps the pane content-sized and fully visible.
     const positionStrategy = this.overlay
       .position()
       .flexibleConnectedTo(this.wrapperEl())
-      .withPositions(positions)
-      .withPush(false);
+      .withFlexibleDimensions(false)
+      .withViewportMargin(8)
+      .withPush(true)
+      .withPositions(positions);
 
     this.overlayRef = this.overlay.create({
       positionStrategy,
