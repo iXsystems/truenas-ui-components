@@ -87,24 +87,28 @@
   }
 }
 
-// Global overlay styles (these are applied to overlay container)
-:host ::ng-deep .tn-datepicker-overlay {
-  .tn-calendar {
-    background: var(--tn-bg1, white);
-    border: 1px solid var(--tn-lines, #e0e0e0);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    padding: 24px;
-    min-width: 380px;
+// Popup calendar sizing. The calendar element belongs to this template, so the
+// scoped rule reaches it even though the overlay pane is portaled outside the
+// host (a `:host ::ng-deep .tn-datepicker-overlay` ancestor never matches
+// there). The pane is content-sized (see createOverlay), so the calendar must
+// declare its own width: its month table is `width: 100%` and would otherwise
+// fill whatever the pane offers.
+.tn-calendar {
+  box-sizing: content-box;
+  width: calc(7 * var(--calendar-cell-size));
+  background: var(--tn-bg1, white);
+  border: 1px solid var(--tn-lines, #e0e0e0);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 24px;
 
-    // Override calendar cell sizing for popup to make it larger
-    --calendar-cell-size: 48px;
-    --calendar-header-height: 44px;
-    --calendar-cell-font-size: 1rem;
-    --calendar-header-font-size: 14px;
+  // Override calendar cell sizing for popup to make it larger
+  --calendar-cell-size: 48px;
+  --calendar-header-height: 44px;
+  --calendar-cell-font-size: 1rem;
+  --calendar-header-font-size: 14px;
 
-    .tn-calendar-content {
-      padding: 0; // Remove default padding since we're adding it to the wrapper
-    }
+  ::ng-deep .tn-calendar-content {
+    padding: 0; // Remove default padding since we're adding it to the wrapper
   }
 }
