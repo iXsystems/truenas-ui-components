@@ -298,6 +298,24 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   /** Committed chip values — the form model. */
   protected values = signal<T[]>([]);
 
+  /**
+   * The label each committed value was picked FROM, for values whose row is no
+   * longer in {@link optionList} or {@link options}.
+   *
+   * With a `dataSource` the fetched page is the only list a chip's label can be
+   * resolved from, and it is replaced on the next search: pick `admins`, type
+   * `dev`, and the row carrying `g-7` is gone, so the chip the user just made
+   * reverts to `g-7` and stays that way. The pinned `[options]` escape hatch
+   * does not cover it — the host would have to append every freshly picked row
+   * to that input, which is the bookkeeping `dataSource` exists to remove.
+   *
+   * `tn-autocomplete` remembers the same thing in its `selectedLabel`; this is
+   * the multi-value form of it. Consulted LAST (see {@link labelOptions}), so a
+   * live row or a host pin always wins over a name that may since have changed,
+   * and pruned to the committed values so it cannot grow without bound.
+   */
+  private readonly rememberedLabels = signal<TnChipInputOption<T>[]>([]);
+
   /** Current text in the field. */
   protected inputValue = signal('');
 
@@ -376,8 +394,10 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
    * names values it already knows the labels for, so it stays part of the
    * lookup even where it is not part of the dropdown.
    *
-   * Deliberately not deduplicated: fetched rows come first, and every reader
-   * takes the first match, so a value in both lists resolves to the server's row.
+   * Deliberately not deduplicated: the order is the precedence — the server's
+   * fetched rows, then the host's pinned ones, then the labels this field
+   * remembered committing ({@link rememberedLabels}) — and every reader takes
+   * the first match, so the freshest name for a value wins.
    *
    * Read by {@link commitText} as well, so the labels the field paints and the
    * labels it accepts back are one set. Deliberately NOT read by
@@ -388,7 +408,11 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   private readonly labelOptions = computed<TnChipInputOption<T>[]>(() => {
     const list = this.optionList();
     const pinned = this.dataSource() ? this.options() : [];
-    return pinned.length ? [...list, ...pinned] : list;
+    const remembered = this.rememberedLabels();
+    if (!pinned.length && !remembered.length) {
+      return list;
+    }
+    return [...list, ...pinned, ...remembered];
   });
 
   /** Options matching the typed text and not already selected. */
@@ -500,6 +524,9 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     // may legitimately seed more values than the cap; silently dropping them
     // would lose data. The cap only blocks further user-driven additions.
     this.values.set(Array.isArray(value) ? [...value] : []);
+    // A value the model dropped takes its remembered label with it — otherwise
+    // a form reset would leave the field naming chips it no longer holds.
+    this.pruneRememberedLabels();
   }
 
   registerOnChange(fn: (value: T[]) => void): void {
@@ -599,7 +626,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
       event.preventDefault();
       const idx = this.highlightedIndex();
       if (this.isOpen() && idx >= 0 && idx < suggestions.length) {
-        this.commitValue(suggestions[idx].value);
+        this.commitValue(suggestions[idx].value, suggestions[idx].label);
       } else {
         this.commitText(this.inputValue());
       }
@@ -615,7 +642,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   }
 
   protected onSuggestionClick(option: TnChipInputOption<T>): void {
-    this.commitValue(option.value);
+    this.commitValue(option.value, option.label);
     this.inputEl().nativeElement.focus();
   }
 
@@ -633,6 +660,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
       return;
     }
     this.values.update((values) => values.filter((_, i) => i !== index));
+    this.pruneRememberedLabels();
     this.onChange(this.values());
     this.onTouched();
     this.chipRemoved.emit(removed);
@@ -738,7 +766,7 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     }
     const match = this.labelOptions().find((option) => option.label.toLowerCase() === text.toLowerCase());
     if (match) {
-      this.commitValue(match.value);
+      this.commitValue(match.value, match.label);
       return;
     }
     if (this.allowCustomValue()) {
@@ -748,8 +776,15 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     this.clearInput();
   }
 
-  /** Commits a resolved value, honouring duplicate and cap rules. */
-  private commitValue(value: T): void {
+  /**
+   * Commits a resolved value, honouring duplicate and cap rules.
+   *
+   * `label` is the text of the option the value came from, when there was one —
+   * remembered so the chip keeps that name after the page carrying its row is
+   * replaced. See {@link rememberedLabels}. Free text passes none: such a chip
+   * is its own label, and `String(value)` already renders it.
+   */
+  private commitValue(value: T, label?: string): void {
     if (this.isDisabled() || !this.canAddMore()) {
       return;
     }
@@ -758,10 +793,26 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
       return;
     }
     this.values.update((values) => [...values, value]);
+    if (label !== undefined) {
+      this.rememberedLabels.update((remembered) => [...remembered, { label, value }]);
+    }
     this.onChange(this.values());
     this.onTouched();
     this.chipAdded.emit(value);
     this.clearInput();
+  }
+
+  /**
+   * Drop remembered labels for values no longer committed, so the memory stays
+   * bounded by the chips on screen rather than by everything ever picked.
+   */
+  private pruneRememberedLabels(): void {
+    if (!this.rememberedLabels().length) {
+      return;
+    }
+    this.rememberedLabels.update((remembered) => remembered.filter(
+      (option) => this.values().some((value) => this.valueMatches(option.value, value)),
+    ));
   }
 
   /**

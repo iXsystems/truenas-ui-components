@@ -69,6 +69,28 @@ class ChipPinnedLabelsHostComponent {
   readonly source: TnOptionsFetchFn<Option> = () => this.responder();
 }
 
+/**
+ * A `[dataSource]` with NO pinned `[options]`: the fetched page is the only
+ * list a chip's label can come from, and it is replaced on the next search.
+ */
+@Component({
+  selector: 'tn-chip-remembered-label-host',
+  standalone: true,
+  imports: [TnChipInputComponent, ReactiveFormsModule],
+  // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
+  template: `
+    <tn-chip-input
+      [formControl]="control"
+      [dataSource]="source"
+      [dataSourceDebounce]="250" />
+  `,
+})
+class ChipRememberedLabelHostComponent {
+  control = new FormControl<string[]>([]);
+  responder: (query: string) => Observable<Option[]> = () => of([]);
+  readonly source: TnOptionsFetchFn<Option> = (query) => this.responder(query);
+}
+
 describe('tn-chip-input [dataSource]', () => {
   let fixture: ComponentFixture<ChipDataSourceHostComponent>;
   let host: ChipDataSourceHostComponent;
@@ -532,5 +554,132 @@ describe('tn-chip-input [dataSource] with pinned [options]', () => {
 
     expect(Array.from(overlayEl.querySelectorAll('.tn-chip-input__option'))
       .map((option) => option.textContent?.trim())).toEqual(['builders']);
+  });
+});
+
+
+describe('tn-chip-input [dataSource] label memory', () => {
+  let fixture: ComponentFixture<ChipRememberedLabelHostComponent>;
+  let host: ChipRememberedLabelHostComponent;
+  let overlayEl: HTMLElement;
+
+  function input(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('input') as HTMLInputElement;
+  }
+
+  function chipLabels(): string[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.tn-chip__label'))
+      .map((label) => (label as HTMLElement).textContent?.trim() ?? '');
+  }
+
+  function focus(): void {
+    input().dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+  }
+
+  function type(text: string): void {
+    input().value = text;
+    input().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    jest.advanceTimersByTime(250);
+    fixture.detectChanges();
+  }
+
+  function pressEnter(): void {
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ChipRememberedLabelHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ChipRememberedLabelHostComponent);
+    host = fixture.componentInstance;
+    overlayEl = TestBed.inject(OverlayContainer).getContainerElement();
+    host.responder = (query) => of(
+      [{ label: 'admins', value: 'g-7' }, { label: 'developers', value: 'g-9' }]
+        .filter((option) => option.label.startsWith(query)),
+    );
+    fixture.detectChanges();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    TestBed.inject(OverlayContainer).ngOnDestroy();
+  });
+
+  /** Click the fetched row carrying `label`. */
+  function pickSuggestion(label: string): void {
+    const row = Array.from(overlayEl.querySelectorAll('.tn-chip-input__option'))
+      .find((option) => option.textContent?.trim() === label) as HTMLElement;
+    row.click();
+    fixture.detectChanges();
+  }
+
+  it('keeps a picked chip named after the page carrying its row is replaced', () => {
+    // The page is the ONLY list this chip's label can be resolved from, and the
+    // next query replaces it. Without remembering the label the value was
+    // committed from, a chip the user picked a keystroke ago reverted to its
+    // raw id — the exact failure `[options]` fixes for values the HOST already
+    // knows, but for one the FIELD itself painted, where no host binding can
+    // help.
+    focus();
+    pickSuggestion('admins');
+    expect(host.control.value).toEqual(['g-7']);
+    expect(chipLabels()).toEqual(['admins']);
+
+    type('dev');
+
+    expect(chipLabels()).toEqual(['admins']);
+  });
+
+  it('reads that remembered label back rather than duplicating it as free text', () => {
+    // Paint/read symmetry: a label the field is still willing to SHOW is one it
+    // has to RECOGNISE. With the row paged away and nothing remembering it,
+    // typing the name on the chip resolved to no option and was committed as
+    // the raw string `admins`, beside the `g-7` chip it already names.
+    focus();
+    pickSuggestion('admins');
+
+    host.responder = () => of([]);
+    type('admins');
+    expect(chipLabels()).toEqual(['admins']);
+    pressEnter();
+
+    // Recognised as the chip already committed, so the duplicate guard drops it.
+    expect(host.control.value).toEqual(['g-7']);
+  });
+
+  it('forgets the label once its chip is gone', () => {
+    // The memory is bounded by the chips on screen. A label no longer painted
+    // must not keep being read back, or removing a chip and retyping its name
+    // would resurrect a value the field no longer offers.
+    focus();
+    pickSuggestion('admins');
+    (fixture.nativeElement.querySelector('.tn-chip__close') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(host.control.value).toEqual([]);
+
+    host.responder = () => of([]);
+    type('admins');
+    pressEnter();
+
+    expect(host.control.value).toEqual(['admins']);
+  });
+
+  it('lets a fetched row win over the remembered name', () => {
+    // Remembered labels are consulted LAST: a name the server has since changed
+    // must not be pinned to the screen by the fact that it was once picked.
+    focus();
+    pickSuggestion('admins');
+    expect(chipLabels()).toEqual(['admins']);
+
+    host.responder = () => of([{ label: 'administrators', value: 'g-7' }]);
+    type('admin');
+
+    expect(chipLabels()).toEqual(['administrators']);
   });
 });
