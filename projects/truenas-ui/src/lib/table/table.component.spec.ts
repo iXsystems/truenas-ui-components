@@ -395,6 +395,43 @@ describe('TnTableComponent', () => {
       expect(component.selection.selected).toHaveLength(0);
       expect(component.isRowSelected(pageOne[0])).toBe(false);
     });
+
+    it('emits the empty selection from clearSelection(), so a mirrored copy can follow', () => {
+      const spy = jest.fn();
+      component.toggleRowSelection(pageOne[0]);
+      component.selectionChange.subscribe(spy);
+
+      component.clearSelection();
+      expect(spy).toHaveBeenCalledWith([]);
+
+      // Nothing left to clear, nothing to say.
+      spy.mockClear();
+      component.clearSelection();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('stays quiet when only the key function identity changes', () => {
+      const spy = jest.fn();
+      component.toggleRowSelection(pageOne[0]);
+      component.selectionChange.subscribe(spy);
+
+      fixture.componentRef.setInput('selectionKey', (row: { id: number }) => row.id);
+      fixture.detectChanges();
+
+      expect(spy).not.toHaveBeenCalled();
+      expect(component.isRowSelected(pageOne[0])).toBe(true);
+    });
+
+    it('keeps detail rows open when only the key function identity changes', () => {
+      fixture.componentRef.setInput('expandable', true);
+      fixture.detectChanges();
+      component.toggleRowExpansion(pageOne[0]);
+
+      fixture.componentRef.setInput('selectionKey', (row: { id: number }) => row.id);
+      fixture.detectChanges();
+
+      expect(component.isRowExpanded(pageOne[0])).toBe(true);
+    });
   });
 
   describe('clickable rows', () => {

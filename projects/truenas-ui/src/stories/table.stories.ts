@@ -98,7 +98,8 @@ const meta: Meta<TnTableComponent> = {
     selectable: { description: 'Show checkbox column for row selection', control: 'boolean' },
     selectionKey: {
       description:
-        'Identity function `(row) => key`. Tracks selection by key instead of by object reference, so it '
+        'Identity function `(row) => key`, bound as a stable member (`[selectionKey]="rowKey"`) since '
+        + 'Angular templates have no arrow functions. Tracks selection by key instead of by object reference, so it '
         + 'survives a `dataSource` change — paging, sorting, filtering, or a reload that rebuilt its rows. '
         + 'Select-all stays scoped to the visible page.',
       control: false,
@@ -288,19 +289,22 @@ export const SelectionAcrossPages: Story = {
       allData: sampleData,
       tableColumns: ['name', 'email', 'role'],
       selectionKey: (user: User) => user.id,
-      get pageData(): User[] {
-        const start = this['page'] * this['pageSize'];
-        return this['allData'].slice(start, start + this['pageSize']);
-      },
-      get selectedNames(): string {
-        return this['selected'].map((user: User) => user.name).join(', ') || 'none';
-      },
+      // Plain properties recomputed in the handlers, not getters: `@storybook/angular`
+      // applies story props with `Object.assign`, which invokes an accessor once and
+      // copies the value, so a getter here would freeze at its first result and neither
+      // paging nor selecting would ever show.
+      pageData: sampleData.slice(0, 2),
+      selectedNames: 'none',
       turnPage(delta: number) {
         const last = Math.ceil(this['allData'].length / this['pageSize']) - 1;
         this['page'] = Math.min(Math.max(this['page'] + delta, 0), last);
+        const start = this['page'] * this['pageSize'];
+        this['pageData'] = this['allData'].slice(start, start + this['pageSize']);
       },
       onSelect(users: User[]) {
+        // The mirrored copy a consumer keeps, and the label read off it.
         this['selected'] = users;
+        this['selectedNames'] = this['selected'].map((user: User) => user.name).join(', ') || 'none';
       },
     },
     template: `
@@ -330,6 +334,30 @@ export const SelectionAcrossPages: Story = {
       </div>
     `,
   }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The checkbox labels are page-relative ("Select row 1" is whichever row is on top),
+    // which is what makes them a fair check that the ticks come back on the way home.
+    const row = (position: number): HTMLElement => canvas.getByLabelText(`Select row ${position}`);
+    const summary = (): HTMLElement => canvas.getByText(/^Selected:/);
+
+    await userEvent.click(row(1));
+    await expect(summary()).toHaveTextContent('Selected: Alice Johnson');
+
+    // Page forward: a new `dataSource` array, and the tick on page one has to survive it.
+    await userEvent.click(canvas.getByRole('button', { name: 'Next page' }));
+    await expect(canvas.getByText('Carol Williams')).toBeInTheDocument();
+    await expect(row(1)).not.toBeChecked();
+
+    await userEvent.click(row(2));
+    await expect(summary()).toHaveTextContent('Selected: Alice Johnson, David Brown');
+
+    // ...and back: the row selected on page one is still checked.
+    await userEvent.click(canvas.getByRole('button', { name: 'Previous page' }));
+    await expect(canvas.getByText('Alice Johnson')).toBeInTheDocument();
+    await expect(row(1)).toBeChecked();
+    await expect(row(2)).not.toBeChecked();
+  },
 };
 
 export const ExpandableTable: Story = {
