@@ -826,7 +826,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       } else {
         // Revert to last valid selection or clear
         const current = this.selectedValue();
-        this.setDisplayFromValue(current);
+        this.revertDisplayToValue(current);
         if (current === null || current === undefined) {
           this.onChange(null);
         }
@@ -860,7 +860,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * row — that draft must not survive as a value.
    */
   private runAction(): void {
-    this.setDisplayFromValue(this.selectedValue());
+    this.revertDisplayToValue(this.selectedValue());
     this.close();
     this.actionSelected.emit();
   }
@@ -910,7 +910,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         if (this.allowCustomValue()) {
           // Escape means "cancel the draft": revert to the committed value's
           // text so the upcoming blur doesn't commit the abandoned term.
-          this.setDisplayFromValue(this.selectedValue());
+          this.revertDisplayToValue(this.selectedValue());
         }
         this.close();
         break;
@@ -1114,6 +1114,33 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const remembered = this.selectedLabel();
     this.searchTerm.set(match?.label ?? remembered ?? String(value));
     this.displayIsFallback = !match && remembered === null;
+  }
+
+  /**
+   * Abandon the draft term: repaint `value`'s label AND tell the async engine
+   * the term is gone.
+   *
+   * `asyncOptions.search()` is otherwise only reached from `onInput`, so every
+   * path that rewrites the text WITHOUT the user typing — the `requireSelection`
+   * revert on blur, the `allowCustomValue` Escape branch, and `runAction` —
+   * moved the display while the engine kept the query, the rows and the
+   * `primed` latch of the term walked away from. Reopening then showed that
+   * term's results (or "No results found") against a field displaying something
+   * else, and issued nothing to correct it: `open()` only calls `prime()`,
+   * which is a documented no-op once primed.
+   *
+   * `tn-chip-input.clearInput()` closes the same gap the same way. The request
+   * goes through the usual debounce, and the duplicate-term guard drops it
+   * entirely when the reverted text is the term already loaded — which is the
+   * common case of an Escape with no draft typed.
+   *
+   * `writeValue` deliberately does NOT come through here: a programmatic write
+   * is not a user abandoning a search, and querying there would break the rule
+   * that a field nobody has opened issues no request.
+   */
+  private revertDisplayToValue(value: T | null): void {
+    this.setDisplayFromValue(value);
+    this.asyncOptions.search(this.searchTerm());
   }
 
   /**

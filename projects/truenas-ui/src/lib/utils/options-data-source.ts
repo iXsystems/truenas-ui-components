@@ -2,7 +2,9 @@ import { DestroyRef, effect, inject, signal, untracked, type Signal } from '@ang
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, of, timer } from 'rxjs';
 import type { Observable } from 'rxjs';
-import { catchError, debounce, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
+import {
+  catchError, debounce, defaultIfEmpty, distinctUntilChanged, filter, map, switchMap, take, tap,
+} from 'rxjs/operators';
 
 /**
  * Fetches one page of options for a server-driven dropdown.
@@ -13,6 +15,14 @@ import { catchError, debounce, distinctUntilChanged, filter, map, switchMap, tap
  * owns the cursor, and rolls it back for you when a page fails.
  *
  * `page` is zero-based; page 0 is the first page of a fresh search.
+ *
+ * Only the FIRST emission is read, and an observable that completes without
+ * emitting is treated as an empty page — both normalized by
+ * {@link createTnOptionsDataSource} rather than required of the caller, since
+ * the signature promises neither. `(q) => q ? this.api.search(q) : EMPTY` is a
+ * shape consumers reach for, and left unnormalized it wedged the `loading`
+ * latch for the life of the field: both hosts prime with `''`, so the very
+ * first open would hang a spinner over an empty panel and kill paging with it.
  */
 export type TnOptionsFetchFn<O> = (query: string, page: number) => Observable<O[]>;
 
@@ -207,6 +217,22 @@ export function createTnOptionsDataSource<O>(
 
   const requests$ = new Subject<{ query: string; immediate: boolean }>();
 
+  /**
+   * One page from `fetch`, normalized to exactly one emission.
+   *
+   * Every latch in here — `loading`, `searchInFlight`, `loadMoreInFlight`,
+   * `onSettled` — is released from the `next` handler, so a source that
+   * completes without emitting released none of them: `loading` stuck true, and
+   * `loadMore` bails on `loading()`, so paging was dead for the rest of the
+   * session. `defaultIfEmpty` makes an empty completion an empty page, which is
+   * what it means. `take(1)` is the other half: a source that emits more than
+   * once would otherwise append the same page twice through `loadMore` and
+   * decrement `loadMoreInFlight` below zero.
+   */
+  function fetchPage(fetch: TnOptionsFetchFn<O>, term: string, page: number): Observable<O[]> {
+    return fetch(term, page).pipe(take(1), defaultIfEmpty([] as O[]));
+  }
+
   requests$
     .pipe(
       // A request made with no source bound is not a request. Every latch
@@ -255,7 +281,7 @@ export function createTnOptionsDataSource<O>(
             rows: [] as O[], failed: false, skipped: true, requestedGeneration,
           });
         }
-        return fetch(request.query, 0).pipe(
+        return fetchPage(fetch, request.query, 0).pipe(
           map((rows) => ({
             rows, failed: false, skipped: false, requestedGeneration,
           })),
@@ -338,10 +364,21 @@ export function createTnOptionsDataSource<O>(
   // `untracked` because emitting runs the pipeline synchronously, which reads
   // `source` and `debounceMs` — tracked here, those would re-run this effect
   // on every debounce change and on its own writes.
+  //
+  // Latched on the false->true EDGE rather than on every run: this effect
+  // re-runs on any identity change of `source`, and `[dataSource]="(q, p) =>
+  // this.search(q, p)"` — the call site the docs warn against, but one that
+  // type-checks — hands it a new reference on every change detection. Priming
+  // unconditionally then wrote `loading`, which schedules another change
+  // detection, which changes the input again: a cancel-storm of requests for
+  // the whole first round trip, and indefinitely if the endpoint keeps failing.
+  let hadSource = !!untracked(() => config.source());
   effect(() => {
     const hasSource = !!config.source();
     untracked(() => {
-      if (hasSource && primeRequested) {
+      const bound = hasSource && !hadSource;
+      hadSource = hasSource;
+      if (bound && primeRequested) {
         primeNow();
       }
     });
@@ -386,7 +423,7 @@ export function createTnOptionsDataSource<O>(
       loading.set(true);
       loadMoreInFlight++;
 
-      fetch(query, requestedPage)
+      fetchPage(fetch, query, requestedPage)
         .pipe(takeUntilDestroyed(destroyRef))
         .subscribe({
           next: (rows) => {

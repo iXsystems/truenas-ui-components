@@ -344,9 +344,12 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
   private readonly asyncOptions = createTnOptionsDataSource<TnChipInputOption<T>>({
     source: this.dataSource,
     debounceMs: this.dataSourceDebounce,
-    // The dropdown is not paged, so nothing ever asks for page 1 and this
-    // only decides an `exhausted` flag no one reads.
-    pageSize: computed(() => Number.POSITIVE_INFINITY),
+    // The dropdown is not paged, so nothing ever asks for page 1 and this only
+    // decides an `exhausted` flag no one reads yet. `0` leaves that flag false;
+    // `Infinity` would latch it TRUE for every page (`rows.length < Infinity`),
+    // and `loadMore()` bails on `exhausted()` before anything else — so paging
+    // would silently no-op for whoever wires it into this dropdown later.
+    pageSize: signal(0),
     identity: (option) => option.value,
     onError: (error) => this.dataSourceError.emit(error),
     onSettled: () => this.syncDropdownAfterFetch(),

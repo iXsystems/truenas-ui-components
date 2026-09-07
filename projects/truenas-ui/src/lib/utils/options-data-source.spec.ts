@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Subject, of } from 'rxjs';
+import { EMPTY, Subject, of } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { createTnOptionsDataSource } from './options-data-source';
 import type { TnOptionsDataSource, TnOptionsFetchFn } from './options-data-source';
@@ -147,6 +147,78 @@ describe('createTnOptionsDataSource', () => {
       inFlight.error(new Error('gone'));
 
       expect(engine.loading()).toBe(false);
+    });
+
+    it('releases the flag when a search completes without emitting', () => {
+      // `(q) => q ? this.api.search(q) : EMPTY` is a shape the signature invites
+      // and the engine used to hang on: every latch is released from `next`, so
+      // an empty completion released none of them. Both hosts prime with `''`,
+      // which is exactly the branch that returns EMPTY — so the first open hung
+      // a spinner over an empty panel for the life of the field, and `loadMore`
+      // bails on `loading()`, so paging died with it.
+      responder = () => EMPTY;
+
+      engine.prime();
+
+      expect(engine.loading()).toBe(false);
+      expect(engine.options()).toEqual([]);
+    });
+
+    it('releases the flag when a page completes without emitting', () => {
+      loadFirstPage();
+      responder = () => EMPTY;
+
+      engine.loadMore();
+
+      expect(engine.loading()).toBe(false);
+    });
+  });
+
+  describe('a source that does not emit exactly once', () => {
+    it('reads only the first page a source emits', () => {
+      // Without `take(1)` a multicasting source appends the same rows twice and
+      // drives `loadMoreInFlight` below zero, which then releases `loading` for
+      // a page still genuinely in flight.
+      loadFirstPage();
+      const twice = new Subject<Row[]>();
+      responder = () => twice;
+
+      engine.loadMore();
+      twice.next([{ id: 10 }]);
+      twice.next([{ id: 11 }]);
+      twice.complete();
+
+      expect(engine.options()).toEqual([{ id: 0 }, { id: 1 }, { id: 10 }]);
+      expect(engine.loading()).toBe(false);
+    });
+  });
+
+  describe('a source that binds late', () => {
+    it('primes once when the source arrives, not on every identity change', () => {
+      // The effect re-runs on any identity change of `source`, and
+      // `[dataSource]="(q, p) => this.search(q, p)"` — the call site the docs
+      // warn against, but one that type-checks — hands it a new reference on
+      // every change detection. Priming on every run then wrote `loading`,
+      // which schedules another one: a cancel-storm of requests for the whole
+      // first round trip.
+      source.set(undefined);
+      TestBed.tick();
+      engine.prime();
+      expect(requests).toEqual([]);
+
+      const fetch: TnOptionsFetchFn<Row> = (query, pageIndex) => {
+        requests.push({ query, page: pageIndex });
+        return responder(query, pageIndex);
+      };
+      source.set(fetch);
+      TestBed.tick();
+      expect(requests).toEqual([{ query: '', page: 0 }]);
+
+      // A new reference for the same bound source is not a re-binding.
+      source.set((query, pageIndex) => fetch(query, pageIndex));
+      TestBed.tick();
+
+      expect(requests).toEqual([{ query: '', page: 0 }]);
     });
   });
 });

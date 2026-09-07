@@ -811,6 +811,84 @@ describe('tn-autocomplete [dataSource]', () => {
     });
   });
 
+  describe('abandoning a term', () => {
+    it('re-queries the reverted term, so reopening is not stuck on the abandoned one', () => {
+      // `asyncOptions.search()` is reached from `onInput` alone, so every path
+      // that rewrites the text WITHOUT the user typing left the engine holding
+      // the query, the rows and the `primed` latch of the term walked away
+      // from. `open()` only calls `prime()`, a no-op once primed — so the panel
+      // reopened on "No results found" against an empty field and issued
+      // nothing to correct it. Only a non-empty keystroke recovered it.
+      host.requireSelection.set(true);
+      fixture.detectChanges();
+
+      focus();
+      responder = () => of([]);
+      type('zzz');
+      expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeTruthy();
+
+      responder = (query, page) => of(pageOf(query, page, page === 0 ? 2 : 0));
+      input().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+      expect(input().value).toBe('');
+
+      // The revert re-asked for the empty term, through the usual debounce.
+      jest.advanceTimersByTime(250);
+      fixture.detectChanges();
+      focus();
+
+      expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
+      expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeFalsy();
+    });
+
+    it('re-queries after Escape cancels a draft under allowCustomValue', () => {
+      host.allowCustomValue.set(true);
+      fixture.detectChanges();
+
+      focus();
+      responder = () => of([]);
+      type('zzz');
+
+      responder = (query, page) => of(pageOf(query, page, page === 0 ? 2 : 0));
+      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+      jest.advanceTimersByTime(250);
+      fixture.detectChanges();
+
+      focus();
+
+      expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
+    });
+
+    it('does not re-query when the reverted text is the term already loaded', () => {
+      // The common Escape — panel opened, nothing typed. The duplicate-term
+      // guard has to drop this, or every dismissal costs a round trip.
+      host.allowCustomValue.set(true);
+      fixture.detectChanges();
+
+      focus();
+      const before = requests.length;
+
+      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+      jest.advanceTimersByTime(250);
+      fixture.detectChanges();
+
+      expect(requests.length).toBe(before);
+    });
+
+    it('does not query for a value written before the field was ever opened', () => {
+      // The revert funnel must not swallow the rule that a field nobody has
+      // touched costs nothing: `writeValue` repaints through the same display
+      // helper, but deliberately not through the engine sync.
+      host.control.setValue('4242');
+      fixture.detectChanges();
+      jest.advanceTimersByTime(250);
+
+      expect(requests).toEqual([]);
+    });
+  });
+
   describe('refreshOptions()', () => {
     /**
      * A `[dataSource]` is usually a fixed function reading live configuration —
