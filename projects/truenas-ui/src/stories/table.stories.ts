@@ -96,6 +96,13 @@ const meta: Meta<TnTableComponent> = {
     dataSource: { description: 'Data array or TnTableDataSource object', control: false },
     displayedColumns: { description: 'Column names to display in order', control: false },
     selectable: { description: 'Show checkbox column for row selection', control: 'boolean' },
+    selectionKey: {
+      description:
+        'Identity function `(row) => key`. Tracks selection by key instead of by object reference, so it '
+        + 'survives a `dataSource` change — paging, sorting, filtering, or a reload that rebuilt its rows. '
+        + 'Select-all stays scoped to the visible page.',
+      control: false,
+    },
     expandable: { description: 'Enable click-to-expand detail rows', control: 'boolean' },
     isRowExpandable: {
       description: 'Optional per-row predicate `(row) => boolean`; rows returning false show no expand control',
@@ -257,6 +264,70 @@ export const SelectableTable: Story = {
           <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
         </ng-container>
       </tn-table>
+    `,
+  }),
+};
+
+export const SelectionAcrossPages: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Without `[selectionKey]` a `dataSource` change clears the selection, so a paged table loses '
+          + 'everything the user ticked the moment they turn the page. Passing an identity function keeps the '
+          + 'selection keyed by row, so it survives paging and comes back checked — while the header checkbox '
+          + 'stays scoped to the page on screen. Tick a row, page forward, tick another, and page back.',
+      },
+    },
+  },
+  render: () => ({
+    props: {
+      pageSize: 2,
+      page: 0,
+      selected: [] as User[],
+      allData: sampleData,
+      tableColumns: ['name', 'email', 'role'],
+      selectionKey: (user: User) => user.id,
+      get pageData(): User[] {
+        const start = this['page'] * this['pageSize'];
+        return this['allData'].slice(start, start + this['pageSize']);
+      },
+      get selectedNames(): string {
+        return this['selected'].map((user: User) => user.name).join(', ') || 'none';
+      },
+      turnPage(delta: number) {
+        const last = Math.ceil(this['allData'].length / this['pageSize']) - 1;
+        this['page'] = Math.min(Math.max(this['page'] + delta, 0), last);
+      },
+      onSelect(users: User[]) {
+        this['selected'] = users;
+      },
+    },
+    template: `
+      <p style="margin-bottom: 8px;">Selected: {{ selectedNames }}</p>
+      <tn-table
+        [dataSource]="pageData"
+        [displayedColumns]="tableColumns"
+        [selectable]="true"
+        [selectionKey]="selectionKey"
+        (selectionChange)="onSelect($event)">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <tn-icon-button name="chevron-left" library="mdi" ariaLabel="Previous page" (onClick)="turnPage(-1)" />
+        <tn-icon-button name="chevron-right" library="mdi" ariaLabel="Next page" (onClick)="turnPage(1)" />
+      </div>
     `,
   }),
 };
