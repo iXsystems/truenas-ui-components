@@ -42,6 +42,7 @@ function pageOf(query: string, page: number, count: number): Option[] {
       [dataSourceDebounce]="250"
       [pageSize]="pageSize()"
       [options]="staticOptions()"
+      [keepSelectedOption]="keepSelectedOption()"
       [allowCustomValue]="allowCustomValue()"
       [requireSelection]="requireSelection()"
       [actionOption]="actionOption()"
@@ -55,6 +56,7 @@ class DataSourceHostComponent {
   control = new FormControl<string | null>(null);
   pageSize = signal(5);
   staticOptions = signal<Option[]>([]);
+  keepSelectedOption = signal(true);
   allowCustomValue = signal(false);
   requireSelection = signal(false);
   actionOption = signal<Option | undefined>(undefined);
@@ -644,6 +646,25 @@ describe('tn-autocomplete [dataSource]', () => {
       focus();
 
       expect(renderedOptions()).toContain('archived-user');
+    });
+
+    it('upgrades the raw fallback when a late [options] names the value, with the keep opt-out off', () => {
+      // The display-upgrade effect has to TRACK the list it RESOLVES from.
+      // Tracking `resolvedOptions` instead read `keptSelectedOption`, which
+      // returns at its first guard when `keepSelectedOption` is false — before
+      // it ever touches the pinned rows. So `options` was not a dependency on
+      // that branch, and a host label that resolved after the write never
+      // reached the screen: the edit form kept showing the raw id until the
+      // panel was opened AND a fetched page happened to carry the row.
+      host.keepSelectedOption.set(false);
+      host.control.setValue('4242');
+      fixture.detectChanges();
+      expect(input().value).toBe('4242');
+
+      host.staticOptions.set([{ label: 'archived-user', value: '4242' }]);
+      fixture.detectChanges();
+
+      expect(input().value).toBe('archived-user');
     });
 
     it('leaves the dropdown to the source', () => {

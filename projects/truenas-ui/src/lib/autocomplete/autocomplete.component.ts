@@ -621,7 +621,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // `isOpen` is a dependency rather than an `untracked` read so that closing
     // the panel re-runs the resolution over whatever the search left behind.
     effect(() => {
-      this.resolvedOptions();
+      // Track the list this resolves FROM. `resolvedOptions` is not the same
+      // list: with `[keepSelectedOption]="false"` its kept-row branch returns
+      // before reading `pinnedOptions`, so `options` would not be a dependency
+      // and a late-arriving host label would never upgrade the raw fallback.
+      this.resolvableOptions();
       this.compareWith();
       this.isOpen();
       untracked(() => {
@@ -1080,6 +1084,12 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     }
     const value = term === '' ? null : (term as unknown as T);
     this.selectedValue.set(value);
+    // The remembered label belongs to the option that WAS selected; a custom
+    // value came from no option, so keeping it would let `setDisplayFromValue`
+    // repaint the old name over the user's text — and the next blur would read
+    // that name back and commit the option it belongs to. `writeValue` clears
+    // it for the same reason.
+    this.selectedLabel.set(null);
     this.onChange(value);
   }
 
