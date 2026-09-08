@@ -56,7 +56,7 @@
       class="tn-autocomplete__listbox"
       role="listbox"
       [attr.id]="uid + '-dropdown'"
-      [attr.aria-busy]="loading() ? true : null"
+      [attr.aria-busy]="resolvedLoading() ? true : null"
       (scroll)="onPanelScroll($event)">
       @if (hasResults()) {
         @for (option of filteredOptions(); track $index) {
@@ -68,6 +68,7 @@
             [tnTestId]="optionTestIdParts(option)"
             [class.highlighted]="highlightedIndex() === $index"
             [class.disabled]="option.disabled"
+            [class.tn-autocomplete__option--action]="option === actionOption()"
             [attr.id]="uid + '-option-' + $index"
             [attr.aria-selected]="isOptionSelected(option)"
             [attr.aria-disabled]="option.disabled ? true : null"
@@ -81,7 +82,7 @@
     </div>
 
     <div role="status">
-      @if (loading()) {
+      @if (resolvedLoading()) {
         <div
           class="tn-autocomplete__loading"
           tnTestIdType="autocomplete"
@@ -89,7 +90,7 @@
           <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="resolvedLoadingText()" />
           <span>{{ resolvedLoadingText() }}</span>
         </div>
-      } @else if (!hasResults()) {
+      } @else if (!hasMatches()) {
         <div
           class="tn-autocomplete__no-results"
           tnTestIdType="autocomplete"

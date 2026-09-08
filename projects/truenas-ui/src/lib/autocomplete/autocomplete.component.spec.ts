@@ -1064,6 +1064,36 @@ describe('TnAutocompleteComponent', () => {
       expect(getAsyncInput().value).toBe('beta');
     });
 
+    it('forgets the previous option label once a custom value is committed', () => {
+      // The remembered label belongs to the option that WAS selected. Left in
+      // place, every path that re-derives the text from the committed value
+      // preferred it over the custom value: Escape repainted `beta` over
+      // `zzz`, and the next blur read `beta` back and silently committed the
+      // option it names over the text the user actually typed.
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      const overlay = TestBed.inject(OverlayContainer).getContainerElement();
+      (Array.from(overlay.querySelectorAll('.tn-autocomplete__option'))
+        .find((option) => option.textContent?.trim() === 'beta') as HTMLElement).click();
+      asyncFixture.detectChanges();
+      expect(asyncHost.control.value).toBe('beta');
+
+      typeAsync('zzz');
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.control.value).toBe('zzz');
+
+      getAsyncInput().dispatchEvent(new Event('focus'));
+      asyncFixture.detectChanges();
+      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      asyncFixture.detectChanges();
+      expect(getAsyncInput().value).toBe('zzz');
+
+      getAsyncInput().dispatchEvent(new Event('blur'));
+      asyncFixture.detectChanges();
+      expect(asyncHost.control.value).toBe('zzz');
+    });
+
     it('clears the value when the text is emptied', () => {
       asyncHost.control.setValue('beta');
       asyncFixture.detectChanges();

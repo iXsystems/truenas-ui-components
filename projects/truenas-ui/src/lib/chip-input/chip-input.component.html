@@ -48,31 +48,51 @@
 <!-- Suggestion dropdown — portaled via CDK overlay so it escapes ancestor
      overflow/clipping. Attach/detach is driven by open()/close(). -->
 <ng-template #dropdownTemplate>
-  <div
-    class="tn-chip-input__dropdown"
-    role="listbox"
-    [attr.id]="uid + '-listbox'"
-  >
-    @for (suggestion of filteredSuggestions(); track $index) {
-      <!-- Options are tabindex="-1" and never focused: keyboard selection goes
-           through the input's aria-activedescendant + the Enter branch in
-           onKeydown, so a key handler here would be dead code. Click is a
-           pointer-only affordance. -->
-      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
-      <div
-        class="tn-chip-input__option"
-        role="option"
-        tabindex="-1"
-        tnTestIdType="option"
-        [tnTestId]="suggestionTestId(suggestion)"
-        [class.highlighted]="highlightedIndex() === $index"
-        [attr.id]="uid + '-option-' + $index"
-        [attr.aria-selected]="highlightedIndex() === $index"
-        (mousedown)="onSuggestionMousedown($event)"
-        (click)="onSuggestionClick(suggestion)"
-      >
-        {{ suggestion.label }}
-      </div>
-    }
+  <div class="tn-chip-input__dropdown">
+    <!-- Per ARIA a listbox may only contain option children, so the loading row
+         lives OUTSIDE it as a live-region sibling. The listbox is also the
+         scrollport, which keeps that row pinned below the rows it describes
+         rather than scrolling away with them. -->
+    <div
+      class="tn-chip-input__listbox"
+      role="listbox"
+      [attr.id]="uid + '-listbox'"
+      [attr.aria-busy]="loading() ? true : null"
+    >
+      @for (suggestion of filteredSuggestions(); track $index) {
+        <!-- Options are tabindex="-1" and never focused: keyboard selection goes
+             through the input's aria-activedescendant + the Enter branch in
+             onKeydown, so a key handler here would be dead code. Click is a
+             pointer-only affordance. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
+        <div
+          class="tn-chip-input__option"
+          role="option"
+          tabindex="-1"
+          tnTestIdType="option"
+          [tnTestId]="suggestionTestId(suggestion)"
+          [class.highlighted]="highlightedIndex() === $index"
+          [attr.id]="uid + '-option-' + $index"
+          [attr.aria-selected]="highlightedIndex() === $index"
+          (mousedown)="onSuggestionMousedown($event)"
+          (click)="onSuggestionClick(suggestion)"
+        >
+          {{ suggestion.label }}
+        </div>
+      }
+    </div>
+
+    <div role="status">
+      @if (loading()) {
+        <div
+          class="tn-chip-input__loading"
+          tnTestIdType="chip-input"
+          [tnTestId]="statusTestIdParts('loading')"
+        >
+          <tn-spinner [diameter]="16" [strokeWidth]="2" [ariaLabel]="resolvedLoadingText()" />
+          <span>{{ resolvedLoadingText() }}</span>
+        </div>
+      }
+    </div>
   </div>
 </ng-template>
