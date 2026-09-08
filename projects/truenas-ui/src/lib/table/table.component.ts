@@ -269,6 +269,36 @@ export class TnTableComponent<T = unknown> implements OnInit {
   displayedColumns = input<string[]>([]);
   trackBy = input<((index: number, item: T) => unknown) | undefined>(undefined);
 
+  /**
+   * Identity function for SELECTION. When set, the table tracks selected rows by the
+   * key this returns rather than by object reference, and the selection survives a
+   * `dataSource` change: paging, sorting, filtering, or a background reload that hands
+   * back freshly-built row objects. Rows selected on a page the table is no longer
+   * showing stay selected and keep coming back in `selectionChange`.
+   *
+   * Without it the table keeps its historical behaviour — any `dataSource` reference
+   * change clears the selection and emits an empty `selectionChange` — because
+   * reference-keyed selections cannot be recognised in a new array and would otherwise
+   * leave the header checkbox counting rows that are no longer on screen.
+   *
+   * This is deliberately separate from {@link trackBy}, which is a rendering concern
+   * (`@for` identity, index-based by default) and is free to stay so on a table whose
+   * selection has to be stable. Pass a key that identifies the ROW, not its position —
+   * and bind a stable member rather than writing the function in the template, since
+   * Angular's expression grammar has no arrow functions:
+   * `[selectionKey]="rowKey"` for a `rowKey = (row: User) => row.id` on the host.
+   *
+   * The select-all checkbox stays scoped to the visible page — it selects and clears
+   * the rows the table is currently showing, and `isAllSelected` reflects only those,
+   * so it never claims to have selected rows the user cannot see.
+   *
+   * Retention is unconditional, and it has to be: the table sees one page and cannot
+   * tell a row that moved off-screen from one that was destroyed. A consumer whose rows
+   * can disappear for good owns that check — reconcile `selectionChange` against the
+   * full list it holds, and call {@link clearSelection} once a batch action is done.
+   */
+  selectionKey = input<((row: T) => unknown) | undefined>(undefined);
+
   emptyMessage = input<string>('No data available');
 
   /**
@@ -553,8 +583,32 @@ export class TnTableComponent<T = unknown> implements OnInit {
   private readonly instanceId = `tn-table-${TnTableComponent.instanceCount++}`;
 
   // --- Selection state ---
+  /**
+   * The rows of the CURRENT `data()` that are selected. With `selectionKey` set this is
+   * the visible slice of {@link selectedByKey} — it is what the row checkboxes and the
+   * select-all state read, so both stay scoped to the page on screen.
+   */
   selection = new SelectionModel<T>(true, []);
+
+  /**
+   * The whole selection, keyed by `selectionKey`, including rows that are no longer in
+   * `data()`. Empty (and unused) when no `selectionKey` is set.
+   *
+   * It holds the row objects, not just the keys, so `selectionChange` can hand a
+   * consumer the rows it selected on an earlier page — a batch action has to act on
+   * rows, and the table is the only thing that ever saw them.
+   */
+  private readonly selectedByKey = new Map<unknown, T>();
+
+  /** Number of selected rows present in the current `data()` — see {@link selection}. */
   private selectionCount = signal(0);
+
+  /**
+   * The array last handed to `selectionChange`, so a reconcile that leaves the selection
+   * exactly as the consumer already sees it can stay quiet — re-running because
+   * `selectionKey`'s identity changed is not news.
+   */
+  private lastEmittedSelection: T[] = [];
   private initialized = false;
 
   // Column def map as a computed signal
@@ -570,15 +624,45 @@ export class TnTableComponent<T = unknown> implements OnInit {
   });
 
   constructor() {
-    // Clear selection and expansion when data reference changes
+    // Collapse every open detail row when the data reference changes: the rows the
+    // expanded set holds belong to the array that is going away. This reads `data()`
+    // and nothing else, so an unrelated input — `selectionKey` above all, which a
+    // consumer may swap or re-create on any change-detection pass — cannot close what
+    // the user opened as a side effect of a selection concern.
     effect(() => {
       this.data();
-      if (this.initialized) {
-        this.selection.clear();
-        this.selectionCount.set(0);
-        this.expandedRows.set(new Set());
-        this.selectionChange.emit([]);
+      if (!this.initialized) { return; }
+      this.expandedRows.set(new Set());
+    });
+
+    // Reconcile the retained selection against the rows now on screen. This has to
+    // react to `selectionKey` as well as to `data()` — a key being taken away must be
+    // noticed promptly — so the emit is guarded by whether the selection the consumer
+    // last saw actually changed, and a key swapped for an equivalent one stays silent.
+    effect(() => {
+      const rows = this.data();
+      const selectionKey = this.selectionKey();
+      if (!this.initialized) { return; }
+
+      if (!selectionKey) {
+        // Also drop anything retained under a key, so a table whose `selectionKey` is
+        // taken away cannot resurrect those rows if it is given one again.
+        this.clearSelection();
+        return;
       }
+
+      // Re-point every retained selection at the row object the new data carries, so a
+      // reload that rebuilt its rows leaves the consumer holding live references rather
+      // than the stale ones it selected. Rows the new data does not carry (another page,
+      // or filtered out) keep the reference they were selected with.
+      for (const row of rows) {
+        const key = selectionKey(row);
+        if (this.selectedByKey.has(key)) {
+          this.selectedByKey.set(key, row);
+        }
+      }
+      this.syncSelectionToData(rows, selectionKey);
+      this.emitSelectionIfChanged();
     });
 
     // Clear expanded rows when expandable is toggled off
@@ -747,7 +831,7 @@ export class TnTableComponent<T = unknown> implements OnInit {
     this.initialized = true;
 
     this.destroyRef.onDestroy(() => {
-      this.selection.clear();
+      this.clearSelection();
       this.resizeObserver?.disconnect();
     });
   }
@@ -1199,23 +1283,110 @@ export class TnTableComponent<T = unknown> implements OnInit {
   }
 
   toggleSelectAll(): void {
-    if (this.isAllSelected()) {
-      this.selection.clear();
-    } else {
+    const selectAll = !this.isAllSelected();
+    if (selectAll) {
       this.selection.select(...this.data());
+    } else {
+      this.selection.clear();
     }
+
+    // Only the visible rows move: select-all is scoped to the page, so rows retained
+    // from elsewhere are neither selected nor dropped by it.
+    const selectionKey = this.selectionKey();
+    if (selectionKey) {
+      for (const row of this.data()) {
+        const key = selectionKey(row);
+        if (selectAll) {
+          this.selectedByKey.set(key, row);
+        } else {
+          this.selectedByKey.delete(key);
+        }
+      }
+    }
+
     this.selectionCount.set(this.selection.selected.length);
-    this.selectionChange.emit(this.selection.selected);
+    this.emitSelection();
   }
 
   toggleRowSelection(row: T): void {
     this.selection.toggle(row);
+
+    const selectionKey = this.selectionKey();
+    if (selectionKey) {
+      const key = selectionKey(row);
+      if (this.selection.isSelected(row)) {
+        this.selectedByKey.set(key, row);
+      } else {
+        this.selectedByKey.delete(key);
+      }
+    }
+
     this.selectionCount.set(this.selection.selected.length);
-    this.selectionChange.emit(this.selection.selected);
+    this.emitSelection();
   }
 
   isRowSelected(row: T): boolean {
+    const selectionKey = this.selectionKey();
+    if (selectionKey) {
+      // Read the keyed store rather than the model: a row object rebuilt by a reload is
+      // a different reference, and it should render checked before the reconciling
+      // effect has had a chance to re-point the model at it.
+      return this.selectedByKey.has(selectionKey(row));
+    }
     return this.selection.isSelected(row);
+  }
+
+  /**
+   * Drops the whole selection, including rows retained from pages the table is not
+   * showing. Use it after a batch action consumes the selection.
+   *
+   * Emits an empty `selectionChange` if anything was selected. The caller knows it
+   * cleared, but `selectionChange` is the only way anything else can: a toolbar bound to
+   * a mirrored copy of the selection a layer up would otherwise stay stale until the next
+   * `dataSource` change happened to correct it. Clearing {@link selection} directly is not
+   * enough once `selectionKey` is set: the retained rows would survive and come back on
+   * the next reconcile.
+   */
+  clearSelection(): void {
+    this.selection.clear();
+    this.selectedByKey.clear();
+    this.selectionCount.set(0);
+    this.emitSelectionIfChanged();
+  }
+
+  /** Re-applies the retained selection to the rows currently on screen. */
+  private syncSelectionToData(rows: readonly T[], selectionKey: (row: T) => unknown): void {
+    this.selection.clear();
+    const selected = rows.filter((row) => this.selectedByKey.has(selectionKey(row)));
+    if (selected.length) {
+      this.selection.select(...selected);
+    }
+    this.selectionCount.set(this.selection.selected.length);
+  }
+
+  /** What `selectionChange` carries: the whole selection when keyed, the page's otherwise. */
+  private emittedSelection(): T[] {
+    return this.selectionKey() ? [...this.selectedByKey.values()] : this.selection.selected;
+  }
+
+  /** Emits the current selection and records it. For the paths that always change it. */
+  private emitSelection(): void {
+    this.lastEmittedSelection = this.emittedSelection();
+    this.selectionChange.emit(this.lastEmittedSelection);
+  }
+
+  /**
+   * Emits only if the selection differs from the one last emitted, by row identity — for
+   * the paths that may be re-run without anything having moved.
+   */
+  private emitSelectionIfChanged(): void {
+    const next = this.emittedSelection();
+    const previous = this.lastEmittedSelection;
+    if (next.length === previous.length && next.every((row, index) => row === previous[index])) {
+      return;
+    }
+    this.lastEmittedSelection = next;
+    this.selectionChange.emit(next);
   }
 
   // --- Card-mode computeds ---

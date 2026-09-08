@@ -282,6 +282,156 @@ describe('TnTableComponent', () => {
       component.toggleRowSelection(testData[0]);
       expect(spy).toHaveBeenCalledWith([testData[0]]);
     });
+
+    it('clears the selection when the data reference changes', () => {
+      component.toggleRowSelection(testData[0]);
+      expect(component.selection.selected).toHaveLength(1);
+
+      fixture.componentRef.setInput('dataSource', [...testData]);
+      fixture.detectChanges();
+
+      expect(component.selection.selected).toHaveLength(0);
+    });
+  });
+
+  describe('selection with selectionKey', () => {
+    const pageOne = [{ id: 1 }, { id: 2 }];
+    const pageTwo = [{ id: 3 }, { id: 4 }];
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('dataSource', pageOne);
+      fixture.componentRef.setInput('selectable', true);
+      fixture.componentRef.setInput('selectionKey', (row: { id: number }) => row.id);
+      fixture.detectChanges();
+    });
+
+    it('keeps rows selected on a page the table is no longer showing', () => {
+      component.toggleRowSelection(pageOne[0]);
+
+      fixture.componentRef.setInput('dataSource', pageTwo);
+      fixture.detectChanges();
+
+      component.toggleRowSelection(pageTwo[1]);
+
+      expect(component.selection.selected).toEqual([pageTwo[1]]);
+      expect(component.isRowSelected(pageOne[0])).toBe(true);
+    });
+
+    it('emits the whole selection, including rows off the current page', () => {
+      const spy = jest.fn();
+      component.selectionChange.subscribe(spy);
+
+      component.toggleRowSelection(pageOne[0]);
+      fixture.componentRef.setInput('dataSource', pageTwo);
+      fixture.detectChanges();
+      component.toggleRowSelection(pageTwo[0]);
+
+      expect(spy).toHaveBeenLastCalledWith([pageOne[0], pageTwo[0]]);
+    });
+
+    it('re-checks the row when the page it was selected on comes back', () => {
+      component.toggleRowSelection(pageOne[0]);
+
+      fixture.componentRef.setInput('dataSource', pageTwo);
+      fixture.detectChanges();
+      fixture.componentRef.setInput('dataSource', pageOne);
+      fixture.detectChanges();
+
+      expect(component.selection.selected).toEqual([pageOne[0]]);
+      expect(component.isAllSelected()).toBe(false);
+      expect(component.isIndeterminate()).toBe(true);
+    });
+
+    it('re-points a retained selection at the row object a reload rebuilt', () => {
+      const spy = jest.fn();
+      component.toggleRowSelection(pageOne[0]);
+      component.selectionChange.subscribe(spy);
+
+      const reloaded = [{ id: 1 }, { id: 2 }];
+      fixture.componentRef.setInput('dataSource', reloaded);
+      fixture.detectChanges();
+
+      expect(component.selection.selected).toEqual([reloaded[0]]);
+      expect(spy).toHaveBeenLastCalledWith([reloaded[0]]);
+      expect(spy.mock.lastCall?.[0][0]).toBe(reloaded[0]);
+    });
+
+    it('scopes select-all to the visible page', () => {
+      component.toggleRowSelection(pageOne[0]);
+
+      fixture.componentRef.setInput('dataSource', pageTwo);
+      fixture.detectChanges();
+      component.toggleSelectAll();
+
+      expect(component.isAllSelected()).toBe(true);
+      expect(component.isRowSelected(pageOne[0])).toBe(true);
+
+      // Clearing the page drops only the rows it shows.
+      component.toggleSelectAll();
+      expect(component.isRowSelected(pageTwo[0])).toBe(false);
+      expect(component.isRowSelected(pageOne[0])).toBe(true);
+    });
+
+    it('does not resurrect retained rows when selectionKey is taken away and given back', () => {
+      component.toggleRowSelection(pageOne[0]);
+
+      fixture.componentRef.setInput('selectionKey', undefined);
+      fixture.detectChanges();
+      fixture.componentRef.setInput('selectionKey', (row: { id: number }) => row.id);
+      fixture.detectChanges();
+
+      expect(component.isRowSelected(pageOne[0])).toBe(false);
+    });
+
+    it('drops the retained rows too when clearSelection() is called', () => {
+      component.toggleRowSelection(pageOne[0]);
+      fixture.componentRef.setInput('dataSource', pageTwo);
+      fixture.detectChanges();
+
+      component.clearSelection();
+      fixture.componentRef.setInput('dataSource', pageOne);
+      fixture.detectChanges();
+
+      expect(component.selection.selected).toHaveLength(0);
+      expect(component.isRowSelected(pageOne[0])).toBe(false);
+    });
+
+    it('emits the empty selection from clearSelection(), so a mirrored copy can follow', () => {
+      const spy = jest.fn();
+      component.toggleRowSelection(pageOne[0]);
+      component.selectionChange.subscribe(spy);
+
+      component.clearSelection();
+      expect(spy).toHaveBeenCalledWith([]);
+
+      // Nothing left to clear, nothing to say.
+      spy.mockClear();
+      component.clearSelection();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('stays quiet when only the key function identity changes', () => {
+      const spy = jest.fn();
+      component.toggleRowSelection(pageOne[0]);
+      component.selectionChange.subscribe(spy);
+
+      fixture.componentRef.setInput('selectionKey', (row: { id: number }) => row.id);
+      fixture.detectChanges();
+
+      expect(spy).not.toHaveBeenCalled();
+      expect(component.isRowSelected(pageOne[0])).toBe(true);
+    });
+
+    it('keeps detail rows open when only the key function identity changes', () => {
+      fixture.componentRef.setInput('expandable', true);
+      fixture.detectChanges();
+      component.toggleRowExpansion(pageOne[0]);
+
+      fixture.componentRef.setInput('selectionKey', (row: { id: number }) => row.id);
+      fixture.detectChanges();
+
+      expect(component.isRowExpanded(pageOne[0])).toBe(true);
+    });
   });
 
   describe('clickable rows', () => {
