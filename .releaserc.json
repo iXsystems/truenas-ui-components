@@ -11,17 +11,17 @@
         { "breaking": true, "release": "minor" }
       ],
       "parserOpts": {
-        "headerPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!?: (.+)$",
+        "headerPattern": "^(?:.+ / )?(\\w*)(?:\\(([^)]*)\\))?!?: (.+)$",
         "headerCorrespondence": ["type", "scope", "subject"],
-        "breakingHeaderPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!: (.+)$"
+        "breakingHeaderPattern": "^(?:.+ / )?(\\w*)(?:\\(([^)]*)\\))?!: (.+)$"
       }
     }],
     ["@semantic-release/release-notes-generator", {
       "preset": "conventionalcommits",
       "parserOpts": {
-        "headerPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!?: (.+)$",
+        "headerPattern": "^(?:.+ / )?(\\w*)(?:\\(([^)]*)\\))?!?: (.+)$",
         "headerCorrespondence": ["type", "scope", "subject"],
-        "breakingHeaderPattern": "^(?:.+ / )?(\\w*)(?:\\(([\\w$.\\-*/ ]*)\\))?!: (.+)$"
+        "breakingHeaderPattern": "^(?:.+ / )?(\\w*)(?:\\(([^)]*)\\))?!: (.+)$"
       },
       "presetConfig": {
         "types": [
