@@ -452,18 +452,23 @@ export const ExpansionSurvivesReload: Story = {
   }),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const [keyedExpand, unkeyedExpand] = canvas.getAllByLabelText('Expand row');
+    // Scope each query to its own table. Both render the same rows, so a document-order
+    // lookup across the whole canvas would take two buttons out of the keyed table and
+    // never touch the unkeyed one — which is the contrast this story exists to show.
+    const [keyedTable, unkeyedTable] = Array.from(canvasElement.querySelectorAll('tn-table')) as HTMLElement[];
+    const keyed = within(keyedTable);
+    const unkeyed = within(unkeyedTable);
 
-    await userEvent.click(keyedExpand);
-    await userEvent.click(unkeyedExpand);
-    await expect(canvas.getByText(/Still open after 0 reload/)).toBeInTheDocument();
-    await expect(canvas.getByText(/Closed by the next reload/)).toBeInTheDocument();
+    await userEvent.click(keyed.getAllByLabelText('Expand row')[0]);
+    await userEvent.click(unkeyed.getAllByLabelText('Expand row')[0]);
+    await expect(keyed.getByText(/Still open after 0 reload/)).toBeInTheDocument();
+    await expect(unkeyed.getByText(/Closed by the next reload/)).toBeInTheDocument();
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
 
     // The keyed table re-points its open row at the new object; the unkeyed one drops it.
-    await expect(canvas.getByText(/Still open after 1 reload/)).toBeInTheDocument();
-    await expect(canvas.queryByText(/Closed by the next reload/)).not.toBeInTheDocument();
+    await expect(keyed.getByText(/Still open after 1 reload/)).toBeInTheDocument();
+    await expect(unkeyed.queryByText(/Closed by the next reload/)).not.toBeInTheDocument();
   },
 };
 

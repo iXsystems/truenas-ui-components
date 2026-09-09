@@ -616,6 +616,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
    *
    * Replacing the data array collapses everything unless {@link expansionKey} is set, in
    * which case this is the visible slice of {@link expandedByKey} and survives the swap.
+   *
+   * Writable for consumers that predate {@link expansionKey}. **Adding a key to a consumer
+   * that writes this signal directly is a migration, not a drop-in**: `expandedRows.set(new
+   * Set())` closes only what is on screen, so a row retained off-screen re-opens on the next
+   * reconcile. Move those writes to {@link expandRow}, {@link toggleRowExpansion} and
+   * {@link clearExpansion}, which keep the retained map in step.
    */
   expandedRows = signal<Set<unknown>>(new Set());
 
