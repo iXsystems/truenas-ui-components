@@ -876,21 +876,52 @@ describe('TnTableComponent', () => {
         expect(component.expandedRows().size).toBe(0);
       });
 
-      it('clearExpansion drops rows that are not on screen, expandedRows.set does not', () => {
+      it('a direct expandedRows write closes the visible row but leaves its key', () => {
         fixture.componentRef.setInput('expansionKey', rowKey);
         fixture.detectChanges();
         component.toggleRowExpansion(testData[0]);
-        fixture.componentRef.setInput('dataSource', [testData[1]]);
-        fixture.detectChanges();
 
-        // Closing only what is visible leaves the retained row to come back.
+        // The row is ON SCREEN, which is the case that distinguishes the two paths: the write
+        // must actually close it, not be reverted by the reconcile.
         component.expandedRows.set(new Set());
-        fixture.componentRef.setInput('dataSource', testData);
         fixture.detectChanges();
-        expect(component.isRowExpanded(testData[0])).toBe(true);
+        expect(component.expandedRows().size).toBe(0);
+
+        // ...but it never touched the retained map, so the next reconcile brings it back. This
+        // is the documented sharp edge of leaving `expandedRows` writable.
+        fixture.componentRef.setInput('dataSource', testData.map((row) => ({ ...row })));
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(1);
+      });
+
+      it('clearExpansion drops the key as well, so nothing comes back', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
 
         component.clearExpansion();
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+
         fixture.componentRef.setInput('dataSource', testData.map((row) => ({ ...row })));
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+      });
+
+      it('closes a row that has paged away instead of re-adding it', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+
+        // Row 0 leaves the page while still open — retained, but not in the visible set.
+        fixture.componentRef.setInput('dataSource', [testData[1]]);
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+
+        // Identity against the visible set would read this as "closed" and re-add it. Keyed,
+        // it closes, so a consumer holding the row can still act on it without clearing all.
+        component.toggleRowExpansion(testData[0]);
+        fixture.componentRef.setInput('dataSource', testData);
         fixture.detectChanges();
         expect(component.expandedRows().size).toBe(0);
       });

@@ -17,6 +17,7 @@ import {
   model,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import { tnScrollableRegion } from '../a11y/scrollable-region';
@@ -618,10 +619,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * which case this is the visible slice of {@link expandedByKey} and survives the swap.
    *
    * Writable for consumers that predate {@link expansionKey}. **Adding a key to a consumer
-   * that writes this signal directly is a migration, not a drop-in**: `expandedRows.set(new
-   * Set())` closes only what is on screen, so a row retained off-screen re-opens on the next
-   * reconcile. Move those writes to {@link expandRow}, {@link toggleRowExpansion} and
-   * {@link clearExpansion}, which keep the retained map in step.
+   * that writes this signal directly is a migration, not a drop-in**: a write here closes
+   * what is on screen but never touches the retained map, so every row whose key is still in
+   * it re-opens on the next reconcile — the one it just closed included. Move those writes to
+   * {@link expandRow}, {@link toggleRowExpansion} and {@link clearExpansion}, which keep the
+   * two in step.
    */
   expandedRows = signal<Set<unknown>>(new Set());
 
@@ -713,7 +715,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
           visible.add(row);
         }
       }
-      if (!isSameSet(visible, this.expandedRows())) {
+      // `untracked`: the guard needs the current value, not a subscription. Reading it
+      // tracked would make every write to `expandedRows` re-run this effect and rewrite it
+      // from the map — so a consumer closing a visible row with `expandedRows.set(new Set())`
+      // would have it put straight back, and the signal would be read-only in all but name.
+      if (!isSameSet(visible, untracked(this.expandedRows))) {
         this.expandedRows.set(visible);
       }
     });
@@ -1075,7 +1081,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
     if (!this.canExpandRow(row)) { return; }
     const expanded = new Set(this.expandedRows());
     const expansionKey = this.expansionKey();
-    if (expanded.has(row)) {
+    if (this.isExpansionOpen(row)) {
+      // `delete` is a no-op for a row that has paged away — it is not in the visible set —
+      // and dropping the key is what actually closes it. Resolving through the key is why
+      // toggling a retained row closes it instead of re-adding it, matching
+      // `toggleRowSelection`.
       expanded.delete(row);
       if (expansionKey) { this.expandedByKey.delete(expansionKey(row)); }
     } else {
@@ -1090,13 +1100,24 @@ export class TnTableComponent<T = unknown> implements OnInit {
   }
 
   /**
+   * Whether `row`'s detail row counts as open for a toggle. With {@link expansionKey} that is
+   * the retained map, which includes rows this page is not showing; without one it is object
+   * identity against the visible set. Distinct from {@link isRowExpanded}, which drives
+   * rendering and must therefore stay about the row in front of the user.
+   */
+  private isExpansionOpen(row: T): boolean {
+    const expansionKey = this.expansionKey();
+    return expansionKey ? this.expandedByKey.has(expansionKey(row)) : this.expandedRows().has(row);
+  }
+
+  /**
    * Opens `row`'s detail row programmatically — the same thing a chevron click does, for a
    * consumer restoring expansion from somewhere else (a `?jobId=` query parameter, say).
    * Honours `singleExpand` and keeps {@link expansionKey}'s retained set in step, which
    * writing {@link expandedRows} directly does not.
    */
   expandRow(row: T): void {
-    if (this.isRowExpanded(row)) { return; }
+    if (this.isExpansionOpen(row)) { return; }
     this.toggleRowExpansion(row);
   }
 
