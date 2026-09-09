@@ -895,6 +895,60 @@ describe('TnTableComponent', () => {
         expect(component.expandedRows().size).toBe(0);
       });
 
+      it('does not re-open rows that toggling expandable off closed', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+
+        // The table closes the row itself — no user action, so nothing may bring it back.
+        fixture.componentRef.setInput('expandable', false);
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+
+        fixture.componentRef.setInput('expandable', true);
+        fixture.componentRef.setInput('dataSource', testData.map((row) => ({ ...row })));
+        fixture.detectChanges();
+
+        expect(component.expandedRows().size).toBe(0);
+      });
+
+      it('does not re-open a row the isRowExpandable prune rejected', () => {
+        const allowed = signal([1, 2]);
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.componentRef.setInput('isRowExpandable', (row: { id: number }) => allowed().includes(row.id));
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        // The predicate stops allowing it: the prune closes it.
+        allowed.set([2]);
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+
+        // Allowing it again must not silently reappear it already expanded — the guarantee
+        // the prune exists for, which the retained map would otherwise defeat on the next
+        // dataSource change.
+        allowed.set([1, 2]);
+        fixture.componentRef.setInput('dataSource', testData.map((row) => ({ ...row })));
+        fixture.detectChanges();
+
+        expect(component.expandedRows().size).toBe(0);
+      });
+
+      it('leaves the expanded set alone when only the key function identity changes', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+        const before = component.expandedRows();
+
+        // What an inline arrow in a template does on every change-detection pass.
+        fixture.componentRef.setInput('expansionKey', (row: { id: number }) => row.id);
+        fixture.detectChanges();
+
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+        expect(component.expandedRows()).toBe(before);
+      });
+
       it('expandRow opens a row and stays a no-op on one already open', () => {
         fixture.componentRef.setInput('expansionKey', rowKey);
         fixture.detectChanges();

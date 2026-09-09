@@ -119,6 +119,19 @@ function getExpandDuration(): string {
 }
 
 /**
+ * Same members, order-independent. Used to keep the expansion reconcile idempotent: it re-runs
+ * whenever `expansionKey`'s identity changes, and writing a fresh `Set` every time would churn
+ * the signal for a consumer that binds an inline arrow rather than a stable member.
+ */
+function isSameSet(a: ReadonlySet<unknown>, b: ReadonlySet<unknown>): boolean {
+  if (a.size !== b.size) { return false; }
+  for (const value of a) {
+    if (!b.has(value)) { return false; }
+  }
+  return true;
+}
+
+/**
  * Chrome copy `tn-table` renders itself. These were baked into the template as English literals,
  * which a consumer could not translate at all — there was no input to bind. Provide
  * {@link TN_TABLE_LABELS} at the app root to wire them to an i18n service.
@@ -659,11 +672,18 @@ export class TnTableComponent<T = unknown> implements OnInit {
   });
 
   constructor() {
-    // Collapse every open detail row when the data reference changes: the rows the
-    // expanded set holds belong to the array that is going away. This reads `data()`
-    // and nothing else, so an unrelated input — `selectionKey` above all, which a
-    // consumer may swap or re-create on any change-detection pass — cannot close what
-    // the user opened as a side effect of a selection concern.
+    // Reconcile open detail rows against the rows now on screen.
+    //
+    // Without `expansionKey` this collapses everything: the set holds rows from the array
+    // that is going away, and reference-keyed rows cannot be recognised in a new one.
+    //
+    // With a key it re-points them instead. It therefore has to read `expansionKey()` as
+    // well as `data()` — a key being taken away must be noticed promptly — which means an
+    // unrelated re-creation of that input (an inline arrow in a template, which the type
+    // permits) re-runs this. That must not churn the signal or, worse, close what the user
+    // opened, so the keyed branch derives `visible` from the retained map and writes only
+    // when the result actually differs. `selectionKey` is still never read here: a
+    // selection concern must not touch expansion.
     effect(() => {
       const rows = this.data();
       const expansionKey = this.expansionKey();
@@ -687,7 +707,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
           visible.add(row);
         }
       }
-      this.expandedRows.set(visible);
+      if (!isSameSet(visible, this.expandedRows())) {
+        this.expandedRows.set(visible);
+      }
     });
 
     // Reconcile the retained selection against the rows now on screen. This has to
@@ -720,10 +742,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
       this.emitSelectionIfChanged();
     });
 
-    // Clear expanded rows when expandable is toggled off
+    // Clear expanded rows when expandable is toggled off. Through `clearExpansion()`, so the
+    // rows retained under `expansionKey` go as well: clearing only the visible set would let
+    // the next `dataSource` change re-open rows the table itself had just closed.
     effect(() => {
       if (!this.expandable()) {
-        this.expandedRows.set(new Set());
+        this.clearExpansion();
       }
     });
 
@@ -735,15 +759,23 @@ export class TnTableComponent<T = unknown> implements OnInit {
     // before the predicate runs — there is nothing to prune, and the next toggle
     // re-runs this effect and re-tracks the predicate's signals. The
     // next.size !== expanded.size guard makes the self-write converge after one
-    // extra run, so there is no infinite loop.
+    // extra run, so there is no infinite loop. A rejected row leaves the retained
+    // `expansionKey` map as well — see below.
     effect(() => {
       const predicate = this.isRowExpandable();
       if (!predicate) { return; }
       const expanded = this.expandedRows();
       if (expanded.size === 0) { return; }
+      const expansionKey = this.expansionKey();
       const next = new Set<unknown>();
       for (const row of expanded) {
-        if (predicate(row as T)) { next.add(row); }
+        if (predicate(row as T)) {
+          next.add(row);
+        } else if (expansionKey) {
+          // Drop it from the retained map too, or the guarantee above holds only until the
+          // next `dataSource` change re-points the row and opens it again.
+          this.expandedByKey.delete(expansionKey(row as T));
+        }
       }
       if (next.size !== expanded.size) {
         this.expandedRows.set(next);
