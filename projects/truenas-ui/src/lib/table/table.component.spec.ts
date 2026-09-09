@@ -801,6 +801,112 @@ describe('TnTableComponent', () => {
       expect(component.isRowExpanded(testData[0])).toBe(false);
     });
 
+    describe('expansionKey', () => {
+      const rowKey = (row: { id: number }): number => row.id;
+
+      it('collapses everything on a dataSource change when no key is set', () => {
+        component.toggleRowExpansion(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        const rebuilt = testData.map((row) => ({ ...row }));
+        fixture.componentRef.setInput('dataSource', rebuilt);
+        fixture.detectChanges();
+
+        expect(component.expandedRows().size).toBe(0);
+      });
+
+      it('keeps the row open across a reload that rebuilt its objects', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+
+        // What a background reload does: same rows, new objects.
+        const rebuilt = testData.map((row) => ({ ...row }));
+        fixture.componentRef.setInput('dataSource', rebuilt);
+        fixture.detectChanges();
+
+        // Re-pointed at the NEW object, not the one it was opened with.
+        expect(component.isRowExpanded(rebuilt[0])).toBe(true);
+        expect(component.isRowExpanded(testData[0])).toBe(false);
+        expect(component.expandedRows().size).toBe(1);
+      });
+
+      it('re-opens a retained row when it comes back to the current page', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+
+        // The row leaves the page — another tab, a filter. Nothing is on screen to open.
+        fixture.componentRef.setInput('dataSource', [testData[1]]);
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+
+        fixture.componentRef.setInput('dataSource', testData);
+        fixture.detectChanges();
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+      });
+
+      it('does not re-open a row the user collapsed while it was on screen', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+        component.toggleRowExpansion(testData[0]);
+
+        const rebuilt = testData.map((row) => ({ ...row }));
+        fixture.componentRef.setInput('dataSource', rebuilt);
+        fixture.detectChanges();
+
+        expect(component.expandedRows().size).toBe(0);
+      });
+
+      it('drops rows retained off-screen when the key is taken away', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+
+        fixture.componentRef.setInput('expansionKey', undefined);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('dataSource', testData.map((row) => ({ ...row })));
+        fixture.detectChanges();
+
+        // Giving the key back must not resurrect it.
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.componentRef.setInput('dataSource', testData);
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+      });
+
+      it('clearExpansion drops rows that are not on screen, expandedRows.set does not', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+        component.toggleRowExpansion(testData[0]);
+        fixture.componentRef.setInput('dataSource', [testData[1]]);
+        fixture.detectChanges();
+
+        // Closing only what is visible leaves the retained row to come back.
+        component.expandedRows.set(new Set());
+        fixture.componentRef.setInput('dataSource', testData);
+        fixture.detectChanges();
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        component.clearExpansion();
+        fixture.componentRef.setInput('dataSource', testData.map((row) => ({ ...row })));
+        fixture.detectChanges();
+        expect(component.expandedRows().size).toBe(0);
+      });
+
+      it('expandRow opens a row and stays a no-op on one already open', () => {
+        fixture.componentRef.setInput('expansionKey', rowKey);
+        fixture.detectChanges();
+
+        component.expandRow(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+
+        component.expandRow(testData[0]);
+        expect(component.isRowExpanded(testData[0])).toBe(true);
+      });
+    });
+
     describe('singleExpand', () => {
       it('collapses the previously expanded row', () => {
         fixture.componentRef.setInput('singleExpand', true);

@@ -105,6 +105,15 @@ const meta: Meta<TnTableComponent> = {
       control: false,
     },
     expandable: { description: 'Enable click-to-expand detail rows', control: 'boolean' },
+    expansionKey: {
+      description:
+        'Identity function `(row) => key`, bound as a stable member (`[expansionKey]="rowKey"`) since '
+        + 'Angular templates have no arrow functions. Keys open detail rows instead of holding them by object '
+        + 'reference, so a background reload that rebuilt its rows leaves them open rather than collapsing them. '
+        + 'A row that leaves the page is retained and re-opens when it comes back; call `clearExpansion()` when '
+        + 'it is gone for good.',
+      control: false,
+    },
     isRowExpandable: {
       description: 'Optional per-row predicate `(row) => boolean`; rows returning false show no expand control',
       control: false,
