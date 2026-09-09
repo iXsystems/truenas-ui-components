@@ -17,6 +17,7 @@ import {
   model,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import { tnScrollableRegion } from '../a11y/scrollable-region';
@@ -116,6 +117,19 @@ function getExpandDuration(): string {
     return '0ms';
   }
   return '225ms cubic-bezier(0.4, 0.0, 0.2, 1)';
+}
+
+/**
+ * Same members, order-independent. Used to keep the expansion reconcile idempotent: it re-runs
+ * whenever `expansionKey`'s identity changes, and writing a fresh `Set` every time would churn
+ * the signal for a consumer that binds an inline arrow rather than a stable member.
+ */
+function isSameSet(a: ReadonlySet<unknown>, b: ReadonlySet<unknown>): boolean {
+  if (a.size !== b.size) { return false; }
+  for (const value of a) {
+    if (!b.has(value)) { return false; }
+  }
+  return true;
 }
 
 /**
@@ -298,6 +312,34 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * full list it holds, and call {@link clearSelection} once a batch action is done.
    */
   selectionKey = input<((row: T) => unknown) | undefined>(undefined);
+
+  /**
+   * Identifies a row for EXPANSION, so an open detail row survives a `dataSource` change.
+   *
+   * Detail rows are held by object identity, and a consumer that re-fetches hands back new
+   * objects for the same rows — so without a key a background reload closes the row the
+   * user opened, which is usually the moment its contents are worth watching (a running
+   * job's logs, say). With a key set, the table re-points the open rows at the new objects
+   * instead of collapsing them.
+   *
+   * A row the new `data()` does not carry — another page, another tab, filtered out — is
+   * kept, not dropped, and re-opens on its own once that row is listed again. Retention is
+   * unconditional for the same reason it is for {@link selectionKey}: the table sees one
+   * page and cannot tell a row that moved off-screen from one that is gone for good. Call
+   * {@link clearExpansion} when the consumer knows it is gone.
+   *
+   * Without it the table keeps its historical behaviour — any `dataSource` reference change
+   * collapses every open row.
+   *
+   * With a key set, drive expansion through {@link toggleRowExpansion}, {@link expandRow}
+   * and {@link clearExpansion} rather than writing {@link expandedRows} directly, or the
+   * retained set and the visible set drift apart.
+   *
+   * Pass a key that identifies the ROW, not its position, and bind a stable member rather
+   * than writing the function in the template: `[expansionKey]="rowKey"` for a
+   * `rowKey = (row: Job) => row.id` on the host.
+   */
+  expansionKey = input<((row: T) => unknown) | undefined>(undefined);
 
   emptyMessage = input<string>('No data available');
 
@@ -571,12 +613,26 @@ export class TnTableComponent<T = unknown> implements OnInit {
   sortDirection = model<'asc' | 'desc' | ''>('');
 
   /**
-   * Set of currently expanded row references.
-   * Note: uses object identity. If the consumer replaces the data array
-   * (e.g. after sorting), expanded state is lost. A future key-based
-   * approach could address this.
+   * The rows of the CURRENT `data()` whose detail row is open, by object identity.
+   *
+   * Replacing the data array collapses everything unless {@link expansionKey} is set, in
+   * which case this is the visible slice of {@link expandedByKey} and survives the swap.
+   *
+   * Writable for consumers that predate {@link expansionKey}. **Adding a key to a consumer
+   * that writes this signal directly is a migration, not a drop-in**: a write here closes
+   * what is on screen but never touches the retained map, so every row whose key is still in
+   * it re-opens on the next reconcile — the one it just closed included. Move those writes to
+   * {@link expandRow}, {@link toggleRowExpansion} and {@link clearExpansion}, which keep the
+   * two in step.
    */
   expandedRows = signal<Set<unknown>>(new Set());
+
+  /**
+   * Every open detail row keyed by {@link expansionKey}, including rows no longer in
+   * `data()`. Empty (and unused) when no key is set. Holds the row objects so a row that
+   * comes back can be re-pointed at the object the new data carries.
+   */
+  private expandedByKey = new Map<unknown, T>();
 
   // Per-instance prefix for generated DOM ids, so two tables on a page can't collide.
   private static instanceCount = 0;
@@ -624,15 +680,48 @@ export class TnTableComponent<T = unknown> implements OnInit {
   });
 
   constructor() {
-    // Collapse every open detail row when the data reference changes: the rows the
-    // expanded set holds belong to the array that is going away. This reads `data()`
-    // and nothing else, so an unrelated input — `selectionKey` above all, which a
-    // consumer may swap or re-create on any change-detection pass — cannot close what
-    // the user opened as a side effect of a selection concern.
+    // Reconcile open detail rows against the rows now on screen.
+    //
+    // Without `expansionKey` this collapses everything: the set holds rows from the array
+    // that is going away, and reference-keyed rows cannot be recognised in a new one.
+    //
+    // With a key it re-points them instead. It therefore has to read `expansionKey()` as
+    // well as `data()` — a key being taken away must be noticed promptly — which means an
+    // unrelated re-creation of that input (an inline arrow in a template, which the type
+    // permits) re-runs this. That must not churn the signal or, worse, close what the user
+    // opened, so the keyed branch derives `visible` from the retained map and writes only
+    // when the result actually differs. `selectionKey` is still never read here: a
+    // selection concern must not touch expansion.
     effect(() => {
-      this.data();
+      const rows = this.data();
+      const expansionKey = this.expansionKey();
       if (!this.initialized) { return; }
-      this.expandedRows.set(new Set());
+
+      if (!expansionKey) {
+        // Also drop anything retained under a key, so a table whose `expansionKey` is taken
+        // away cannot re-open those rows if it is given one again.
+        this.expandedByKey.clear();
+        this.expandedRows.set(new Set());
+        return;
+      }
+
+      // Re-point each retained row at the object the new data carries and show the ones this
+      // page actually has. Rows it does not have stay in the map and re-open when they return.
+      const visible = new Set<unknown>();
+      for (const row of rows) {
+        const key = expansionKey(row);
+        if (this.expandedByKey.has(key)) {
+          this.expandedByKey.set(key, row);
+          visible.add(row);
+        }
+      }
+      // `untracked`: the guard needs the current value, not a subscription. Reading it
+      // tracked would make every write to `expandedRows` re-run this effect and rewrite it
+      // from the map — so a consumer closing a visible row with `expandedRows.set(new Set())`
+      // would have it put straight back, and the signal would be read-only in all but name.
+      if (!isSameSet(visible, untracked(this.expandedRows))) {
+        this.expandedRows.set(visible);
+      }
     });
 
     // Reconcile the retained selection against the rows now on screen. This has to
@@ -665,10 +754,12 @@ export class TnTableComponent<T = unknown> implements OnInit {
       this.emitSelectionIfChanged();
     });
 
-    // Clear expanded rows when expandable is toggled off
+    // Clear expanded rows when expandable is toggled off. Through `clearExpansion()`, so the
+    // rows retained under `expansionKey` go as well: clearing only the visible set would let
+    // the next `dataSource` change re-open rows the table itself had just closed.
     effect(() => {
       if (!this.expandable()) {
-        this.expandedRows.set(new Set());
+        this.clearExpansion();
       }
     });
 
@@ -680,15 +771,23 @@ export class TnTableComponent<T = unknown> implements OnInit {
     // before the predicate runs — there is nothing to prune, and the next toggle
     // re-runs this effect and re-tracks the predicate's signals. The
     // next.size !== expanded.size guard makes the self-write converge after one
-    // extra run, so there is no infinite loop.
+    // extra run, so there is no infinite loop. A rejected row leaves the retained
+    // `expansionKey` map as well — see below.
     effect(() => {
       const predicate = this.isRowExpandable();
       if (!predicate) { return; }
       const expanded = this.expandedRows();
       if (expanded.size === 0) { return; }
+      const expansionKey = this.expansionKey();
       const next = new Set<unknown>();
       for (const row of expanded) {
-        if (predicate(row as T)) { next.add(row); }
+        if (predicate(row as T)) {
+          next.add(row);
+        } else if (expansionKey) {
+          // Drop it from the retained map too, or the guarantee above holds only until the
+          // next `dataSource` change re-points the row and opens it again.
+          this.expandedByKey.delete(expansionKey(row as T));
+        }
       }
       if (next.size !== expanded.size) {
         this.expandedRows.set(next);
@@ -981,15 +1080,55 @@ export class TnTableComponent<T = unknown> implements OnInit {
   toggleRowExpansion(row: T): void {
     if (!this.canExpandRow(row)) { return; }
     const expanded = new Set(this.expandedRows());
-    if (expanded.has(row)) {
+    const expansionKey = this.expansionKey();
+    if (this.isExpansionOpen(row)) {
+      // `delete` is a no-op for a row that has paged away — it is not in the visible set —
+      // and dropping the key is what actually closes it. Resolving through the key is why
+      // toggling a retained row closes it instead of re-adding it, matching
+      // `toggleRowSelection`.
       expanded.delete(row);
+      if (expansionKey) { this.expandedByKey.delete(expansionKey(row)); }
     } else {
       if (this.singleExpand()) {
         expanded.clear();
+        if (expansionKey) { this.expandedByKey.clear(); }
       }
       expanded.add(row);
+      if (expansionKey) { this.expandedByKey.set(expansionKey(row), row); }
     }
     this.expandedRows.set(expanded);
+  }
+
+  /**
+   * Whether `row`'s detail row counts as open for a toggle. With {@link expansionKey} that is
+   * the retained map, which includes rows this page is not showing; without one it is object
+   * identity against the visible set. Distinct from {@link isRowExpanded}, which drives
+   * rendering and must therefore stay about the row in front of the user.
+   */
+  private isExpansionOpen(row: T): boolean {
+    const expansionKey = this.expansionKey();
+    return expansionKey ? this.expandedByKey.has(expansionKey(row)) : this.expandedRows().has(row);
+  }
+
+  /**
+   * Opens `row`'s detail row programmatically — the same thing a chevron click does, for a
+   * consumer restoring expansion from somewhere else (a `?jobId=` query parameter, say).
+   * Honours `singleExpand` and keeps {@link expansionKey}'s retained set in step, which
+   * writing {@link expandedRows} directly does not.
+   */
+  expandRow(row: T): void {
+    if (this.isExpansionOpen(row)) { return; }
+    this.toggleRowExpansion(row);
+  }
+
+  /**
+   * Collapses every detail row, including rows retained under {@link expansionKey} that are
+   * not on screen. `expandedRows.set(new Set())` only closes what is visible, so with a key
+   * set the off-screen rows would re-open on the next reconcile.
+   */
+  clearExpansion(): void {
+    this.expandedByKey.clear();
+    this.expandedRows.set(new Set());
   }
 
   isRowExpanded(row: T): boolean {

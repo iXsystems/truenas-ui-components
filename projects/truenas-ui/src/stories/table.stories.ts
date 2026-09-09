@@ -5,6 +5,7 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
 import { expect, userEvent, within } from 'storybook/test';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
+import { TnButtonComponent } from '../lib/button/button.component';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnIconComponent } from '../lib/icon/icon.component';
@@ -80,6 +81,7 @@ const meta: Meta<TnTableComponent> = {
         TnIconComponent,
         TnIconButtonComponent,
         TnInputComponent,
+        TnButtonComponent,
       ],
     }),
   ],
@@ -105,6 +107,15 @@ const meta: Meta<TnTableComponent> = {
       control: false,
     },
     expandable: { description: 'Enable click-to-expand detail rows', control: 'boolean' },
+    expansionKey: {
+      description:
+        'Identity function `(row) => key`, bound as a stable member (`[expansionKey]="rowKey"`) since '
+        + 'Angular templates have no arrow functions. Keys open detail rows instead of holding them by object '
+        + 'reference, so a background reload that rebuilt its rows leaves them open rather than collapsing them. '
+        + 'A row that leaves the page is retained and re-opens when it comes back; call `clearExpansion()` when '
+        + 'it is gone for good.',
+      control: false,
+    },
     isRowExpandable: {
       description: 'Optional per-row predicate `(row) => boolean`; rows returning false show no expand control',
       control: false,
@@ -357,6 +368,107 @@ export const SelectionAcrossPages: Story = {
     await expect(canvas.getByText('Alice Johnson')).toBeInTheDocument();
     await expect(row(1)).toBeChecked();
     await expect(row(2)).not.toBeChecked();
+  },
+};
+
+export const ExpansionSurvivesReload: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Detail rows are held by object identity, so a background reload — which hands back new objects '
+          + 'for the same rows — collapses them, usually just when their contents are worth watching. '
+          + '`[expansionKey]` keys them instead, so they stay open across the swap. Open a row, hit Reload, '
+          + 'and compare the two tables: the keyed one keeps the row open, the unkeyed one closes it.',
+      },
+    },
+  },
+  render: () => ({
+    props: {
+      tableColumns: ['name', 'email', 'role'],
+      rowKey: (user: User) => user.id,
+      // Two independent copies, so the same Reload button can show both outcomes side by side.
+      keyedData: sampleData.slice(0, 3),
+      unkeyedData: sampleData.slice(0, 3),
+      reloads: 0,
+      reload() {
+        // Exactly what a re-fetch does: same rows, new objects.
+        this['reloads'] = this['reloads'] + 1;
+        this['keyedData'] = this['keyedData'].map((user: User) => ({ ...user }));
+        this['unkeyedData'] = this['unkeyedData'].map((user: User) => ({ ...user }));
+      },
+    },
+    template: `
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+        <tn-button label="Reload" (onClick)="reload()" />
+        <span>Reloads: {{ reloads }}</span>
+      </div>
+
+      <p style="margin: 8px 0 4px;"><strong>With [expansionKey]</strong></p>
+      <tn-table
+        [dataSource]="keyedData"
+        [displayedColumns]="tableColumns"
+        [expandable]="true"
+        [expansionKey]="rowKey">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+        <ng-template let-user tnDetailRowDef>
+          <div style="padding: 8px 0;">Still open after {{ reloads }} reload(s) — {{ user.email }}</div>
+        </ng-template>
+      </tn-table>
+
+      <p style="margin: 16px 0 4px;"><strong>Without it</strong></p>
+      <tn-table
+        [dataSource]="unkeyedData"
+        [displayedColumns]="tableColumns"
+        [expandable]="true">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+        <ng-template let-user tnDetailRowDef>
+          <div style="padding: 8px 0;">Closed by the next reload — {{ user.email }}</div>
+        </ng-template>
+      </tn-table>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // Scope each query to its own table. Both render the same rows, so a document-order
+    // lookup across the whole canvas would take two buttons out of the keyed table and
+    // never touch the unkeyed one — which is the contrast this story exists to show.
+    const [keyedTable, unkeyedTable] = Array.from(canvasElement.querySelectorAll('tn-table')) as HTMLElement[];
+    const keyed = within(keyedTable);
+    const unkeyed = within(unkeyedTable);
+
+    await userEvent.click(keyed.getAllByLabelText('Expand row')[0]);
+    await userEvent.click(unkeyed.getAllByLabelText('Expand row')[0]);
+    await expect(keyed.getByText(/Still open after 0 reload/)).toBeInTheDocument();
+    await expect(unkeyed.getByText(/Closed by the next reload/)).toBeInTheDocument();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Reload' }));
+
+    // The keyed table re-points its open row at the new object; the unkeyed one drops it.
+    await expect(keyed.getByText(/Still open after 1 reload/)).toBeInTheDocument();
+    await expect(unkeyed.queryByText(/Closed by the next reload/)).not.toBeInTheDocument();
   },
 };
 
