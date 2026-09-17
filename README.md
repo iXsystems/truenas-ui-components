@@ -142,6 +142,20 @@ const menu: TnMenuItem[] = [
 ];
 ```
 
+### Rows of a table
+
+A row `tn-table` renders is the one element a consumer cannot tag from their own template — the
+cell bodies they write may be bare interpolation, and the `<tr>` is the library's. `[rowTestId]`
+names each row from its data, so a suite can address one:
+
+```html
+<tn-table [dataSource]="users" [rowTestId]="rowTestId" />
+```
+
+```typescript
+readonly rowTestId = (row: User) => row.username;  // <tr data-testid="row-jane-doe">
+```
+
 ### Attribute name
 
 By default the library renders `data-testid="..."` (industry convention). Consumers with an existing `data-test` convention can override at the application root via the `TN_TEST_ATTR` injection token — every component-level `testId` input and the internal `[tnTestId]` directive will respect it:

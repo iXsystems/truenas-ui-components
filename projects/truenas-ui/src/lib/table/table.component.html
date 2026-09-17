@@ -145,6 +145,8 @@
       <div
         class="tn-table__card"
         role="listitem"
+        tnTestIdType="row"
+        [tnTestId]="rowTestIds()[rowIdx]"
         [attr.data-row-index]="rowIdx"
         [class.tn-table__card--active]="isRowActive(row)"
         [class.tn-table__card--clickable]="clickable()"
@@ -394,6 +396,8 @@
       @for (row of data(); track trackByFn()($index, row); let rowIdx = $index) {
         <tr
           class="tn-table__row"
+          tnTestIdType="row"
+          [tnTestId]="rowTestIds()[rowIdx]"
           [attr.data-row-index]="rowIdx"
           [class.tn-table__row--expandable]="canExpandRow(row)"
           [class.tn-table__row--expanded]="canExpandRow(row) && isRowExpanded(row)"

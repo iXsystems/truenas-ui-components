@@ -439,6 +439,24 @@ export class TnTableHarness extends ComponentHarness {
   // --- Active row ---
 
   /**
+   * Gets the test id written on a data row by `[rowTestId]`.
+   *
+   * Layout-aware, like the rest of the row queries: reads the card in the card layout, which
+   * carries the same id. Reads `data-testid` first and falls through to `data-test`, so it
+   * answers the same either way the consumer configured `TN_TEST_ATTR`.
+   *
+   * @param rowIndex Zero-based index of the data row (or card).
+   * @returns Promise resolving to the row's test id, or null when `[rowTestId]` is unset.
+   */
+  async getRowTestId(rowIndex: number): Promise<string | null> {
+    const selector = (await this.isCards())
+      ? `.tn-table__card[data-row-index="${rowIndex}"]`
+      : `.tn-table__row[data-row-index="${rowIndex}"]`;
+    const row = await this.locatorFor(selector)();
+    return (await row.getAttribute('data-testid')) ?? (await row.getAttribute('data-test'));
+  }
+
+  /**
    * Checks if a data row is currently marked active.
    *
    * Layout-aware: reads the card's active class in the card layout, which marks the same

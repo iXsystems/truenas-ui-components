@@ -30,7 +30,7 @@ import {
   TnRowActionsDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
-import { TnTestIdDirective } from '../test-id';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 import { injectTnLabels } from '../utils/inject-labels';
 
 // NOTE: the sort/expand icon names (mat-arrow_upward, mat-keyboard_arrow_down,
@@ -190,7 +190,14 @@ export const TN_TABLE_LABELS = new InjectionToken<TnTableLabels | Signal<TnTable
 @Component({
   selector: 'tn-table',
   standalone: true,
-  imports: [CommonModule, TnCheckboxComponent, TnEmptyComponent, TnIconComponent, TnSpinnerComponent],
+  imports: [
+    CommonModule,
+    TnCheckboxComponent,
+    TnEmptyComponent,
+    TnIconComponent,
+    TnSpinnerComponent,
+    TnTestIdDirective,
+  ],
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss',
   animations: [
@@ -340,6 +347,37 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * `rowKey = (row: Job) => row.id` on the host.
    */
   expansionKey = input<((row: T) => unknown) | undefined>(undefined);
+
+  /**
+   * Test id for each ROW, as a function of the row and its index.
+   *
+   * The table writes no id on a `<tr>` of its own, and a cell body is free to be bare
+   * interpolation — `{{ row.username }}` renders no element the consumer can bind to. A list
+   * built that way is unaddressable: an automated suite that has to open, select or delete one
+   * specific row has nothing to select it by but position or cell text, both of which change
+   * under the test. Set this and every row carries `row-<base>` on the `<tr>`, and on its card
+   * in card mode, through the same {@link TnTestIdDirective} as every other id the library
+   * emits — so it honours {@link TN_TEST_ATTR} and is kebab-cased by {@link composeTestId}.
+   *
+   * Pass the base only, not the `row-` prefix, and identify the ROW rather than its position,
+   * the way {@link selectionKey} and {@link expansionKey} do — an index-derived id renames every
+   * row below the one that was deleted. The index is passed for the case where the data genuinely
+   * has nothing unique in it.
+   *
+   * Bind a stable member rather than writing the function in the template, since Angular's
+   * expression grammar has no arrow functions:
+   * `[rowTestId]="rowTestId"` for a `rowTestId = (row: User) => row.username` on the host.
+   *
+   * ```html
+   * <tn-table [dataSource]="users" [rowTestId]="rowTestId" />
+   * <!-- <tr data-testid="row-jane-doe"> -->
+   * ```
+   *
+   * Cells are not covered by this: a suite that has to read one cell of a row still needs an id
+   * on the element that cell renders. Tagging the row is what makes the row itself reachable —
+   * which is the part a consumer cannot add from the outside.
+   */
+  rowTestId = input<((row: T, index: number) => TnTestIdValue) | undefined>(undefined);
 
   emptyMessage = input<string>('No data available');
 
@@ -955,6 +993,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
       return source;
     }
     return source?.data ?? source?.connect?.() ?? [];
+  });
+
+  /**
+   * The resolved base for each row, by index.
+   *
+   * Computed once per `data()` change rather than called per row per change-detection pass: a
+   * base is usually an array, every call builds a new one, and a new reference restarts the
+   * directive's effect — so binding the call directly would rewrite every row's attribute on
+   * every pass. Recomputing here on the signal the rows are rendered from keeps the value
+   * identical between passes, and correct after a reload hands back new row objects.
+   */
+  protected readonly rowTestIds = computed<TnTestIdValue[]>(() => {
+    const resolve = this.rowTestId();
+    return resolve ? this.data().map((row, index) => resolve(row, index)) : [];
   });
 
   effectiveDisplayedColumns = computed(() => {
