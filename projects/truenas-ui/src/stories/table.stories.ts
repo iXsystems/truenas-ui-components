@@ -116,6 +116,16 @@ const meta: Meta<TnTableComponent> = {
         + 'it is gone for good.',
       control: false,
     },
+    rowTestId: {
+      description:
+        'Test id for each row, `(row, index) => base`, bound as a stable member (`[rowTestId]="rowTestId"`) '
+        + 'since Angular templates have no arrow functions. The row element carries `row-<base>` — on the `<tr>`, '
+        + 'or on the card in card mode — through the same directive as every other id, so it honours '
+        + '`TN_TEST_ATTR` and is kebab-cased. Without it a row the table renders is unaddressable: a cell body '
+        + 'may be bare interpolation, leaving an automated suite nothing to select a row by but position or text. '
+        + 'Key it on the row, not the index.',
+      control: false,
+    },
     isRowExpandable: {
       description: 'Optional per-row predicate `(row) => boolean`; rows returning false show no expand control',
       control: false,
@@ -368,6 +378,57 @@ export const SelectionAcrossPages: Story = {
     await expect(canvas.getByText('Alice Johnson')).toBeInTheDocument();
     await expect(row(1)).toBeChecked();
     await expect(row(2)).not.toBeChecked();
+  },
+};
+
+export const RowTestIds: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A row the table renders is the one element a consumer cannot tag from their own template: the '
+          + '`<tr>` is the library\'s, and a cell body may be bare interpolation that renders nothing to bind an '
+          + 'id to. `[rowTestId]` names each row from its data — inspect a row here and it carries '
+          + '`data-testid="row-alice-johnson"`. Delete a row and the ids below it are unchanged, which is why '
+          + 'the key is the row rather than its index.',
+      },
+    },
+  },
+  render: () => ({
+    props: {
+      tableColumns: ['name', 'email', 'role'],
+      users: sampleData.slice(0, 3),
+      // A stable member, not an inline arrow: Angular's template grammar has no arrow functions.
+      rowTestId: (user: User) => user.name,
+    },
+    template: `
+      <tn-table
+        [dataSource]="users"
+        [displayedColumns]="tableColumns"
+        [rowTestId]="rowTestId">
+        <ng-container tnColumnDef="name">
+          <ng-template tnHeaderCellDef>Name</ng-template>
+          <ng-template let-user tnCellDef>{{ user.name }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="email">
+          <ng-template tnHeaderCellDef>Email</ng-template>
+          <ng-template let-user tnCellDef>{{ user.email }}</ng-template>
+        </ng-container>
+        <ng-container tnColumnDef="role">
+          <ng-template tnHeaderCellDef>Role</ng-template>
+          <ng-template let-user tnCellDef>{{ user.role }}</ng-template>
+        </ng-container>
+      </tn-table>
+    `,
+  }),
+  play: async ({ canvasElement }) => {
+    const rows = Array.from(canvasElement.querySelectorAll('.tn-table__row'));
+
+    await expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual([
+      'row-alice-johnson',
+      'row-bob-smith',
+      'row-carol-williams',
+    ]);
   },
 };
 

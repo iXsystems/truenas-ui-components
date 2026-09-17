@@ -122,6 +122,51 @@ export interface TnCardAction {
 }
 ```
 
+## Rows a component renders for you
+
+A repeating element the library renders from data — a table row — is the one case a consumer
+cannot tag from the outside. `tn-table` writes nothing on the `<tr>`, and a cell body is free to
+be bare interpolation:
+
+```html
+<ng-container tnColumnDef="username" label="Username">
+  <ng-template let-row tnCellDef>{{ row.username }}</ng-template>
+</ng-container>
+```
+
+That renders `<td class="tn-table__cell" data-column="username">jane</td>` — no element carries an
+id, and nothing in the consumer's template can be given one. A suite that has to open, select or
+delete one particular row is left selecting by row position or by cell text, both of which change
+under the test.
+
+`[rowTestId]` closes that: a function of the row (and its index), resolved to a base that the row
+element carries through `TnTestIdDirective`, with the `row` type prefix the library owns.
+
+```html
+<tn-table [dataSource]="users" [rowTestId]="rowTestId" />
+```
+
+```typescript
+// Bound as a stable member — Angular's template grammar has no arrow functions.
+readonly rowTestId = (row: User): TnTestIdValue => row.username;
+// <tr data-testid="row-jane-doe">
+```
+
+Three properties are the point of routing it through the directive rather than letting a consumer
+write the attribute:
+
+- It honours `TN_TEST_ATTR`, so an app on `data-test` gets `data-test`.
+- The base is kebab-normalized and prefixed once, by the same `composeTestId` every other id goes
+  through — including the array form, `(row, index) => ['user', row.name, index]`.
+- Card mode tags the card with the same id, so a narrow viewport does not silently unname the row.
+
+Key it on the ROW rather than its position, the way `[selectionKey]` and `[expansionKey]` are
+keyed: an index-derived id renames every row below the one that was deleted. The index is passed
+for data with genuinely nothing unique in it.
+
+This covers the row, not its cells. A suite reading one cell of a row still needs an id on
+whatever that cell renders, which is the consumer's own template and already addressable.
+
 ## Harness conventions
 
 Component harnesses with a `testId` filter (`with({ testId })`) and a `getTestId()` accessor read **both** attributes, preferring `data-testid` (the library's default emit target) and falling through to `data-test`:
@@ -186,7 +231,7 @@ Every interactive component listed below supports `testId`:
 | `tn-slider` | `testId` input | `.tn-slider-container` |
 | `tn-stepper` | `testId` input | stepper root |
 | `tn-tab` | `testId` input | tab `<button>` |
-| `tn-table` | `hostDirectives` | host element |
+| `tn-table` | `hostDirectives` + `rowTestId` callback | host element + every row (`<tr>`, or the card in card mode) |
 | `tn-tab-panel` | `testId` input | panel `<div>` |
 | `tn-tabs` | `testId` input | tablist root |
 | `tn-time-input` | passthrough to inner `tn-select` | inner select's container |
