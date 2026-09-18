@@ -5,8 +5,10 @@
   two types deliberately made assertive. See `../a11y/live-region.ts`.
 -->
 <div
+  tnTestIdType="banner"
   [ngClass]="classes()"
   [attr.role]="ariaRole()"
+  [tnTestId]="testId()"
 >
   @if (hasStructuredContent()) {
     <div class="tn-banner__main">
