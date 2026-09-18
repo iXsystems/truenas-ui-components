@@ -46,8 +46,8 @@ export function kebabTestSegment(part: string | number): string {
  * re-implemented at each call site.
  *
  * Note this is *base-first*: the suffix trails the base. Fixed chrome whose role
- * should lead (e.g. `tn-dialog-shell`'s `button-close-<base>`) prepends the role
- * manually instead of calling this.
+ * should lead (e.g. `tn-dialog-shell`'s `button-close-<base>` and
+ * `dialog-title-<base>`) prepends the role manually instead of calling this.
  *
  * Falsy segments are preserved here (not filtered) so `composeTestId` can apply
  * its own drop/scoping rules — `scopeTestId(undefined, 'edit')` yields

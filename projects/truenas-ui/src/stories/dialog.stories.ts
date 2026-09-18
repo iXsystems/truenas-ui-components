@@ -425,12 +425,15 @@ class DialogTestIdDemoComponent {
 
 /**
  * **Test IDs.** Dialogs are service-driven and render in a portaled overlay, so
- * their button ids aren't capturable inline — the library owns them:
+ * their ids aren't capturable inline — the library owns them. The shell's own
+ * chrome is role-first: the role leads and the `testId` base trails, so every
+ * dialog's close button (or title) shares one prefix.
  *
  * | Element | Emitted id |
  * |---|---|
- * | shell close (✕) | `button-close` (or `button-<shell testId>-close`) |
- * | shell fullscreen | `button-fullscreen` |
+ * | shell title | `dialog-title` (or `dialog-title-<shell testId>`) |
+ * | shell close (✕) | `button-close` (or `button-close-<shell testId>`) |
+ * | shell fullscreen | `button-fullscreen` (or `button-fullscreen-<shell testId>`) |
  * | confirm-dialog confirm | `button-<confirmTestId>` (default `button-confirm`) |
  * | confirm-dialog cancel | `button-<cancelTestId>` (default `button-cancel`) |
  *

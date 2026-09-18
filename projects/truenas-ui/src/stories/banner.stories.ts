@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, within } from 'storybook/test';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnBannerComponent, TnBannerActionDirective } from '../lib/banner/banner.component';
 import { TnButtonComponent } from '../lib/button/button.component';
@@ -46,6 +47,10 @@ const meta: Meta<TnBannerComponent> = {
     bordered: {
       control: 'boolean',
       description: 'Adds top, right, and bottom borders (defaults to false)',
+    },
+    testId: {
+      control: 'text',
+      description: 'Semantic base for the banner\'s test id. The library prefixes it: `banner-<base>`.',
     },
   },
 };
@@ -260,4 +265,44 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+/**
+ * **Test IDs.** `tn-banner` emits `banner-<base>` on the banner root — the
+ * element carrying the live-region role — under `data-testid` (default) /
+ * `data-test`. Pass the bare base; the `banner-` prefix is the library's.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-banner
+          testId="insecure-connection"
+          type="warning"
+          heading="Insecure connection"
+          message="This page was not served over HTTPS." />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnBannerComponent, TestIdInspectorComponent] },
+  }),
+};
+
+/**
+ * **Scoped test ids.** An array base namespaces the id —
+ * `[testId]="['signin','insecure-connection']"` →
+ * `banner-signin-insecure-connection`.
+ */
+export const ScopedTestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-banner
+          [testId]="['signin','insecure-connection']"
+          type="warning"
+          heading="Insecure connection"
+          message="This page was not served over HTTPS." />
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: { imports: [TnBannerComponent, TestIdInspectorComponent] },
+  }),
 };

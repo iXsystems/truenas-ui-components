@@ -96,9 +96,10 @@ export class TnDialogShellComponent implements OnInit {
   /** Hide the actions footer. Same wrapper-case rationale as {@link hideContent}. */
   hideActions = input<boolean>(false);
   /**
-   * Optional semantic base that scopes the shell's chrome buttons. The close
-   * and fullscreen buttons emit `button-close` / `button-fullscreen` by default,
-   * or `button-close-<testId>` / `button-fullscreen-<testId>` when a base is
+   * Optional semantic base that scopes the shell's chrome. The close and
+   * fullscreen buttons emit `button-close` / `button-fullscreen` by default, and
+   * the title heading `dialog-title`, or `button-close-<testId>` /
+   * `button-fullscreen-<testId>` / `dialog-title-<testId>` when a base is
    * provided (useful when more than one dialog can be open).
    */
   testId = input<TnTestIdValue>(undefined);
@@ -144,6 +145,19 @@ export class TnDialogShellComponent implements OnInit {
   protected closeTestId = computed(() => ['close', ...this.baseSegments()]);
   /** Role-first test-id segments for the fullscreen button: `button-fullscreen[-<base>]`. */
   protected fullscreenTestId = computed(() => ['fullscreen', ...this.baseSegments()]);
+  /**
+   * Role-first test-id segments for the title heading: `dialog-title[-<base>]`.
+   *
+   * The heading is fixed chrome like the two buttons, so it follows the same
+   * role-first shape — and a test that knows a dialog's base knows its title's
+   * id without being told separately, which is the point: dialogs raised
+   * through one generic error path are otherwise indistinguishable by id, and
+   * the only remaining handle is a match on their prose.
+   *
+   * There is no id when there is no title: the heading is not rendered at all
+   * (see the template), so nothing is left behind to select.
+   */
+  protected titleTestId = computed(() => ['title', ...this.baseSegments()]);
 
   /** Stable id for the title heading, referenced by the dialog's aria-labelledby. */
   readonly titleId = `tn-dialog-title-${nextUniqueId++}`;

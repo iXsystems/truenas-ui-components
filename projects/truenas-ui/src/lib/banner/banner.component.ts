@@ -9,6 +9,7 @@ import {
 import { tnLiveRegionRole } from '../a11y/live-region';
 import { TnIconRegistryService } from '../icon/icon-registry.service';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 export type TnBannerType = 'info' | 'warning' | 'error' | 'success';
 
@@ -39,7 +40,7 @@ const ICON_MAP = {
 @Component({
   selector: 'tn-banner',
   standalone: true,
-  imports: [CommonModule, TnIconComponent],
+  imports: [CommonModule, TnIconComponent, TnTestIdDirective],
   templateUrl: './banner.component.html',
   styleUrls: ['./banner.component.scss'],
 })
@@ -66,6 +67,17 @@ export class TnBannerComponent {
   message = input<string | undefined>(undefined);
   type = input<TnBannerType>('info');
   bordered = input<boolean>(false);
+
+  /**
+   * Semantic base for the banner's test id, rendered onto the banner root as
+   * `banner-<testId>` through {@link TnTestIdDirective} — so the value follows
+   * the library's own naming and honours `TN_TEST_ATTR`.
+   *
+   * The root, rather than the host element, because that is what carries the
+   * live-region role: the element a test asserts a warning on is the same one
+   * assistive tech announces.
+   */
+  testId = input<TnTestIdValue>(undefined);
 
   constructor() {
     this.registerMdiIcons();

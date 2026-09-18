@@ -317,6 +317,64 @@ describe('TnDialogHarness', () => {
     });
   });
 
+  // Dialogs raised through one generic error path all carry the same test id,
+  // whichever error they are, so a suite could only tell them apart by matching
+  // their prose — a selector that breaks when the wording is edited or
+  // translated, and which already reported a successful sign-in as a failed one
+  // (a dev-only diagnostic dialog and a middleware error were indistinguishable).
+  // The title's id is derived from the base the dialog was already given, so a
+  // test that knows the dialog knows the id without being told separately.
+  describe('title test id', () => {
+    it('scopes the title role-first as dialog-title-<testId>', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Feedback', testId: 'feedback-dialog' },
+      });
+      fixture.detectChanges();
+
+      const title = document.querySelector('[data-testid="dialog-title-feedback-dialog"]');
+      expect(title?.textContent?.trim()).toBe('Feedback');
+      // The heading itself, not a wrapper: it is what names the dialog.
+      const container = document.querySelector('cdk-dialog-container');
+      expect(container?.getAttribute('aria-labelledby')).toBe(title?.id);
+    });
+
+    it('tells two open dialogs apart without matching their prose', () => {
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Middleware error', testId: 'error-middleware' },
+      });
+      tnDialog.open(TestDialogComponent, {
+        data: { title: 'Diagnostic', testId: 'error-diagnostic' },
+      });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="dialog-title-error-middleware"]')).toBeTruthy();
+      expect(document.querySelector('[data-testid="dialog-title-error-diagnostic"]')).toBeTruthy();
+    });
+
+    it('falls back to the bare role when no testId is set', () => {
+      tnDialog.open(TestDialogComponent, { data: { title: 'No base' } });
+      fixture.detectChanges();
+
+      expect(document.querySelector('[data-testid="dialog-title"]')).toBeTruthy();
+    });
+
+    it('leaves no title id behind when the dialog has no title', () => {
+      // An untitled dialog trips `tnAccessibleName`'s dev-mode warning by
+      // design — asserted properly in `dialog-shell-a11y.spec.ts`, mocked here
+      // so an expected warning does not print a stack trace over this run.
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      tnDialog.open(TestDialogComponent, { data: { title: '' } });
+      fixture.detectChanges();
+
+      // No heading element renders at all, so there is nothing to tag.
+      expect(document.querySelector('.tn-dialog__title')).toBeFalsy();
+      expect(document.querySelector('[data-testid^="dialog-title"]')).toBeFalsy();
+
+      warn.mockRestore();
+    });
+  });
+
   describe('with() filter', () => {
     // The two untitled-dialog cases below trip `tnAccessibleName`'s dev-mode
     // warning by design — it is what tells a developer their dialog fell back

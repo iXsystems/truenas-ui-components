@@ -167,6 +167,35 @@ for data with genuinely nothing unique in it.
 This covers the row, not its cells. A suite reading one cell of a row still needs an id on
 whatever that cell renders, which is the consumer's own template and already addressable.
 
+## Dialog chrome
+
+`tn-dialog-shell` renders its own header, so the title heading and the two chrome buttons are
+elements no consumer template can tag. One `testId` on the shell names all three, and the role
+LEADS rather than trails — the opposite of the base-first scoping `scopeTestId` does for content
+children:
+
+```html
+<tn-dialog-shell title="Middleware error" testId="error-middleware" />
+```
+
+```
+dialog-title-error-middleware       the <h2>
+button-close-error-middleware       the ✕
+button-fullscreen-error-middleware  the fullscreen toggle
+```
+
+With no `testId` each falls back to the bare role — `dialog-title`, `button-close`. Role-first is
+what lets automation target "every dialog title" or "every close button" with one selector, and it
+matches webui's established close-button ids.
+
+The title's id is the handle for *which* dialog is on screen. Dialogs raised through one generic
+error path otherwise carry identical ids whichever error they are, leaving a suite to match on
+their prose — which breaks when the wording is edited or translated. Because the id derives from
+the base the dialog was already given, a test that knows the dialog knows its title's id.
+
+A dialog with no title renders no heading at all (an empty `<h2>` is an `empty-heading` violation),
+so there is no `dialog-title-*` id to find rather than an untagged or empty one.
+
 ## Harness conventions
 
 Component harnesses with a `testId` filter (`with({ testId })`) and a `getTestId()` accessor read **both** attributes, preferring `data-testid` (the library's default emit target) and falling through to `data-test`:
@@ -206,6 +235,7 @@ Every interactive component listed below supports `testId`:
 | Component | Mechanism | Targets |
 |---|---|---|
 | `tn-autocomplete` | `testId` input | `.tn-autocomplete` container |
+| `tn-banner` | `testId` input | banner root `<div>` — the element carrying the live-region role |
 | `tn-button` | `testId` input | inner `<button>` |
 | `tn-button-toggle` | `testId` input | inner `<button>` |
 | `tn-button-toggle-group` | `testId` input | group root `<div>` |
@@ -216,6 +246,7 @@ Every interactive component listed below supports `testId`:
 | `tn-chip-input` | `testId` input, else the bound control name | inner `<input>`, each chip and each suggestion row |
 | `tn-date-input` | `testId` input | `.tn-date-input-container` |
 | `tn-date-range-input` | `testId` input | `.tn-date-range-container` |
+| `tn-dialog-shell` | `testId` input | title `<h2>`, close `<button>`, fullscreen `<button>` — role-first, see *Dialog chrome* |
 | `tn-drawer` | `testId` input | both side-mode and over-mode panels |
 | `tn-expansion-panel` | `testId` input + `toggleTestId` input | root + toggle header `<button>` |
 | `tn-file-picker` | `testId` input | `.tn-file-picker-container` |
@@ -238,4 +269,8 @@ Every interactive component listed below supports `testId`:
 | `tn-tree` | `hostDirectives` | host element |
 | `tn-tree-node` | `hostDirectives` | host element |
 
-Components that are purely presentational (`tn-banner`, `tn-divider`, `tn-empty`, `tn-icon`, `tn-progress-bar`, `tn-spinner`, `tn-tooltip`, etc.) intentionally do not have a `testId` input — apply `[ixTest]`-style attribution in the consumer's template if needed.
+Components that are purely presentational (`tn-divider`, `tn-empty`, `tn-icon`, `tn-progress-bar`, `tn-spinner`, `tn-tooltip`, etc.) intentionally do not have a `testId` input — apply `[ixTest]`-style attribution in the consumer's template if needed.
+
+`tn-banner` is on the list above rather than here: a suite asserting a warning has to reach the
+banner, and tagging it at the call site instead means the id follows no convention the library
+owns — each consumer invents its own.
