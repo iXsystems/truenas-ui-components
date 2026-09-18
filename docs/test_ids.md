@@ -175,7 +175,7 @@ LEADS rather than trails — the opposite of the base-first scoping `scopeTestId
 children:
 
 ```html
-<tn-dialog-shell title="Middleware error" testId="error-middleware" />
+<tn-dialog-shell title="Middleware error" testId="error-middleware" showFullscreenButton />
 ```
 
 ```
@@ -183,6 +183,9 @@ dialog-title-error-middleware       the <h2>
 button-close-error-middleware       the ✕
 button-fullscreen-error-middleware  the fullscreen toggle
 ```
+
+Each id appears only when its element does: `showFullscreenButton` is off by default, and
+`showCloseButton` can be turned off for a dialog that must not be dismissed from its chrome.
 
 With no `testId` each falls back to the bare role — `dialog-title`, `button-close`. Role-first is
 what lets automation target "every dialog title" or "every close button" with one selector, and it
