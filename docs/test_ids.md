@@ -167,6 +167,27 @@ for data with genuinely nothing unique in it.
 This covers the row, not its cells. A suite reading one cell of a row still needs an id on
 whatever that cell renders, which is the consumer's own template and already addressable.
 
+## Rows a consumer writes
+
+`tn-list-item` is the other repeating row, and it is the opposite case to a table row: the
+consumer *does* write the element. What it lacked was anywhere to put the id — there was no
+`testId` input, so a row that selects a VDEV type or states the configured from-address could be
+reached only by position or by its own text.
+
+It now takes one, applied to the host through `hostDirectives`. The host is deliberate: `(click)`
+and `role="listitem"` are both host bindings, so a single id addresses the row whether a suite
+clicks it or reads what it renders.
+
+```html
+<tn-list-item [clickable]="true" [testId]="['vdev-type', type]">{{ type }}</tn-list-item>
+<!-- data-testid="vdev-type-raidz2" -->
+```
+
+The value is written **verbatim**, with no element-type prefix — the same choice as `tn-tree-node`
+and the `tn-table` host, and for the same reason: a row of a list is not a control whose type the
+library can name, and what the row means comes from the list around it, which only the consumer
+knows. Scope it with the array form where one list holds many rows.
+
 ## Dialog chrome
 
 `tn-dialog-shell` renders its own header, so the title heading and the two chrome buttons are
@@ -254,8 +275,10 @@ Every interactive component listed below supports `testId`:
 | `tn-expansion-panel` | `testId` input + `toggleTestId` input | root + toggle header `<button>` |
 | `tn-file-picker` | `testId` input | `.tn-file-picker-container` |
 | `tn-form-field` | `testId` input | `.tn-form-field` |
+| `tn-icon` | `testId` input | inner `.tn-icon` — prefixed, `testId="close"` → `icon-close` |
 | `tn-icon-button` | `testId` input | inner `<button>` |
 | `tn-input` | `testId` input | inner `<input>` / `<textarea>` |
+| `tn-list-item` | `hostDirectives` | host element — written verbatim, see *Rows a consumer writes* |
 | `tn-menu` | `TnMenuItem.testId` per item | each item's `<button>` |
 | `tn-radio` | `testId` input | visible `<label>` (the native `<input>` is hidden, so the label is the hit target) |
 | `tn-select` | `testId` input | `.tn-select-container` |
@@ -272,7 +295,7 @@ Every interactive component listed below supports `testId`:
 | `tn-tree` | `hostDirectives` | host element |
 | `tn-tree-node` | `hostDirectives` | host element |
 
-Components that are purely presentational (`tn-divider`, `tn-empty`, `tn-icon`, `tn-progress-bar`, `tn-spinner`, `tn-tooltip`, etc.) intentionally do not have a `testId` input — apply `[ixTest]`-style attribution in the consumer's template if needed.
+Components that are purely presentational (`tn-divider`, `tn-empty`, `tn-progress-bar`, `tn-spinner`, `tn-tooltip`, etc.) intentionally do not have a `testId` input — apply the `[tnTestId]` directive in the consumer's template if needed.
 
 `tn-banner` is on the list above rather than here: a suite asserting a warning has to reach the
 banner, and tagging it at the call site instead means the id follows no convention the library

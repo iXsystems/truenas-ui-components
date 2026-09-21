@@ -156,6 +156,20 @@ names each row from its data, so a suite can address one:
 readonly rowTestId = (row: User) => row.username;  // <tr data-testid="row-jane-doe">
 ```
 
+### Rows of a list
+
+`tn-list-item` takes a `testId` too, written verbatim on the host — the element that carries both
+the click handler and `role="listitem"`, so one id serves a suite clicking the row and a suite
+reading what it renders:
+
+```html
+<tn-list-item [clickable]="true" [testId]="['vdev-type', type]">{{ type }}</tn-list-item>
+<!-- data-testid="vdev-type-raidz2" -->
+```
+
+Unlike the control components, there is no element-type prefix: a list row is not a control whose
+type the library can name, so the consumer supplies the whole base.
+
 ### Attribute name
 
 By default the library renders `data-testid="..."` (industry convention). Consumers with an existing `data-test` convention can override at the application root via the `TN_TEST_ATTR` injection token — every component-level `testId` input and the internal `[tnTestId]` directive will respect it:

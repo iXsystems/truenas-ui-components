@@ -7,6 +7,7 @@ import {
   TnListItemSecondaryDirective,
   TnListItemTrailingDirective
 } from '../list-directives/list-directives';
+import { TnTestIdDirective } from '../test-id';
 
 /**
  * A single row of a `tn-list`.
@@ -33,6 +34,14 @@ import {
  * The primary-text slot is the deliberate exception — it has no gate, so
  * `[tnListItemTitle]` and `[tnListItemPrimary]` render either way. See the
  * comment in `list-item.component.html` for why the asymmetry is there.
+ *
+ * `[testId]` names the row for automation. It lands on the host, which is both
+ * the click target (`(click)` is a host binding) and the `listitem` — so one id
+ * addresses the row whether a suite clicks it or reads what it renders. The
+ * value is written verbatim, with no element-type prefix, matching the other
+ * components whose host *is* the target (`tn-tree-node`, `tn-table`): a row of
+ * a list is not a control whose type the library can name, and its meaning
+ * comes from the list it sits in, which only the consumer knows.
  */
 @Component({
   selector: 'tn-list-item',
@@ -40,6 +49,7 @@ import {
   imports: [],
   templateUrl: './list-item.component.html',
   styleUrl: './list-item.component.scss',
+  hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   host: {
     'class': 'tn-list-item',
     '[class.tn-list-item--disabled]': 'disabled()',
