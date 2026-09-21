@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { TestIdInspectorComponent } from './testid-inspector.component';
 import { TnDividerComponent } from '../lib/divider/divider.component';
 import { TnListComponent } from '../lib/list/list.component';
 import { 
@@ -257,5 +258,43 @@ export const ListWithSelection: Story = {
         </tn-list-option>
       </tn-selection-list>
     `
+  }),
+};
+
+/**
+ * **Test IDs.** `tn-list-item` takes a `testId` and writes it **verbatim** on
+ * the host — no element-type prefix, matching the other components whose host
+ * is the target (`tn-tree-node`, `tn-table`). The host is where both the
+ * `(click)` binding and `role="listitem"` live, so one id addresses the row
+ * whether a suite clicks it or reads the value it renders.
+ *
+ * A row of a list is not a control whose type the library can name, and what it
+ * means comes from the list around it — so the consumer supplies the whole
+ * base, scoping it with an array where the row is one of many:
+ * `[testId]="['vdev-type', type]"` → `vdev-type-raidz2`.
+ */
+export const TestIds: Story = {
+  render: () => ({
+    template: `
+      <tn-testid-inspector>
+        <tn-list>
+          <tn-list-item [clickable]="true" [testId]="['vdev-type', 'Mirror']">Mirror</tn-list-item>
+          <tn-list-item [clickable]="true" [testId]="['vdev-type', 'RAIDZ2']">RAIDZ2</tn-list-item>
+          <tn-list-item testId="email-from-address">
+            <span tnListItemTitle>From address</span>
+            <span tnListItemLine>admin@example.com</span>
+          </tn-list-item>
+        </tn-list>
+      </tn-testid-inspector>
+    `,
+    moduleMetadata: {
+      imports: [
+        TnListComponent,
+        TnListItemComponent,
+        TnListItemTitleDirective,
+        TnListItemLineDirective,
+        TestIdInspectorComponent,
+      ],
+    },
   }),
 };
