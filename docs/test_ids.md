@@ -275,6 +275,7 @@ Every interactive component listed below supports `testId`:
 | `tn-expansion-panel` | `testId` input + `toggleTestId` input | root + toggle header `<button>` |
 | `tn-file-picker` | `testId` input | `.tn-file-picker-container` |
 | `tn-form-field` | `testId` input | `.tn-form-field` |
+| `tn-icon` | `testId` input | inner `.tn-icon` — prefixed, `testId="close"` → `icon-close` |
 | `tn-icon-button` | `testId` input | inner `<button>` |
 | `tn-input` | `testId` input | inner `<input>` / `<textarea>` |
 | `tn-list-item` | `hostDirectives` | host element — written verbatim, see *Rows a consumer writes* |

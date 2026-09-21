@@ -23,10 +23,15 @@ import type { TnTestIdValue } from '../test-id';
   selector: 'tn-list-item-test-id-host',
   standalone: true,
   imports: [TnListItemComponent],
-  template: `<tn-list-item [clickable]="true" [testId]="testId()">Mirror</tn-list-item>`,
+  template: `
+    <tn-list-item [clickable]="true" [testId]="testId()" (itemClick)="clicks = clicks + 1">
+      Mirror
+    </tn-list-item>
+  `,
 })
 class ListItemTestIdHostComponent {
   readonly testId = signal<TnTestIdValue>('vdev-type-mirror');
+  clicks = 0;
 }
 
 describe('TnListItemComponent [testId]', () => {
@@ -59,17 +64,18 @@ describe('TnListItemComponent [testId]', () => {
     const fixture = setup();
 
     // The host owns both `(click)` and role="listitem", so the element a suite
-    // clicks by id is the element that emits `itemClick`.
+    // clicks by id is the element that emits `itemClick`. Counting through the
+    // output rather than a listener on the element is what makes this fail if
+    // the click handler ever moves to an inner element: a click on the host
+    // does not reach its children.
     const tagged = (fixture.nativeElement as HTMLElement)
       .querySelector('[data-testid="vdev-type-mirror"]') as HTMLElement;
 
     expect(tagged.getAttribute('role')).toBe('listitem');
 
-    let clicked = 0;
-    tagged.addEventListener('click', () => { clicked += 1; });
     tagged.click();
 
-    expect(clicked).toBe(1);
+    expect(fixture.componentInstance.clicks).toBe(1);
   });
 
   it('kebab-cases the base and composes an array base in order', () => {
