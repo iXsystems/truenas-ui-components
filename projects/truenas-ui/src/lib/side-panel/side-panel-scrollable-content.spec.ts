@@ -158,13 +158,15 @@ describe('tn-side-panel scrolling content region (#248)', () => {
   });
 
   afterEach(() => {
-    // The overlay is portaled to document.body and only removed on destroy, so
-    // without this every later fixture scans the previous one's panel too.
+    // An open panel's overlay is in a CDK overlay outside the fixture and is
+    // only given back on destroy, so without this every later fixture scans
+    // the previous one's panel too.
     fixture.destroy();
     globalThis.ResizeObserver = originalResizeObserver;
   });
 
-  /** The overlay is in `document.body`, not in the fixture — it is portaled there. */
+  /** Found from `document.body`, because an open panel's overlay is portaled
+   * out of the fixture and into a CDK overlay. */
   function overlay(): HTMLElement {
     return document.body.querySelector('.tn-side-panel__overlay') as HTMLElement;
   }

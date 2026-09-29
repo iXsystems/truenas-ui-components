@@ -13,6 +13,20 @@ describe('TnSidePanelComponent', () => {
     return document.querySelector(`[data-tn-panel="${component.panelId}"].tn-side-panel__overlay`)!;
   }
 
+  /**
+   * Escape, as a real keypress inside the panel.
+   *
+   * `bubbles` is what makes this a test rather than a no-op since #322: the key
+   * is handled by CDK's overlay keyboard dispatcher, which listens on
+   * `document.body`, so an event that does not bubble reaches nothing. Every
+   * real keypress bubbles; the two assertions below that expect the panel to
+   * STAY open would pass without it whatever the component did.
+   */
+  function pressEscape(): void {
+    getOverlay().querySelector('.tn-side-panel__panel')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  }
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TnSidePanelComponent],
@@ -31,7 +45,7 @@ describe('TnSidePanelComponent', () => {
   });
 
   afterEach(() => {
-    // Clean up portaled overlay from document.body
+    // Takes down the overlay, including the CDK overlay hosting it while open
     fixture.destroy();
     warn.mockRestore();
   });
@@ -161,8 +175,7 @@ describe('TnSidePanelComponent', () => {
       fixture.componentRef.setInput('open', true);
       fixture.detectChanges();
 
-      const panel = getOverlay().querySelector('.tn-side-panel__panel')!;
-      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      pressEscape();
 
       expect(component.open()).toBe(false);
     });
@@ -172,8 +185,7 @@ describe('TnSidePanelComponent', () => {
       fixture.componentRef.setInput('closeOnEscape', false);
       fixture.detectChanges();
 
-      const panel = getOverlay().querySelector('.tn-side-panel__panel')!;
-      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      pressEscape();
 
       expect(component.open()).toBe(true);
     });
@@ -219,8 +231,7 @@ describe('TnSidePanelComponent', () => {
     it('applies the guard to the Escape key', () => {
       openWithGuard(() => of(false));
 
-      getOverlay().querySelector('.tn-side-panel__panel')!
-        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      pressEscape();
 
       expect(component.open()).toBe(true);
     });

@@ -93,8 +93,9 @@ describe('TN_FALLBACK_LABELS', () => {
     withBundle.componentRef.setInput('open', true);
     withBundle.detectChanges();
 
-    // The overlay is portaled to document.body, not left in the fixture — the same
-    // reason `side-panel-a11y.spec.ts` reaches for it there.
+    // An open panel's overlay is portaled into a CDK overlay, not left in the
+    // fixture — the same reason `side-panel-a11y.spec.ts` reaches for it from
+    // the document.
     expect(document.body.querySelector('.tn-side-panel__overlay')?.getAttribute('aria-label'))
       .toBe('Panneau latéral');
   });

@@ -21,8 +21,10 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
  * The fix is shared (`lib/a11y/initial-focus.ts`), so the browser assertion
  * over it is too, and neither can be tightened without the other.
  *
- * Both panels are portaled to `document.body`, so the dialog is found from the
- * document rather than from `canvasElement`.
+ * Both panels leave `canvasElement` when they open — `tn-drawer` by appending
+ * its overlay to `document.body`, `tn-side-panel` by portaling into a CDK
+ * overlay (#322) — so the dialog is found from the document rather than from
+ * the canvas.
  *
  * @param canvasElement The story root, which holds the trigger.
  * @param triggerName Accessible name of the button that opens the surface.
@@ -62,9 +64,9 @@ export async function expectOpeningMovesFocusInside(
 
     // Ordered before the `contains` check below, not after it, because both
     // fail together in the case that matters and this one names it: the
-    // trigger sits in the canvas and the dialog is portaled to `document.body`,
-    // so focus being inside the dialog already implies it is not on the
-    // trigger. Read the other way round it is an assertion that cannot fail.
+    // trigger sits in the canvas and the open dialog is portaled out of it, so
+    // focus being inside the dialog already implies it is not on the trigger.
+    // Read the other way round it is an assertion that cannot fail.
     await expect(
       active === trigger,
       `focus never left the trigger, ${describeElement(trigger)}`

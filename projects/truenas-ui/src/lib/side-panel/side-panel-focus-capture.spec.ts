@@ -92,8 +92,9 @@ describe('tn-side-panel focus capture (#227)', () => {
   });
 
   afterEach(() => {
-    // The overlay is portaled to document.body and only removed on destroy, so
-    // without this the next fixture in this file finds the previous one's panel.
+    // An open panel's overlay is in a CDK overlay outside the fixture and is
+    // only given back on destroy, so without this the next fixture in this
+    // file finds the previous one's panel.
     fixture.destroy();
     // Several tests below stub `focus` or `requestAnimationFrame` to stage a
     // browser that declines a call. A stub that outlived its test would stage

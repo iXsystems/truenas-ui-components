@@ -13,10 +13,12 @@ import { TN_SIDE_PANEL_DEFAULT_LABEL } from '../a11y/fallback-labels';
  * The ticket reported axe returning no violations AND zero rules passed. Run
  * against the unchanged component that is exactly what a scan of the component's
  * own element does — and it is an artefact of where the markup lives rather than
- * of what it says. `afterNextRender` moves `.tn-side-panel__overlay` to
- * `document.body`, so `<tn-side-panel>` itself is an empty element and a scan
- * rooted at it evaluates two rules about the host and nothing about the panel.
- * `the reported scan` at the bottom of this file keeps that measurement.
+ * of what it says. An OPEN panel's `.tn-side-panel__overlay` is not inside
+ * `<tn-side-panel>` at all — it is hosted in a CDK overlay (#322; it was
+ * appended straight to `document.body` when this file was written) — so the
+ * host is an empty element and a scan rooted at it evaluates two rules about
+ * the host and nothing about the panel. `the reported scan` at the bottom of
+ * this file keeps that measurement.
  *
  * Scanned where the overlay actually is, an OPEN panel WITH A TITLE already
  * passed 24 rules including `aria-dialog-name`: the role, the modal flag, the
@@ -125,7 +127,7 @@ describe('tn-side-panel accessibility (#214)', () => {
   });
 
   afterEach(() => {
-    // The overlay is portaled to document.body and only removed on destroy, so
+    // An open panel's overlay is in a CDK overlay outside the fixture, so
     // without this every later fixture in this file scans the previous one's
     // panel as well as its own.
     fixture.destroy();
@@ -133,9 +135,9 @@ describe('tn-side-panel accessibility (#214)', () => {
   });
 
   /**
-   * The overlay is in `document.body`, not in the fixture — see the header. Both
-   * the scanned root and the targets have to be found there, which is the whole
-   * point of the reported defect.
+   * An open panel's overlay is outside the fixture, in a CDK overlay — see the
+   * header. Both the scanned root and the targets have to be found from
+   * `document.body`, which is the whole point of the reported defect.
    */
   function overlay(): HTMLElement {
     return document.body.querySelector('.tn-side-panel__overlay') as HTMLElement;
@@ -458,11 +460,14 @@ describe('tn-side-panel accessibility (#214)', () => {
     }
 
     /**
-     * The reported measurement itself, kept as a test: scanning the component's
-     * own element evaluates NOTHING about the dialog, because the overlay is in
-     * `document.body`. This is why every assertion above roots its scan at the
-     * overlay, and it fails if the portal is ever removed — at which point the
-     * scans above should be rooted at the fixture instead.
+     * The reported measurement itself, kept as a test: scanning the
+     * component's own element evaluates NOTHING about the dialog, because an
+     * OPEN panel's overlay has left it for a CDK overlay. This is why every
+     * assertion above roots its scan at the overlay, and it fails if the portal
+     * is ever removed — at which point the scans above should be rooted at the
+     * fixture instead. The panel is opened first for exactly that reason: a
+     * CLOSED one keeps its overlay right here, and the emptiness being measured
+     * would be an artefact of the panel being shut.
      */
     it('evaluates no dialog rule against the component element, which is empty', async () => {
       openPanel();
