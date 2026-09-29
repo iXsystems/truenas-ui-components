@@ -850,7 +850,9 @@ describe('tn-autocomplete [dataSource]', () => {
       type('zzz');
 
       responder = (query, page) => of(pageOf(query, page, page === 0 ? 2 : 0));
-      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      // `bubbles`, because a real key press does, and Escape is handled on the
+      // component's host element rather than on the input (#324).
+      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       fixture.detectChanges();
       jest.advanceTimersByTime(250);
       fixture.detectChanges();
@@ -869,7 +871,7 @@ describe('tn-autocomplete [dataSource]', () => {
       focus();
       const before = requests.length;
 
-      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       fixture.detectChanges();
       jest.advanceTimersByTime(250);
       fixture.detectChanges();

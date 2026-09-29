@@ -41,7 +41,10 @@ import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTe
   styleUrl: './file-picker.component.scss',
   host: {
     'class': 'tn-file-picker',
-    '[class.error]': 'hasError()'
+    '[class.error]': 'hasError()',
+    // Escape only, and deliberately HERE rather than beside the input's own
+    // bindings — see `onHostKeydown`.
+    '(keydown)': 'onHostKeydown($event)'
   }
 })
 export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDestroy {
@@ -248,6 +251,43 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     if (this.openOnClick() && !this.selectedPath()) {
       this.openFilePicker();
     }
+  }
+
+  /**
+   * Escape, which closes the popup and CONSUMES the key.
+   *
+   * Opening the popup does not move focus into it, so the keystroke a user
+   * actually makes starts on the path input — inside this host, not inside the
+   * overlay. That is the path the `keydownEvents()` subscription in
+   * `createOverlay` cannot serve: CDK's `OverlayKeyboardDispatcher` listens on
+   * `<body>`, so any ancestor that stops the key first means it never runs.
+   * `tn-drawer` in `over` mode is exactly such an ancestor — it calls
+   * `stopPropagation()` on Escape from a handler on its own panel element — so
+   * a picker left waiting for the dispatcher stayed open while the drawer
+   * closed underneath it (#324).
+   *
+   * Consuming it also keeps a `tn-side-panel` from acting on the same key:
+   * since #322 the panel is a CDK overlay subscribed through that dispatcher,
+   * and closing this popup disposes its overlay mid-keystroke, leaving the
+   * panel as the top-most subscriber for an Escape allowed to carry on.
+   *
+   * With the popup closed the key is NOT consumed: there is nothing to close
+   * and it belongs to whatever contains this field. The inline-creation row is
+   * unaffected either way — it lives in the popup, whose keydowns never reach
+   * this host.
+   *
+   * Why the HOST rather than the input: `stopPropagation()` stops ANCESTOR
+   * listeners, not other listeners on the same element. From here a `tnTooltip`
+   * on this component still sees Escape and dismisses itself, and only the
+   * containers ABOVE this field stop seeing it.
+   */
+  protected onHostKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape' || !this.isOpen()) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.close();
   }
 
   openFilePicker(): void {
@@ -576,6 +616,28 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     this.overlayRef.backdropClick().subscribe(() => {
       this.close();
+    });
+
+    // Escape arriving from INSIDE the popup — a folder row or footer button
+    // the user tabbed or clicked to. That keydown starts in the overlay, which
+    // is not under this component's host, so `onHostKeydown` never sees it;
+    // CDK's keyboard dispatcher does, and hands the key to the top-most
+    // attached overlay that HAS subscribers, stopping there. Subscribing is
+    // what makes this popup — rather than a `tn-side-panel` or dialog
+    // underneath it — the thing that Escape closes (#324).
+    //
+    // Escape from the path input is the other half and is handled on the host,
+    // because an ancestor can stop the key before the dispatcher runs.
+    //
+    // The inline-creation row inside the popup stops Escape from propagating
+    // while it is open (see `onInlineCreationKeyDown`), so the key never
+    // reaches the dispatcher and cancelling that row still wins over closing
+    // the popup.
+    this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        this.close();
+      }
     });
 
     this.portal = new TemplatePortal(this.filePickerTemplate(), this.viewContainerRef);

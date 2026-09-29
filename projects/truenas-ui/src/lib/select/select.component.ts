@@ -85,6 +85,11 @@ const VIEWPORT_MARGIN_PX = 8;
   ],
   templateUrl: './select.component.html',
   styleUrls: ['./select.component.scss'],
+  // Escape only, and deliberately HERE rather than beside the trigger's own
+  // keydown binding — see `onHostKeydown`.
+  host: {
+    '(keydown)': 'onHostKeydown($event)',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
@@ -462,8 +467,15 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       this.overlayRef.backdropClick().subscribe(() => this.closeDropdown(false)),
     );
 
-    // Escape as a fallback (the trigger keydown handler covers the common case,
-    // but if focus ever moves into the panel, this catches it too).
+    // Escape reaching the panel through CDK's keyboard dispatcher, which hands
+    // the key to the top-most attached overlay that HAS subscribers and stops
+    // there — so an overlay that subscribes is also one the key stops at,
+    // rather than carrying on to a `tn-side-panel` underneath it (#324).
+    //
+    // Not reachable from the trigger, which is where focus stays: `onHostKeydown`
+    // consumes Escape before the dispatcher's listener on `<body>` sees it. This
+    // is the fallback for focus that reaches the panel some other way, and it
+    // predates #324.
     this.overlaySubs.push(
       this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
@@ -726,7 +738,9 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * - **Enter / Space** opens the dropdown if closed; if open and an option
    *   is highlighted, selects that option (in single mode) or toggles it
    *   (in multiple mode).
-   * - **Escape** closes the dropdown without changing the selection.
+   * - **Escape** is NOT here: it closes the dropdown without changing the
+   *   selection, from `onHostKeydown` on this component's host element,
+   *   because it also has to consume the key.
    *
    * All navigation keys call `event.preventDefault()` so the page does not
    * scroll while the user is moving through options.
@@ -780,12 +794,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         }
         break;
 
-      case 'Escape':
-        if (this.isOpen()) {
-          event.preventDefault();
-          this.closeDropdown();
-        }
-        break;
+      // Escape is not here: it is handled on this component's HOST element
+      // instead, because it has to consume the key — see `onHostKeydown`.
 
       case 'Tab':
         // Standard combobox: Tab moves focus out of the select; close first
@@ -794,6 +804,34 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         if (this.isOpen()) {this.closeDropdown(false);}
         break;
     }
+  }
+
+  /**
+   * Escape, which closes the dropdown and CONSUMES the key.
+   *
+   * Consuming matters because of what is usually underneath: since #322 a
+   * `tn-side-panel` is a CDK overlay listening for Escape through
+   * `OverlayKeyboardDispatcher`, which delivers to the top-most attached
+   * overlay that has subscribers. Closing the dropdown disposes this select's
+   * overlay mid-keystroke, taking it out of that stack — so an Escape left to
+   * carry on reached `<body>`, found the panel as the new top-most subscriber,
+   * and closed the whole form along with the dropdown (#324). A `tn-drawer` in
+   * `over` mode has a keydown handler of its own and closed the same way.
+   *
+   * Why this sits on the HOST rather than beside the other keys on the trigger:
+   * `stopPropagation()` stops ANCESTOR listeners, not other listeners on the
+   * same element. Called from the trigger it also hid Escape from a `tnTooltip`
+   * on this component, which dismisses a visible tooltip from a host listener —
+   * so the tooltip stayed up. From here, that directive still sees the key and
+   * only the containers ABOVE this select stop seeing it.
+   */
+  protected onHostKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape' || !this.isOpen()) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.closeDropdown();
   }
 
   private moveFocus(target: 1 | -1 | 'first' | 'last'): void {

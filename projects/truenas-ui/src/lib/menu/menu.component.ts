@@ -62,6 +62,7 @@ export class TnMenuComponent implements OnDestroy {
 
   private contextOverlayRef?: OverlayRef;
   private contextBackdropSub?: Subscription;
+  private contextKeydownSub?: Subscription;
 
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
@@ -152,6 +153,37 @@ export class TnMenuComponent implements OnDestroy {
         this.closeContextMenu();
       });
 
+      // Escape, which this menu had no handling for at all. CDK's keyboard
+      // dispatcher hands the key to the top-most attached overlay that HAS
+      // subscribers and stops there, so subscribing is both what dismisses this
+      // menu and what keeps the key from reaching a `tn-side-panel` or dialog
+      // underneath it (#324).
+      //
+      // Focus is NOT restored here, unlike `TnMenuTriggerDirective`: a context
+      // menu is opened by pointer at a cursor position with no trigger element
+      // to go back to, which is also why the backdrop-click path above does not
+      // restore it either.
+      //
+      // The dispatcher is the ONLY route here, where the form controls fixed
+      // under #324 also consume Escape on their own host element. They can:
+      // opening one leaves focus on a trigger inside that host, so a host
+      // listener sees the key even when an ancestor would stop it before the
+      // dispatcher's listener on `<body>` runs. A context menu has no such
+      // element — a right-click moves focus nowhere, so Escape starts wherever
+      // focus already was, which need not be inside this `tn-menu` at all.
+      // Consequence, and it is a real gap: inside a `tn-drawer` in `over` mode,
+      // whose panel calls `stopPropagation()` on Escape, the drawer closes and
+      // this menu stays up. Closing it there needs focus management this menu
+      // has never had (see the note on restoration above), not another
+      // listener.
+
+      this.contextKeydownSub = this.contextOverlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          this.closeContextMenu();
+        }
+      });
+
       this.onMenuOpen();
     }
   }
@@ -159,6 +191,8 @@ export class TnMenuComponent implements OnDestroy {
   private closeContextMenu(): void {
     this.contextBackdropSub?.unsubscribe();
     this.contextBackdropSub = undefined;
+    this.contextKeydownSub?.unsubscribe();
+    this.contextKeydownSub = undefined;
     if (this.contextOverlayRef) {
       this.contextOverlayRef.dispose();
       this.contextOverlayRef = undefined;
@@ -170,6 +204,8 @@ export class TnMenuComponent implements OnDestroy {
     // Component destroyed while context menu open → clean up without notifying.
     this.contextBackdropSub?.unsubscribe();
     this.contextBackdropSub = undefined;
+    this.contextKeydownSub?.unsubscribe();
+    this.contextKeydownSub = undefined;
     this.contextOverlayRef?.dispose();
     this.contextOverlayRef = undefined;
   }

@@ -85,6 +85,11 @@ export const TN_AUTOCOMPLETE_LABELS = new InjectionToken<TnAutocompleteLabels | 
   ],
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
+  // Escape only, and deliberately HERE rather than beside the input's own
+  // keydown binding — see `onHostKeydown`.
+  host: {
+    '(keydown)': 'onHostKeydown($event)',
+  },
 })
 export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, TnAsyncOptionsHost, OnDestroy {
   private readonly elementRef = inject(ElementRef);
@@ -905,17 +910,44 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         break;
       }
 
-      case 'Escape': {
-        event.preventDefault();
-        if (this.allowCustomValue()) {
-          // Escape means "cancel the draft": revert to the committed value's
-          // text so the upcoming blur doesn't commit the abandoned term.
-          this.revertDisplayToValue(this.selectedValue());
-        }
-        this.close();
-        break;
-      }
+      // Escape is not here: it is handled on this component's HOST element
+      // instead, because it has to consume the key — see `onHostKeydown`.
     }
+  }
+
+  /**
+   * Escape, which cancels the draft, dismisses the panel, and — while the panel
+   * is open — CONSUMES the key.
+   *
+   * Consuming matters because of what is usually underneath: since #322 a
+   * `tn-side-panel` is a CDK overlay listening for Escape through
+   * `OverlayKeyboardDispatcher`, which delivers to the top-most attached
+   * overlay that has subscribers. Dismissing disposes this panel's overlay
+   * mid-keystroke, taking it out of that stack — so an Escape left to carry on
+   * reached `<body>`, found the side panel as the new top-most subscriber, and
+   * closed the whole form along with the panel (#324). A `tn-drawer` in `over`
+   * mode has a keydown handler of its own and closed the same way.
+   *
+   * With the panel already closed the key is NOT consumed: there is nothing to
+   * dismiss and it belongs to whatever contains this field. The draft still
+   * reverts, which is what the blur that follows would otherwise commit.
+   *
+   * Why this sits on the HOST rather than beside the other keys on the input:
+   * `stopPropagation()` stops ANCESTOR listeners, not other listeners on the
+   * same element. Called from the input it also hid Escape from a `tnTooltip`
+   * on this component, which dismisses a visible tooltip from a host listener —
+   * so the tooltip stayed up. From here, that directive still sees the key and
+   * only the containers ABOVE this field stop seeing it.
+   */
+  protected onHostKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') {
+      return;
+    }
+    event.preventDefault();
+    if (this.isOpen()) {
+      event.stopPropagation();
+    }
+    this.dismiss();
   }
 
   /**
@@ -1254,6 +1286,43 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         this.close();
       })
     );
+
+    // Escape reaching the panel through CDK's keyboard dispatcher, which hands
+    // the key to the top-most attached overlay that HAS subscribers and stops
+    // there — so an overlay that subscribes is also one the key stops at,
+    // rather than carrying on to a `tn-side-panel` underneath it (#324).
+    //
+    // NOT REACHABLE TODAY, and kept deliberately. It would take a keydown that
+    // did not come from the input, and there is none: `onBlur` closes the panel
+    // as soon as focus leaves the field, and every option row is
+    // `tabindex="-1"` with its `mousedown` prevented. While focus IS in the
+    // field, `onHostKeydown` consumes Escape before it can reach the
+    // dispatcher's listener on `<body>`. This is what would keep the key
+    // stopping here if the panel ever did take focus — the shape `tn-select`
+    // has carried since long before #324.
+    this.overlaySubs.push(
+      this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          this.dismiss();
+        }
+      })
+    );
+  }
+
+  /**
+   * Escape's effect on this field: cancel the draft, then close.
+   *
+   * Shared by the overlay subscription above and `onHostKeydown`, which is
+   * where Escape arrives while focus is in the field — open panel or closed.
+   */
+  private dismiss(): void {
+    if (this.allowCustomValue()) {
+      // Escape means "cancel the draft": revert to the committed value's text
+      // so the upcoming blur doesn't commit the abandoned term.
+      this.revertDisplayToValue(this.selectedValue());
+    }
+    this.close();
   }
 
   private detachOverlay(): void {

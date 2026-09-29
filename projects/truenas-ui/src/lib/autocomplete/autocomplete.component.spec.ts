@@ -211,8 +211,10 @@ describe('TnAutocompleteComponent', () => {
     fixture.detectChanges();
   };
 
+  // `bubbles`, because a real key press does, and Escape is handled on the
+  // component's host element rather than on the input (#324).
   const pressKey = (key: string) => {
-    getInput().dispatchEvent(new KeyboardEvent('keydown', { key }));
+    getInput().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
     fixture.detectChanges();
   };
 
@@ -1055,7 +1057,7 @@ describe('TnAutocompleteComponent', () => {
       asyncFixture.detectChanges();
 
       typeAsync('abandoned-draft');
-      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       asyncFixture.detectChanges();
       getAsyncInput().dispatchEvent(new Event('blur'));
       asyncFixture.detectChanges();
@@ -1085,7 +1087,7 @@ describe('TnAutocompleteComponent', () => {
 
       getAsyncInput().dispatchEvent(new Event('focus'));
       asyncFixture.detectChanges();
-      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       asyncFixture.detectChanges();
       expect(getAsyncInput().value).toBe('zzz');
 

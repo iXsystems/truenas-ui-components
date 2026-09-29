@@ -119,6 +119,11 @@ let nextId = 0;
   ],
   templateUrl: './chip-input.component.html',
   styleUrl: './chip-input.component.scss',
+  // Escape only, and deliberately HERE rather than beside the input's own
+  // keydown binding — see `onHostKeydown`.
+  host: {
+    '(keydown)': 'onHostKeydown($event)',
+  },
 })
 export class TnChipInputComponent<T = string> implements ControlValueAccessor, TnAsyncOptionsHost, OnDestroy {
   private readonly overlay = inject(Overlay);
@@ -615,13 +620,10 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     }
 
     if (event.key === 'Escape') {
-      if (this.isOpen()) {
-        event.preventDefault();
-        // Latched, so neither the re-open effect nor a `dataSource` response
-        // still in flight can undo the dismissal. See {@link closedByUser}.
-        this.closedByUser = true;
-        this.close();
-      }
+      // Handled on this component's HOST element instead, because it has to
+      // consume the key — see `onHostKeydown`. Returning rather than falling
+      // through, so that a consumer who lists Escape in `separatorKeys` cannot
+      // have it commit a chip on the way past.
       return;
     }
 
@@ -642,6 +644,40 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
       event.preventDefault();
       this.removeChip(this.values().length - 1);
     }
+  }
+
+  /**
+   * Escape, which dismisses the suggestion panel and CONSUMES the key.
+   *
+   * Consuming matters because of what is usually underneath: since #322 a
+   * `tn-side-panel` is a CDK overlay listening for Escape through
+   * `OverlayKeyboardDispatcher`, which delivers to the top-most attached
+   * overlay that has subscribers. Dismissing disposes this panel's overlay
+   * mid-keystroke, taking it out of that stack — so an Escape left to carry on
+   * reached `<body>`, found the side panel as the new top-most subscriber, and
+   * closed the whole form along with the panel (#324). A `tn-drawer` in `over`
+   * mode has a keydown handler of its own and closed the same way.
+   *
+   * With the panel already closed nothing happens here and the key belongs to
+   * whatever contains this field — which is what it did before #324 too.
+   *
+   * Why this sits on the HOST rather than beside the other keys on the input:
+   * `stopPropagation()` stops ANCESTOR listeners, not other listeners on the
+   * same element. Called from the input it also hid Escape from a `tnTooltip`
+   * on this component, which dismisses a visible tooltip from a host listener —
+   * so the tooltip stayed up. From here, that directive still sees the key and
+   * only the containers ABOVE this field stop seeing it.
+   */
+  protected onHostKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape' || !this.isOpen()) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    // Latched, so neither the re-open effect nor a `dataSource` response still
+    // in flight can undo the dismissal. See {@link closedByUser}.
+    this.closedByUser = true;
+    this.close();
   }
 
   protected onSuggestionClick(option: TnChipInputOption<T>): void {
@@ -974,6 +1010,31 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
           return;
         }
         this.close();
+      }),
+    );
+
+    // Escape reaching the panel through CDK's keyboard dispatcher, which hands
+    // the key to the top-most attached overlay that HAS subscribers and stops
+    // there — so an overlay that subscribes is also one the key stops at,
+    // rather than carrying on to a `tn-side-panel` underneath it (#324).
+    //
+    // NOT REACHABLE TODAY, and kept deliberately. It would take a keydown that
+    // did not come from the input, and there is none: `onBlur` closes the panel
+    // as soon as focus leaves the field, and every suggestion row is
+    // `tabindex="-1"` with its `mousedown` prevented. While focus IS in the
+    // field, `onHostKeydown` consumes Escape before it can reach the
+    // dispatcher's listener on `<body>`. This is what would keep the key
+    // stopping here if the panel ever did take focus — the shape `tn-select`
+    // has carried since long before #324.
+    this.overlaySubs.push(
+      this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          // Latched, so neither the re-open effect nor a `dataSource` response
+          // still in flight can undo the dismissal. See {@link closedByUser}.
+          this.closedByUser = true;
+          this.close();
+        }
       }),
     );
   }
