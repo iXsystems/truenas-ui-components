@@ -462,11 +462,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       this.overlayRef.backdropClick().subscribe(() => this.closeDropdown(false)),
     );
 
-    // Escape, for every case: focus on the trigger, and focus moved into the
-    // panel. CDK's keyboard dispatcher hands the key to the top-most attached
-    // overlay that HAS subscribers and stops there, so subscribing is both what
-    // closes this dropdown and what keeps the key away from a `tn-side-panel`
-    // or dialog underneath it (#324).
+    // Escape with focus moved INTO the panel, where the trigger's own keydown
+    // handler cannot see it. CDK's keyboard dispatcher hands the key to the
+    // top-most attached overlay that HAS subscribers and stops there, so
+    // subscribing is both what closes this dropdown and what keeps the key from
+    // reaching a `tn-side-panel` or dialog underneath it (#324).
     this.overlaySubs.push(
       this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
@@ -784,12 +784,21 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         break;
 
       case 'Escape':
-        // Not handled here: with the dropdown open, the overlay's own
-        // `keydownEvents()` subscription closes it — see `createOverlay`.
-        // Closing from here disposed that overlay mid-keystroke, and CDK's
-        // dispatcher then routed the same Escape to whatever overlay is
-        // underneath, so Escape in a select inside a `tn-side-panel` closed the
-        // panel as well as the dropdown (#324).
+        if (this.isOpen()) {
+          event.preventDefault();
+          // The dropdown is what this Escape dismissed, so nothing underneath
+          // may act on it as well (#324). Closing here disposes this overlay
+          // mid-keystroke, which takes it out of CDK's dispatcher stack — so
+          // without this, the event carried on to `<body>` and the dispatcher
+          // handed it to the next overlay down, closing the `tn-side-panel`
+          // holding the form as well as the dropdown.
+          //
+          // `stopPropagation` rather than leaving it to the dispatcher to route:
+          // it cannot be routed at all if an ancestor swallows it first, which
+          // `tn-drawer` does in `over` mode (`drawer.component.ts`).
+          event.stopPropagation();
+          this.closeDropdown();
+        }
         break;
 
       case 'Tab':

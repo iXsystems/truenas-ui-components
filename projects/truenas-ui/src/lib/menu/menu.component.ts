@@ -153,11 +153,16 @@ export class TnMenuComponent implements OnDestroy {
         this.closeContextMenu();
       });
 
-      // Escape, the same way the trigger directive does it for the anchored
-      // menu. CDK's keyboard dispatcher hands the key to the top-most attached
-      // overlay that HAS subscribers and stops there, so subscribing is both
-      // what dismisses this menu and what keeps the key away from a
-      // `tn-side-panel` or dialog underneath it (#324).
+      // Escape, which this menu had no handling for at all. CDK's keyboard
+      // dispatcher hands the key to the top-most attached overlay that HAS
+      // subscribers and stops there, so subscribing is both what dismisses this
+      // menu and what keeps the key from reaching a `tn-side-panel` or dialog
+      // underneath it (#324).
+      //
+      // Focus is NOT restored here, unlike `TnMenuTriggerDirective`: a context
+      // menu is opened by pointer at a cursor position with no trigger element
+      // to go back to, which is also why the backdrop-click path above does not
+      // restore it either.
       this.contextKeydownSub = this.contextOverlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
           event.preventDefault();

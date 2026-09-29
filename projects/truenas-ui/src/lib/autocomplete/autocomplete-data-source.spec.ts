@@ -850,9 +850,7 @@ describe('tn-autocomplete [dataSource]', () => {
       type('zzz');
 
       responder = (query, page) => of(pageOf(query, page, page === 0 ? 2 : 0));
-      // `bubbles`, because a real key press does: Escape is routed to the open
-      // panel by CDK's keyboard dispatcher, which listens on `<body>` (#324).
-      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       fixture.detectChanges();
       jest.advanceTimersByTime(250);
       fixture.detectChanges();

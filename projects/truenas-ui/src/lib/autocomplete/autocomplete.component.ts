@@ -906,14 +906,23 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       }
 
       case 'Escape': {
-        // With the panel open, the overlay's own `keydownEvents()` subscription
-        // is what handles this — see `attachOverlay`. Acting here as well would
-        // dispose that overlay mid-keystroke, and CDK's dispatcher would then
-        // route the same Escape to whatever overlay is underneath (#324).
-        if (this.isOpen()) {
-          break;
-        }
         event.preventDefault();
+        if (this.isOpen()) {
+          // The panel is what this Escape dismissed, so nothing underneath may
+          // act on it as well (#324). Closing here disposes the overlay
+          // mid-keystroke, which takes it out of CDK's dispatcher stack — so
+          // without this, the event carried on to `<body>` and the dispatcher
+          // handed it to the next overlay down, closing the `tn-side-panel`
+          // holding the form as well as the panel.
+          //
+          // `stopPropagation` rather than leaving it to the dispatcher to
+          // route: it cannot be routed at all if an ancestor swallows it first,
+          // which `tn-drawer` does in `over` mode (`drawer.component.ts`).
+          event.stopPropagation();
+        }
+        // With the panel closed there is nothing to dismiss and the key belongs
+        // to whatever is underneath — but the draft still reverts, which is
+        // what the blur that follows would otherwise commit.
         this.dismiss();
         break;
       }
@@ -1257,13 +1266,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       })
     );
 
-    // Escape, through CDK's keyboard dispatcher (#324). The dispatcher hands
-    // the key to the top-most attached overlay that HAS subscribers and stops
-    // there, so this is both what closes the panel and what keeps the key away
-    // from a `tn-side-panel` or dialog underneath it. `onKeydown` deliberately
-    // leaves Escape alone while the panel is open — closing from there disposed
-    // this overlay before the dispatcher ran, and the dispatcher then handed
-    // the same keystroke to the panel behind, which closed the whole form.
+    // Escape with focus moved INTO the panel, where the input's own keydown
+    // handler cannot see it. CDK's keyboard dispatcher hands the key to the
+    // top-most attached overlay that HAS subscribers and stops there, so
+    // subscribing is both what dismisses this panel and what keeps the key from
+    // reaching a `tn-side-panel` or dialog underneath it (#324).
     this.overlaySubs.push(
       this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {

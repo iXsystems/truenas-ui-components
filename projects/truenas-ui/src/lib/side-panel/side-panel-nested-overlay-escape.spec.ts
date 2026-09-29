@@ -9,6 +9,7 @@ import { TnAutocompleteComponent } from '../autocomplete/autocomplete.component'
 import { TnChipInputComponent } from '../chip-input/chip-input.component';
 import { TnDateInputComponent } from '../date-range-input/date-input.component';
 import { TnDateRangeInputComponent } from '../date-range-input/date-range-input.component';
+import { TnDrawerComponent } from '../drawer/drawer.component';
 import { TnFilePickerComponent } from '../file-picker/file-picker.component';
 import { TnMenuComponent } from '../menu/menu.component';
 import { TnSelectComponent } from '../select/select.component';
@@ -35,16 +36,23 @@ import { TnSelectComponent } from '../select/select.component';
  * the time the dispatcher looked, the popup was gone from the stack and the
  * panel was the top-most subscriber. The popup closed AND the panel closed.
  * `tn-select` was measured doing this, so "the way tn-select does it" was not a
- * shape worth copying; the element-level handlers now leave Escape alone while
- * their popup is open and let the dispatcher route it.
+ * shape worth copying. Those handlers now call `stopPropagation()` when they
+ * consume Escape, so nothing underneath acts on a key they already handled.
+ *
+ * WHY THOSE THREE CONSUME IT RATHER THAN DEFERRING TO THE DISPATCHER
+ * -----------------------------------------------------------------
+ * Because the dispatcher cannot route a key it never receives. `tn-drawer` in
+ * `over` mode calls `stopPropagation()` on Escape from a handler on its own
+ * panel element, which is an ANCESTOR of anything projected into it — so a
+ * popup that waited for the dispatcher stayed open while the drawer closed
+ * underneath it. The second `describe` below is that case.
  *
  * WHAT THESE SPECS DISPATCH
  * -------------------------
- * A bubbling `keydown`, because that is what a real key press is and the
- * dispatcher's listener is on `<body>`. Where it is dispatched FROM is the
- * difference between the two shapes above: from inside the popup for the ones
- * that take focus into their overlay, and from the input for the comboboxes
- * that leave focus in the field.
+ * A bubbling `keydown`, because that is what a real key press is. Where it is
+ * dispatched FROM is the difference between the two shapes above: from inside
+ * the popup for the ones that take focus into their overlay, and from the input
+ * for the comboboxes that leave focus in the field.
  */
 
 @Component({
@@ -271,6 +279,36 @@ const CASES: PopupCase[] = [
   },
 ];
 
+/**
+ * The same three comboboxes inside a `tn-drawer`, which is NOT a CDK overlay
+ * and which swallows Escape on its own panel element
+ * (`drawer.component.ts#onKeydown` calls `stopPropagation`).
+ *
+ * This is why the fix cannot simply hand Escape to CDK's dispatcher and let it
+ * route: an ancestor that stops propagation means the dispatcher never runs at
+ * all, and a popup relying on it would stay open with the drawer closing
+ * underneath. The component consumes the key itself instead, which works
+ * whatever sits above it.
+ */
+@Component({
+  selector: 'tn-escape-drawer-host',
+  standalone: true,
+  imports: [TnDrawerComponent, TnAutocompleteComponent, TnChipInputComponent, TnSelectComponent],
+  template: `
+    <tn-drawer mode="over" ariaLabel="Filters" [(opened)]="opened">
+      <tn-select [options]="options" /><tn-autocomplete [options]="options" /><tn-chip-input [suggestions]="suggestions" />
+    </tn-drawer>
+  `,
+})
+class DrawerHostComponent {
+  opened = signal(true);
+  options = [
+    { label: 'Alpha', value: 'alpha' },
+    { label: 'Beta', value: 'beta' },
+  ];
+  suggestions = ['alpha', 'beta'];
+}
+
 describe('Escape in a popup opened over a tn-side-panel (#324)', () => {
   let overlayEl: HTMLElement;
 
@@ -330,5 +368,80 @@ describe('Escape in a popup opened over a tn-side-panel (#324)', () => {
 
       expect(fixture.componentInstance.open()).toBe(false);
     });
+  });
+});
+
+describe('Escape in a combobox inside a tn-drawer (#324)', () => {
+  let fixture: ComponentFixture<DrawerHostComponent>;
+  let overlayEl: HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DrawerHostComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DrawerHostComponent);
+    overlayEl = TestBed.inject(OverlayContainer).getContainerElement();
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+  });
+
+  function escapeFrom(element: Element): void {
+    element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+  }
+
+  /**
+   * An `over` drawer portals its panel to `document.body` to avoid clipping, so
+   * the projected comboboxes are not under the fixture's element — the same
+   * lookup `drawer-a11y.spec.ts` uses for that mode.
+   */
+  function inDrawer(selector: string): Element {
+    const panel = document.body.querySelector('.tn-drawer__panel--over') as Element;
+    return panel.querySelector(selector) as Element;
+  }
+
+  it('closes the tn-select dropdown and leaves the drawer open', () => {
+    fixture.debugElement.query(By.directive(TnSelectComponent)).componentInstance.openDropdown();
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-select-dropdown')).not.toBeNull();
+
+    escapeFrom(inDrawer('.tn-select-trigger'));
+
+    expect(overlayEl.querySelector('.tn-select-dropdown')).toBeNull();
+    expect(fixture.componentInstance.opened()).toBe(true);
+  });
+
+  it('closes the tn-autocomplete panel and leaves the drawer open', () => {
+    const field = inDrawer('tn-autocomplete input');
+    field.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-autocomplete__dropdown')).not.toBeNull();
+
+    escapeFrom(field);
+
+    expect(overlayEl.querySelector('.tn-autocomplete__dropdown')).toBeNull();
+    expect(fixture.componentInstance.opened()).toBe(true);
+  });
+
+  it('closes the tn-chip-input panel and leaves the drawer open', () => {
+    const field = inDrawer('tn-chip-input input');
+    field.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-chip-input__dropdown')).not.toBeNull();
+
+    escapeFrom(field);
+
+    expect(overlayEl.querySelector('.tn-chip-input__dropdown')).toBeNull();
+    expect(fixture.componentInstance.opened()).toBe(true);
+  });
+
+  it('closes the drawer when no popup is open', () => {
+    escapeFrom(inDrawer('.tn-select-trigger'));
+
+    expect(fixture.componentInstance.opened()).toBe(false);
   });
 });
