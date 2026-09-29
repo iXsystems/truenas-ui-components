@@ -1013,11 +1013,19 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
       }),
     );
 
-    // Escape with focus moved INTO the panel, where the input's own keydown
-    // handler cannot see it. CDK's keyboard dispatcher hands the key to the
-    // top-most attached overlay that HAS subscribers and stops there, so
-    // subscribing is both what dismisses this panel and what keeps the key from
-    // reaching a `tn-side-panel` or dialog underneath it (#324).
+    // Escape reaching the panel through CDK's keyboard dispatcher, which hands
+    // the key to the top-most attached overlay that HAS subscribers and stops
+    // there — so an overlay that subscribes is also one the key stops at,
+    // rather than carrying on to a `tn-side-panel` underneath it (#324).
+    //
+    // NOT REACHABLE TODAY, and kept deliberately. It would take a keydown that
+    // did not come from the input, and there is none: `onBlur` closes the panel
+    // as soon as focus leaves the field, and every suggestion row is
+    // `tabindex="-1"` with its `mousedown` prevented. While focus IS in the
+    // field, `onHostKeydown` consumes Escape before it can reach the
+    // dispatcher's listener on `<body>`. This is what would keep the key
+    // stopping here if the panel ever did take focus — the shape `tn-select`
+    // has carried since long before #324.
     this.overlaySubs.push(
       this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {

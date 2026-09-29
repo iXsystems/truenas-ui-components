@@ -467,11 +467,15 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       this.overlayRef.backdropClick().subscribe(() => this.closeDropdown(false)),
     );
 
-    // Escape with focus moved INTO the panel, where the trigger's own keydown
-    // handler cannot see it. CDK's keyboard dispatcher hands the key to the
-    // top-most attached overlay that HAS subscribers and stops there, so
-    // subscribing is both what closes this dropdown and what keeps the key from
-    // reaching a `tn-side-panel` or dialog underneath it (#324).
+    // Escape reaching the panel through CDK's keyboard dispatcher, which hands
+    // the key to the top-most attached overlay that HAS subscribers and stops
+    // there — so an overlay that subscribes is also one the key stops at,
+    // rather than carrying on to a `tn-side-panel` underneath it (#324).
+    //
+    // Not reachable from the trigger, which is where focus stays: `onHostKeydown`
+    // consumes Escape before the dispatcher's listener on `<body>` sees it. This
+    // is the fallback for focus that reaches the panel some other way, and it
+    // predates #324.
     this.overlaySubs.push(
       this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
