@@ -358,11 +358,17 @@ TestBed.configureTestingModule({
 });
 
 const httpMock = TestBed.inject(HttpTestingController);
+// The sprite request is made from the loader's constructor, so something has
+// to inject it before there is a request to expect.
+TestBed.inject(TnSpriteLoaderService);
 httpMock.expectOne('assets/tn-icons/sprite-config.json').flush({ iconUrl: '…', icons: ['folder'] });
 ```
 
-An unstubbed request's error names the method, the URL and this way out, so a
-spec that meant to answer one and did not says so rather than hanging. See
+Once a spec takes over the backend it owns the whole exchange: the testing
+backend answers nothing until it is flushed, so a request the spec forgets
+about hangs silently rather than failing the way the environment's backend
+would. An unstubbed request under the environment's backend errors instead,
+naming the method, the URL and this way out. See
 `lib/icon/sprite-loader.service.spec.ts` for both halves.
 
 For a spec that only needs icons to *render* — not to resolve — mock the icon
