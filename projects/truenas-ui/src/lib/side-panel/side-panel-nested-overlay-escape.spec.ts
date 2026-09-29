@@ -1,6 +1,4 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -449,7 +447,6 @@ describe('Escape in a combobox carrying a tnTooltip (#324)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TooltipHostComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TooltipHostComponent);

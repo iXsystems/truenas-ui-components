@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -35,10 +34,7 @@ describe('TnBannerComponent [testId]', () => {
   function setup(attr?: 'data-test'): Fixture {
     TestBed.configureTestingModule({
       imports: [BannerTestIdHostComponent],
-      providers: [
-        provideHttpClient(),
-        ...(attr ? [{ provide: TN_TEST_ATTR, useValue: attr }] : []),
-      ],
+      providers: [...(attr ? [{ provide: TN_TEST_ATTR, useValue: attr }] : [])],
     });
     const fixture = TestBed.createComponent(BannerTestIdHostComponent);
     fixture.detectChanges();

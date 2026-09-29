@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -12,8 +11,7 @@ describe('TnFilePickerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TnFilePickerComponent, NoopAnimationsModule],
-      providers: [provideHttpClient()]
+      imports: [TnFilePickerComponent, NoopAnimationsModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TnFilePickerComponent);
@@ -562,8 +560,7 @@ class TestFormNameHostComponent {
 describe('TnFilePickerComponent test-id fallback', () => {
   it('derives data-testid from formControlName when no testId is set', async () => {
     await TestBed.configureTestingModule({
-      imports: [TestFormNameHostComponent, NoopAnimationsModule],
-      providers: [provideHttpClient()]
+      imports: [TestFormNameHostComponent, NoopAnimationsModule]
     }).compileComponents();
     const fixture = TestBed.createComponent(TestFormNameHostComponent);
     fixture.detectChanges();

@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -44,8 +43,7 @@ describe('TnBannerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TnBannerComponent, BannerWithActionTestComponent, BannerWithoutActionTestComponent, BannerWithProjectedContentTestComponent],
-      providers: [provideHttpClient()]
+      imports: [TnBannerComponent, BannerWithActionTestComponent, BannerWithoutActionTestComponent, BannerWithProjectedContentTestComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TnBannerComponent);

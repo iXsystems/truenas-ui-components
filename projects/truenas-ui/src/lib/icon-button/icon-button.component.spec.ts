@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -11,8 +10,7 @@ describe('TnIconButtonComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TnIconButtonComponent],
-      providers: [provideHttpClient()]
+      imports: [TnIconButtonComponent]
     })
     .compileComponents();
 

@@ -330,6 +330,50 @@ describe('Tn[Name]Component', () => {
 });
 ```
 
+### HTTP: no spec reaches the network
+
+`setup-jest.ts` gives every spec an `HttpBackend` that **fails** a request
+instead of making one, installed on the test environment so it survives
+`TestBed.resetTestingModule()`. Nothing has to opt in, and nothing should
+provide `provideHttpClient()` to keep a component's HTTP off the wire — that
+re-provides the real XHR backend and puts the spec back on the network.
+
+Why it exists: `TnSpriteLoaderService` fetches the icon sprite config from its
+constructor, so every spec that renders a `tn-icon` used to make a real request
+that jsdom then reported as a ~25-line `Error: AggregateError` stack — about
+three quarters of the CI test log (#326). It fails rather than answers because
+a successful answer would flip `isSpriteLoaded()` to true and start each spec
+warning about every sprite icon it could not find.
+
+**A spec that wants a response provides its own backend**, which wins over the
+environment's:
+
+```typescript
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+
+TestBed.configureTestingModule({
+  imports: [Tn[Name]Component],
+  providers: [provideHttpClient(), provideHttpClientTesting()],
+});
+
+const httpMock = TestBed.inject(HttpTestingController);
+// The sprite request is made from the loader's constructor, so something has
+// to inject it before there is a request to expect.
+TestBed.inject(TnSpriteLoaderService);
+httpMock.expectOne('assets/tn-icons/sprite-config.json').flush({ iconUrl: '…', icons: ['folder'] });
+```
+
+Once a spec takes over the backend it owns the whole exchange: the testing
+backend answers nothing until it is flushed, so a request the spec forgets
+about hangs silently rather than failing the way the environment's backend
+would. An unstubbed request under the environment's backend errors instead,
+naming the method, the URL and this way out. See
+`lib/icon/sprite-loader.service.spec.ts` for both halves.
+
+For a spec that only needs icons to *render* — not to resolve — mock the icon
+services instead and skip HTTP entirely: `TnIconTesting.jest.providers()`.
+
 ### Testing Components with Child Components
 
 ```typescript

@@ -1,5 +1,4 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -31,10 +30,7 @@ describe('TnTooltipHarness', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
-      providers: [
-        provideHttpClient(),
-        TnIconTesting.jest.providers()
-      ]
+      providers: [TnIconTesting.jest.providers()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);

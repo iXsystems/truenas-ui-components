@@ -1,6 +1,5 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { provideHttpClient } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture} from '@angular/core/testing';
@@ -85,10 +84,7 @@ describe('TnBannerHarness', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
-      providers: [
-        provideHttpClient(),
-        TnIconTesting.jest.providers()
-      ]
+      providers: [TnIconTesting.jest.providers()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestHostComponent);
@@ -210,10 +206,7 @@ describe('TnBannerHarness actions', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ActionHostComponent],
-      providers: [
-        provideHttpClient(),
-        TnIconTesting.jest.providers()
-      ]
+      providers: [TnIconTesting.jest.providers()]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(ActionHostComponent);
@@ -278,10 +271,7 @@ describe('TnBannerHarness action scoping', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MixedContentHostComponent],
-      providers: [
-        provideHttpClient(),
-        TnIconTesting.jest.providers()
-      ]
+      providers: [TnIconTesting.jest.providers()]
     }).compileComponents();
 
     const fixture = TestBed.createComponent(MixedContentHostComponent);

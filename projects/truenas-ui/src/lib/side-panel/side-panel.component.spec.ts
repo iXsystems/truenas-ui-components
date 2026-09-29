@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
@@ -30,7 +29,6 @@ describe('TnSidePanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TnSidePanelComponent],
-      providers: [provideHttpClient()],
     }).compileComponents();
 
     // Almost every fixture here is untitled and unlabelled, and #214 makes an
