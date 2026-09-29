@@ -738,7 +738,9 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    * - **Enter / Space** opens the dropdown if closed; if open and an option
    *   is highlighted, selects that option (in single mode) or toggles it
    *   (in multiple mode).
-   * - **Escape** closes the dropdown without changing the selection.
+   * - **Escape** is NOT here: it closes the dropdown without changing the
+   *   selection, from `onHostKeydown` on this component's host element,
+   *   because it also has to consume the key.
    *
    * All navigation keys call `event.preventDefault()` so the page does not
    * scroll while the user is moving through options.
