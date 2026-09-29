@@ -578,6 +578,24 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.close();
     });
 
+    // Escape, through CDK's keyboard dispatcher rather than a handler on the
+    // popup (#324). The dispatcher hands the key to the top-most attached
+    // overlay that HAS subscribers and stops there, so subscribing is what
+    // makes this popup — rather than a `tn-side-panel` or dialog underneath it
+    // — the thing Escape closes. Without it the key went straight past the open
+    // popup to the panel behind, which closed the whole form.
+    //
+    // The inline-creation row inside the popup stops Escape from propagating
+    // while it is open (see `onInlineCreationKeyDown`), so the key never
+    // reaches the dispatcher and cancelling that row still wins over closing
+    // the popup.
+    this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        this.close();
+      }
+    });
+
     this.portal = new TemplatePortal(this.filePickerTemplate(), this.viewContainerRef);
     this.overlayRef.attach(this.portal);
   }

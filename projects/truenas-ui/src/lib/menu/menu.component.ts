@@ -62,6 +62,7 @@ export class TnMenuComponent implements OnDestroy {
 
   private contextOverlayRef?: OverlayRef;
   private contextBackdropSub?: Subscription;
+  private contextKeydownSub?: Subscription;
 
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
@@ -152,6 +153,18 @@ export class TnMenuComponent implements OnDestroy {
         this.closeContextMenu();
       });
 
+      // Escape, the same way the trigger directive does it for the anchored
+      // menu. CDK's keyboard dispatcher hands the key to the top-most attached
+      // overlay that HAS subscribers and stops there, so subscribing is both
+      // what dismisses this menu and what keeps the key away from a
+      // `tn-side-panel` or dialog underneath it (#324).
+      this.contextKeydownSub = this.contextOverlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          this.closeContextMenu();
+        }
+      });
+
       this.onMenuOpen();
     }
   }
@@ -159,6 +172,8 @@ export class TnMenuComponent implements OnDestroy {
   private closeContextMenu(): void {
     this.contextBackdropSub?.unsubscribe();
     this.contextBackdropSub = undefined;
+    this.contextKeydownSub?.unsubscribe();
+    this.contextKeydownSub = undefined;
     if (this.contextOverlayRef) {
       this.contextOverlayRef.dispose();
       this.contextOverlayRef = undefined;
@@ -170,6 +185,8 @@ export class TnMenuComponent implements OnDestroy {
     // Component destroyed while context menu open → clean up without notifying.
     this.contextBackdropSub?.unsubscribe();
     this.contextBackdropSub = undefined;
+    this.contextKeydownSub?.unsubscribe();
+    this.contextKeydownSub = undefined;
     this.contextOverlayRef?.dispose();
     this.contextOverlayRef = undefined;
   }

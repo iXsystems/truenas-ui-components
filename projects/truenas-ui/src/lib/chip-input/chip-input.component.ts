@@ -615,13 +615,12 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
     }
 
     if (event.key === 'Escape') {
-      if (this.isOpen()) {
-        event.preventDefault();
-        // Latched, so neither the re-open effect nor a `dataSource` response
-        // still in flight can undo the dismissal. See {@link closedByUser}.
-        this.closedByUser = true;
-        this.close();
-      }
+      // Not handled here: with the panel open, the overlay's own
+      // `keydownEvents()` subscription dismisses it — see `attachOverlay`.
+      // Closing from here disposed that overlay mid-keystroke, and CDK's
+      // dispatcher then routed the same Escape to whatever overlay is
+      // underneath (#324). With the panel closed there is nothing to dismiss,
+      // and the key belongs to whatever is underneath.
       return;
     }
 
@@ -974,6 +973,26 @@ export class TnChipInputComponent<T = string> implements ControlValueAccessor, T
           return;
         }
         this.close();
+      }),
+    );
+
+    // Escape, through CDK's keyboard dispatcher (#324). The dispatcher hands
+    // the key to the top-most attached overlay that HAS subscribers and stops
+    // there, so this is both what dismisses the panel and what keeps the key
+    // away from a `tn-side-panel` or dialog underneath it. `onKeydown`
+    // deliberately leaves Escape alone while the panel is open — closing from
+    // there disposed this overlay before the dispatcher ran, and the dispatcher
+    // then handed the same keystroke to the panel behind, which closed the
+    // whole form.
+    this.overlaySubs.push(
+      this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          // Latched, so neither the re-open effect nor a `dataSource` response
+          // still in flight can undo the dismissal. See {@link closedByUser}.
+          this.closedByUser = true;
+          this.close();
+        }
       }),
     );
   }

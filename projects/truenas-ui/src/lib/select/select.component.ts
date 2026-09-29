@@ -462,8 +462,11 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       this.overlayRef.backdropClick().subscribe(() => this.closeDropdown(false)),
     );
 
-    // Escape as a fallback (the trigger keydown handler covers the common case,
-    // but if focus ever moves into the panel, this catches it too).
+    // Escape, for every case: focus on the trigger, and focus moved into the
+    // panel. CDK's keyboard dispatcher hands the key to the top-most attached
+    // overlay that HAS subscribers and stops there, so subscribing is both what
+    // closes this dropdown and what keeps the key away from a `tn-side-panel`
+    // or dialog underneath it (#324).
     this.overlaySubs.push(
       this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
@@ -781,10 +784,12 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         break;
 
       case 'Escape':
-        if (this.isOpen()) {
-          event.preventDefault();
-          this.closeDropdown();
-        }
+        // Not handled here: with the dropdown open, the overlay's own
+        // `keydownEvents()` subscription closes it — see `createOverlay`.
+        // Closing from here disposed that overlay mid-keystroke, and CDK's
+        // dispatcher then routed the same Escape to whatever overlay is
+        // underneath, so Escape in a select inside a `tn-side-panel` closed the
+        // panel as well as the dropdown (#324).
         break;
 
       case 'Tab':

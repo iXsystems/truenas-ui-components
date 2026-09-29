@@ -906,13 +906,15 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       }
 
       case 'Escape': {
-        event.preventDefault();
-        if (this.allowCustomValue()) {
-          // Escape means "cancel the draft": revert to the committed value's
-          // text so the upcoming blur doesn't commit the abandoned term.
-          this.revertDisplayToValue(this.selectedValue());
+        // With the panel open, the overlay's own `keydownEvents()` subscription
+        // is what handles this — see `attachOverlay`. Acting here as well would
+        // dispose that overlay mid-keystroke, and CDK's dispatcher would then
+        // route the same Escape to whatever overlay is underneath (#324).
+        if (this.isOpen()) {
+          break;
         }
-        this.close();
+        event.preventDefault();
+        this.dismiss();
         break;
       }
     }
@@ -1254,6 +1256,37 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         this.close();
       })
     );
+
+    // Escape, through CDK's keyboard dispatcher (#324). The dispatcher hands
+    // the key to the top-most attached overlay that HAS subscribers and stops
+    // there, so this is both what closes the panel and what keeps the key away
+    // from a `tn-side-panel` or dialog underneath it. `onKeydown` deliberately
+    // leaves Escape alone while the panel is open — closing from there disposed
+    // this overlay before the dispatcher ran, and the dispatcher then handed
+    // the same keystroke to the panel behind, which closed the whole form.
+    this.overlaySubs.push(
+      this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+        if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+          this.dismiss();
+        }
+      })
+    );
+  }
+
+  /**
+   * Escape's effect on this field: cancel the draft, then close.
+   *
+   * Shared by the overlay subscription above and the closed-panel branch of
+   * `onKeydown`, which are the two states Escape can arrive in.
+   */
+  private dismiss(): void {
+    if (this.allowCustomValue()) {
+      // Escape means "cancel the draft": revert to the committed value's text
+      // so the upcoming blur doesn't commit the abandoned term.
+      this.revertDisplayToValue(this.selectedValue());
+    }
+    this.close();
   }
 
   private detachOverlay(): void {

@@ -390,7 +390,9 @@ describe('tn-chip-input [dataSource]', () => {
     input().value = 'an';
     input().dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    // `bubbles`, because a real key press does: Escape is routed to the open
+    // panel by CDK's keyboard dispatcher, which listens on `<body>` (#324).
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
     expect(listbox()).toBeNull();
 
@@ -405,7 +407,7 @@ describe('tn-chip-input [dataSource]', () => {
   it('re-arms the panel on the next keystroke after Escape', () => {
     // The dismissal is until the term next changes, not for good.
     focus();
-    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
 
     type('a');

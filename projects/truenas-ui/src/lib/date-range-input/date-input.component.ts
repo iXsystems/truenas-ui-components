@@ -289,6 +289,19 @@ export class TnDateInputComponent implements ControlValueAccessor, OnInit, OnDes
       this.close();
     });
 
+    // Escape, through CDK's keyboard dispatcher rather than a handler on the
+    // calendar (#324). The dispatcher hands the key to the top-most attached
+    // overlay that HAS subscribers and stops there, so subscribing is what
+    // makes this calendar — rather than a `tn-side-panel` or dialog underneath
+    // it — the thing Escape closes. Without it the key went straight past the
+    // open calendar to the panel behind, which closed the whole form.
+    this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        this.close();
+      }
+    });
+
     this.portal = new TemplatePortal(this.calendarTemplate(), this.viewContainerRef);
     this.overlayRef.attach(this.portal);
   }
