@@ -85,6 +85,11 @@ const VIEWPORT_MARGIN_PX = 8;
   ],
   templateUrl: './select.component.html',
   styleUrls: ['./select.component.scss'],
+  // Escape only, and deliberately HERE rather than beside the trigger's own
+  // keydown binding — see `onHostKeydown`.
+  host: {
+    '(keydown)': 'onHostKeydown($event)',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnDestroy {
@@ -783,23 +788,8 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         }
         break;
 
-      case 'Escape':
-        if (this.isOpen()) {
-          event.preventDefault();
-          // The dropdown is what this Escape dismissed, so nothing underneath
-          // may act on it as well (#324). Closing here disposes this overlay
-          // mid-keystroke, which takes it out of CDK's dispatcher stack — so
-          // without this, the event carried on to `<body>` and the dispatcher
-          // handed it to the next overlay down, closing the `tn-side-panel`
-          // holding the form as well as the dropdown.
-          //
-          // `stopPropagation` rather than leaving it to the dispatcher to route:
-          // it cannot be routed at all if an ancestor swallows it first, which
-          // `tn-drawer` does in `over` mode (`drawer.component.ts`).
-          event.stopPropagation();
-          this.closeDropdown();
-        }
-        break;
+      // Escape is not here: it is handled on this component's HOST element
+      // instead, because it has to consume the key — see `onHostKeydown`.
 
       case 'Tab':
         // Standard combobox: Tab moves focus out of the select; close first
@@ -808,6 +798,34 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         if (this.isOpen()) {this.closeDropdown(false);}
         break;
     }
+  }
+
+  /**
+   * Escape, which closes the dropdown and CONSUMES the key.
+   *
+   * Consuming matters because of what is usually underneath: since #322 a
+   * `tn-side-panel` is a CDK overlay listening for Escape through
+   * `OverlayKeyboardDispatcher`, which delivers to the top-most attached
+   * overlay that has subscribers. Closing the dropdown disposes this select's
+   * overlay mid-keystroke, taking it out of that stack — so an Escape left to
+   * carry on reached `<body>`, found the panel as the new top-most subscriber,
+   * and closed the whole form along with the dropdown (#324). A `tn-drawer` in
+   * `over` mode has a keydown handler of its own and closed the same way.
+   *
+   * Why this sits on the HOST rather than beside the other keys on the trigger:
+   * `stopPropagation()` stops ANCESTOR listeners, not other listeners on the
+   * same element. Called from the trigger it also hid Escape from a `tnTooltip`
+   * on this component, which dismisses a visible tooltip from a host listener —
+   * so the tooltip stayed up. From here, that directive still sees the key and
+   * only the containers ABOVE this select stop seeing it.
+   */
+  protected onHostKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape' || !this.isOpen()) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.closeDropdown();
   }
 
   private moveFocus(target: 1 | -1 | 'first' | 'last'): void {

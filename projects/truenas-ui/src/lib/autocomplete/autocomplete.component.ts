@@ -85,6 +85,11 @@ export const TN_AUTOCOMPLETE_LABELS = new InjectionToken<TnAutocompleteLabels | 
   ],
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
+  // Escape only, and deliberately HERE rather than beside the input's own
+  // keydown binding — see `onHostKeydown`.
+  host: {
+    '(keydown)': 'onHostKeydown($event)',
+  },
 })
 export class TnAutocompleteComponent<T = unknown> implements ControlValueAccessor, TnAsyncOptionsHost, OnDestroy {
   private readonly elementRef = inject(ElementRef);
@@ -905,28 +910,44 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         break;
       }
 
-      case 'Escape': {
-        event.preventDefault();
-        if (this.isOpen()) {
-          // The panel is what this Escape dismissed, so nothing underneath may
-          // act on it as well (#324). Closing here disposes the overlay
-          // mid-keystroke, which takes it out of CDK's dispatcher stack — so
-          // without this, the event carried on to `<body>` and the dispatcher
-          // handed it to the next overlay down, closing the `tn-side-panel`
-          // holding the form as well as the panel.
-          //
-          // `stopPropagation` rather than leaving it to the dispatcher to
-          // route: it cannot be routed at all if an ancestor swallows it first,
-          // which `tn-drawer` does in `over` mode (`drawer.component.ts`).
-          event.stopPropagation();
-        }
-        // With the panel closed there is nothing to dismiss and the key belongs
-        // to whatever is underneath — but the draft still reverts, which is
-        // what the blur that follows would otherwise commit.
-        this.dismiss();
-        break;
-      }
+      // Escape is not here: it is handled on this component's HOST element
+      // instead, because it has to consume the key — see `onHostKeydown`.
     }
+  }
+
+  /**
+   * Escape, which cancels the draft, dismisses the panel, and — while the panel
+   * is open — CONSUMES the key.
+   *
+   * Consuming matters because of what is usually underneath: since #322 a
+   * `tn-side-panel` is a CDK overlay listening for Escape through
+   * `OverlayKeyboardDispatcher`, which delivers to the top-most attached
+   * overlay that has subscribers. Dismissing disposes this panel's overlay
+   * mid-keystroke, taking it out of that stack — so an Escape left to carry on
+   * reached `<body>`, found the side panel as the new top-most subscriber, and
+   * closed the whole form along with the panel (#324). A `tn-drawer` in `over`
+   * mode has a keydown handler of its own and closed the same way.
+   *
+   * With the panel already closed the key is NOT consumed: there is nothing to
+   * dismiss and it belongs to whatever contains this field. The draft still
+   * reverts, which is what the blur that follows would otherwise commit.
+   *
+   * Why this sits on the HOST rather than beside the other keys on the input:
+   * `stopPropagation()` stops ANCESTOR listeners, not other listeners on the
+   * same element. Called from the input it also hid Escape from a `tnTooltip`
+   * on this component, which dismisses a visible tooltip from a host listener —
+   * so the tooltip stayed up. From here, that directive still sees the key and
+   * only the containers ABOVE this field stop seeing it.
+   */
+  protected onHostKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') {
+      return;
+    }
+    event.preventDefault();
+    if (this.isOpen()) {
+      event.stopPropagation();
+    }
+    this.dismiss();
   }
 
   /**

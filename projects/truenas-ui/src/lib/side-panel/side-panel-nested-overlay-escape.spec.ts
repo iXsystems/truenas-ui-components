@@ -1,4 +1,6 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -13,6 +15,7 @@ import { TnDrawerComponent } from '../drawer/drawer.component';
 import { TnFilePickerComponent } from '../file-picker/file-picker.component';
 import { TnMenuComponent } from '../menu/menu.component';
 import { TnSelectComponent } from '../select/select.component';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * Escape inside a popup that is open OVER a `tn-side-panel` (#324).
@@ -368,6 +371,76 @@ describe('Escape in a popup opened over a tn-side-panel (#324)', () => {
 
       expect(fixture.componentInstance.open()).toBe(false);
     });
+  });
+});
+
+/**
+ * A `tnTooltip` ON the combobox, which is what decides WHERE the combobox may
+ * consume Escape.
+ *
+ * `TnTooltipDirective` dismisses a visible tooltip from `@HostListener
+ * ('keydown')`, so its listener sits on the `<tn-select>` element itself.
+ * `stopPropagation()` stops ANCESTOR listeners and not other listeners on the
+ * same element — so consuming Escape on the host leaves the tooltip working,
+ * and consuming it on the inner trigger (which an earlier round of this fix
+ * did) left the tooltip on screen after the keystroke that closed the dropdown.
+ */
+@Component({
+  selector: 'tn-escape-tooltip-host',
+  standalone: true,
+  imports: [TnSelectComponent, TnTooltipDirective],
+  template: '<tn-select tnTooltip="Pick a pool" [options]="options" />',
+})
+class TooltipHostComponent {
+  options = [
+    { label: 'Alpha', value: 'alpha' },
+    { label: 'Beta', value: 'beta' },
+  ];
+}
+
+describe('Escape in a combobox carrying a tnTooltip (#324)', () => {
+  let fixture: ComponentFixture<TooltipHostComponent>;
+  let overlayEl: HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TooltipHostComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TooltipHostComponent);
+    overlayEl = TestBed.inject(OverlayContainer).getContainerElement();
+    fixture.detectChanges();
+
+    // The directive's show/hide are `setTimeout`s — the same clock
+    // `tooltip.directive.spec.ts` drives them with.
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    jest.advanceTimersByTime(0);
+    jest.useRealTimers();
+  });
+
+  it('closes the dropdown and dismisses the tooltip on one Escape', () => {
+    const select = fixture.debugElement.query(By.directive(TnSelectComponent));
+    (select.nativeElement as HTMLElement).dispatchEvent(new MouseEvent('mouseenter'));
+    jest.advanceTimersByTime(0);
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-tooltip')).not.toBeNull();
+
+    select.componentInstance.openDropdown();
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-select-dropdown')).not.toBeNull();
+
+    (fixture.nativeElement.querySelector('.tn-select-trigger') as Element)
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    jest.advanceTimersByTime(0);
+    fixture.detectChanges();
+
+    expect(overlayEl.querySelector('.tn-select-dropdown')).toBeNull();
+    expect(overlayEl.querySelector('.tn-tooltip')).toBeNull();
   });
 });
 
