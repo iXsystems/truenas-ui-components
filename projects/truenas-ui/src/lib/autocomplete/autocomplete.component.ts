@@ -1313,8 +1313,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   /**
    * Escape's effect on this field: cancel the draft, then close.
    *
-   * Shared by the overlay subscription above and the closed-panel branch of
-   * `onKeydown`, which are the two states Escape can arrive in.
+   * Shared by the overlay subscription above and `onHostKeydown`, which is
+   * where Escape arrives while focus is in the field — open panel or closed.
    */
   private dismiss(): void {
     if (this.allowCustomValue()) {

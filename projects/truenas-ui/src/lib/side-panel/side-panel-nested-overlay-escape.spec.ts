@@ -42,20 +42,30 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
  * shape worth copying. Those handlers now call `stopPropagation()` when they
  * consume Escape, so nothing underneath acts on a key they already handled.
  *
- * WHY THOSE THREE CONSUME IT RATHER THAN DEFERRING TO THE DISPATCHER
- * -----------------------------------------------------------------
+ * WHY THE COMPONENT CONSUMES IT RATHER THAN DEFERRING TO THE DISPATCHER
+ * ---------------------------------------------------------------------
  * Because the dispatcher cannot route a key it never receives. `tn-drawer` in
  * `over` mode calls `stopPropagation()` on Escape from a handler on its own
  * panel element, which is an ANCESTOR of anything projected into it — so a
  * popup that waited for the dispatcher stayed open while the drawer closed
- * underneath it. The second `describe` below is that case.
+ * underneath it. The last `describe` below is that case.
  *
  * WHAT THESE SPECS DISPATCH
  * -------------------------
- * A bubbling `keydown`, because that is what a real key press is. Where it is
- * dispatched FROM is the difference between the two shapes above: from inside
- * the popup for the ones that take focus into their overlay, and from the input
- * for the comboboxes that leave focus in the field.
+ * A bubbling `keydown`, because that is what a real key press is.
+ *
+ * Where it is dispatched FROM is the point. No popup in this library moves
+ * focus into its own overlay on open — `openFilePicker`, `openDatepicker` and
+ * `openDropdown` all just create the overlay and flip `isOpen` — so a user's
+ * Escape starts on the TRIGGER, inside the host, every time. That is the
+ * default here, and it is the path the host listeners serve. Escape starting
+ * inside the overlay is reachable too (tab or click to a day button, a folder
+ * row) and is the `keydownEvents()` subscriptions' path; there is a spec for
+ * it per component below.
+ *
+ * `tn-menu`'s context menu is the exception with no trigger at all: a
+ * right-click moves focus nowhere, so it has only the dispatcher's path and
+ * only the in-overlay spec.
  */
 
 @Component({
@@ -179,9 +189,9 @@ interface PopupCase {
   /** Matches the popup's pane inside the overlay container while it is open. */
   popup: string;
   /**
-   * Where Escape is dispatched from. Defaults to the popup itself — a
-   * file-picker or calendar takes focus into its own overlay. A combobox
-   * leaves focus in its input, which is inside the panel.
+   * The trigger a user's Escape really starts on, which is inside the panel:
+   * none of these popups moves focus into its own overlay when it opens.
+   * Omitted only for the context menu, which has no trigger element.
    */
   escapeFrom?: (fixture: ComponentFixture<PanelHost>) => Element;
 }
@@ -216,6 +226,7 @@ const CASES: PopupCase[] = [
       fixture.detectChanges();
     },
     popup: '.tn-file-picker-overlay',
+    escapeFrom: input,
   },
   {
     name: 'tn-date-input',
@@ -227,6 +238,7 @@ const CASES: PopupCase[] = [
       fixture.detectChanges();
     },
     popup: '.tn-datepicker-overlay',
+    escapeFrom: input,
   },
   {
     name: 'tn-date-range-input',
@@ -238,6 +250,7 @@ const CASES: PopupCase[] = [
       fixture.detectChanges();
     },
     popup: '.tn-datepicker-overlay',
+    escapeFrom: input,
   },
   {
     name: 'tn-autocomplete',
@@ -283,23 +296,36 @@ const CASES: PopupCase[] = [
 ];
 
 /**
- * The same three comboboxes inside a `tn-drawer`, which is NOT a CDK overlay
+ * Every component fixed here, inside a `tn-drawer` — which is NOT a CDK overlay
  * and which swallows Escape on its own panel element
  * (`drawer.component.ts#onKeydown` calls `stopPropagation`).
  *
  * This is why the fix cannot simply hand Escape to CDK's dispatcher and let it
  * route: an ancestor that stops propagation means the dispatcher never runs at
  * all, and a popup relying on it would stay open with the drawer closing
- * underneath. The component consumes the key itself instead, which works
- * whatever sits above it.
+ * underneath. Each component consumes the key on its own host instead, which
+ * works whatever sits above it.
+ *
+ * `tn-menu`'s context menu is absent, and it is the one gap this leaves: a
+ * right-click moves focus nowhere, so there is no trigger for a host listener
+ * to sit on and the dispatcher is its only route. See the comment beside its
+ * `keydownEvents()` subscription.
  */
 @Component({
   selector: 'tn-escape-drawer-host',
   standalone: true,
-  imports: [TnDrawerComponent, TnAutocompleteComponent, TnChipInputComponent, TnSelectComponent],
+  imports: [
+    TnDrawerComponent,
+    TnAutocompleteComponent,
+    TnChipInputComponent,
+    TnDateInputComponent,
+    TnDateRangeInputComponent,
+    TnFilePickerComponent,
+    TnSelectComponent,
+  ],
   template: `
     <tn-drawer mode="over" ariaLabel="Filters" [(opened)]="opened">
-      <tn-select [options]="options" /><tn-autocomplete [options]="options" /><tn-chip-input [suggestions]="suggestions" />
+      <tn-select [options]="options" /><tn-autocomplete [options]="options" /><tn-chip-input [suggestions]="suggestions" /><tn-file-picker /><tn-date-input /><tn-date-range-input />
     </tn-drawer>
   `,
 })
@@ -339,12 +365,17 @@ describe('Escape in a popup opened over a tn-side-panel (#324)', () => {
       return overlayEl.querySelector(testCase.popup) !== null;
     }
 
-    function pressEscape(): void {
-      const from = testCase.escapeFrom
-        ? testCase.escapeFrom(fixture)
-        : (overlayEl.querySelector(testCase.popup) as Element);
-      from.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    function escapeFrom(element: Element): void {
+      element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       fixture.detectChanges();
+    }
+
+    function pressEscape(): void {
+      escapeFrom(
+        testCase.escapeFrom
+          ? testCase.escapeFrom(fixture)
+          : (overlayEl.querySelector(testCase.popup) as Element)
+      );
     }
 
     it('closes its own popup', () => {
@@ -362,6 +393,19 @@ describe('Escape in a popup opened over a tn-side-panel (#324)', () => {
 
       pressEscape();
 
+      expect(fixture.componentInstance.open()).toBe(true);
+    });
+
+    it('closes its own popup from a keydown inside the overlay', () => {
+      testCase.openPopup(fixture);
+      expect(popupIsOpen()).toBe(true);
+
+      // The other path: focus moved into the popup itself (a day button, a
+      // folder row), so the key bubbles to `<body>` without passing this
+      // component's host and only CDK's dispatcher can route it.
+      escapeFrom(overlayEl.querySelector(testCase.popup) as Element);
+
+      expect(popupIsOpen()).toBe(false);
       expect(fixture.componentInstance.open()).toBe(true);
     });
 
@@ -509,6 +553,39 @@ describe('Escape in a combobox inside a tn-drawer (#324)', () => {
     escapeFrom(field);
 
     expect(overlayEl.querySelector('.tn-chip-input__dropdown')).toBeNull();
+    expect(fixture.componentInstance.opened()).toBe(true);
+  });
+
+  it('closes the tn-file-picker popup and leaves the drawer open', () => {
+    fixture.debugElement.query(By.directive(TnFilePickerComponent)).componentInstance.openFilePicker();
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-file-picker-overlay')).not.toBeNull();
+
+    escapeFrom(inDrawer('tn-file-picker input'));
+
+    expect(overlayEl.querySelector('.tn-file-picker-overlay')).toBeNull();
+    expect(fixture.componentInstance.opened()).toBe(true);
+  });
+
+  it('closes the tn-date-input calendar and leaves the drawer open', () => {
+    fixture.debugElement.query(By.directive(TnDateInputComponent)).componentInstance.openDatepicker();
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-datepicker-overlay')).not.toBeNull();
+
+    escapeFrom(inDrawer('tn-date-input input'));
+
+    expect(overlayEl.querySelector('.tn-datepicker-overlay')).toBeNull();
+    expect(fixture.componentInstance.opened()).toBe(true);
+  });
+
+  it('closes the tn-date-range-input calendar and leaves the drawer open', () => {
+    fixture.debugElement.query(By.directive(TnDateRangeInputComponent)).componentInstance.openDatepicker();
+    fixture.detectChanges();
+    expect(overlayEl.querySelector('.tn-datepicker-overlay')).not.toBeNull();
+
+    escapeFrom(inDrawer('tn-date-range-input input'));
+
+    expect(overlayEl.querySelector('.tn-datepicker-overlay')).toBeNull();
     expect(fixture.componentInstance.opened()).toBe(true);
   });
 

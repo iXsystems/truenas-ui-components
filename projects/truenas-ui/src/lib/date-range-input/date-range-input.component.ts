@@ -29,7 +29,10 @@ export interface DateRange {
   templateUrl: './date-range-input.component.html',
   styleUrl: './date-range-input.component.scss',
   host: {
-    'class': 'tn-date-range-input'
+    'class': 'tn-date-range-input',
+    // Escape only, and deliberately HERE rather than beside the segments' own
+    // keydown binding — see `onHostKeydown`.
+    '(keydown)': 'onHostKeydown($event)'
   }
 })
 export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, OnDestroy {
@@ -280,6 +283,33 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
     }
   }
 
+  /**
+   * Escape, which closes the calendar and CONSUMES the key. Same reasoning as
+   * `TnDateInputComponent.onHostKeydown`, which this mirrors: opening does not
+   * move focus into the overlay, so the real keystroke starts on a date
+   * segment inside this host, where an ancestor such as a `tn-drawer` in
+   * `over` mode would stop it before CDK's keyboard dispatcher ever ran — and
+   * a calendar waiting on the dispatcher stayed open while the drawer closed
+   * underneath it (#324).
+   *
+   * Consuming it also keeps a `tn-side-panel` from acting on the same key: the
+   * panel is a CDK overlay subscribed through that dispatcher (#322), and
+   * closing this calendar disposes its overlay mid-keystroke, leaving the
+   * panel as the top-most subscriber for an Escape allowed to carry on.
+   *
+   * Closed, the key is not consumed; it belongs to whatever contains this
+   * field. On the HOST rather than the segments so that `stopPropagation()`
+   * still leaves a `tnTooltip` on this component able to see the key.
+   */
+  protected onHostKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape' || !this.isOpen()) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.close();
+  }
+
   openDatepicker(): void {
     if (this.isOpen()) {return;}
 
@@ -360,12 +390,16 @@ export class TnDateRangeInputComponent implements ControlValueAccessor, OnInit, 
       this.close();
     });
 
-    // Escape, through CDK's keyboard dispatcher rather than a handler on the
-    // calendar (#324). The dispatcher hands the key to the top-most attached
-    // overlay that HAS subscribers and stops there, so subscribing is what
-    // makes this calendar — rather than a `tn-side-panel` or dialog underneath
-    // it — the thing Escape closes. Without it the key went straight past the
-    // open calendar to the panel behind, which closed the whole form.
+    // Escape arriving from INSIDE the calendar — a day button the user tabbed
+    // or clicked to. That keydown starts in the overlay, which is not under
+    // this component's host, so `onHostKeydown` never sees it; CDK's keyboard
+    // dispatcher does, and hands the key to the top-most attached overlay that
+    // HAS subscribers, stopping there. Subscribing is what makes this calendar
+    // — rather than a `tn-side-panel` or dialog underneath it — the thing that
+    // Escape closes (#324).
+    //
+    // Escape from the date segments is the other half and is handled on the
+    // host, because an ancestor can stop the key before the dispatcher runs.
     this.overlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
       if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();

@@ -163,6 +163,20 @@ export class TnMenuComponent implements OnDestroy {
       // menu is opened by pointer at a cursor position with no trigger element
       // to go back to, which is also why the backdrop-click path above does not
       // restore it either.
+      //
+      // The dispatcher is the ONLY route here, where the form controls fixed
+      // under #324 also consume Escape on their own host element. They can:
+      // opening one leaves focus on a trigger inside that host, so a host
+      // listener sees the key even when an ancestor would stop it before the
+      // dispatcher's listener on `<body>` runs. A context menu has no such
+      // element — a right-click moves focus nowhere, so Escape starts wherever
+      // focus already was, which need not be inside this `tn-menu` at all.
+      // Consequence, and it is a real gap: inside a `tn-drawer` in `over` mode,
+      // whose panel calls `stopPropagation()` on Escape, the drawer closes and
+      // this menu stays up. Closing it there needs focus management this menu
+      // has never had (see the note on restoration above), not another
+      // listener.
+
       this.contextKeydownSub = this.contextOverlayRef.keydownEvents().subscribe((event: KeyboardEvent) => {
         if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey) {
           event.preventDefault();
