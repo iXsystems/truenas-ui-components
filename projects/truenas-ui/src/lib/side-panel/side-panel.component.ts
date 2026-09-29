@@ -1,5 +1,6 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { Dialog } from '@angular/cdk/dialog';
+import type { DialogRef } from '@angular/cdk/dialog';
 import {
   createGlobalPositionStrategy, createNoopScrollStrategy, createOverlayRef,
 } from '@angular/cdk/overlay';
@@ -213,21 +214,29 @@ export class TnSidePanelComponent implements OnDestroy {
   private keydowns: Subscription | null = null;
 
   /**
-   * How many CDK dialogs have opened over this panel since it opened (#322).
+   * The CDK dialogs currently covering this panel (#322).
    *
-   * The panel is hidden from assistive technology while this is above zero,
+   * The panel is hidden from assistive technology while this is non-empty,
    * which is what CDK's own `Dialog` does for everything outside the overlay
    * container — it sweeps the container's SIBLINGS, and a panel that now lives
    * INSIDE the container is not one. A dialog already open when the panel opens
-   * is underneath it and is not counted; only dialogs that arrive afterwards
+   * is underneath it and never joins this; only dialogs that arrive afterwards
    * are above.
    *
-   * Counted rather than tracked as a boolean, and restored only when the last
-   * one closes, on the same reasoning as CDK's `_removeOpenDialog`: two stacked
-   * dialogs closing one at a time must not un-hide the panel while one is still
-   * covering it.
+   * A SET RATHER THAN A COUNT, and each dialog removes ITSELF. Nothing
+   * unsubscribes a dialog's `closed` when the panel closes underneath it — the
+   * panel cannot outlive its own release to do that — so with a count, a
+   * dialog opened during one open and closed during the NEXT one decremented a
+   * tally it had never contributed to, and put the panel back in the
+   * accessibility tree with a live modal still stacked over it. Removing a
+   * member that is not there is a no-op, which is the property a count does
+   * not have.
+   *
+   * Emptied only when the last one goes, on the same reasoning as CDK's
+   * `_removeOpenDialog`: two stacked dialogs closing one at a time must not
+   * un-hide the panel while one is still covering it.
    */
-  private dialogsAbove = signal(0);
+  private dialogsAbove = signal<ReadonlySet<DialogRef<unknown, unknown>>>(new Set());
 
   /**
    * Whether the content region carries the tab stop, its role and its name
@@ -389,7 +398,7 @@ export class TnSidePanelComponent implements OnDestroy {
    * from separate bindings would mean the second could clear the first.
    */
   protected hiddenFromAssistiveTech = computed(
-    () => !this.open() || this.dialogsAbove() > 0
+    () => !this.open() || this.dialogsAbove().size > 0
   );
 
   // Focus restoration
@@ -466,10 +475,14 @@ export class TnSidePanelComponent implements OnDestroy {
       if (!this.cdkOverlay) {
         return;
       }
-      this.dialogsAbove.update((count) => count + 1);
-      ref.closed
-        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => this.dialogsAbove.update((count) => Math.max(0, count - 1)));
+      this.dialogsAbove.update((above) => new Set(above).add(ref));
+      ref.closed.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        this.dialogsAbove.update((above) => {
+          const remaining = new Set(above);
+          remaining.delete(ref);
+          return remaining;
+        });
+      });
     });
 
     afterNextRender(() => this.initialized.set(true));
@@ -541,7 +554,7 @@ export class TnSidePanelComponent implements OnDestroy {
     this.keydowns = null;
     this.cdkOverlay?.dispose();
     this.cdkOverlay = null;
-    this.dialogsAbove.set(0);
+    this.dialogsAbove.set(new Set());
     this.overlayRef().nativeElement.classList.remove(TN_SIDE_PANEL_ATTACHED_CLASS);
   }
 

@@ -104,6 +104,20 @@ describe('tn-side-panel overlay stacking (#322)', () => {
   }
 
   /**
+   * End the close transition, which is what releases the CDK overlay.
+   *
+   * The overlay outlives the close itself so the slide-out can run. Assembled
+   * from `Event` because jsdom implements no `TransitionEvent` constructor —
+   * the same stand-in `side-panel-lifecycle.spec.ts` uses, for the same
+   * reason.
+   */
+  function settleClose(): void {
+    const transitionend = Object.assign(new Event('transitionend'), { propertyName: 'transform' });
+    panelOverlay()!.querySelector('.tn-side-panel__panel')!.dispatchEvent(transitionend);
+    fixture.detectChanges();
+  }
+
+  /**
    * Which of the overlay container's children `element` is inside, which is the
    * paint order — see the header. `-1` for an element that is not in the
    * container at all, which is what a closed panel is.
@@ -129,14 +143,7 @@ describe('tn-side-panel overlay stacking (#322)', () => {
 
       host.open.set(false);
       fixture.detectChanges();
-      // The overlay outlives the close itself so the slide-out can run, and it
-      // is the end of that transition which releases it. Assembled from
-      // `Event` because jsdom implements no `TransitionEvent` constructor —
-      // the same stand-in `side-panel-lifecycle.spec.ts` uses, for the same
-      // reason.
-      const transitionend = Object.assign(new Event('transitionend'), { propertyName: 'transform' });
-      panelOverlay()!.querySelector('.tn-side-panel__panel')!.dispatchEvent(transitionend);
-      fixture.detectChanges();
+      settleClose();
 
       expect(stackPosition(panelOverlay())).toBe(-1);
     });
@@ -251,6 +258,39 @@ describe('tn-side-panel overlay stacking (#322)', () => {
       fixture.detectChanges();
 
       expect(panelOverlay()!.getAttribute('aria-hidden')).toBeNull();
+    });
+
+    /**
+     * A dialog that was above the panel during a PREVIOUS open must not
+     * un-hide it when it closes during this one.
+     *
+     * Nothing unsubscribes a dialog's `closed` when the panel closes
+     * underneath it — the panel is gone from the stack and cannot reach into
+     * dialogs it no longer covers — so the state this keys off has to be
+     * insensitive to a late arrival from a previous generation. It is a set,
+     * and removing a member that is not in it is a no-op; a tally decremented
+     * instead, and the panel came back into the accessibility tree with a live
+     * modal still over it.
+     */
+    it('is not un-hidden by a dialog left over from an earlier open', () => {
+      host.open.set(true);
+      fixture.detectChanges();
+      const earlier = openDialog();
+      fixture.detectChanges();
+
+      host.open.set(false);
+      fixture.detectChanges();
+      settleClose();
+
+      host.open.set(true);
+      fixture.detectChanges();
+      openDialog();
+      fixture.detectChanges();
+
+      earlier.close();
+      fixture.detectChanges();
+
+      expect(panelOverlay()!.getAttribute('aria-hidden')).toBe('true');
     });
 
     it('keeps the panel hidden until the last dialog above it closes', () => {

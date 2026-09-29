@@ -19,7 +19,7 @@ describe('TnSidePanelComponent', () => {
    * `bubbles` is what makes this a test rather than a no-op since #322: the key
    * is handled by CDK's overlay keyboard dispatcher, which listens on
    * `document.body`, so an event that does not bubble reaches nothing. Every
-   * real keypress bubbles; the three assertions below that expect the panel to
+   * real keypress bubbles; the two assertions below that expect the panel to
    * STAY open would pass without it whatever the component did.
    */
   function pressEscape(): void {
