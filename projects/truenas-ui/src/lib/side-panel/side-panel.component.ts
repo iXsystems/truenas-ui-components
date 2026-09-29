@@ -161,7 +161,8 @@ export class TnSidePanelHeaderActionDirective {}
  *   `OverlayKeyboardDispatcher`, rather than through a `keydown` handler on the
  *   panel that stopped propagation to keep a dialog underneath from closing too.
  *   The panel therefore also closes on Escape pressed outside it, which is what
- *   every other modal in this library does.
+ *   `TnDialog` does — `tn-drawer` still binds `keydown` on its own panel and
+ *   does not.
  * - **A CDK dialog opened over an open panel hides the panel from assistive
  *   technology.** CDK does this by sweeping the overlay container's SIBLINGS,
  *   which no longer includes the panel, so the component tracks it — see
