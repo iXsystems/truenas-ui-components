@@ -28,7 +28,8 @@ export class TnSidePanelHarness extends ComponentHarness {
   }
 
   /**
-   * Locate the overlay wrapper, which may be portaled to document.body.
+   * Locate the overlay wrapper, which is portaled into a CDK overlay while the
+   * panel is open and sits inside the host element while it is not.
    * Uses the data-tn-panel attribute to correlate the host with its overlay.
    */
   private async getOverlay() {

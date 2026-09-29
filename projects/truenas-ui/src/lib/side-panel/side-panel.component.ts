@@ -1,14 +1,20 @@
 import { A11yModule } from '@angular/cdk/a11y';
+import { Dialog } from '@angular/cdk/dialog';
+import {
+  createGlobalPositionStrategy, createNoopScrollStrategy, createOverlayRef,
+} from '@angular/cdk/overlay';
+import type { OverlayRef } from '@angular/cdk/overlay';
+import { DomPortal } from '@angular/cdk/portal';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import {
-  Component, Directive, input, output, model, computed, effect, inject, signal,
+  Component, Directive, Injector, input, output, model, computed, effect, inject, signal,
   contentChildren, viewChild, afterNextRender, DestroyRef,
 } from '@angular/core';
 import type { ElementRef, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { mdiClose } from '@mdi/js';
 import { take } from 'rxjs';
-import type { Observable } from 'rxjs';
+import type { Observable, Subscription } from 'rxjs';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { injectTnFallbackName } from '../a11y/fallback-labels';
 import { tnFocusOnOpen } from '../a11y/initial-focus';
@@ -47,6 +53,42 @@ export const TN_SIDE_PANEL_CONTENT_LABEL = 'Panel content';
  * why it is copied from the rule at all.
  */
 export const TN_SIDE_PANEL_OVERFLOW_TOLERANCE_PX = TN_SCROLLABLE_REGION_TOLERANCE_PX;
+
+/**
+ * Marks the overlay as currently hosted in a CDK overlay (#322).
+ *
+ * It is what makes the overlay render at all — `.tn-side-panel__overlay` is
+ * `display: none` without it. A detached overlay is back inside
+ * `<tn-side-panel>`, whose ancestors the consumer owns, and one of them having a
+ * `transform` would make `position: fixed` resolve against that box instead of
+ * the viewport and paint the closed panel next to it. On `<body>`, where the
+ * overlay used to live unconditionally, that could not happen.
+ *
+ * Applied imperatively rather than bound, for the reason
+ * `TN_SIDE_PANEL_OPEN_CLASS` gives — the two have to land in that order and in
+ * that relationship to the attach.
+ */
+const TN_SIDE_PANEL_ATTACHED_CLASS = 'tn-side-panel__overlay--attached';
+
+/**
+ * Puts the panel in its open position, and is the class the open/close
+ * transition runs on.
+ *
+ * WHY THIS IS NOT A TEMPLATE BINDING (#322)
+ * -----------------------------------------
+ * Angular refreshes a component's template BEFORE it runs that component's
+ * effects, so a `[class.…--open]="open()"` binding is written while the overlay
+ * is still detached and `display: none`. The effect below then attaches it, and
+ * the browser's first look at the element has it already open — a transition
+ * needs a previous computed style to run from, and there is none. The panel
+ * appears instead of sliding in.
+ *
+ * So the order is owned here instead: attach, force a layout read so the closed
+ * position is what the browser has computed, then add this. It is still applied
+ * inside the same change detection pass the `open` change arrives in, so a spec
+ * that calls `detectChanges()` and asserts on the class sees it.
+ */
+const TN_SIDE_PANEL_OPEN_CLASS = 'tn-side-panel__overlay--open';
 
 /**
  * Directive to mark an element as a side-panel footer action.
@@ -97,6 +139,35 @@ export class TnSidePanelHeaderActionDirective {}
  * own, focus it yourself once the panel is open; the component leaves focus
  * alone as soon as it is inside the panel. `lib/a11y/initial-focus.ts` holds
  * the reasoning for capturing the container rather than a control.
+ *
+ * WHERE IT RENDERS, AND WHY THAT DECIDES WHAT IT STACKS AGAINST
+ * ------------------------------------------------------------
+ * The panel renders through a CDK `OverlayRef` created WHEN IT OPENS (#322),
+ * which is what makes it stack with `TnDialog`, `tn-menu` and tooltips by open
+ * order: whatever attached last paints on top, in both directions. It used to
+ * append its overlay to `<body>` at construction time with a fixed `z-index`,
+ * and the CDK overlay container is a `<body>` child with the same one — so the
+ * winner was whichever element `<body>` happened to receive last, which follows
+ * nothing a caller can see. A panel opened FROM a dialog landed under that
+ * dialog's backdrop; on a browser with the popover API, where CDK puts its
+ * overlays in the top layer, no `z-index` on a `<body>` child could have won at
+ * all.
+ *
+ * Three things follow from being a CDK overlay, and each replaces something
+ * this component used to do for itself:
+ *
+ * - **Escape reaches the topmost overlay only**, through CDK's
+ *   `OverlayKeyboardDispatcher`, rather than through a `keydown` handler on the
+ *   panel that stopped propagation to keep a dialog underneath from closing too.
+ *   The panel therefore also closes on Escape pressed outside it, which is what
+ *   every other modal in this library does.
+ * - **A CDK dialog opened over an open panel hides the panel from assistive
+ *   technology.** CDK does this by sweeping the overlay container's SIBLINGS,
+ *   which no longer includes the panel, so the component tracks it — see
+ *   `dialogsAbove`.
+ * - **A consumer no longer re-homes the overlay or overrides its `z-index` and
+ *   `pointer-events`.** There is no `z-index` on it any more; the CDK pane it
+ *   lives in carries the stacking.
  */
 @Component({
   selector: 'tn-side-panel',
@@ -113,11 +184,50 @@ export class TnSidePanelComponent implements OnDestroy {
   private iconRegistry = inject(TnIconRegistryService);
   private document = inject(DOCUMENT);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
+  private dialog = inject(Dialog);
 
-  private overlayRef = viewChild.required<ElementRef>('overlay');
+  private overlayRef = viewChild.required<ElementRef<HTMLElement>>('overlay');
   private panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
   private contentRef = viewChild.required<ElementRef<HTMLElement>>('content');
   protected initialized = signal(false);
+
+  /**
+   * The CDK overlay currently hosting `overlayRef`'s element, or `null` while
+   * the panel is closed (#322).
+   *
+   * **Created on open and disposed once the close has settled**, not once for
+   * the component's lifetime. That is the whole mechanism: CDK decides stacking
+   * by the order overlays ATTACH — `showPopover()` order in the top layer, and
+   * `_updateStackingOrder()`'s move to the end of the container where the
+   * popover API is missing — so an overlay created when the component was built
+   * would stack by construction order, which for a panel rendered inside a
+   * dialog is exactly backwards.
+   *
+   * Non-null is therefore also the answer to "is this panel currently one of
+   * the overlays on screen", which is what `dialogsAbove` keys off.
+   */
+  private cdkOverlay: OverlayRef | null = null;
+
+  /** Escape handling for the overlay above, dropped with it. */
+  private keydowns: Subscription | null = null;
+
+  /**
+   * How many CDK dialogs have opened over this panel since it opened (#322).
+   *
+   * The panel is hidden from assistive technology while this is above zero,
+   * which is what CDK's own `Dialog` does for everything outside the overlay
+   * container — it sweeps the container's SIBLINGS, and a panel that now lives
+   * INSIDE the container is not one. A dialog already open when the panel opens
+   * is underneath it and is not counted; only dialogs that arrive afterwards
+   * are above.
+   *
+   * Counted rather than tracked as a boolean, and restored only when the last
+   * one closes, on the same reasoning as CDK's `_removeOpenDialog`: two stacked
+   * dialogs closing one at a time must not un-hide the panel while one is still
+   * covering it.
+   */
+  private dialogsAbove = signal(0);
 
   /**
    * Whether the content region carries the tab stop, its role and its name
@@ -131,10 +241,14 @@ export class TnSidePanelComponent implements OnDestroy {
    * answer is held true while the region has focus, and why `role` and
    * `aria-label` are gated on the same signal as `tabindex` rather than left on.
    *
-   * Read in `afterNextRender`, which is where the helper takes its first
-   * measurement — before the overlay is portaled to `<body>` below, which does
-   * not affect it: `.tn-side-panel__overlay` is `position: fixed; inset: 0`, so
-   * its size comes from the viewport rather than from its parent.
+   * The helper's FIRST measurement reads a closed panel, which is
+   * `display: none` since #322 and so reads as not overflowing. That is the
+   * right answer for a panel nobody can reach yet, and it does not stick: the
+   * helper's `ResizeObserver` fires when the overlay attaches and the region
+   * gets a box, which is the same instrument that already answered a viewport
+   * resize. Once open, `.tn-side-panel__overlay` is `position: fixed;
+   * inset: 0`, so the region's size comes from the viewport rather than from
+   * whichever CDK pane is hosting it.
    */
   protected contentKeyboardReachable = tnScrollableRegion(
     () => this.contentRef().nativeElement
@@ -267,6 +381,17 @@ export class TnSidePanelComponent implements OnDestroy {
     ariaLabelledby: this.resolvedAriaLabelledby,
   });
 
+  /**
+   * Whether the overlay is out of the accessibility tree: closed, or covered by
+   * a CDK dialog that opened over it (#322).
+   *
+   * The two are one attribute because they are one question, and rendering them
+   * from separate bindings would mean the second could clear the first.
+   */
+  protected hiddenFromAssistiveTech = computed(
+    () => !this.open() || this.dialogsAbove() > 0
+  );
+
   // Focus restoration
   private previouslyFocusedElement: HTMLElement | null = null;
 
@@ -275,11 +400,22 @@ export class TnSidePanelComponent implements OnDestroy {
    * above fire exactly once per change whether or not a transition ran. A field
    * initializer rather than the constructor, because it registers an `effect`
    * and so needs an injection context.
+   *
+   * It is also what times the overlay's release (#322). The CDK overlay has to
+   * outlive the CLOSE — disposing it puts the element back in this component's
+   * view, where it is `display: none`, so doing that the moment `open` goes
+   * false replaces the slide-out with a disappearance. "The close has settled"
+   * is exactly the question this helper already answers, for a transition that
+   * may never fire.
    */
-  private lifecycle = tnTransitionLifecycle(
-    this.open,
-    (open) => (open ? this.opened.emit() : this.closed.emit())
-  );
+  private lifecycle = tnTransitionLifecycle(this.open, (open) => {
+    if (open) {
+      this.opened.emit();
+      return;
+    }
+    this.releaseOverlay();
+    this.closed.emit();
+  });
 
   constructor() {
     this.registerMdiIcons();
@@ -308,10 +444,105 @@ export class TnSidePanelComponent implements OnDestroy {
       }
     });
 
-    afterNextRender(() => {
-      this.document.body.appendChild(this.overlayRef().nativeElement);
-      this.initialized.set(true);
+    // Hosts the overlay in a CDK overlay while the panel is open (#322). The
+    // element it moves is the one this component renders, so the projected
+    // content, the view queries and the bindings on it all survive the move —
+    // which a `TemplatePortal` would not give, since detaching one destroys the
+    // view and takes the caller's content with it.
+    effect(() => {
+      if (this.open()) {
+        this.showOverlay();
+      } else {
+        this.overlayRef().nativeElement.classList.remove(TN_SIDE_PANEL_OPEN_CLASS);
+      }
     });
+
+    // A dialog opened while this panel is on screen is above it, because CDK
+    // stacks by attach order — so it covers the panel, and the panel leaves the
+    // accessibility tree for as long as it does. Dialogs already open when the
+    // panel opens are underneath it and are not counted: `cdkOverlay` is null
+    // until the panel attaches.
+    this.dialog.afterOpened.pipe(takeUntilDestroyed()).subscribe((ref) => {
+      if (!this.cdkOverlay) {
+        return;
+      }
+      this.dialogsAbove.update((count) => count + 1);
+      ref.closed
+        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.dialogsAbove.update((count) => Math.max(0, count - 1)));
+    });
+
+    afterNextRender(() => this.initialized.set(true));
+  }
+
+  /**
+   * Put the overlay on screen, in a CDK overlay created now (#322).
+   *
+   * The three steps are ordered, and the order is the reason this is not two
+   * bindings:
+   *
+   * 1. **Attach**, which is what fixes where the panel sits in the stack.
+   * 2. **Read layout**, which forces the browser to compute the panel's closed
+   *    position in its new home. Without it the attach and the open class land
+   *    in one style update, the browser has no "before" to transition from, and
+   *    the panel appears rather than slides. A deliberate synchronous reflow,
+   *    and the only one: it happens once per open.
+   * 3. **Open**, which is the change the transition runs on.
+   *
+   * Re-entrant on purpose. A panel reopened while its close is still animating
+   * keeps the overlay it already has — the stack has not changed under it, and
+   * `tnTransitionLifecycle` has already cancelled the close that would have
+   * released it.
+   */
+  private showOverlay(): void {
+    const element = this.overlayRef().nativeElement;
+
+    if (!this.cdkOverlay) {
+      this.cdkOverlay = createOverlayRef(this.injector, {
+        positionStrategy: createGlobalPositionStrategy(this.injector),
+        // The panel is `position: fixed` and fills the viewport, so there is
+        // nothing to reposition or block when the page scrolls.
+        scrollStrategy: createNoopScrollStrategy(),
+        // The panel draws its own backdrop inside the overlay, because it is
+        // the thing that fades with the panel.
+        hasBackdrop: false,
+        // Names the pane, the same way `TnDialog` names its own
+        // `tn-dialog-panel` — it is how anything looking at the overlay
+        // container tells one of these apart from a dialog or a menu.
+        panelClass: 'tn-side-panel-pane',
+      });
+      this.cdkOverlay.attach(new DomPortal(element));
+      element.classList.add(TN_SIDE_PANEL_ATTACHED_CLASS);
+
+      // Escape, from CDK's keyboard dispatcher, which delivers it to the
+      // TOPMOST attached overlay and nothing else. That is what keeps a dialog
+      // underneath this panel from closing on the same keystroke, and it works
+      // in the other direction too — a dialog raised from the panel takes the
+      // key instead, which a handler on this element could not have known.
+      this.keydowns = this.cdkOverlay
+        .keydownEvents()
+        .subscribe((event) => this.onOverlayKeydown(event));
+    }
+
+    element.getBoundingClientRect();
+    element.classList.add(TN_SIDE_PANEL_OPEN_CLASS);
+  }
+
+  /**
+   * Give the CDK overlay back, once the close has finished animating.
+   *
+   * Disposing rather than detaching, so that the next open builds a new overlay
+   * and takes a new place in the stack — see `cdkOverlay`. It restores the
+   * element to this component's own view, where `display: none` keeps it out of
+   * the way until then.
+   */
+  private releaseOverlay(): void {
+    this.keydowns?.unsubscribe();
+    this.keydowns = null;
+    this.cdkOverlay?.dispose();
+    this.cdkOverlay = null;
+    this.dialogsAbove.set(0);
+    this.overlayRef().nativeElement.classList.remove(TN_SIDE_PANEL_ATTACHED_CLASS);
   }
 
   ngOnDestroy(): void {
@@ -330,6 +561,11 @@ export class TnSidePanelComponent implements OnDestroy {
     // in and back to a trigger they left minutes ago. A no-op after an
     // ordinary close either way, which clears `previouslyFocusedElement`.
     const heldFocus = overlay.contains(this.document.activeElement);
+    // Released BEFORE the removal, and unconditionally: a panel destroyed while
+    // open still holds a CDK overlay, and disposing it is what takes the pane
+    // out of the overlay container. The element itself comes back here first,
+    // which is what `remove()` below then takes out of the document.
+    this.releaseOverlay();
     overlay.remove();
 
     if (heldFocus) {
@@ -359,9 +595,21 @@ export class TnSidePanelComponent implements OnDestroy {
     }
   }
 
-  protected onKeydown(event: KeyboardEvent): void {
+  /**
+   * Escape, delivered by CDK's `OverlayKeyboardDispatcher` (#322).
+   *
+   * It arrives only while this panel is the topmost attached overlay, so
+   * nothing here has to decide whether the key was meant for something above or
+   * below — which is what the `stopPropagation` this replaced was standing in
+   * for, and it could only ever guard the direction it knew about.
+   *
+   * `preventDefault` rather than `stopPropagation`, matching CDK's own
+   * `DialogRef`: the key has already been routed, and swallowing it would hide
+   * it from a consumer listening at the document for their own reasons.
+   */
+  private onOverlayKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape' && this.closeOnEscape() && this.open()) {
-      event.stopPropagation();
+      event.preventDefault();
       this.dismiss();
     }
   }

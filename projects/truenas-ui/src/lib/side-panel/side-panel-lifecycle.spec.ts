@@ -70,7 +70,8 @@ describe('TnSidePanelComponent lifecycle outputs', () => {
   });
 
   afterEach(() => {
-    // Destroys the portaled overlay this suite appended to `document.body`.
+    // Takes down the overlay, including the CDK overlay hosting it if a test
+    // in this suite left the panel open.
     panel.destroy();
     warn.mockRestore();
     jest.useRealTimers();

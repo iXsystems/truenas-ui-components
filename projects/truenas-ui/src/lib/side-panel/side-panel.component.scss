@@ -1,14 +1,27 @@
-// Host is just an invisible anchor; the overlay is portaled to body
+// Host is just an invisible anchor; the overlay is portaled into a CDK overlay
 :host {
   display: contents;
 }
 
-// Overlay wrapper (always portaled to document.body)
+// Overlay wrapper. Rendered only while it is hosted in a CDK overlay, which is
+// only while the panel is open or closing (#322) — the rest of the time it sits
+// back inside `<tn-side-panel>`, where a consumer's `transform` on any ancestor
+// would make `position: fixed` resolve against that box rather than the
+// viewport and paint the off-screen panel beside it.
+//
+// NO `z-index`, deliberately. The CDK pane this lives in carries the stacking,
+// and by open order; a `z-index` here competed with `.cdk-overlay-container`'s
+// for as long as the overlay was a `<body>` child, which is the bug #322 fixed
+// and the reason consumers were overriding this rule.
 .tn-side-panel__overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  display: none;
   pointer-events: none;
+
+  &--attached {
+    display: block;
+  }
 
   &--open {
     pointer-events: auto;

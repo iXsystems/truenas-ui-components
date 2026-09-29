@@ -840,7 +840,8 @@ export const LongPath: Story = {
   }),
   // Wrapping is layout, which jsdom cannot do — the guard has to be in a browser.
   play: async () => {
-    // The panel is portaled to <body>, so it is out of `canvasElement`.
+    // An open panel is portaled into a CDK overlay, so it is out of
+    // `canvasElement`.
     const content = document.querySelector('.tn-side-panel__content') as HTMLElement;
     await expect(content.scrollWidth).toBeLessThanOrEqual(content.clientWidth);
   },

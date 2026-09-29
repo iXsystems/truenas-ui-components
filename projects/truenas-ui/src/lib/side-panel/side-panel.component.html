@@ -1,5 +1,8 @@
 <!--
-  Overlay wrapper: portaled to document.body.
+  Overlay wrapper: moved into a CDK overlay while the panel is open (#322), and
+  back here — `display: none` — while it is not. `--open` and `--attached` are
+  applied by the component rather than bound, because both have to land in a
+  fixed order around the move; see the constants in `side-panel.component.ts`.
 
   A CLOSED panel is `inert` as well as `aria-hidden` (#214). It stays in the DOM
   and keeps its close button and its projected content, so `aria-hidden` alone
@@ -15,6 +18,10 @@
   heading. `resolvedAriaLabel` is `null` when the panel is named by a heading or
   an IDREF and the caller passed no `ariaLabel` of their own — an explicit one is
   always emitted, so that a dangling IDREF cannot leave the panel unnamed.
+
+  `aria-hidden` is `hiddenFromAssistiveTech` rather than `!open()` because a
+  dialog opened OVER the panel hides it too (#322) — the panel is still open
+  underneath, which is why the other three stay on `open()`.
 -->
 <div
   #overlay
@@ -24,11 +31,10 @@
   [attr.data-tn-panel]="panelId"
   [tnTestId]="testId()"
   [class.tn-side-panel__overlay--initialized]="initialized()"
-  [class.tn-side-panel__overlay--open]="open()"
   [attr.aria-modal]="open() ? 'true' : null"
   [attr.aria-labelledby]="open() ? resolvedAriaLabelledby() : null"
   [attr.aria-label]="open() ? resolvedAriaLabel() : null"
-  [attr.aria-hidden]="!open() ? 'true' : null"
+  [attr.aria-hidden]="hiddenFromAssistiveTech() ? 'true' : null"
   [attr.inert]="open() ? null : ''">
 
   <!-- Backdrop -->
@@ -47,6 +53,10 @@
     nothing (#227). `tabindex="-1"` is what makes this element the target it
     focuses — see `../a11y/initial-focus.ts` for why the container and not the
     first control inside it.
+
+    No `(keydown)` here since #322: Escape arrives through CDK's overlay
+    keyboard dispatcher, which knows which overlay is on top and this element
+    does not.
   -->
   <div
     #panel
@@ -54,8 +64,7 @@
     tabindex="-1"
     cdkTrapFocus
     [style.width]="width()"
-    (transitionend)="onTransitionEnd($event)"
-    (keydown)="onKeydown($event)">
+    (transitionend)="onTransitionEnd($event)">
 
     <!-- Header -->
     <header class="tn-side-panel__header">
