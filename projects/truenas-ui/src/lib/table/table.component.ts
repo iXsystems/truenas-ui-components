@@ -968,7 +968,9 @@ export class TnTableComponent<T = unknown> implements OnInit {
     this.initialized = true;
 
     this.destroyRef.onDestroy(() => {
-      this.clearSelection();
+      // Not `clearSelection()`: that emits, and `selectionChange` is already torn down
+      // here, which warns NG0953. Nothing is left to receive it either way.
+      this.resetSelectionState();
       this.resizeObserver?.disconnect();
     });
   }
@@ -1539,10 +1541,20 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * the next reconcile.
    */
   clearSelection(): void {
+    this.resetSelectionState();
+    this.emitSelectionIfChanged();
+  }
+
+  /**
+   * Drops the selection state and tells nobody. Only teardown wants this: by the time
+   * the `onDestroy` hook runs, `selectionChange` is an `OutputRef` Angular has already
+   * destroyed, and emitting on it warns NG0953 in dev mode. Every live path wants
+   * {@link clearSelection}, because a consumer mirroring the selection has to hear it.
+   */
+  private resetSelectionState(): void {
     this.selection.clear();
     this.selectedByKey.clear();
     this.selectionCount.set(0);
-    this.emitSelectionIfChanged();
   }
 
   /** Re-applies the retained selection to the rows currently on screen. */
