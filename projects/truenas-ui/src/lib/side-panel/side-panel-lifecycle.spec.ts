@@ -1,5 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnSidePanelComponent } from './side-panel.component';
@@ -49,14 +47,13 @@ describe('TnSidePanelComponent lifecycle outputs', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TnSidePanelComponent],
-      // The panel's icon registry fetches the sprite config over HTTP. The
-      // testing backend answers nothing and is never flushed here, which is the
-      // whole intent: no icon in this suite is asserted on, and the request
-      // must simply not reach the network. `fakeAsync` used to enforce that on
-      // its own by refusing a real XHR outright ("Cannot make XHRs from within
-      // a fake async test"); Jest's fake timers do not, so the testing backend
-      // is now the only thing standing between this suite and the network.
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      // The panel's icon registry fetches the sprite config over HTTP, and
+      // nothing here stubs it: `setup-jest.ts` gives every spec an HttpBackend
+      // that fails a request rather than making one (#326). No icon in this
+      // suite is asserted on, so a failed request is all this suite needs —
+      // what it must not do is reach the network, which `fakeAsync` used to
+      // enforce on its own ("Cannot make XHRs from within a fake async test")
+      // and Jest's fake timers do not.
     }).compileComponents();
 
     // Every fixture here is untitled and unlabelled, and #214 makes an unnamed

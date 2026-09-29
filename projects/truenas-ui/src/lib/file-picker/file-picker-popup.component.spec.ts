@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -48,8 +47,7 @@ describe('TnFilePickerPopupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TnFilePickerPopupComponent, NoopAnimationsModule, FileSizePipe],
-      providers: [provideHttpClient()]
+      imports: [TnFilePickerPopupComponent, NoopAnimationsModule, FileSizePipe]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TnFilePickerPopupComponent);

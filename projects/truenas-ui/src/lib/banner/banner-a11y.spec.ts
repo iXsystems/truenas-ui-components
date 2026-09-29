@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnBannerComponent } from './banner.component';
@@ -27,7 +26,6 @@ describe('tn-banner accessibility (#194)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TnBannerComponent],
-      providers: [provideHttpClient()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TnBannerComponent);

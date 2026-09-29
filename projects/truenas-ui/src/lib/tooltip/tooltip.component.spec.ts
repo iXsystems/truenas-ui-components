@@ -1,5 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { hasInteractiveContent, plainTextMessage } from './interactive-content';
@@ -61,8 +59,8 @@ describe('TnTooltipComponent sticky mode', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TnTooltipComponent],
-      // The dismiss button renders a tn-icon, which loads the sprite config over HTTP.
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      // The dismiss button renders a tn-icon, which loads the sprite config
+      // over HTTP — answered by setup-jest.ts's non-network backend (#326).
     });
   });
 
@@ -226,7 +224,6 @@ describe('hasInteractiveContent', () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
         imports: [TnTooltipComponent],
-        providers: [provideHttpClient(), provideHttpClientTesting()],
       });
     });
 

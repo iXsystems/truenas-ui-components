@@ -1,7 +1,5 @@
 import { FocusMonitor } from '@angular/cdk/a11y';
 import { OverlayRef } from '@angular/cdk/overlay';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -80,10 +78,10 @@ describe('TnTooltipDirective sticky mode', () => {
   let sideHost: HTMLButtonElement;
 
   beforeEach(() => {
-    // The dismiss button renders a tn-icon, whose sprite loader would otherwise fire a real XHR.
+    // The dismiss button renders a tn-icon, whose sprite loader would fire a
+    // real XHR were setup-jest.ts not stubbing the backend for every spec (#326).
     TestBed.configureTestingModule({
       imports: [HostComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
