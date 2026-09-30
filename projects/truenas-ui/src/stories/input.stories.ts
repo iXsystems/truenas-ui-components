@@ -147,7 +147,11 @@ export const WithError: Story = {
   render: (args) => ({
     props: {
       ...args,
-      emailControl: new FormControl('invalid-email', { 
+      // The disabled state is built into the control rather than bound with
+      // [disabled] on the host: an element carrying both [disabled] and
+      // [formControl] also sets FormControlDirective's own disabled input,
+      // whose setter logs Angular's reactive-forms warning on every set.
+      emailControl: new FormControl({ value: 'invalid-email', disabled: args.disabled ?? false }, {
         validators: [(control) => {
           const email = control.value;
           if (!email || !email.includes('@')) {
@@ -158,14 +162,13 @@ export const WithError: Story = {
       })
     },
     template: `
-      <tn-form-field 
+      <tn-form-field
         label="Email Address"
         hint="Must be a valid email format"
         [required]="true">
         <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
-          [disabled]="disabled"
           [testId]="testId"
           [formControl]="emailControl">
         </tn-input>
@@ -193,14 +196,13 @@ export const Password: Story = {
   render: (args) => ({
     props: {
       ...args,
-      passwordControl: new FormControl('foobar'),
+      passwordControl: new FormControl({ value: 'foobar', disabled: args.disabled ?? false }),
     },
     template: `
       <tn-form-field label="Password">
         <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
-          [disabled]="disabled"
           [testId]="testId"
           [showPasswordToggle]="showPasswordToggle"
           [prefixIcon]="prefixIcon"
@@ -232,7 +234,10 @@ export const NumberInteger: Story = {
       ...args,
       // Range enforcement is the consumer's job; these validators work because
       // tn-input emits a real number (not a string) in number mode.
-      portControl: new FormControl<number | null>(443, [Validators.min(1), Validators.max(65535)]),
+      portControl: new FormControl<number | null>(
+        { value: 443, disabled: args.disabled ?? false },
+        [Validators.min(1), Validators.max(65535)],
+      ),
     },
     template: `
       <tn-form-field
@@ -241,7 +246,6 @@ export const NumberInteger: Story = {
         <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
-          [disabled]="disabled"
           [testId]="testId"
           [allowDecimals]="allowDecimals"
           [formControl]="portControl">
@@ -270,7 +274,10 @@ export const NumberDecimal: Story = {
     props: {
       ...args,
       // Decimal mode (the default) accepts a single '.' and emits via parseFloat.
-      weightControl: new FormControl<number | null>(1.5, [Validators.min(0)]),
+      weightControl: new FormControl<number | null>(
+        { value: 1.5, disabled: args.disabled ?? false },
+        [Validators.min(0)],
+      ),
     },
     template: `
       <tn-form-field
@@ -279,7 +286,6 @@ export const NumberDecimal: Story = {
         <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
-          [disabled]="disabled"
           [testId]="testId"
           [allowDecimals]="allowDecimals"
           [formControl]="weightControl">
@@ -321,7 +327,10 @@ export const Size: Story = {
     props: {
       ...args,
       // The model is bytes; 200 TiB shown below as the initial human-readable value.
-      sizeControl: new FormControl<number | null>(200 * 1024 ** 4, [Validators.min(0)]),
+      sizeControl: new FormControl<number | null>(
+        { value: 200 * 1024 ** 4, disabled: args.disabled ?? false },
+        [Validators.min(0)],
+      ),
     },
     template: `
       <tn-form-field
@@ -330,7 +339,6 @@ export const Size: Story = {
         <tn-input
           [inputType]="inputType"
           [placeholder]="placeholder"
-          [disabled]="disabled"
           [testId]="testId"
           [sizeStandard]="sizeStandard"
           [sizeDefaultUnit]="sizeDefaultUnit"

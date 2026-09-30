@@ -116,7 +116,11 @@ export const Default: Story = {
     // through the CVA, not optionSelected) — bind one and mirror it into a
     // signal so the story can show what actually landed.
     props: (() => {
-      const control = new FormControl<string | null>(null);
+      // The disabled state is built into the control rather than bound with
+      // [disabled] on the host: an element carrying both [disabled] and
+      // [formControl] also sets FormControlDirective's own disabled input,
+      // whose setter logs Angular's reactive-forms warning on every set.
+      const control = new FormControl<string | null>({ value: null, disabled: args.disabled ?? false });
       const committed = signal<string | null>(control.value);
       control.valueChanges.subscribe((value) => committed.set(value));
       return {
@@ -133,7 +137,6 @@ export const Default: Story = {
         <tn-autocomplete
           [options]="options"
           [placeholder]="placeholder"
-          [disabled]="disabled"
           [requireSelection]="requireSelection"
           [allowCustomValue]="allowCustomValue"
           [loading]="loading"

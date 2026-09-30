@@ -47,7 +47,14 @@ type Story = StoryObj<TnChipInputComponent>;
 export const Default: Story = {
   render: (args) => ({
     props: (() => {
-      const control = new FormControl<string[]>(['TypeScript', 'Angular']);
+      // The disabled state is built into the control rather than bound with
+      // [disabled] on the host: an element carrying both [disabled] and
+      // [formControl] also sets FormControlDirective's own disabled input,
+      // whose setter logs Angular's reactive-forms warning on every set.
+      const control = new FormControl<string[]>({
+        value: ['TypeScript', 'Angular'],
+        disabled: args.disabled ?? false,
+      });
       const committed = signal<string[]>(control.value ?? []);
       control.valueChanges.subscribe((value) => committed.set(value ?? []));
       return { ...args, control, committed, suggestions: frameworks };
@@ -60,7 +67,6 @@ export const Default: Story = {
           [formControl]="control"
           [suggestions]="suggestions"
           [placeholder]="placeholder"
-          [disabled]="disabled"
           [addOnBlur]="addOnBlur"
           [allowDuplicates]="allowDuplicates"
           [maxChips]="maxChips"
