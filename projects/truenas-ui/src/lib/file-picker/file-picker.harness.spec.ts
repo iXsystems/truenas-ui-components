@@ -17,9 +17,13 @@ import { TnFilePickerHarness } from './file-picker.harness';
       [multiSelect]="multiSelect()"
       [allowManualInput]="allowManualInput()"
       [placeholder]="placeholder()"
-      [disabled]="disabled()"
       [testId]="testId()"
       [formControl]="control" />
+
+    <!-- The disabled input gets its own form-directive-free host: [disabled] beside
+         [formControl] also binds FormControlDirective's own disabled input, which logs
+         Angular's reactive-forms warning on every set in dev mode. -->
+    <tn-file-picker testId="plain" placeholder="Plain picker" [disabled]="disabled()" />
   `
 })
 class TestHostComponent {
@@ -142,7 +146,9 @@ describe('TnFilePickerHarness', () => {
 
     it('returns true when disabled via input', async () => {
       hostComponent.disabled.set(true);
-      const picker = await loader.getHarness(TnFilePickerHarness);
+      const picker = await loader.getHarness(
+        TnFilePickerHarness.with({ testId: 'file-picker-plain' })
+      );
       expect(await picker.isDisabled()).toBe(true);
     });
 
@@ -176,7 +182,9 @@ describe('TnFilePickerHarness', () => {
 
     it('does not open while disabled', async () => {
       hostComponent.disabled.set(true);
-      const picker = await loader.getHarness(TnFilePickerHarness);
+      const picker = await loader.getHarness(
+        TnFilePickerHarness.with({ testId: 'file-picker-plain' })
+      );
       await picker.open();
       expect(await picker.isOpen()).toBe(false);
     });
