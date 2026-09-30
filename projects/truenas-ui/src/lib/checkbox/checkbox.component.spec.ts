@@ -13,7 +13,6 @@ import { TnCheckboxComponent, TnCheckboxLabelDirective } from './checkbox.compon
     <tn-checkbox
       testId="main"
       [label]="label()"
-      [disabled]="disabled()"
       [required]="required()"
       [indeterminate]="indeterminate()"
       [error]="error()"
@@ -25,6 +24,11 @@ import { TnCheckboxComponent, TnCheckboxLabelDirective } from './checkbox.compon
     </tn-checkbox>
 
     <tn-checkbox testId="listened" [label]="label()" (change)="changeCount = changeCount + 1" />
+
+    <!-- The disabled input gets its own form-directive-free host: [disabled] beside
+         [formControl] also binds FormControlDirective's own disabled input, which logs
+         Angular's reactive-forms warning on every set in dev mode. -->
+    <tn-checkbox testId="plain" label="Plain" [disabled]="disabled()" />
   `
 })
 class TestHostComponent {
@@ -133,7 +137,8 @@ describe('TnCheckboxComponent', () => {
       host.disabled.set(true);
       fixture.detectChanges();
 
-      expect(getWrapper().classList.contains('tn-checkbox--disabled')).toBe(true);
+      expect(getWrapper('checkbox-plain').classList.contains('tn-checkbox--disabled')).toBe(true);
+      expect(getInput('checkbox-plain').disabled).toBe(true);
     });
 
     it('should add error class', () => {

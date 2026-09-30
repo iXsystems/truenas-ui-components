@@ -30,7 +30,6 @@ const countryOptions = countries.map((c) => ({ label: c.name, value: c.code }));
     <tn-autocomplete
       [options]="options()"
       [placeholder]="placeholder()"
-      [disabled]="disabled()"
       [requireSelection]="requireSelection()"
       [maxResults]="maxResults()"
       [formControl]="control"
@@ -40,11 +39,26 @@ const countryOptions = countries.map((c) => ({ label: c.name, value: c.code }));
 class TestHostComponent {
   options = signal(countryOptions);
   placeholder = signal('Search...');
-  disabled = signal(false);
   requireSelection = signal(false);
   maxResults = signal(100);
   control = new FormControl<string | null>(null);
   selected: TnAutocompleteOption<string> | null = null;
+}
+
+// The `disabled` input gets its own form-directive-free host: [disabled] beside
+// [formControl] also binds FormControlDirective's `disabled` input, which logs
+// Angular's reactive-forms warning on every set in dev mode.
+@Component({
+  selector: 'tn-disabled-input-test-host',
+  standalone: true,
+  imports: [TnAutocompleteComponent],
+  template: `
+    <tn-autocomplete [options]="options" [disabled]="disabled()" />
+  `
+})
+class DisabledInputHostComponent {
+  options = countryOptions;
+  disabled = signal(true);
 }
 
 @Component({
@@ -259,10 +273,17 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should not open when disabled', () => {
-      host.disabled.set(true);
-      fixture.detectChanges();
+      const dFixture = TestBed.createComponent(DisabledInputHostComponent);
+      dFixture.detectChanges();
 
-      focusInput();
+      const input = dFixture.nativeElement.querySelector(
+        '.tn-autocomplete__input'
+      ) as HTMLInputElement;
+      expect(input.disabled).toBe(true);
+
+      input.dispatchEvent(new Event('focus'));
+      dFixture.detectChanges();
+
       expect(getDropdown()).toBeNull();
     });
   });
@@ -411,6 +432,19 @@ describe('TnAutocompleteComponent', () => {
       host.control.reset();
       fixture.detectChanges();
       expect(getInput().value).toBe('');
+    });
+
+    it('should disable and re-enable the input through the form control', () => {
+      host.control.disable();
+      fixture.detectChanges();
+      expect(getInput().disabled).toBe(true);
+
+      focusInput();
+      expect(getDropdown()).toBeNull();
+
+      host.control.enable();
+      fixture.detectChanges();
+      expect(getInput().disabled).toBe(false);
     });
   });
 

@@ -18,10 +18,14 @@ import { TnFileInputHarness } from './file-input.harness';
       [buttonLabel]="buttonLabel()"
       [accept]="accept()"
       [multiple]="multiple()"
-      [disabled]="disabled()"
       [showFileName]="showFileName()"
       [formControl]="control"
       (selectionChange)="onSelectionChange($event)" />
+
+    <!-- The disabled input gets its own form-directive-free host: [disabled] beside
+         [formControl] also binds FormControlDirective's own disabled input, which logs
+         Angular's reactive-forms warning on every set in dev mode. -->
+    <tn-file-input testId="plain" buttonLabel="Plain" [disabled]="disabled()" />
   `
 })
 class TestHostComponent {
@@ -50,14 +54,16 @@ describe('TnFileInputComponent', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let host: TestHostComponent;
 
-  const getContainer = (): HTMLElement =>
-    fixture.nativeElement.querySelector('[data-testid="file-input-main"]');
+  const getContainer = (testId = 'file-input-main'): HTMLElement =>
+    fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
-  const getButton = (): HTMLButtonElement =>
-    getContainer().querySelector('.tn-file-input__button .storybook-button') as HTMLButtonElement;
+  const getButton = (testId?: string): HTMLButtonElement =>
+    getContainer(testId).querySelector(
+      '.tn-file-input__button .storybook-button'
+    ) as HTMLButtonElement;
 
-  const getNative = (): HTMLInputElement =>
-    getContainer().querySelector('input[type="file"]') as HTMLInputElement;
+  const getNative = (testId?: string): HTMLInputElement =>
+    getContainer(testId).querySelector('input[type="file"]') as HTMLInputElement;
 
   const getFilename = (): HTMLElement | null =>
     getContainer().querySelector('.tn-file-input__filename');
@@ -125,11 +131,11 @@ describe('TnFileInputComponent', () => {
   it('does not open the dialog when disabled', () => {
     host.disabled.set(true);
     fixture.detectChanges();
-    const spy = jest.spyOn(getNative(), 'click');
-    getButton().click();
+    const spy = jest.spyOn(getNative('file-input-plain'), 'click');
+    getButton('file-input-plain').click();
     expect(spy).not.toHaveBeenCalled();
-    expect(getButton().disabled).toBe(true);
-    expect(getNative().disabled).toBe(true);
+    expect(getButton('file-input-plain').disabled).toBe(true);
+    expect(getNative('file-input-plain').disabled).toBe(true);
   });
 
   it('emits a single File and updates the form value on selection', () => {
@@ -214,8 +220,22 @@ describe('TnFileInputComponent', () => {
     it('reports disabled state', async () => {
       host.disabled.set(true);
       fixture.detectChanges();
-      const harness = await loader.getHarness(TnFileInputHarness);
+      const harness = await loader.getHarness(
+        TnFileInputHarness.with({ testId: 'file-input-plain' })
+      );
       expect(await harness.isDisabled()).toBe(true);
+    });
+
+    it('reports the form control disabled state', async () => {
+      const harness = await loader.getHarness(TnFileInputHarness);
+
+      host.control.disable();
+      fixture.detectChanges();
+      expect(await harness.isDisabled()).toBe(true);
+
+      host.control.enable();
+      fixture.detectChanges();
+      expect(await harness.isDisabled()).toBe(false);
     });
 
     it('finds by testId and reads it back', async () => {

@@ -19,12 +19,16 @@ import { TnChipInputHarness } from './chip-input.harness';
       testId="tags"
       [formControl]="control"
       [suggestions]="suggestions()"
-      [disabled]="disabled()"
       [allowDuplicates]="allowDuplicates()"
       [allowCustomValue]="allowCustomValue()"
       [addOnBlur]="addOnBlur()"
       [separatorKeys]="separatorKeys()"
       [maxChips]="maxChips()" />
+
+    <!-- The disabled input gets its own form-directive-free host: [disabled] beside
+         [formControl] also binds FormControlDirective's own disabled input, which logs
+         Angular's reactive-forms warning on every set in dev mode. -->
+    <tn-chip-input testId="plain" placeholder="Plain chips" [disabled]="disabled()" />
   `,
 })
 class TestHostComponent {
@@ -208,9 +212,25 @@ describe('TnChipInputHarness', () => {
 
   it('reflects the disabled state', async () => {
     hostComponent.disabled.set(true);
-    const chipInput = await loader.getHarness(TnChipInputHarness);
+    const chipInput = await loader.getHarness(
+      TnChipInputHarness.with({ testId: 'chip-input-plain' })
+    );
 
     expect(await chipInput.isDisabled()).toBe(true);
+  });
+
+  it('reflects the form control disabled state', async () => {
+    const chipInput = await loader.getHarness(
+      TnChipInputHarness.with({ testId: 'chip-input-tags' })
+    );
+
+    hostComponent.control.disable();
+    fixture.detectChanges();
+    expect(await chipInput.isDisabled()).toBe(true);
+
+    hostComponent.control.enable();
+    fixture.detectChanges();
+    expect(await chipInput.isDisabled()).toBe(false);
   });
 });
 

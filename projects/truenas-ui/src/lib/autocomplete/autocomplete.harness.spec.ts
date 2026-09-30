@@ -18,11 +18,15 @@ type FruitOption = TnAutocompleteOption<string>;
     <tn-autocomplete
       [options]="options()"
       [placeholder]="placeholder()"
-      [disabled]="disabled()"
       [requireSelection]="requireSelection()"
       [filterFn]="customFilter()"
       [formControl]="control"
       (optionSelected)="handleSelection($event)" />
+
+    <!-- The disabled input gets its own form-directive-free host: [disabled] beside
+         [formControl] also binds FormControlDirective's own disabled input, which logs
+         Angular's reactive-forms warning on every set in dev mode. -->
+    <tn-autocomplete placeholder="Plain fruits" [options]="options()" [disabled]="disabled()" />
   `
 })
 class TestHostComponent {
@@ -99,8 +103,24 @@ describe('TnAutocompleteHarness', () => {
 
     it('should return true when disabled', async () => {
       hostComponent.disabled.set(true);
-      const ac = await loader.getHarness(TnAutocompleteHarness);
+      const ac = await loader.getHarness(
+        TnAutocompleteHarness.with({ placeholder: 'Plain fruits' })
+      );
       expect(await ac.isDisabled()).toBe(true);
+    });
+
+    it('should follow the form control disabled state', async () => {
+      const ac = await loader.getHarness(
+        TnAutocompleteHarness.with({ placeholder: 'Search fruits...' })
+      );
+
+      hostComponent.control.disable();
+      fixture.detectChanges();
+      expect(await ac.isDisabled()).toBe(true);
+
+      hostComponent.control.enable();
+      fixture.detectChanges();
+      expect(await ac.isDisabled()).toBe(false);
     });
   });
 

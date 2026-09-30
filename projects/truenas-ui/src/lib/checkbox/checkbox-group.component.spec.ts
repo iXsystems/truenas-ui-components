@@ -27,7 +27,6 @@ interface ObjectValue {
       [formControl]="control"
       [options]="options"
       [inline]="inline()"
-      [disabled]="disabled()"
       (change)="changes.push($event)" />
 
     <tn-checkbox-group
@@ -42,6 +41,15 @@ interface ObjectValue {
     </tn-form-field>
 
     <tn-checkbox-group testId="standalone-required" ariaLabel="Standalone" [required]="true" [options]="options" />
+
+    <!-- The disabled input gets its own form-directive-free host: [disabled] beside
+         [formControl] also binds FormControlDirective's own disabled input, which logs
+         Angular's reactive-forms warning on every set in dev mode. -->
+    <tn-checkbox-group
+      testId="plain"
+      ariaLabel="Plain"
+      [options]="options"
+      [disabled]="disabled()" />
   `,
 })
 class TestHostComponent {
@@ -180,7 +188,7 @@ describe('TnCheckboxGroupComponent', () => {
     host.disabled.set(true);
     fixture.detectChanges();
 
-    const group = await letters();
+    const group = await loader.getHarness(TnCheckboxGroupHarness.with({ ariaLabel: 'Plain' }));
     expect(await group.isDisabled()).toBe(true);
   });
 
@@ -303,7 +311,9 @@ describe('TnCheckboxGroupComponent', () => {
       host.disabled.set(true);
       fixture.detectChanges();
 
-      const root = fixture.nativeElement.querySelector('.tn-checkbox-group') as HTMLElement;
+      const root = fixture.nativeElement.querySelector(
+        '[data-testid="checkbox-group-plain"]'
+      ) as HTMLElement;
       expect(root.getAttribute('aria-disabled')).toBe('true');
     });
   });

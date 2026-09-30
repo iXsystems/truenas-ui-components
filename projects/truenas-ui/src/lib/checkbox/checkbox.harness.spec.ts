@@ -16,7 +16,6 @@ import { TnCheckboxHarness } from './checkbox.harness';
     <tn-checkbox
       testId="test"
       [label]="label()"
-      [disabled]="disabled()"
       [required]="required()"
       [indeterminate]="indeterminate()"
       [error]="error()"
@@ -32,6 +31,11 @@ import { TnCheckboxHarness } from './checkbox.harness';
     <tn-checkbox testId="terms" [formControl]="termsControl">
       <span tnCheckboxLabel>I agree to the <a href="/terms">Terms</a></span>
     </tn-checkbox>
+
+    <!-- The disabled input gets its own form-directive-free host: [disabled] beside
+         [formControl] also binds FormControlDirective's own disabled input, which logs
+         Angular's reactive-forms warning on every set in dev mode. -->
+    <tn-checkbox testId="plain" label="Plain checkbox" [disabled]="disabled()" />
   `
 })
 class TestHostComponent {
@@ -192,7 +196,7 @@ describe('TnCheckboxHarness', () => {
     it('should return true when disabled via input', async () => {
       hostComponent.disabled.set(true);
       const checkbox = await loader.getHarness(
-        TnCheckboxHarness.with({ testId: 'checkbox-test' })
+        TnCheckboxHarness.with({ testId: 'checkbox-plain' })
       );
       expect(await checkbox.isDisabled()).toBe(true);
     });
