@@ -111,15 +111,22 @@ describe('tn-file-picker-popup accessibility (#337)', () => {
      * would otherwise go unmeasured while these cases stayed green. See
      * `scss-testing.ts` for why that half matters.
      *
-     * A rule is one of ours when its selector mentions `.zfs-badge` and it
-     * declares one of the four colour properties. That leaves out the
-     * `prefers-contrast: high` block, which only sets `border`: it changes no
-     * text and no surface, so there is nothing to measure.
+     * A rule is one of ours when its selector mentions `.zfs-badge`, it is not
+     * inside an `@media` block, and it declares one of the four colour
+     * properties.
+     *
+     * The `@media` exclusion is what keeps the `prefers-contrast: high` and
+     * `max-width` blocks out. Those are conditional surfaces — whether they
+     * render at all is the browser's answer, not something readable here — and
+     * `themePalettes` refuses a palette nested inside another block for the
+     * same reason. The cost is stated rather than hidden: a hue fill added
+     * INSIDE a media block would go unmeasured by these cases.
      */
     const PAINTS = ['color', 'background', 'background-color', 'border-color'];
 
     const painted = scssRules(readFileSync(POPUP_SCSS, 'utf8'), 'file-picker-popup.component.scss')
       .filter((rule) => flattenSelector(rule).includes('.zfs-badge'))
+      .filter((rule) => !flattenSelector(rule).includes('@media'))
       .filter((rule) => PAINTS.some((property) => rule.declarations.has(property)))
       .map((rule) => ({
         selector: flattenSelector(rule),
@@ -183,11 +190,14 @@ describe('tn-file-picker-popup accessibility (#337)', () => {
     // case titles name which rule each measurement came from.
     //
     // `normal`, not `large`: the badge is 0.625rem (10px), well under the
-    // 14pt-bold threshold, so 4.5:1 applies rather than 3:1. The per-type
-    // `border-color` is NOT measured here — a border is non-text content at
-    // 3:1 under WCAG 1.4.11, which is the floor those hue tokens are tuned
-    // for, and `semantic-status-contrast.spec.ts` is where the hue tokens
-    // themselves are held to their own claims.
+    // 14pt-bold threshold, so 4.5:1 applies rather than 3:1.
+    //
+    // The per-type `border-color` is NOT measured, and not because it would
+    // pass — it mostly would not (the stylesheet records the range). It is
+    // redundant colour-coding over the `DS`/`ZV`/`MP` text, so WCAG 1.4.11
+    // does not hold it to a ratio, and no spec in this repo measures
+    // `--tn-blue`/`--tn-green`/`--tn-orange` against anything. What these
+    // cases are for is the TEXT, which is the half that was failing.
     testEachPalette(measured, pairings, AA_MINIMUM.normal);
   });
 });

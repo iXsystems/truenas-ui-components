@@ -29,9 +29,10 @@ const fgVars = ['--tn-fg1', '--tn-fg2', '--tn-fg3', '--tn-fg4', '--tn-alt-fg1', 
  * was making — so a reader who scanned the grid instead of the prose still came
  * away with it.
  */
+const NON_TEXT_ROLE = 'Non-text (3:1)';
 const fgRoles: Record<string, string> = {
-  '--tn-fg3': 'Non-text (3:1)',
-  '--tn-fg4': 'Non-text (3:1)',
+  '--tn-fg3': NON_TEXT_ROLE,
+  '--tn-fg4': NON_TEXT_ROLE,
 };
 const bgVars = ['--tn-bg1', '--tn-bg2', '--tn-bg3', '--tn-alt-bg1', '--tn-alt-bg2'];
 const uiVars = ['--tn-primary', '--tn-primary-txt', '--tn-accent', '--tn-accent-txt', '--tn-topbar', '--tn-topbar-txt', '--tn-lines'];
@@ -39,31 +40,49 @@ const statusVars = ['--tn-red', '--tn-green', '--tn-yellow', '--tn-orange', '--t
 const statusTextVars = ['--tn-error-text'];
 
 /**
- * The class `parameters.a11y.context.exclude` names, put on the swatches that
- * render a NON-TEXT token as text on purpose. See `NON_TEXT_SAMPLE` below.
+ * WHY TWO STORIES EXCLUDE A SELECTOR FROM THE a11y SCAN
+ *
+ * Both of these stories render a colour as the literal string "Aa" so that it
+ * can be seen. That makes axe measure it as text and hold it to 4.5:1, which
+ * is the `color-contrast` violation the Storybook a11y run reported on
+ * API/Color Palette > Foregrounds and > FG × BG Matrix (#337). There is
+ * nothing to fix in either: a sample is not a recommendation, and both stories
+ * say so in their own prose.
+ *
+ * The two exclusions are deliberately different, because the two stories claim
+ * different things, and both are by SELECTOR rather than by turning
+ * `color-contrast` off for the story — so the rule stays live on the headings,
+ * the labels and the prose around the samples.
+ *
+ * `NON_TEXT_SWATCH` is for Foregrounds, which labels every swatch with the role
+ * the token has. The ones labelled "Text" are making a claim and are measured;
+ * the two labelled `NON_TEXT_ROLE` are not, and are excluded. Keyed off that
+ * exact string rather than off "has a `fgRoles` entry at all", so that giving a
+ * TEXT foreground a role label cannot quietly drop it from the scan.
+ *
+ * `COLOUR_SAMPLE` is for the matrix, where EVERY cell is excluded, because the
+ * story's own paragraph says every cell is a sample and only two columns of two
+ * rows carry any guarantee at all. Measured in `.tn-dark`, the browser run's
+ * default theme, five cells fail besides the ten in the two non-text rows:
+ * `--tn-alt-fg1` on `--tn-alt-bg2` is 3.34:1 and `--tn-fg3` on `--tn-alt-bg2`
+ * is 3.57:1 — neither pairing is one those tokens are tuned for, and the grid
+ * renders the full cross product on purpose.
+ *
+ * What is NOT given up by excluding the cells: the pairings that do carry a
+ * guarantee are measured in jest by `theme/text-fg-contrast.spec.ts` and
+ * `theme/text-token-surface-contrast.spec.ts`, in all nine palettes rather than
+ * in the one theme a browser run happens to load. The grid is documentation of
+ * those specs' subject, not a second copy of their guard.
  */
 const NON_TEXT_CLASS = 'tn-palette-non-text-sample';
+const SAMPLE_CLASS = 'tn-palette-colour-sample';
 
-/**
- * Why two stories exclude a selector from the a11y scan rather than being fixed.
- *
- * `--tn-fg3` and `--tn-fg4` are tuned to the 3:1 NON-TEXT minimum (see
- * `fgRoles` above, and #240). Both of these stories render every foreground as
- * the literal string "Aa" so the colour can be seen — which makes axe measure
- * them as text and hold them to 4.5:1, and `--tn-fg4` misses it in all nine
- * palettes (3.12:1 on `--tn-bg2` in `.tn-dark`), `--tn-fg3` in five. That is
- * the `color-contrast` violation the Storybook a11y run reported on
- * API/Color Palette > Foregrounds and > FG × BG Matrix (#337).
- *
- * There is nothing to fix: the swatch is a colour sample, not a text
- * recommendation, and both stories say so in their own prose. So the exclusion
- * is scoped to the samples of the two non-text tokens — by selector, not by
- * turning `color-contrast` off for the story — which leaves the rule live on
- * every other swatch, on the labels under them, and on the four foregrounds
- * that DO carry a text guarantee.
- */
-const NON_TEXT_SAMPLE = {
+const NON_TEXT_SWATCH = {
   a11y: { context: { exclude: [`.${NON_TEXT_CLASS}`] } },
+};
+
+const COLOUR_SAMPLE = {
+  a11y: { context: { exclude: [`.${SAMPLE_CLASS}`] } },
 };
 
 function swatchRow(varName: string, type: 'bg' | 'fg'): string {
@@ -77,10 +96,10 @@ function swatchRow(varName: string, type: 'bg' | 'fg'): string {
         </div>
       </div>`;
   }
-  // Keyed off `fgRoles` so the swatch excluded from the contrast scan is
-  // exactly the one labelled "Non-text (3:1)" underneath it, rather than a
-  // second list that can drift from the first.
-  const sampleClass = fgRoles[varName] ? ` class="${NON_TEXT_CLASS}"` : '';
+  // Compared against the role string, not merely tested for one: see
+  // `NON_TEXT_SWATCH`. A swatch labelled "Text" stays in the contrast scan
+  // however much else `fgRoles` comes to say about it.
+  const sampleClass = fgRoles[varName] === NON_TEXT_ROLE ? ` class="${NON_TEXT_CLASS}"` : '';
   return `
     <div style="display:flex; align-items:center; gap:12px; padding:8px 0;">
       <div style="width:48px; height:48px; border-radius:8px; border:1px solid var(--tn-lines); background:var(--tn-bg2); display:flex; align-items:center; justify-content:center;">
@@ -113,11 +132,11 @@ function section(title: string, vars: string[], type: 'bg' | 'fg'): string {
 function comboGrid(): string {
   const headers = bgVars.map(bg => `<th style="padding:8px; font-size:11px; color:var(--tn-fg2); font-weight:600;">${bg.replace('--tn-', '')}</th>`).join('');
   const rows = fgVars.map(fg => {
-    const sampleClass = fgRoles[fg] ? ` class="${NON_TEXT_CLASS}"` : '';
+    // Every cell, not only the non-text rows: see `COLOUR_SAMPLE`.
     const cells = bgVars.map(bg => `
       <td style="padding:4px;">
         <div style="background:var(${bg}); border-radius:6px; padding:8px; text-align:center; border:1px solid var(--tn-lines);">
-          <span${sampleClass} style="color:var(${fg}); font-size:13px; font-weight:600;">Aa</span>
+          <span class="${SAMPLE_CLASS}" style="color:var(${fg}); font-size:13px; font-weight:600;">Aa</span>
         </div>
       </td>`).join('');
     return `<tr>
@@ -146,7 +165,7 @@ export const Backgrounds: Story = {
 };
 
 export const Foregrounds: Story = {
-  parameters: NON_TEXT_SAMPLE,
+  parameters: NON_TEXT_SWATCH,
   render: () => ({
     template: section('Foreground Variables', fgVars, 'fg'),
   }),
@@ -171,7 +190,7 @@ export const StatusColors: Story = {
 
 export const Combinations: Story = {
   name: 'FG × BG Matrix',
-  parameters: NON_TEXT_SAMPLE,
+  parameters: COLOUR_SAMPLE,
   render: () => ({
     template: comboGrid(),
   }),

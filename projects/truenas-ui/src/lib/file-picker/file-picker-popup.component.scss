@@ -301,10 +301,18 @@ tn-table {
 // every File Picker story that lists a ZFS object (#337). Blue alone cleared
 // AA, and only in some palettes.
 //
-// So the hue moves to the border, which IS a 3:1 non-text use of those tokens,
-// and the text keeps the base `--tn-alt-fg2` on `--tn-alt-bg2` pairing that
-// `text-token-surface-contrast.spec.ts` already measures in all nine palettes.
-// The badges stay colour-coded; the two letters stay legible.
+// So the hue moves to the border and the text keeps the base `--tn-alt-fg2` on
+// `--tn-alt-bg2` pairing, which `text-token-surface-contrast.spec.ts` already
+// measures in all nine palettes.
+//
+// WHAT THE BORDER IS AND IS NOT. It is redundant colour-coding: the type is
+// carried by the `DS`/`ZV`/`MP` text, which is why WCAG 1.4.11 does not hold
+// the edge to 3:1 — and it would not clear it if it did. Measured against the
+// badge's own `--tn-alt-bg2`, `--tn-blue` is 1.65:1 in `.tn-dark` and
+// `--tn-orange` 2.97:1; across the nine palettes the three hues range
+// 1.48:1-6.67:1. So the border is a hint, not the distinction, and nothing
+// here depends on it being visible. `prefers-contrast: high` replaces it with
+// an `--tn-fg1` edge for exactly that reason, at the bottom of this file.
 .zfs-badge {
   display: inline-flex;
   align-items: center;
@@ -481,8 +489,20 @@ tn-table {
   // That is the intent: under `prefers-contrast: high` a definite edge against
   // the row matters more than the type's hue, and the two letters still say
   // which type it is.
+  //
+  // THE TYPE SELECTORS ARE LISTED BECAUSE SPECIFICITY DECIDES THIS, NOT THE
+  // MEDIA QUERY. A media block adds no specificity, so a bare `.zfs-badge`
+  // here is (0,1,0) and loses to `.zfs-badge.zfs-badge-dataset` at (0,2,0) —
+  // and every badge the template emits is typed, so the override would never
+  // render on any of them. Matching the type selectors makes these (0,2,0) as
+  // well, and later in the file, which is what wins.
   .zfs-badge {
-    border: 1px solid var(--tn-fg1);
+    &,
+    &.zfs-badge-dataset,
+    &.zfs-badge-zvol,
+    &.zfs-badge-mountpoint {
+      border: 1px solid var(--tn-fg1);
+    }
   }
 }
 
