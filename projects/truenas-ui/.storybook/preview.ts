@@ -31,12 +31,12 @@ export const parameters: Preview['parameters'] = {
    * of a non-text token, say — says so for itself with `parameters.a11y`, which
    * is reviewable per story. `API/Color Palette` is the worked example.
    *
-   * There is a third mode, `'todo'`, which is the addon's default and which
-   * scans and warns without failing. A story carries it when a violation is
-   * real, known and NOT yet identified — a different claim from the exclusions
-   * above, and one that is a debt rather than a decision.
+   * A story may also keep the `'todo'` this parameter overrides, and one does.
+   * That is a different claim from the exclusions above: not "axe is wrong
+   * here" but "axe is right here and nobody has worked out which rule it is" —
+   * a debt rather than a decision, which is why it warns rather than passes.
    * `Patterns/Progressive Disclosure (WIP) > Storage Pool Creation Wizard` is
-   * the only story using it, and says there what is still unknown about it.
+   * the only story carrying it, and says there what is still unknown about it.
    */
   a11y: {
     test: 'error',
