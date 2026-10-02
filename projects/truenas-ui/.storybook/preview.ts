@@ -18,6 +18,23 @@ export const parameters: Preview['parameters'] = {
     disabled: true,
   },
   /**
+   * An axe violation FAILS the Storybook Interaction Tests job.
+   *
+   * `@storybook/addon-a11y` defaults this to `'todo'`, which scans every story
+   * and then only logs — so 13 violations across 11 stories sat in the job's
+   * output as 77 lines of warnings that could not fail it, and did not name
+   * which rules they were (#337). The two modes are the same scan; they differ
+   * only in what the test runner does with the result, and `'error'` is what
+   * makes it print the rule, the selector and the failing markup.
+   *
+   * A story that renders something axe is right to object to — a colour swatch
+   * of a non-text token, say — says so for itself with `parameters.a11y`, which
+   * is reviewable per story. `API/Color Palette` is the worked example.
+   */
+  a11y: {
+    test: 'error',
+  },
+  /**
    * The theme Storybook renders DOCS PAGES with. `manager.ts` gives the same
    * object to the manager UI; this is the preview's half of the pair, and it
    * was missing until #293.
