@@ -30,6 +30,13 @@ export const parameters: Preview['parameters'] = {
    * A story that renders something axe is right to object to — a colour swatch
    * of a non-text token, say — says so for itself with `parameters.a11y`, which
    * is reviewable per story. `API/Color Palette` is the worked example.
+   *
+   * There is a third mode, `'todo'`, which is the addon's default and which
+   * scans and warns without failing. A story carries it when a violation is
+   * real, known and NOT yet identified — a different claim from the exclusions
+   * above, and one that is a debt rather than a decision.
+   * `Patterns/Progressive Disclosure (WIP) > Storage Pool Creation Wizard` is
+   * the only story using it, and says there what is still unknown about it.
    */
   a11y: {
     test: 'error',
