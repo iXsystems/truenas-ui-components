@@ -115,12 +115,20 @@ describe('tn-file-picker-popup accessibility (#337)', () => {
      * inside an `@media` block, and it declares one of the four colour
      * properties.
      *
-     * The `@media` exclusion is what keeps the `prefers-contrast: high` and
-     * `max-width` blocks out. Those are conditional surfaces — whether they
-     * render at all is the browser's answer, not something readable here — and
-     * `themePalettes` refuses a palette nested inside another block for the
-     * same reason. The cost is stated rather than hidden: a hue fill added
-     * INSIDE a media block would go unmeasured by these cases.
+     * The `@media` exclusion changes nothing today and is deliberate anyway.
+     * Nothing in a media block currently reaches these cases regardless: the
+     * `prefers-contrast: high` rule declares the `border` SHORTHAND, which is
+     * not in `PAINTS`, and the `max-width` block has no `.zfs-badge` rule at
+     * all. What the filter states up front is that a media block is a
+     * conditional surface — whether it renders is the browser's answer, not
+     * something readable here, the same reason `themePalettes` refuses a
+     * palette nested inside another block.
+     *
+     * The gap that leaves, named rather than hidden: `PAINTS` has no entry for
+     * the `border` shorthand, so an edge colour written that way goes
+     * unmeasured wherever it is written, media block or not. An edge is
+     * non-text, which is why that is tolerable. `background` IS listed, so a
+     * fill is caught in either spelling.
      */
     const PAINTS = ['color', 'background', 'background-color', 'border-color'];
 
@@ -195,9 +203,14 @@ describe('tn-file-picker-popup accessibility (#337)', () => {
     // The per-type `border-color` is NOT measured, and not because it would
     // pass — it mostly would not (the stylesheet records the range). It is
     // redundant colour-coding over the `DS`/`ZV`/`MP` text, so WCAG 1.4.11
-    // does not hold it to a ratio, and no spec in this repo measures
-    // `--tn-blue`/`--tn-green`/`--tn-orange` against anything. What these
-    // cases are for is the TEXT, which is the half that was failing.
+    // does not hold it to a ratio at all. What these cases are for is the
+    // TEXT, which is the half that was failing.
+    //
+    // Those three hue tokens are not unmeasured in the repo, just not measured
+    // HERE and not on this surface: `semantic-status-contrast.spec.ts` reaches
+    // their values through the palettes that alias `--tn-info`, `--tn-warning`
+    // and `--tn-success` to them, and holds those to 4.5:1 on the text
+    // surfaces. The badge's own fill is not one of them.
     testEachPalette(measured, pairings, AA_MINIMUM.normal);
   });
 });

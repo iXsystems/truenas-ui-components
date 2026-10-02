@@ -298,8 +298,9 @@ tn-table {
 // for carrying text. Measured on the shipped palettes, white on them is
 // 2.27:1 (green) and 2.55:1 (orange) in `.tn-dark`, down to 1.37:1 in Dracula,
 // which is the `color-contrast` violation the Storybook a11y run reported on
-// every File Picker story that lists a ZFS object (#337). Blue alone cleared
-// AA, and only in some palettes.
+// every File Picker story that lists a ZFS object (#337). Of the 27 pairings,
+// seven cleared AA: blue in six of the nine palettes, orange in one (4.61:1 in
+// Solarized Dark), green in none.
 //
 // So the hue moves to the border and the text keeps the base `--tn-alt-fg2` on
 // `--tn-alt-bg2` pairing, which `text-token-surface-contrast.spec.ts` already

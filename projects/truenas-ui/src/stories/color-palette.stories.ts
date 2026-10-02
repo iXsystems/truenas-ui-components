@@ -63,10 +63,13 @@ const statusTextVars = ['--tn-error-text'];
  * `COLOUR_SAMPLE` is for the matrix, where EVERY cell is excluded, because the
  * story's own paragraph says every cell is a sample and only two columns of two
  * rows carry any guarantee at all. Measured in `.tn-dark`, the browser run's
- * default theme, five cells fail besides the ten in the two non-text rows:
- * `--tn-alt-fg1` on `--tn-alt-bg2` is 3.34:1 and `--tn-fg3` on `--tn-alt-bg2`
- * is 3.57:1 — neither pairing is one those tokens are tuned for, and the grid
- * renders the full cross product on purpose.
+ * default theme, seven of the thirty cells fail: all five `--tn-fg4` cells,
+ * `--tn-fg3` on `--tn-alt-bg2` at 3.57:1 (it clears 4.79:1 to 5.91:1 on the
+ * other four surfaces), and — the only failure OUTSIDE the two non-text rows —
+ * `--tn-alt-fg1` on `--tn-alt-bg2` at 3.34:1. That last one is why a row-wise
+ * exclusion is not enough: `--tn-alt-fg1` is translucent, so it composites to a
+ * pairing it was never tuned for, and the grid renders the full cross product
+ * on purpose.
  *
  * What is NOT given up by excluding the cells: the pairings that do carry a
  * guarantee are measured in jest by `theme/text-fg-contrast.spec.ts` and
