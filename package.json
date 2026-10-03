@@ -45,7 +45,7 @@
   "lint-staged": {
     "projects/truenas-ui/src/**/*.ts": [
       "eslint --fix",
-      "jest --config ./projects/truenas-ui/jest.config.ts --bail --coverage=false --passWithNoTests --findRelatedTests"
+      "jest --config ./projects/truenas-ui/jest.config.ts --bail --passWithNoTests --findRelatedTests"
     ],
     "projects/truenas-ui/src/**/*.html": [
       "eslint --fix"
