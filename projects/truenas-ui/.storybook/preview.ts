@@ -38,6 +38,7 @@ export const parameters: Preview['parameters'] = {
   // The per-story half of #337 is done: a story that renders something axe is
   // right to object to says so for itself with `parameters.a11y`, which is
   // reviewable per story, and `API/Color Palette` is the worked example.
+
   /**
    * The theme Storybook renders DOCS PAGES with. `manager.ts` gives the same
    * object to the manager UI; this is the preview's half of the pair, and it

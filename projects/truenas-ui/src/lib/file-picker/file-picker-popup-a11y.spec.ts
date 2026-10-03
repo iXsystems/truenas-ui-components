@@ -23,9 +23,12 @@ import { flattenSelector, inheritedValue, scssRules, tokenOf } from '../a11y/scs
  * `color-contrast` finding on the ZFS badges is not — jsdom has no layout
  * engine, so axe cannot decide it (see `axe-testing.ts`) — and the claim that
  * CAN be made is about the palette: read what the stylesheet pairs, and measure
- * that pairing on every shipped theme. `yarn test-sb` is what checks the page,
- * and `parameters.a11y.test: 'error'` in `.storybook/preview.ts` is what makes
- * it fail rather than warn.
+ * that pairing on every shipped theme. `yarn test-sb` is what checks the page.
+ *
+ * It does not yet FAIL on what it finds there: that needs
+ * `parameters.a11y.test: 'error'`, which `.storybook/preview.ts` deliberately
+ * does not set — see the note where it would go. So these cases are the only
+ * part of #337 that blocks a merge today.
  */
 
 const POPUP_SCSS = join(__dirname, 'file-picker-popup.component.scss');
@@ -69,13 +72,18 @@ describe('tn-file-picker-popup accessibility (#337)', () => {
       expect(selectHeader()).not.toBeNull();
     });
 
-    it('names the column for a screen reader without showing the label', () => {
+    it('names the column through a .cdk-visually-hidden span', () => {
       const hidden = selectHeader().querySelector('.cdk-visually-hidden');
 
       // The label comes from `label="Select"` on the column def via
       // `hideLabel`. What this rules out is the empty `tnHeaderCellDef`
       // template that used to sit here: it OVERRODE the header, so the cell
       // rendered nothing at all and the column was unnamed in both senses.
+      //
+      // It does NOT check that the label is invisible — that is layout, and
+      // jsdom has none. The class is the whole mechanism (`table.component.scss`
+      // keeps a local copy, because the CDK's global stylesheet is not
+      // shipped), so this asserts the class and leaves the hiding to the page.
       expect(hidden?.textContent?.trim()).toBe('Select');
     });
 
