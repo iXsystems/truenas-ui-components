@@ -180,6 +180,33 @@ belongs to that Jira issue — a follow-up commit to a PR that already has one.
 Not "a related ticket", not "the same component". If you are choosing a key
 rather than continuing one, leave it out.
 
+## Reading a failed CI job: use the annotations, not the log
+
+A failed job's log is not reachable through the API —
+`GET /actions/jobs/<id>/logs` answers a 302 to a signed blob, and a check run
+carries no `output.text`. So **read the annotations instead**:
+
+```
+GET /check-runs/<id>/annotations
+```
+
+Every Jest failure in `Run Tests` (both its steps) and `Storybook
+Interaction Tests` arrives there with the test's full name, the failure
+message, and the file and line. That is `scripts/ci/github-annotations-reporter.cjs`,
+a shared reporter wired into all three Jest configs — the Storybook
+test-runner is Jest underneath, so it takes the same one through
+`.storybook/test-runner-jest.config.mjs`.
+
+**If you add another Jest invocation to CI, add that reporter to it**, or its
+failures go back to being log-only. It is silent off a runner, so a local
+`yarn test` is unchanged.
+
+GitHub records at most 10 error annotations per step. Up to ten failures each
+get their own. Past that the reporter annotates the first nine and spends the
+last slot on a summary naming the rest, so **the detailed message is only
+there for the first nine** — and the summary's list of names is itself cut
+after a few dozen. Its title always carries the exact total.
+
 ## Important Notes for Agents
 
 - **Don't read all files at once** - Load only what you need for the current task
