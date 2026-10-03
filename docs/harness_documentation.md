@@ -315,6 +315,15 @@ To regenerate docs without starting Storybook:
 yarn generate-harness-docs
 ```
 
+This prints one summary line (`✅ Generated 41 harness doc(s)`), and names the file
+for any harness it could not process. Add `--verbose` — or set
+`HARNESS_DOCS_VERBOSE=1` — to list every file as it is parsed, which is useful when
+working on the generator itself and is ~130 lines of CI log otherwise:
+
+```bash
+npx tsx scripts/generate-harness-docs.ts --verbose
+```
+
 ### Build Scripts
 
 The generation is integrated into `package.json`:

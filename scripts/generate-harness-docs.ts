@@ -7,7 +7,12 @@
  * extracts class information, methods, interfaces, and JSDoc comments,
  * then generates comprehensive markdown documentation for Storybook.
  *
- * Usage: npx tsx scripts/generate-harness-docs.ts
+ * Usage: npx tsx scripts/generate-harness-docs.ts [--verbose]
+ *
+ * By default this prints one summary line on success. `--verbose` (or
+ * HARNESS_DOCS_VERBOSE=1) restores the per-file listing, which is useful when
+ * working on the generator itself and is 130 lines of CI log otherwise. Failures
+ * are reported either way and always name the file that failed.
  */
 
 import * as fs from 'fs';
@@ -52,9 +57,18 @@ interface HarnessInfo {
 const projectRoot = path.join(__dirname, '..');
 const loaderFile = path.join(projectRoot, 'projects/truenas-ui/.storybook/harness-docs-loader.ts');
 
-console.log('🔨 Generating harness documentation...');
-console.log(`📂 Project root: ${projectRoot}`);
-console.log(`📝 Loader file: ${loaderFile}`);
+const verbose = process.argv.includes('--verbose') || process.env.HARNESS_DOCS_VERBOSE === '1';
+
+/** Progress chatter: useful while working on the generator, noise in a CI log. */
+function logVerbose(message: string): void {
+  if (verbose) {
+    console.log(message);
+  }
+}
+
+logVerbose('🔨 Generating harness documentation...');
+logVerbose(`📂 Project root: ${projectRoot}`);
+logVerbose(`📝 Loader file: ${loaderFile}`);
 
 /**
  * Recursively find all files matching a pattern
@@ -89,8 +103,8 @@ function findHarnessFiles(): string[] {
   const libDir = path.join(projectRoot, 'projects/truenas-ui/src/lib');
   const fileArray = findFilesRecursive(libDir, /\.harness\.ts$/);
 
-  console.log(`\n📦 Found ${fileArray.length} harness file(s):`);
-  fileArray.forEach(file => console.log(`  - ${path.relative(projectRoot, file)}`));
+  logVerbose(`\n📦 Found ${fileArray.length} harness file(s):`);
+  fileArray.forEach(file => logVerbose(`  - ${path.relative(projectRoot, file)}`));
   return fileArray;
 }
 
@@ -391,7 +405,7 @@ function main() {
     }
 
     // Process each harness file
-    console.log('\n🔍 Processing harness files...\n');
+    logVerbose('\n🔍 Processing harness files...\n');
 
     let successCount = 0;
     let errorCount = 0;
@@ -399,13 +413,18 @@ function main() {
 
     for (const filePath of harnessFiles) {
       const componentName = getComponentName(filePath);
-      console.log(`Processing: ${componentName}`);
+      // Every failure branch below names `relativePath` itself. The per-file
+      // "Processing:" line used to supply that context and is now suppressed by
+      // default, so a message that said only "Error: ..." would no longer identify
+      // which of the 41 harnesses broke.
+      const relativePath = path.relative(projectRoot, filePath);
+      logVerbose(`Processing: ${componentName}`);
 
       try {
         const harnessInfo = parseHarnessFile(filePath);
 
         if (!harnessInfo) {
-          console.log(`  ⚠️  Could not extract harness information`);
+          console.error(`  ⚠️  ${relativePath}: could not extract harness information`);
           errorCount++;
           continue;
         }
@@ -413,26 +432,28 @@ function main() {
         const markdown = generateMarkdown(harnessInfo);
         docsRegistry[componentName] = markdown;
 
-        console.log(`  ✓ Processed: ${componentName}`);
+        logVerbose(`  ✓ Processed: ${componentName}`);
         successCount++;
       } catch (error) {
-        console.error(`  ❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error(
+          `  ❌ ${relativePath}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
         errorCount++;
       }
     }
 
     // Generate the loader file
-    console.log('\n📝 Writing loader file...\n');
+    logVerbose('\n📝 Writing loader file...\n');
 
     const loaderContent = generateLoaderFile(docsRegistry);
     fs.writeFileSync(loaderFile, loaderContent, 'utf-8');
 
-    console.log(`  ✓ Written: ${path.relative(projectRoot, loaderFile)}`);
+    logVerbose(`  ✓ Written: ${path.relative(projectRoot, loaderFile)}`);
 
     // Summary
-    console.log(`\n✅ Successfully generated ${successCount} documentation(s)`);
+    console.log(`✅ Generated ${successCount} harness doc(s)`);
     if (errorCount > 0) {
-      console.log(`⚠️  ${errorCount} file(s) had errors`);
+      console.error(`⚠️  ${errorCount} file(s) had errors`);
       // Fail the build. A per-file throw is caught above so the other harnesses still get
       // documented, but reporting success anyway means `yarn build-storybook` ships a
       // registry quietly missing those components, and `loadHarnessDoc()` returning null
@@ -441,7 +462,7 @@ function main() {
       // harnesses here while the script printed the success line.
       process.exitCode = 1;
     }
-    console.log(`📦 Documentation available via loadHarnessDoc()\n`);
+    logVerbose(`📦 Documentation available via loadHarnessDoc()\n`);
 
   } catch (error) {
     console.error('❌ Fatal error:', error);
