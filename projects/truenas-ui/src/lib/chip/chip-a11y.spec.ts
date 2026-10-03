@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnChipComponent } from './chip.component';
 import { axeResult, axeScan } from '../a11y/axe-testing';
+import { TnSpriteLoaderService } from '../icon/sprite-loader.service';
 
 /**
  * Guards the structure fixed for #188: the chip used to render a focusable
@@ -38,13 +39,63 @@ class TestHostComponent {
   closeCount = 0;
 }
 
+const spriteUrl = 'assets/tn-icons/sprite.svg';
+
+/**
+ * What the stub sprite contains, as ids — the generated sprite's own spelling
+ * for the icons this spec uses, taken from `assets/tn-icons/sprite-config.json`.
+ *
+ * Deliberately a separate list from `chipIcon` below, and deliberately the same
+ * literal written twice. The two model different things: this is what the sprite
+ * HAS, that is what the chip ASKS FOR, and #334 was the two disagreeing. A stub
+ * whose inventory is derived from the name under test resolves every name it is
+ * given and can catch no disagreement at all — measured, by setting `chipIcon`
+ * back to `mdi:star` and watching all 28 tests still pass.
+ */
+const spriteIcons = ['mdi-star'];
+
+/**
+ * The icon the two "with an icon" cases below set.
+ *
+ * It is the PREFIXED sprite id — what `tnIconMarker('star', 'mdi')` returns and
+ * what the generated sprite keys on — because `tn-chip` passes `icon` straight
+ * to `tn-icon`'s `name` with no `library` attribute to apply the prefix for it.
+ * This spec used `mdi:star` until #334: `TnIconRegistryService.resolveIcon`
+ * reads a colon as `library:name`, routes it to an `mdi` library that nothing
+ * in this repo registers, warns, and returns null.
+ */
+const chipIcon = 'mdi-star';
+const chipIconHref = `${spriteUrl}#${chipIcon}`;
+
 describe('tn-chip accessibility (#188)', () => {
   let host: TestHostComponent;
   let fixture: ComponentFixture<TestHostComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent]
+      imports: [TestHostComponent],
+      providers: [
+        // A sprite holding exactly one icon. The real loader fetches
+        // `sprite-config.json` over HttpClient and so reports
+        // `isSpriteLoaded()` false under jsdom, which sends every name —
+        // correct or not — down `tn-icon`'s text-abbreviation fallback. That is
+        // what left the scans below unable to tell a resolved icon from a
+        // broken one (#334).
+        //
+        // Only the loader is stubbed, so the REAL `TnIconRegistryService` still
+        // does the resolving: re-introducing `mdi:star` still takes the library
+        // branch, still resolves to nothing, and now fails `iconHref()`.
+        // Two methods, because they are the two the icon path calls — sprite
+        // lookup, and the sprite-loaded test guarding the missing-icon warning.
+        {
+          provide: TnSpriteLoaderService,
+          useValue: {
+            isSpriteLoaded: () => true,
+            getIconUrl: (name: string) =>
+              (spriteIcons.includes(name) ? `${spriteUrl}#${name}` : null),
+          } satisfies Pick<TnSpriteLoaderService, 'isSpriteLoaded' | 'getIconUrl'>
+        }
+      ]
     }).compileComponents();
 
     // TestBed attaches the fixture to the document itself, which axe needs —
@@ -65,6 +116,23 @@ describe('tn-chip accessibility (#188)', () => {
 
   function close(): HTMLButtonElement | null {
     return fixture.nativeElement.querySelector('.tn-chip__close');
+  }
+
+  /**
+   * The `href` of the sprite `<use>` the chip's icon renders, or null when no
+   * icon resolved — the one node in the chip that exists ONLY on success.
+   *
+   * Every other candidate is there either way, which is the whole of #334.
+   * `.tn-chip__icon` is `tn-icon`'s host element, rendered as soon as `icon()`
+   * is truthy; the `role="img"` wrapper inside it is rendered by all five of
+   * `tn-icon`'s branches, the text abbreviation included. So a chip showing the
+   * letters `MD` where a star belongs is, to every assertion above, a chip with
+   * an icon — and both scans below passed on one for as long as this spec
+   * asked for `mdi:star`.
+   */
+  function iconHref(): string | null {
+    return fixture.nativeElement.querySelector('.tn-chip__icon use')
+      ?.getAttribute('href') ?? null;
   }
 
   /**
@@ -97,8 +165,14 @@ describe('tn-chip accessibility (#188)', () => {
     });
 
     it('raises no violation on a closable chip with an icon', async () => {
-      host.icon.set('mdi:star');
+      host.icon.set(chipIcon);
       fixture.detectChanges();
+
+      // Before the scan, not after: an unresolved icon makes this case a
+      // duplicate of the one above rather than a failure, so the icon has to be
+      // established as present before its absence can be ruled out as the
+      // reason nothing was reported.
+      expect(iconHref()).toBe(chipIconHref);
 
       const { violated, evaluated } = await axeResult(
         fixture.nativeElement, interactiveTargets(), ['nested-interactive']
@@ -226,13 +300,21 @@ describe('tn-chip accessibility (#188)', () => {
    */
   describe('the whole chip, with no rule named in advance', () => {
     it.each([
-      ['closable', () => { /* the default fixture */ }],
-      ['with an icon', () => host.icon.set('mdi:star')],
-      ['non-closable', () => host.closable.set(false)],
-      ['disabled', () => host.disabled.set(true)],
-    ])('has nothing for axe to report when %s', async (_name, arrange) => {
+      ['closable', () => { /* the default fixture */ }, null],
+      ['with an icon', () => host.icon.set(chipIcon), chipIconHref],
+      ['non-closable', () => host.closable.set(false), null],
+      ['disabled', () => host.disabled.set(true), null],
+    ])('has nothing for axe to report when %s', async (_name, arrange, href) => {
       arrange();
       fixture.detectChanges();
+
+      // What the sweep is looking at, asserted for every case rather than only
+      // the icon one — so neither direction can go quiet. The icon case fails
+      // if resolution breaks and the sweep silently goes back to scanning a
+      // chip with a text abbreviation in it (#334); the other three fail if an
+      // icon starts appearing where the case name says there is none, which
+      // would make them duplicates of it.
+      expect(iconHref()).toBe(href);
 
       const { violations, incomplete, passed } = await axeScan(fixture);
 
