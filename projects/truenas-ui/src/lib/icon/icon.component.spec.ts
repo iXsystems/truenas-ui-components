@@ -105,6 +105,10 @@ describe('TnIconComponent - MDI Support', () => {
   it('should handle library parameter with fallback', async () => {
     spriteLoader.getIconUrl.mockReturnValue(null);
     iconRegistry.resolveIcon.mockReturnValue(null);
+    // Falling back silently would leave a developer with a two-letter
+    // abbreviation and no way to find out why, so the warning naming the icon
+    // is as much the behaviour here as the fallback itself.
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     fixture.componentRef.setInput('name', 'unknown-icon');
     fixture.componentRef.setInput('library', 'mdi');
@@ -113,6 +117,11 @@ describe('TnIconComponent - MDI Support', () => {
 
     // Icon should fall back to text abbreviation when sprite and registry don't resolve
     expect(component.iconResult().source).toBe('text');
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Icon 'mdi-unknown-icon' not found in sprite")
+    );
+
+    warn.mockRestore();
   });
 });
 
@@ -141,6 +150,8 @@ describe('TnIconComponent - Error Handling', () => {
   });
 
   it('should show fallback for unregistered MDI icon', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
     fixture.componentRef.setInput('name', 'nonexistent');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
@@ -148,9 +159,16 @@ describe('TnIconComponent - Error Handling', () => {
 
     expect(component.iconResult().source).toBe('text');
     expect(component.iconResult().content).toContain('MN');
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Icon 'mdi-nonexistent' not found in sprite")
+    );
+
+    warn.mockRestore();
   });
 
   it('should fallback to text for missing icons', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
     fixture.componentRef.setInput('name', 'missing');
     fixture.componentRef.setInput('library', 'mdi');
     fixture.detectChanges();
@@ -158,6 +176,11 @@ describe('TnIconComponent - Error Handling', () => {
 
     expect(component.iconResult().source).toBe('text');
     expect(component.iconResult().content).toBeTruthy();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Icon 'mdi-missing' not found in sprite")
+    );
+
+    warn.mockRestore();
   });
 
   it('should handle async MDI loading gracefully', async () => {

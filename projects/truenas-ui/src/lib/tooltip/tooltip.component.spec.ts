@@ -12,9 +12,17 @@ function createTooltip(message: string) {
 }
 
 describe('TnTooltipComponent HTML rendering', () => {
+  // The two sanitization cases below feed the component markup Angular strips, and
+  // Angular announces every strip on `console.warn`. Incidental: what they pin is
+  // that the dangerous node is gone from the DOM, which they read off the DOM.
+  let warn: jest.SpyInstance;
+
   beforeEach(() => {
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     TestBed.configureTestingModule({ imports: [TnTooltipComponent] });
   });
+
+  afterEach(() => warn.mockRestore());
 
   it('renders HTML markup in the message', () => {
     const fixture = createTooltip('<b>Online</b> &mdash; <i>healthy</i>');
@@ -221,11 +229,18 @@ describe('hasInteractiveContent', () => {
   });
 
   describe('agrees with what the message renders as', () => {
+    // Every SANITIZED_AWAY case is markup Angular strips, and Angular warns on each
+    // strip. That the content is gone is the point here, and it is read off the DOM.
+    let warn: jest.SpyInstance;
+
     beforeEach(() => {
+      warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
       TestBed.configureTestingModule({
         imports: [TnTooltipComponent],
       });
     });
+
+    afterEach(() => warn.mockRestore());
 
     it.each(SANITIZED_AWAY)('renders %s as bare text, so there is nothing to pin for', (_label, message, text) => {
       const rendered = createTooltip(message).nativeElement.querySelector('.tn-tooltip__message') as HTMLElement;

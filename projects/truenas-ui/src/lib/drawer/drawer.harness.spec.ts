@@ -149,15 +149,21 @@ describe('TnDrawerHarness', () => {
 describe('TnDrawerContainerHarness', () => {
   let fixture: ComponentFixture<TestHostComponent>;
   let loader: HarnessLoader;
+  let warn: jest.SpyInstance;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TestHostComponent],
     }).compileComponents();
 
+    // Same unlabelled host, same #214 warning, same reason as the suite above.
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     fixture = TestBed.createComponent(TestHostComponent);
     loader = TestbedHarnessEnvironment.loader(fixture);
   });
+
+  afterEach(() => warn.mockRestore());
 
   it('should load container harness', async () => {
     const container = await loader.getHarness(TnDrawerContainerHarness);
