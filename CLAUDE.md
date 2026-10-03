@@ -192,7 +192,10 @@ GET /check-runs/<id>/annotations
 
 Every Jest failure in `Run Tests` (both its steps) and `Storybook
 Interaction Tests` arrives there with the test's full name, the failure
-message, and the file and line. That is `scripts/ci/github-annotations-reporter.cjs`,
+message and the file. A line number comes too when the failure's own stack
+names the test file — which a spec failure usually does and a Storybook play
+function usually does not, since its frames point into the transformed story
+and into `node_modules`. That is `scripts/ci/github-annotations-reporter.cjs`,
 a shared reporter wired into all three Jest configs — the Storybook
 test-runner is Jest underneath, so it takes the same one through
 `.storybook/test-runner-jest.config.mjs`.
