@@ -181,11 +181,40 @@ That last one is the case for a token rather than a derived fill, and it is wort
 - `--tn-orange`: Secondary warning
 - `--tn-cyan`: Info accent
 
-`--tn-red` is tuned toward the 3:1 UI-component/border minimum (WCAG 1.4.11) in most themes but not all — `.tn-high-contrast`'s `--tn-red` measures 2.94:1 against `--tn-bg1` — and it is not tuned for the 4.5:1 text minimum (WCAG 1.4.3). The other status colors are not tuned toward either threshold. For text — validation messages, inline errors — use the text-safe counterpart instead:
+`--tn-red` is tuned toward the 3:1 UI-component/border minimum (WCAG 1.4.11) in most themes but not all — `.tn-high-contrast`'s `--tn-red` measures 2.94:1 against `--tn-bg1` — and it is not tuned for the 4.5:1 text minimum (WCAG 1.4.3). The other status colors are not tuned toward either threshold. None of the six is a text color. For text — validation messages, inline errors, banner headings, toast and card status labels, the required asterisk — and for the borders and icons drawn alongside it, use one of the five text-safe status tokens below instead.
 
-- `--tn-error-text`: Error/validation text, 4.5:1 against `--tn-bg1` and `--tn-bg2` in every theme
+#### Which status tokens a custom theme must declare
 
-A custom theme must define `--tn-error-text` explicitly — omitting it does not fall back to that theme's own `--tn-red`. `:root` always defines `--tn-error-text` (see below). A theme class is applied to the same root element and has the same specificity as `:root`, so a theme class that itself declares `--tn-error-text` would win by source order — but a theme class that omits the property declares nothing to compete with `:root` at all, so `:root`'s value is what applies. The error text then silently renders in the default theme's color instead, which is not guaranteed to be accessible against the new theme's palette.
+**All five, explicitly.** None is derived at runtime and none has a usable default: for the four semantic tokens, each theme's value is a hue-preserving lightness shift of that same theme's own hue token — the smallest step that clears 4.5:1 on every surface in its row — so only the theme's own author can supply it.
+
+| token | drawn as | guaranteed 4.5:1 against | derived from | measured by |
+|---|---|---|---|---|
+| `--tn-error-text` | error and validation text on the page and on cards | `--tn-bg1`, `--tn-bg2` | `--tn-red` | `error-text-contrast.spec.ts` |
+| `--tn-info` | info status text, borders and icons | `--tn-alt-bg1`, `--tn-bg1`, `--tn-bg2` | `--tn-blue` | `semantic-status-contrast.spec.ts` |
+| `--tn-warning` | warning status text, borders and icons | `--tn-alt-bg1`, `--tn-bg1`, `--tn-bg2` | `--tn-orange` | `semantic-status-contrast.spec.ts` |
+| `--tn-error` | error status text, borders and icons | `--tn-alt-bg1`, `--tn-bg1`, `--tn-bg2` | `--tn-red` | `semantic-status-contrast.spec.ts` |
+| `--tn-success` | success status text, borders and icons | `--tn-alt-bg1`, `--tn-bg1`, `--tn-bg2` | `--tn-green` | `semantic-status-contrast.spec.ts` |
+
+Those are the surfaces this library paints a status color on: `--tn-alt-bg1` is `tn-banner`'s fill, `--tn-bg1` the page and the file-picker popup, `--tn-bg2` the card and the toast. As with the text tokens above, the covered list is the whole of the guarantee — `--tn-bg3`, `--tn-alt-bg2` and both `--tn-topbar` surfaces appear in no row, so a status color drawn on one of those is a pairing nothing has tuned for, and it belongs in `text-token-surface-contrast.spec.ts` with a measurement.
+
+`--tn-error` is **not** `--tn-error-text`, and substituting either for the other loses the guarantee rather than carrying it over. `--tn-error-text` is `--tn-red`'s companion and covers the two page surfaces only; in the default theme it measures 3.64:1 on `--tn-alt-bg1`, so it is the wrong token inside a banner. `--tn-error` is tuned for that surface too, which is the one extra column in its row. Error text on the page or on a card wants `--tn-error-text`; error text inside a banner wants `--tn-error`.
+
+#### Omitting one is silent, not loud
+
+Omitting any of the five does not fall back to your theme's own hue token. `:root` declares all five itself, so there is always a value to inherit. A theme class is applied to the same root element and has the same specificity as `:root`, so a theme class that declares the property wins by source order — but one that omits it declares nothing to compete with `:root` at all, and `:root`'s value is what applies. The status text then silently renders in the default theme's color, which is not guaranteed to be accessible against the new theme's palette and, in a light theme, is a color that was chosen for a dark one.
+
+Nothing in the cascade reports that. Inside this repo `itDeclares` in `palette-contrast-testing.ts` is what does: it fails a palette that inherits one of these rather than resolving the inherited value and reporting a ratio that was true of a different theme. A consumer theme is outside that spec's reach, which is why the requirement is written here.
+
+#### What the fallback chain is for
+
+Every reader spells the chain whole — `var(--tn-error, var(--tn-red, #bd2626))`, and the matching shape for the other four. It is not a safety net for a theme that omits the token, for the reason just given; it is reached only when no theme stylesheet is loaded at all, and its two links serve two different readers:
+
+- The **middle link** is the hue token, so a consumer stylesheet that predates these five but defines the TrueNAS palette keeps its own branding instead of having it discarded for a literal. That link is not tuned for text, and reaching it is the trade being made: in the default theme `--tn-red` measures 3.15:1 on `--tn-bg1` and 2.22:1 on `--tn-alt-bg1`, and `--tn-blue` 2.56:1 on `--tn-alt-bg1`.
+- The **terminal literal** is reachable only with no theme stylesheet at all, where the surface is the browser's own white. For the four semantic tokens it is `.tn-blue`'s value for that token — `#006997`, `#955313`, `#bd2626`, `#416f26` — a light theme's color being the right one on white; `--tn-error-text`'s is `#b91c1c`, at 6.47:1. All five clear 4.5:1 there, and the specs in the table above assert it.
+
+A palette may declare one of the five as a plain alias of its hue token where that hue already clears every surface in its row, and five of the nine do: `--tn-warning` and `--tn-success` in `:root`, `.tn-dark` and `.tn-dracula`, `--tn-info` in `.tn-paper`, and `--tn-error-text` in `.tn-blue` and `.tn-dracula`. That is a measurement per palette rather than a shortcut to copy — the other four declare all five as their own shade, and `.tn-high-contrast` needs `#ad000d` for `--tn-error` where its `--tn-red` is `#ff0013`.
+
+**Writing a component:** read the token tuned for the surface you are painting, and spell the chain whole. A component that paints a fill of its own *and* accepts projected content has one more job: a control a caller projects into it may read `--tn-error-text`, which is tuned for `--tn-bg1` and `--tn-bg2` and not for your fill. Rebind the token for the whole fill rather than for one slot of it, so that every slot a caller can reach is covered by the same guarantee.
 
 ---
 
