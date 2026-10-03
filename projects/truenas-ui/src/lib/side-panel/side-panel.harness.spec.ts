@@ -76,6 +76,18 @@ describe('TnSidePanelHarness', () => {
   });
 
   describe('getTitle()', () => {
+    // Two of these blank the title deliberately, and `title` is what names a
+    // panel — so an untitled one warns under #214. Incidental here: what these
+    // pin is the locator tolerating a missing heading, not the warning. It is
+    // asserted in `fallback-labels.spec.ts`.
+    let warn: jest.SpyInstance;
+
+    beforeEach(() => {
+      warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => warn.mockRestore());
+
     it('should return the panel title', async () => {
       const panel = await loader.getHarness(TnSidePanelHarness);
       expect(await panel.getTitle()).toBe('Test Panel');

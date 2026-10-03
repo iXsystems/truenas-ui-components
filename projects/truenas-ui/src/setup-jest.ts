@@ -122,24 +122,83 @@ const envPlatform = testEnv.platform;
 TestBed.resetTestEnvironment();
 TestBed.initTestEnvironment([...envModules, NoNetworkHttpModule], envPlatform);
 
-// Suppress expected console errors in test environment
-const originalConsoleError = console.error;
-console.error = (...args: unknown[]) => {
-  const message = args[0]?.toString() || '';
+/**
+ * A `console.warn` or `console.error` a spec did not mock FAILS that spec (#335).
+ *
+ * WHY, since a warning is not a failure
+ * -------------------------------------
+ * Every warning the suite printed was one a passing spec expected — 32 of them
+ * from 7 specs, each carrying a ~30-line Angular change-detection stack, 1,111
+ * of the 1,632 lines `yarn test` wrote. Expected output at that volume is not a
+ * log anyone reads, so a NEW warning had nothing to stand out against: that is
+ * how the 431 XHR errors in #326 and the NG0953 regression in #327 both went
+ * unnoticed for weeks. Failing is what makes the next one visible, in review,
+ * on the diff that caused it.
+ *
+ * WHAT A SPEC THAT PROVOKES ONE DELIBERATELY DOES
+ * -----------------------------------------------
+ * Mock it — `jest.spyOn(console, 'warn').mockImplementation(() => {})` — which
+ * replaces the property and so never reaches this recorder. Where the warning
+ * IS the behaviour under test, assert on the spy; where it is incidental to
+ * what the spec pins, mock it with a one-line comment saying so.
+ *
+ * `jest.spyOn(console, 'warn')` on its own is NOT enough: without
+ * `mockImplementation` the spy calls through to this recorder, and the spec
+ * still fails. That is deliberate — a bare spy does not stop the printing.
+ *
+ * WHAT IT CANNOT SEE
+ * ------------------
+ * A call from an `afterAll` nested inside a `describe` lands after that block's
+ * last `afterEach` and before the file's; `afterAll` below reports whatever is
+ * still pending, so it is attributed to the file rather than to a test. A call
+ * from module scope or a `beforeAll` is attributed to the first test that runs
+ * after it, for the same reason: nothing is dropped, but the blame can be one
+ * hook too late.
+ */
+const EXPECTED_CONSOLE_ERRORS = [
+  // Fires once per spec that renders an icon, because `NoNetworkHttpBackend`
+  // above fails the sprite request instead of answering it, deliberately. It is
+  // the loader's own `catch`, not a jsdom XHR error, and it is one line rather
+  // than a stack.
+  '[TnSpriteLoader] Failed to load sprite config',
+  '[TnIcon] Resolution failed',
+  // Jest's own message when a late async callback logs after its test finished.
+  // Not a spec's output, and nothing a spec can mock.
+  'Cannot log after tests are done',
+];
 
-  // Suppress expected icon/sprite loader errors in test environment.
-  //
-  // `[TnSpriteLoader] Failed to load sprite config` still fires — once per
-  // spec that renders an icon — because `NoNetworkHttpBackend` above fails the
-  // sprite request instead of answering it, deliberately. It is the loader's
-  // own `catch`, not a jsdom XHR error, and it is one line rather than a stack.
-  if (
-    message.includes('[TnSpriteLoader] Failed to load sprite config') ||
-    message.includes('[TnIcon] Resolution failed') ||
-    message.includes('Cannot log after tests are done')
-  ) {
+const unexpectedConsoleCalls: string[] = [];
+
+function recordUnexpected(stream: 'warn' | 'error') {
+  return (...args: unknown[]): void => {
+    const first = args[0]?.toString() || '';
+    if (stream === 'error' && EXPECTED_CONSOLE_ERRORS.some((expected) => first.includes(expected))) {
+      return;
+    }
+    unexpectedConsoleCalls.push(`console.${stream}: ${args.map((arg) => String(arg)).join(' ')}`);
+  };
+}
+
+console.warn = recordUnexpected('warn');
+console.error = recordUnexpected('error');
+
+/**
+ * Drains the pending calls and throws if there were any. Called from both
+ * `afterEach` and `afterAll` — draining rather than reading is what stops one
+ * test's warning failing every test after it.
+ */
+function failOnUnexpectedConsoleCalls(): void {
+  if (unexpectedConsoleCalls.length === 0) {
     return;
   }
+  const calls = unexpectedConsoleCalls.join('\n  ');
+  unexpectedConsoleCalls.length = 0;
+  throw new Error(
+    'Console output no spec expected (#335). Mock it where the spec provokes it on purpose — '
+    + "jest.spyOn(console, 'warn').mockImplementation(() => {}) — and assert on the spy where "
+    + `the message is the behaviour under test:\n  ${calls}`
+  );
+}
 
-  originalConsoleError.apply(console, args);
-};
+afterEach(failOnUnexpectedConsoleCalls);
+afterAll(failOnUnexpectedConsoleCalls);

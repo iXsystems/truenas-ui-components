@@ -224,9 +224,19 @@ describe('TnThemeService', () => {
     });
 
     it('should return false for invalid theme', () => {
+      // The refusal warns as well as returning false, and both halves are the
+      // contract: a caller that ignores the return value still gets told.
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
       const result = service.setTheme('non-existent-theme' as TnTheme);
 
       expect(result).toBe(false);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('[TnThemeService] Theme "non-existent-theme" not found'),
+        expect.any(Array)
+      );
+
+      warn.mockRestore();
     });
 
     it('should mark theme as user-selected', () => {

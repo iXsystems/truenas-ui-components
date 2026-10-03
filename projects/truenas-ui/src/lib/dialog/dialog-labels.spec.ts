@@ -21,7 +21,15 @@ describe('TnDialogShellComponent labels', () => {
       imports: [TnDialogShellComponent],
       providers: [
         // `config` must be present: the component reads `ref.config.ariaLabel` unguarded.
-        { provide: DialogRef, useValue: { close: () => {}, config: {} } },
+        //
+        // `ariaLabel` is what names the shell, and this file is about the CHROME labels —
+        // close and fullscreen — not about the dialog's own name. Naming it here is what
+        // keeps `tnAccessibleName`'s unnamed-surface warning out of this suite's output;
+        // the warning itself is asserted in `fallback-labels.spec.ts`.
+        {
+          provide: DialogRef,
+          useValue: { close: () => {}, config: { ariaLabel: 'Dialog under test' } },
+        },
         { provide: DIALOG_DATA, useValue: {} },
         ...(labels ? [{ provide: TN_DIALOG_CHROME_LABELS, useValue: labels }] : []),
       ],

@@ -55,7 +55,14 @@ describe('TN_FALLBACK_LABELS', () => {
 
   type Fixture = ComponentFixture<LabelsHostComponent>;
 
+  // Installed for the whole file, not just the warning's own describe below:
+  // every `setup()` with no bundle renders four unnamed progressbars, so the
+  // tests about the NAMES provoke the warning too, incidentally.
+  let warn: jest.SpyInstance;
+
   beforeEach(() => {
+    warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     // jsdom has no canvas, so `tn-particle-progress-bar`'s first `clearRect`
     // would throw before any of these assertions ran. Same stub, and the same
     // reasoning, as `particle-progress-bar-a11y.spec.ts`: this file is about the
@@ -148,14 +155,6 @@ describe('TN_FALLBACK_LABELS', () => {
   });
 
   describe('the dev-mode warning', () => {
-    let warn: jest.SpyInstance;
-
-    beforeEach(() => {
-      warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    });
-
-    afterEach(() => warn.mockRestore());
-
     it('fires for an unnamed progressbar while the fallback is this library\'s English', () => {
       setup();
 
