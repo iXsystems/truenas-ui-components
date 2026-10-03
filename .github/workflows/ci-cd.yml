@@ -76,9 +76,16 @@ jobs:
       - name: Build Storybook
         run: yarn build-storybook
 
+      # `--prefix none` is load-bearing. The runner only reads a `::error::`
+      # line as a workflow command when the line starts with it, and
+      # concurrently writes `[TEST] ::error…` — so the annotations the Jest
+      # reporter in `scripts/ci/` emits would be thrown away silently, which
+      # is the exact failure that reporter exists to fix. With no prefix,
+      # `--names` fed nothing else and is gone with it; `http-server` runs
+      # `--silent`, so almost every line here came from the test command anyway.
       - name: Serve Storybook and run interaction tests
         run: |
-          npx concurrently -k -s first -n "SB,TEST" \
+          npx concurrently -k -s first --prefix none \
             "npx http-server storybook-static --port 6006 --silent" \
             "npx wait-on tcp:127.0.0.1:6006 && yarn test-sb --url http://127.0.0.1:6006"
 
