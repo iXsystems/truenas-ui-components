@@ -4,6 +4,12 @@ import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnChipComponent } from '../lib/chip/chip.component';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
+
+// Mark the MDI icon used below for sprite generation. `tn-chip` passes `icon`
+// straight to `tn-icon`'s `name` with no `library` attribute, so the arg has to
+// be the PREFIXED sprite id this returns (`mdi-star`), not the bare `star`.
+tnIconMarker('star', 'mdi');
 
 const harnessDoc = loadHarnessDoc('chip');
 
@@ -64,7 +70,7 @@ export const Default: Story = {
 export const WithIcon: Story = {
   args: {
     label: 'Featured',
-    icon: 'mdi:star',
+    icon: 'mdi-star',
     color: 'primary',
     closable: true,
     disabled: false,
@@ -77,9 +83,21 @@ export const WithIcon: Story = {
     await expect(chip).toBeInTheDocument();
     await expect(chip).toHaveClass('tn-chip--primary');
 
-    // Check that the icon container exists
+    // The icon container, and the name it was handed. Asserting the name is
+    // what stops #334 coming back: `mdi:star` is read by the icon registry as
+    // `library:name`, routed to an `mdi` library nothing registers, and
+    // rendered as a two-letter text abbreviation — so the container below is
+    // present either way and says nothing about whether a star appeared.
+    //
+    // The name rather than the rendered sprite `<use>`, because the sprite
+    // config arrives over HTTP and `tn-icon` resolves once per name change: a
+    // story that renders before that lands shows the fallback and never
+    // retries, which would make a `<use>` assertion race the fetch. The
+    // jsdom-side guard in `chip-a11y.spec.ts` asserts the resolved `<use>`,
+    // where the sprite is stubbed and there is no race.
     const icon = chip.querySelector('.tn-chip__icon');
     await expect(icon).toBeInTheDocument();
+    await expect(icon).toHaveAttribute('name', 'mdi-star');
   },
 };
 
