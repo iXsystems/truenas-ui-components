@@ -315,6 +315,44 @@ type Story = StoryObj<ZfsPoolSetupComponent>;
 export const StoragePoolWizard: Story = {
   name: 'Storage Pool Creation Wizard',
   parameters: {
+    /*
+     * THIS STORY HAS ONE AXE VIOLATION AND NOBODY HAS NAMED IT YET (#337).
+     *
+     * No `parameters.a11y` here: the addon's default `test: 'todo'` already
+     * reports it as a warning, and the preview sets nothing stronger (see
+     * `.storybook/preview.ts`). This note exists so the next reader does not
+     * repeat the search below.
+     *
+     * WHAT IS ALREADY RULED OUT. Every axe rule that does not need layout, run
+     * against this component's rendered DOM under jsdom with `axeScan`
+     * (`lib/a11y/axe-testing.ts`): nothing reported. The only rule `axeScan`
+     * declines is `color-contrast`, so that is almost certainly what this is.
+     * But every text/background pair the initial render paints clears AA in
+     * `.tn-dark` — the theme `withThemeByClassName` puts on `<html>` by
+     * default, and so the only one a browser run scans. Measured over the
+     * values `styles/themes.css` ships, compositing the translucent tokens
+     * onto the surface they are actually drawn on (the card paints `--tn-bg2`,
+     * `background` defaulting to true):
+     *
+     *   --tn-fg2    on --tn-bg1      12.27:1  header body copy, 14px
+     *   --tn-fg1    on --tn-bg2      11.17:1  h2 and the inactive step titles
+     *   --tn-fg2    on --tn-bg2      11.06:1  active step title, "Step 1 of 4"
+     *   --tn-fg2    on --tn-alt-bg1   8.97:1  the tip box, 13px
+     *   --tn-green  on --tn-bg2       6.49:1  "Ready to continue", 12px
+     *   --tn-alt-fg1 on --tn-alt-bg1  4.82:1  inactive indicators "2" "3" "4"
+     *   --tn-primary-txt on --tn-primary 4.58:1  indicator "1", "Next" label
+     *   --tn-fg1    on --tn-bg1      12.63:1  the pool-name input value
+     *
+     * The disabled "Previous" button is exempt — axe's `color-contrast` matcher
+     * returns false for anything inside a disabled control (`axe.js`,
+     * `isDisabled` recurses to the parent, so the label inside it is exempt
+     * too, not just the button). `target-size` is `enabled: false` by default
+     * in axe-core 4.10.3.
+     *
+     * WHAT WOULD NAME IT: one run of `yarn test-sb` with
+     * `a11y: { test: 'error' }`, which prints the rule, the selector, the
+     * failing markup and axe's own failure summary instead of a count.
+     */
     docs: {
       description: {
         story: 'A 4-step wizard demonstrating progressive disclosure principles with guided workflow, plain language defaults, and toggleable expert features. Shows how complex technical processes can be made accessible without sacrificing power-user capabilities.'

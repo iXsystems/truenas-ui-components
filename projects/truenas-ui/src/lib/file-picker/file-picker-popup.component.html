@@ -40,10 +40,16 @@
     <!-- Selection column: explicit width so the auto table layout doesn't
          hand the near-empty column a share of the spare width -->
     @if (multiSelect()) {
-      <ng-container tnColumnDef="select" width="20px">
-      <ng-template tnHeaderCellDef>
-        <!-- Select all checkbox -->
-      </ng-template>
+      <!-- `hideLabel` rather than an empty `tnHeaderCellDef`: a <th> with no
+           text fails axe `empty-table-header`, which is what the Storybook a11y
+           run reported on Components/File Picker > Multi Select Workflow
+           (#337). The empty template that used to sit here OVERRODE the header,
+           so the column was unnamed for anyone reading the header row too —
+           `hideLabel` renders the label into a `.cdk-visually-hidden` span
+           instead, which is the same route tn-table's own row-actions column
+           takes (#246). There is no select-all control, so the name describes
+           what the column holds. -->
+      <ng-container tnColumnDef="select" width="20px" label="Select" [hideLabel]="true">
       <ng-template let-item tnCellDef>
         @if (!item.inlineCreate) {
           <tn-checkbox
