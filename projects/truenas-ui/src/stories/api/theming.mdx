@@ -185,7 +185,7 @@ That last one is the case for a token rather than a derived fill, and it is wort
 
 #### Which status tokens a custom theme must declare
 
-**All five, explicitly.** None is derived at runtime and none has a usable default: for the four semantic tokens, each theme's value is a hue-preserving lightness shift of that same theme's own hue token — the smallest step that clears 4.5:1 on every surface in its row — so only the theme's own author can supply it.
+**All five, explicitly.** For the four semantic tokens, each theme's value is a hue-preserving lightness shift of that same theme's own hue token — the smallest step that clears 4.5:1 on every surface in its row. That step is a measurement against your own backgrounds, so only your palette can supply it and no default can stand in for it.
 
 | token | drawn as | guaranteed 4.5:1 against | derived from | measured by |
 |---|---|---|---|---|
@@ -197,13 +197,16 @@ That last one is the case for a token rather than a derived fill, and it is wort
 
 Those are the surfaces this library paints a status color on: `--tn-alt-bg1` is `tn-banner`'s fill, `--tn-bg1` the page and the file-picker popup, `--tn-bg2` the card and the toast. As with the text tokens above, the covered list is the whole of the guarantee — `--tn-bg3`, `--tn-alt-bg2` and both `--tn-topbar` surfaces appear in no row, so a status color drawn on one of those is a pairing nothing has tuned for, and it belongs in `text-token-surface-contrast.spec.ts` with a measurement.
 
-`--tn-error` is **not** `--tn-error-text`, and substituting either for the other loses the guarantee rather than carrying it over. `--tn-error-text` is `--tn-red`'s companion and covers the two page surfaces only; in the default theme it measures 3.64:1 on `--tn-alt-bg1`, so it is the wrong token inside a banner. `--tn-error` is tuned for that surface too, which is the one extra column in its row. Error text on the page or on a card wants `--tn-error-text`; error text inside a banner wants `--tn-error`.
+`--tn-error` is **not** `--tn-error-text`, and what separates them is which surfaces each was measured on rather than a shade of red. `--tn-error-text` is `--tn-red`'s companion and covers the two page surfaces only; in the default theme it measures 3.64:1 on `--tn-alt-bg1`, so it is the wrong token inside a banner. `--tn-error`'s row covers that surface as well, which makes it a superset: reading it on the page or on a card loses nothing, and `form-errors`, `form-field` and `select` already paint page-surface error text from it. What does not work is the other direction — `--tn-error-text` inside a banner — or either of them on a surface that appears in neither row.
 
 #### Omitting one is silent, not loud
 
-Omitting any of the five does not fall back to your theme's own hue token. `:root` declares all five itself, so there is always a value to inherit. A theme class is applied to the same root element and has the same specificity as `:root`, so a theme class that declares the property wins by source order — but one that omits it declares nothing to compete with `:root` at all, and `:root`'s value is what applies. The status text then silently renders in the default theme's color, which is not guaranteed to be accessible against the new theme's palette and, in a light theme, is a color that was chosen for a dark one.
+Omitting one does not leave the property unset, and it does not reach the fallback chain either. `:root` declares all five itself, so there is always a value to inherit. A theme class is applied to the same root element and has the same specificity as `:root`, so a theme class that declares the property wins by source order — but one that omits it declares nothing to compete with `:root` at all, and `:root`'s value is what applies. Which value that is depends on the form `:root` used, and the five are not alike:
 
-Nothing in the cascade reports that. Inside this repo `itDeclares` in `palette-contrast-testing.ts` is what does: it fails a palette that inherits one of these rather than resolving the inherited value and reporting a ratio that was true of a different theme. A consumer theme is outside that spec's reach, which is why the requirement is written here.
+- `--tn-error-text`, `--tn-info` and `--tn-error` are literals there — `#de6d6d`, `#00adf8`, `#e78888`, the same values `.tn-dark` declares. Omit one and your theme paints the default theme's color on your own surfaces, which in a light theme is a color that was chosen for a dark one.
+- `--tn-warning` and `--tn-success` are `var(--tn-orange)` and `var(--tn-green)` there. A `var()` inside a custom property is substituted on the element the property is computed on, which is the same root element your theme class sits on — so these two do resolve to *your* `--tn-orange` and `--tn-green`. That is the untuned hue token, which is what the semantic token exists to replace: `.tn-dark` clears 4.5:1 on all three surfaces with its own orange and green, and nothing promises yours does.
+
+Either way the result is a color nobody measured against your backgrounds, and either way nothing in the cascade reports it. Inside this repo `itDeclares` in `palette-contrast-testing.ts` is what does: it fails a palette that inherits one of these rather than resolving the inherited value and reporting a ratio that was true of a different theme. A consumer theme is outside that spec's reach, which is why the requirement is written here — and why it is all five rather than only the three with a literal behind them.
 
 #### What the fallback chain is for
 
