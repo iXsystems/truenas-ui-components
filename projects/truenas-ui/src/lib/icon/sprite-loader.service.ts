@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal, type Signal } from '@angular/core';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 
@@ -33,8 +33,24 @@ export interface SpriteConfig {
 })
 export class TnSpriteLoaderService {
   private spriteConfig?: SpriteConfig;
-  private spriteLoaded = false;
   private spriteLoadPromise?: Promise<void>;
+
+  /**
+   * A signal rather than a plain field, because the fetch below starts from the
+   * constructor and lands whenever it lands: anything that resolves an icon
+   * before it does gets a miss, and needs to be told when to ask again (#341).
+   */
+  private readonly spriteLoadedState = signal(false);
+
+  /**
+   * Whether the sprite config has loaded, as a signal — read it inside a
+   * `computed`/`effect` to re-resolve when the sprite arrives.
+   *
+   * `isSpriteLoaded()` reads the same state, so a caller that just wants the
+   * current value needs nothing from here; this is for a caller that wants to
+   * react to it changing.
+   */
+  readonly spriteLoaded: Signal<boolean> = this.spriteLoadedState.asReadonly();
 
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
@@ -57,8 +73,10 @@ export class TnSpriteLoaderService {
         const config = await firstValueFrom(
           this.http.get<SpriteConfig>(defaultSpriteConfigPath)
         );
+        // Config first, then the flag: a reader woken by the signal below goes
+        // straight to `getIconUrl`, which needs the config already there.
         this.spriteConfig = config;
-        this.spriteLoaded = true;
+        this.spriteLoadedState.set(true);
       } catch (error) {
         console.error('[TnSpriteLoader] Failed to load sprite config. Icons may not work:', error);
       }
@@ -72,7 +90,7 @@ export class TnSpriteLoaderService {
    */
   async ensureSpriteLoaded(): Promise<boolean> {
     await this.loadSpriteConfig();
-    return this.spriteLoaded;
+    return this.spriteLoadedState();
   }
 
   /**
@@ -115,10 +133,14 @@ export class TnSpriteLoaderService {
   }
 
   /**
-   * Check if the sprite is loaded
+   * Check if the sprite is loaded.
+   *
+   * Reads the `spriteLoaded` signal, so a call made from inside a `computed` or
+   * an `effect` is tracked and that consumer re-runs when the sprite arrives —
+   * which is how an icon resolved too early gets a second chance (#341).
    */
   isSpriteLoaded(): boolean {
-    return this.spriteLoaded;
+    return this.spriteLoadedState();
   }
 
   /**
