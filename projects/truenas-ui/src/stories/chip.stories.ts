@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnChipComponent } from '../lib/chip/chip.component';
@@ -88,16 +88,26 @@ export const WithIcon: Story = {
     // `library:name`, routed to an `mdi` library nothing registers, and
     // rendered as a two-letter text abbreviation — so the container below is
     // present either way and says nothing about whether a star appeared.
-    //
-    // The name rather than the rendered sprite `<use>`, because the sprite
-    // config arrives over HTTP and `tn-icon` resolves once per name change: a
-    // story that renders before that lands shows the fallback and never
-    // retries, which would make a `<use>` assertion race the fetch. The
-    // jsdom-side guard in `chip-a11y.spec.ts` asserts the resolved `<use>`,
-    // where the sprite is stubbed and there is no race.
     const icon = chip.querySelector('.tn-chip__icon');
     await expect(icon).toBeInTheDocument();
     await expect(icon).toHaveAttribute('name', 'mdi-star');
+
+    // And the glyph the user actually sees, which is the half the name cannot
+    // tell you: a name that is right but absent from the sprite renders the
+    // same two-letter fallback.
+    //
+    // This is a #334 guard rather than a #341 one. `preview.ts` holds an
+    // `APP_INITIALIZER` that awaits `ensureSpriteLoaded()`, so a story never
+    // renders before the config lands and the stale-render #341 fixes cannot
+    // happen here — the jsdom spec in `icon.component.spec.ts` is what covers
+    // that. `waitFor` only because the resolved `<use>` is one Angular render
+    // away from the name attribute above; it is satisfied on the first poll
+    // when the icon has already resolved.
+    await waitFor(async () => {
+      const glyph = icon?.querySelector('svg.tn-icon__sprite use');
+      await expect(glyph).toBeInTheDocument();
+      await expect(glyph?.getAttribute('href')).toContain('#mdi-star');
+    });
   },
 };
 
