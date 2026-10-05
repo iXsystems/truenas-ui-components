@@ -279,32 +279,36 @@ function declarations(scss: string): Declaration[] {
 }
 
 /**
- * `:host(:hover)` and `:host` are the same element, so they compare equal.
+ * A declaration on the component root — in force wherever the component is, and
+ * inherited by every descendant, including one behind `::ng-deep`.
  *
- * Without this a rebind on `:host` — the idiomatic place for a component-wide
- * custom property, and the ONLY place that reaches a `::ng-deep` fill — is
- * reported as scoped to a descendant of the fill, which is both false and the
- * verdict the next person gets for doing the right thing. `tn-list-option`
- * compounds it: its fills sit under `:host(:hover…)` and `:host(:focus-visible)`,
- * which share no textual prefix with a plain `:host`.
+ * A BARE `:host`, AND NOTHING ELSE. An earlier version of this accepted any
+ * level beginning `:host`, on the reasoning that `:host(:hover)` and `:host` are
+ * the same ELEMENT. They are, and it is the wrong question: what the rule asks is
+ * whether the rebind is in force wherever the fill is PAINTED. A rebind under
+ * `:host(:hover)` is not in force while the pointer is elsewhere, so it does not
+ * cover a fill painted unconditionally — and `:host ::ng-deep .tn-banner__action`
+ * is a DESCENDANT, the exact mistake this file exists to catch. Both of those
+ * passed the narrowing case while `\b` let them through, verified by making
+ * each edit.
  */
-function hostLevel(part: string): string {
-  return part.replace(/^:host\s*\([^)]*\)/, ':host');
-}
-
-/** A declaration on the component root, which encloses everything in the file. */
 function atRoot(stack: readonly string[]): boolean {
-  return stack.length === 0 || (stack.length === 1 && /^:host\b/.test(hostLevel(stack[0])));
+  return stack.length === 0 || (stack.length === 1 && /^:host$/.test(stack[0].trim()));
 }
 
-/** `outer` encloses `inner` — or is the very same element. */
+/**
+ * `outer` encloses `inner` — or is the very same element.
+ *
+ * Levels compare VERBATIM, so a state selector covers the fills nested under
+ * that state and no others: `:host(:hover)` does not cover a
+ * `:host(:focus-visible)` fill. Normalising the two to a common `:host` was how
+ * the version before this certified precisely that.
+ */
 function enclosesOrEquals(outer: readonly string[], inner: readonly string[]): boolean {
   if (atRoot(outer)) {
     return true;
   }
-  const above = outer.map(hostLevel);
-  const below = inner.map(hostLevel);
-  return above.length <= below.length && above.every((part, index) => part === below[index]);
+  return outer.length <= inner.length && outer.every((part, index) => part === inner[index]);
 }
 
 function scssFiles(directory: string): string[] {
