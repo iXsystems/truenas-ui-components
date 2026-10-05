@@ -24,10 +24,18 @@
   // for this fill: `--tn-primary` itself is worse (1.82:1 at worst), and the
   // semantic tokens that do clear it mean "info"/"warning"/"error", which a
   // focus cue is not. `--tn-fg1` is the surface's own primary text colour and
-  // clears AA on it in all nine (6.24:1 at worst), and the focus affordance
-  // does not depend on this colour — the focus-visible ring carries it. So the
-  // label stops being accent-coloured inside an entry card rather than being
-  // illegible in six themes.
+  // clears AA on it in all nine (6.24:1 at worst).
+  //
+  // BE PRECISE ABOUT WHAT THAT COSTS, because it is more than a hue. The label's
+  // resting colour is ALREADY `--tn-fg1` (`form-field.component.scss`), so
+  // rebinding the focused colour to the same token makes the focused label
+  // identical to the unfocused one: inside an entry card that cue is not
+  // recoloured, it is gone. It was a redundant secondary one —
+  // `.tn-input-container:focus-within` still draws a `--tn-primary` border and a
+  // 2px ring, so WCAG 2.4.7 holds on the control itself — and a cue that is
+  // absent beats one that is present and unreadable in six of the nine
+  // palettes. Restoring it properly needs an accent tuned for this fill, which
+  // is the palette decision `projected-token-rebind.spec.ts` records.
   //
   // Declared here rather than on `__content` because the fill is what creates
   // the problem and the fill is this element's; a rebind on a descendant leaves
