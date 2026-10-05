@@ -39,7 +39,11 @@ const libPackage = JSON.parse(
   readFileSync(join(libRoot, 'package.json'), 'utf8')
 ) as PackageJson;
 
-/** What a consumer is guaranteed to have: npm installs one, and warns about the other. */
+/**
+ * What a consumer is guaranteed to have: npm installs a `dependencies` entry outright, and
+ * resolves a `peerDependencies` entry against their own tree — aborting the install when it
+ * cannot be satisfied. Either way the package is there, which is what this check is asking.
+ */
 const declared = new Set([
   ...Object.keys(libPackage.dependencies ?? {}),
   ...Object.keys(libPackage.peerDependencies ?? {}),
@@ -49,8 +53,10 @@ const declared = new Set([
  * Packages the entry point reaches that the contract does not declare, and whose range is a
  * decision nobody has made yet. Every entry is a real gap rather than an exemption — #354
  * chose the ranges for `@angular/forms` and `rxjs` and scoped itself to those two, because
- * declaring a peer can emit install warnings for consumers who are fine today. These two
- * surfaced from this check and are proposed as their own ticket:
+ * the range on a peer is a contract call: since npm 7 a floor the consumer's tree cannot
+ * satisfy is an `ERESOLVE` install failure rather than a warning, so getting one wrong breaks
+ * installs that work today. These two surfaced from this check and are proposed as their own
+ * ticket:
  *
  * - `@angular/animations` — `table.component.ts` and `stepper.component.ts` build animations
  *   with it. An Angular 22 application does not necessarily have it installed, so declaring

@@ -290,7 +290,7 @@ package declares, verbatim:
   "@angular/router": "^22.0.0",
   "@mdi/angular-material": "^7.2.96",
   "@mdi/js": "^7.4.47",
-  "rxjs": "^7.8.2"
+  "rxjs": "^7.5.0"
 }
 ```
 
@@ -301,16 +301,26 @@ import graph and fails when the library imports a package the contract does not
 declare — which is how the `@angular/forms` and `rxjs` omission above was found,
 after it had shipped.
 
-**`rxjs` says `^7.8.2`, which is narrower than `@angular/core`'s own
-`^6.5.3 || ^7.4.0`.** 7.8.2 is what this library is built and tested against,
-and the range says what is tested rather than what might work — the same reason
-the Angular range below names one major. An application already on Angular 22
-with an older rxjs 7 will see a peer warning it did not see before; that is the
-cost of the range being honest, and it is a warning rather than a failure.
+**`rxjs` says `^7.5.0`, not the `^7.8.2` this workspace builds against.** The
+newest rxjs feature the library's source uses is the top-level operator
+re-export (`import { take } from 'rxjs'`), which landed in 7.2.0; everything
+else it reaches for — `firstValueFrom`, the `animationFrameScheduler` /
+`asapScheduler` pair, the subjects and the creation functions — is 7.0 or
+older. `^7.5.0` clears that with room to spare and is the floor the workspace
+root's own `peerDependencies` already names.
+
+**A peer range is not a soft preference, which is why the floor is the code's
+and not the lockfile's.** Since npm 7, a peer dependency the consumer's tree
+cannot satisfy is an `ERESOLVE` **install failure** — Yarn and pnpm warn and
+carry on, npm aborts and needs `--legacy-peer-deps`. So an Angular 22
+application pinned at `~7.5.0` installs this library today and would have
+stopped installing it under `^7.8.2`, for code that runs identically against
+either. The Angular range below is narrow for a different and harder reason,
+given there.
 
 **The entry point still reaches three things this package does not declare**,
-each left for a decision of its own rather than folded in silently — declaring a
-peer can emit install warnings for consumers who are fine today. The test above
+each left for a decision of its own rather than folded in silently — a peer a
+consumer cannot satisfy breaks their `npm install`, as above. The test above
 pins all three: it fails if one stops being imported or gets declared, so none
 can be quietly forgotten.
 
