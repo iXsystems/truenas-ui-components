@@ -11,10 +11,13 @@ import type { Config } from 'jest';
  * pointing ts-jest at its own `tsconfig.json`, and adding the next one costs a line here
  * rather than a merge of compiler options.
  *
- * `../../../scripts/ci` is the one project outside this directory. It has to be: the
- * `release` job treats everything under `projects/truenas-ui/scripts/**` as library
- * source, so a CI-only reporter placed here would cut a release of the published
- * package every time it changed.
+ * Two projects live outside this directory, and both have to. The `release` job treats
+ * everything under `projects/truenas-ui/scripts/**` as library source, and
+ * `ng-package.json` copies it into the published package as an asset — so a test placed
+ * here ships to consumers and cuts a release every time it changes.
+ *
+ * - `../../../scripts/ci` — the CI-only annotations reporter and its tests.
+ * - `../../../scripts/package-contract` — what the published `package.json` must declare.
  */
 const config: Config = {
   projects: [
@@ -22,6 +25,7 @@ const config: Config = {
     '<rootDir>/icon-sprite/jest.config.ts',
     '<rootDir>/release-config/jest.config.ts',
     '<rootDir>/../../../scripts/ci/jest.config.ts',
+    '<rootDir>/../../../scripts/package-contract/jest.config.ts',
   ],
   // See `projects/truenas-ui/jest.config.ts` for what the second reporter does.
   // It goes on this config rather than on the per-package ones above because

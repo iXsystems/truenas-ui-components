@@ -210,6 +210,35 @@ last slot on a summary naming the rest, so **the detailed message is only
 there for the first nine** — and the summary's list of names is itself cut
 after a few dozen. Its title always carries the exact total.
 
+## A new import under `src/lib/` needs a declaration
+
+`yarn test:scripts` walks the published entry point's import graph and fails
+when the library imports a package that `projects/truenas-ui/package.json`
+declares in neither `dependencies` nor `peerDependencies`
+(`scripts/package-contract/declared-dependencies.spec.ts`). So **adding
+`import … from '<package>'` to a shipped file can turn `Run Tests` red in a file
+you did not touch.**
+
+The fix is to declare it, not to work around the check. Which block it belongs
+in — and, for a peer, which range — is a contract call: since npm 7 a peer the
+consumer's tree cannot satisfy is an `ERESOLVE` install failure rather than a
+warning, so a floor higher than the code actually needs breaks installs that
+work today. Pick the range the source requires, and if the answer is not
+obvious, propose it rather than picking one. #354 did exactly that for the gaps
+it found but was not scoped to decide — they are listed in the spec with the
+reason for each, and the same check fails if one is fixed and left in the list.
+
+The check reads `/// <reference types="..." />` as well as imports, because
+ng-packagr's flattened `.d.ts` keeps the types a directive resolved and drops the
+directive.
+
+`ng-packagr` does not cover this. `allowedNonPeerDependencies` in
+`ng-package.json` whitelists packages already in the library's `dependencies`;
+it says nothing about one that is imported and declared nowhere.
+
+The README's "Peer Dependencies" block is asserted to match that package.json
+verbatim by the same spec — **edit both or neither.**
+
 ## Important Notes for Agents
 
 - **Don't read all files at once** - Load only what you need for the current task

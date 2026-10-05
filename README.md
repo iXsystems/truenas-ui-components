@@ -286,19 +286,63 @@ package declares, verbatim:
   "@angular/cdk": "^22.0.0",
   "@angular/common": "^22.0.0",
   "@angular/core": "^22.0.0",
+  "@angular/forms": "^22.0.0",
   "@angular/router": "^22.0.0",
   "@mdi/angular-material": "^7.2.96",
-  "@mdi/js": "^7.4.47"
+  "@mdi/js": "^7.4.47",
+  "rxjs": "^7.5.0"
 }
 ```
 
-**`@angular/forms` and `rxjs` are also needed at runtime and are not in that
-list.** Components under `src/lib/` import from both, so an application needs
-them installed, but the package does not declare them as peers and so will not
-warn you. That gap predates this release and is not fixed here; a consumer on
-Angular 22 already has both. An earlier version of this section listed them
-alongside peers the package never declared, which is why it is called out
-rather than quietly dropped.
+That block is checked against `projects/truenas-ui/package.json` by
+`scripts/package-contract/declared-dependencies.spec.ts`, so it cannot drift
+from what the package declares. The same test walks the published entry point's
+import graph and fails when the library imports a package the contract does not
+declare — which is how the `@angular/forms` and `rxjs` omission above was found,
+after it had shipped.
+
+**`rxjs` says `^7.5.0`, not the `^7.8.2` this workspace builds against.** The
+newest rxjs feature the library's source uses is the top-level operator
+re-export (`import { take } from 'rxjs'`), which landed in 7.2.0; everything
+else it reaches for — `firstValueFrom`, the `animationFrameScheduler` /
+`asapScheduler` pair, the subjects and the creation functions — is 7.0 or
+older. `^7.5.0` clears that with room to spare and is the floor the workspace
+root's own `peerDependencies` already names.
+
+**A peer range is not a soft preference, which is why the floor is the code's
+and not the lockfile's.** Since npm 7, a peer dependency the consumer's tree
+cannot satisfy is an `ERESOLVE` **install failure** — Yarn and pnpm warn and
+carry on, npm aborts and needs `--legacy-peer-deps`. So an Angular 22
+application pinned at `~7.5.0` installs this library today and would have
+stopped installing it under `^7.8.2`, for code that runs identically against
+either. The Angular range below is narrow for a different and harder reason,
+given there.
+
+**The entry point still reaches three things this package does not declare**,
+each left for a decision of its own rather than folded in silently — a peer a
+consumer cannot satisfy breaks their `npm install`, as above. The test above
+pins all three: it fails if one stops being imported or gets declared, so none
+can be quietly forgotten.
+
+- **`@angular/animations`** — `tn-table` and `tn-stepper` build animations with
+  it. This is the one an Angular 22 application may genuinely be missing, so an
+  application using either component needs it installed.
+- **`@angular/platform-browser`** — `DomSanitizer`, in the icon components.
+  Every Angular browser application already has it.
+- **`@types/jest`** — `icon-testing.ts` is exported from the public API and its
+  mocks are typed `jest.Mock`. Those types reach the published `.d.ts` while the
+  `/// <reference types="jest" />` that resolved them does not, so a consumer
+  without jest's types in scope sees `Cannot find namespace 'jest'`. A component
+  library declaring a test framework's types as a peer is the wrong shape; the
+  alternative is moving those helpers out of the main entry point, which is an
+  API change.
+
+**What that check does not cover:** it walks the import graph from
+`src/public-api.ts`, and the published package is more than that graph.
+`ng-package.json` also copies `projects/truenas-ui/scripts/` in as assets, which
+is what the `truenas-icons` bin runs, and those files import `fast-glob` —
+declared in the workspace root's `package.json` and not in this one. So the list
+above is complete for what a consumer `import`s and not for what the bin needs.
 
 **Angular 22 only, not `^21.0.0 || ^22.0.0`.** The library is built in partial
 compilation mode, so the Angular linker in the consumer's build has to be at

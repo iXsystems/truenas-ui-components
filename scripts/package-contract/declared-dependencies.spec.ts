@@ -1,0 +1,353 @@
+/**
+ * `projects/truenas-ui/package.json` is the published package's dependency contract, and
+ * nothing connected it to what the library actually imports. It declared six peers while
+ * the entry point reached `@angular/forms` and `rxjs` as well, so an application that
+ * installed `@truenas/ui-components` without either got no peer warning and failed at
+ * build or at runtime instead (#354).
+ *
+ * ng-packagr does not catch this. `allowedNonPeerDependencies` in `ng-package.json` lists
+ * packages that sit in the library's own `dependencies` and would otherwise have to be
+ * peers; nothing there looks at a package that is imported and declared nowhere.
+ *
+ * So this walks the published entry point's own import graph and checks every bare module
+ * specifier against the declared set. Walking from `src/public-api.ts` rather than globbing
+ * `src/lib/**` is what makes "shipped" mean shipped: specs, stories and helpers no entry
+ * point reaches are excluded because nothing imports them, not because a filename pattern
+ * said so.
+ *
+ * It lives out here rather than under `projects/truenas-ui/scripts/` for the reason given in
+ * `projects/truenas-ui/scripts/jest.config.ts`: `ng-package.json` copies that directory into
+ * the published package as an asset, so a test placed there would ship to consumers and cut
+ * a release every time it changed.
+ */
+import { existsSync, readFileSync } from 'node:fs';
+import { builtinModules } from 'node:module';
+import { dirname, join, relative } from 'node:path';
+import ts from 'typescript';
+
+const repoRoot = join(__dirname, '..', '..');
+const libRoot = join(repoRoot, 'projects', 'truenas-ui');
+const entryPoint = join(libRoot, 'src', 'public-api.ts');
+
+interface PackageJson {
+  name: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+}
+
+const libPackage = JSON.parse(
+  readFileSync(join(libRoot, 'package.json'), 'utf8')
+) as PackageJson;
+
+/**
+ * What a consumer is guaranteed to have: npm installs a `dependencies` entry outright, and
+ * resolves a `peerDependencies` entry against their own tree — aborting the install when it
+ * cannot be satisfied. Either way the package is there, which is what this check is asking.
+ */
+const declared = new Set([
+  ...Object.keys(libPackage.dependencies ?? {}),
+  ...Object.keys(libPackage.peerDependencies ?? {}),
+]);
+
+/**
+ * Packages the entry point reaches that the contract does not declare, and whose range is a
+ * decision nobody has made yet. Every entry is a real gap rather than an exemption — #354
+ * chose the ranges for `@angular/forms` and `rxjs` and scoped itself to those two, because
+ * the range on a peer is a contract call: since npm 7 a floor the consumer's tree cannot
+ * satisfy is an `ERESOLVE` install failure rather than a warning, so getting one wrong breaks
+ * installs that work today. These two surfaced from this check and are proposed as their own
+ * ticket:
+ *
+ * - `@angular/animations` — `table.component.ts` and `stepper.component.ts` build animations
+ *   with it. An Angular 22 application does not necessarily have it installed, so declaring
+ *   it is the entry here with a real consumer cost to weigh.
+ * - `@angular/platform-browser` — `DomSanitizer` in the icon components. Every Angular browser
+ *   application already depends on it, so declaring it is close to free; it is held back only
+ *   because the range is the same kind of call.
+ *
+ * The test below fails when an entry stops being true, so a fix removes it rather than
+ * leaving it to rot.
+ */
+const UNDECLARED_PENDING_A_DECISION = ['@angular/animations', '@angular/platform-browser'];
+
+/**
+ * The same thing for `/// <reference types="..." />`, which names a types package rather
+ * than an import.
+ *
+ * - `jest` — `icon-testing.ts` is exported from `public-api.ts` and its mocks are typed
+ *   `jest.Mock`, which reaches the published `.d.ts`. The directive itself does not: flattening
+ *   drops it, so a consumer without `@types/jest` in scope gets `Cannot find namespace 'jest'`.
+ *   Declaring a test framework's types as a peer of a component library is the wrong shape, and
+ *   the alternative — moving the jest-typed helpers out of the main entry point — is an API
+ *   change. Either way it is a decision rather than a range.
+ */
+const TYPES_PENDING_A_DECISION = ['jest'];
+
+const builtins = new Set(builtinModules);
+
+/** Whether `name` from a types directive resolves: `@types/name` counts, as does `name` itself. */
+function typesAreDeclared(name: string): boolean {
+  return declared.has(name) || declared.has(`@types/${name}`);
+}
+
+/**
+ * The installable package a specifier names, or null when it names nothing installable —
+ * a relative path, or a node builtin with or without the `node:` prefix.
+ */
+function packageOf(specifier: string): string | null {
+  if (specifier.startsWith('.') || specifier.startsWith('node:')) {
+    return null;
+  }
+
+  const segments = specifier.split('/');
+  const name = specifier.startsWith('@') ? segments.slice(0, 2).join('/') : segments[0];
+
+  return builtins.has(name) ? null : name;
+}
+
+/** The file a relative specifier resolves to, or null when nothing on disk matches it. */
+function resolveRelative(importer: string, specifier: string): string | null {
+  const base = join(dirname(importer), specifier);
+
+  for (const candidate of [`${base}.ts`, join(base, 'index.ts'), `${base}.d.ts`]) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+interface FileDependencies {
+  /** Module specifiers, relative ones included. */
+  specifiers: string[];
+  /** Packages named by a `/// <reference types="..." />` directive. */
+  typeReferences: string[];
+}
+
+/**
+ * Everything one file depends on, read with the compiler's own parser.
+ *
+ * A regex over the source cannot do this: `src/lib/` is full of JSDoc examples showing a
+ * consumer's `import { X } from '@truenas/ui-components'`, and of prose inside template
+ * strings that happens to put a quote after the word `from`. Both read as imports to a
+ * pattern and to neither the parser nor the compiler.
+ *
+ * `typeReferences` is the half it would be easy to leave out, and the harder half to notice
+ * missing: ng-packagr's flattened `.d.ts` drops the directive while keeping the types that
+ * needed it, so the consumer's error names a namespace and nothing names a package. The
+ * parser populates them for free beside the imports.
+ */
+function dependenciesOf(file: string): FileDependencies {
+  const source = ts.createSourceFile(
+    file,
+    readFileSync(file, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true
+  );
+  const specifiers: string[] = [];
+
+  const visit = (node: ts.Node): void => {
+    if (
+      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+      node.moduleSpecifier !== undefined &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
+      // Covers `import type` too: a consumer's typecheck has to resolve those as well.
+      specifiers.push(node.moduleSpecifier.text);
+    } else if (
+      ts.isImportTypeNode(node) &&
+      ts.isLiteralTypeNode(node.argument) &&
+      ts.isStringLiteral(node.argument.literal)
+    ) {
+      specifiers.push(node.argument.literal.text);
+    } else if (
+      ts.isCallExpression(node) &&
+      node.expression.kind === ts.SyntaxKind.ImportKeyword
+    ) {
+      const [first] = node.arguments;
+
+      if (first !== undefined && ts.isStringLiteral(first)) {
+        specifiers.push(first.text);
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  };
+
+  visit(source);
+
+  return {
+    specifiers,
+    typeReferences: source.typeReferenceDirectives.map((directive) => directive.fileName),
+  };
+}
+
+interface Graph {
+  /** Package name to the repo-relative files that import it. */
+  packages: Map<string, string[]>;
+  /** `/// <reference types="x" />` name to the repo-relative files that carry it. */
+  typeReferences: Map<string, string[]>;
+  /** Every file reached from the entry point, repo-relative. */
+  files: string[];
+  /** Relative specifiers that resolved to no file — a walk that stopped short. */
+  unresolved: string[];
+}
+
+function walkFromEntryPoint(): Graph {
+  const packages = new Map<string, string[]>();
+  const typeReferences = new Map<string, string[]>();
+  const unresolved: string[] = [];
+  const queue = [entryPoint];
+  const seen = new Set(queue);
+
+  const record = (into: Map<string, string[]>, name: string, file: string): void => {
+    const importers = into.get(name) ?? [];
+    const importer = relative(repoRoot, file);
+
+    if (!importers.includes(importer)) {
+      importers.push(importer);
+      into.set(name, importers);
+    }
+  };
+
+  for (let next = 0; next < queue.length; next += 1) {
+    const file = queue[next];
+    const dependencies = dependenciesOf(file);
+
+    for (const name of dependencies.typeReferences) {
+      record(typeReferences, name, file);
+    }
+
+    for (const specifier of dependencies.specifiers) {
+      if (specifier.startsWith('.')) {
+        const target = resolveRelative(file, specifier);
+
+        if (target === null) {
+          unresolved.push(`${relative(repoRoot, file)} -> ${specifier}`);
+        } else if (!seen.has(target)) {
+          seen.add(target);
+          queue.push(target);
+        }
+
+        continue;
+      }
+
+      const name = packageOf(specifier);
+
+      if (name !== null) {
+        record(packages, name, file);
+      }
+    }
+  }
+
+  return {
+    packages,
+    typeReferences,
+    files: queue.map((file) => relative(repoRoot, file)),
+    unresolved,
+  };
+}
+
+const graph = walkFromEntryPoint();
+
+describe('the walk itself', () => {
+  /**
+   * Each of these is a way the check could pass while having examined nothing. The gap it
+   * exists to close was silent for a release; a check that goes quiet the same way is worse
+   * than no check, because it also reads as an answer.
+   */
+  it('reaches the whole library from the entry point, not a handful of files', () => {
+    // 200 files today. The floor is a long way below that on purpose: it is here to catch a
+    // walk that stopped at the first import, not to record a count that every new component
+    // would have to come back and raise.
+    expect(graph.files.length).toBeGreaterThan(150);
+  });
+
+  it('resolves every relative specifier it meets', () => {
+    expect(graph.unresolved).toEqual([]);
+  });
+
+  it('still sees the two packages #354 was filed about', () => {
+    expect(graph.packages.get('@angular/forms')?.length).toBeGreaterThan(0);
+    expect(graph.packages.get('rxjs')?.length).toBeGreaterThan(0);
+  });
+
+  it('reads the type reference directive the flattened .d.ts drops', () => {
+    expect(graph.typeReferences.get('jest')).toContain(
+      'projects/truenas-ui/src/lib/icon/icon-testing.ts'
+    );
+  });
+});
+
+describe('projects/truenas-ui/package.json', () => {
+  it('declares every package the published entry point imports', () => {
+    const undeclared: Record<string, string[]> = {};
+
+    for (const [name, importers] of graph.packages) {
+      if (!declared.has(name) && !UNDECLARED_PENDING_A_DECISION.includes(name)) {
+        // The importers ride along so a failure names a file to look at.
+        undeclared[name] = importers;
+      }
+    }
+
+    expect(undeclared).toEqual({});
+  });
+
+  it('declares the types every file it reaches references', () => {
+    const undeclared: Record<string, string[]> = {};
+
+    for (const [name, referrers] of graph.typeReferences) {
+      if (!typesAreDeclared(name) && !TYPES_PENDING_A_DECISION.includes(name)) {
+        undeclared[name] = referrers;
+      }
+    }
+
+    expect(undeclared).toEqual({});
+  });
+
+  /**
+   * Both deferred lists are asserted in one test, iterating rather than `it.each`, because
+   * `it.each([])` throws `.each called with an empty Array of table data` — so the moment
+   * someone does the thing the comments above ask for and empties a list, the suite goes red
+   * with a message about table data. A tripwire that fails on being disarmed is not one.
+   */
+  it('has no deferred entry that has since been fixed', () => {
+    const stale: string[] = [];
+
+    for (const name of UNDECLARED_PENDING_A_DECISION) {
+      if (declared.has(name)) {
+        stale.push(`${name}: now declared — delete it from UNDECLARED_PENDING_A_DECISION`);
+      }
+
+      if ((graph.packages.get(name)?.length ?? 0) === 0) {
+        stale.push(`${name}: no longer imported — delete it from UNDECLARED_PENDING_A_DECISION`);
+      }
+    }
+
+    for (const name of TYPES_PENDING_A_DECISION) {
+      if (typesAreDeclared(name)) {
+        stale.push(`${name}: types now declared — delete it from TYPES_PENDING_A_DECISION`);
+      }
+
+      if ((graph.typeReferences.get(name)?.length ?? 0) === 0) {
+        stale.push(`${name}: no longer referenced — delete it from TYPES_PENDING_A_DECISION`);
+      }
+    }
+
+    expect(stale).toEqual([]);
+  });
+});
+
+describe("README.md's Peer Dependencies block", () => {
+  it('reproduces the declared peer dependencies verbatim', () => {
+    const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8');
+    const block = /## Peer Dependencies[\s\S]*?```json\n([\s\S]*?)```/.exec(readme);
+
+    if (block === null) {
+      throw new Error('no fenced json block found under README.md\'s "## Peer Dependencies"');
+    }
+
+    expect(JSON.parse(block[1]) as Record<string, string>).toEqual(libPackage.peerDependencies);
+  });
+});
