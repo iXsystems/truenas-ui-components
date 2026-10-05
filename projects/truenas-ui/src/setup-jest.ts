@@ -43,8 +43,9 @@ setupZonelessTestEnv();
  * WHY A SPEC NEEDS ONE AT ALL
  * ---------------------------
  * `TnSpriteLoaderService` requests `assets/tn-icons/sprite-config.json` from
- * its constructor, and `@angular/common/http` 21 provides `HttpBackend` at root
- * as `useExisting: HttpXhrBackend` — so every spec that renders a `tn-icon`
+ * its constructor, and `@angular/common/http` provides `HttpBackend` at root as
+ * a real network backend — `FetchBackend` since v22, `HttpXhrBackend` before
+ * it — so every spec that renders a `tn-icon`
  * used to make a real request to `http://localhost/assets/…`. The connection is
  * refused, and jsdom's virtual console reports that failure separately from the
  * loader's own message, as a ~25-line `Error: AggregateError` stack. On main at

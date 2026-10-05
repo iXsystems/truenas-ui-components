@@ -145,8 +145,9 @@ signal or an input behind it.
 **Components that predate the Angular 22 upgrade mostly carry an explicit
 `changeDetection: ChangeDetectionStrategy.Eager`**, written there by the v22
 migration to preserve the behaviour they had when `Default` was the default.
-Every one of the 69 components under `src/lib/` does, so nothing the package
-ships changed strategy silently. The migration only rewrote decorators at the
+All 69 components under `src/lib/` now declare a strategy explicitly — 45
+`Eager` and 24 that were already `OnPush` — so nothing the package ships
+changed strategy silently. The migration only rewrote decorators at the
 top level of a file, though, so a few dozen spec-local hosts declared inside a
 `describe()` or `it()` body were left at the new default — they are all static
 or signal-backed, which is why the suites pass unchanged.
