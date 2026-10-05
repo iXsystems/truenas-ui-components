@@ -82,13 +82,22 @@ const COVERED_TOKENS: Readonly<Record<string, string>> = {
  * `--tn-error-text` on `--tn-alt-bg2` there is none. Measured across the nine
  * palettes, worst case, on `--tn-alt-bg2`: `--tn-error` 2.98:1, `--tn-info`
  * 3.00:1, `--tn-warning` 2.97:1, `--tn-success` 3.33:1 — every semantic token
- * fails AA there, where on `--tn-alt-bg1` every one of them clears it. Only
- * `--tn-fg1` (5.62:1) and `--tn-fg2` (4.54:1) clear `--tn-alt-bg2`, and
- * rebinding error text to either discards the red, which is the status itself
+ * fails AA there, where on `--tn-alt-bg1` every one of them clears it. The only
+ * tokens clearing `--tn-alt-bg2` in all nine are the text ones — `--tn-fg1`
+ * (5.62:1), `--tn-alt-fg2` (5.46:1) and `--tn-fg2` (4.54:1) — and
+ * rebinding error text to any of them discards the red, which is the status itself
  * rather than decoration. Whether to retune a token or move the fill is "a
  * decision about how a theme looks rather than something this file settles", in
  * `text-token-surface-contrast.spec.ts`'s words, which is why these are recorded
  * for a person instead of being chosen here.
+ *
+ * `--tn-topbar` AND `--tn-topbar-hover` ARE THE SAME SHAPE WITH A DIFFERENT
+ * SURVIVOR, and `tn-table`'s header is the one entry on them: measured the same
+ * way, the only token clearing AA on those two in all nine palettes is
+ * `--tn-topbar-txt` (4.58:1 and 6.16:1 worst), and every semantic token fails in
+ * at least five — `--tn-error` reaches 1.24:1 on `--tn-topbar` and 1.02:1 on
+ * `--tn-topbar-hover`. So the gap is "no tuned STATUS
+ * colour above the page", not something peculiar to `--tn-alt-bg2`.
  */
 const PENDING_A_DECISION: readonly {
   file: string;
@@ -165,6 +174,20 @@ const PENDING_A_DECISION: readonly {
       + 'text, recorded in primary-text-contrast.spec.ts for this same surface',
   },
   {
+    file: 'stepper/stepper.component.scss',
+    token: '--tn-error-text',
+    why: 'governed only because its step header is rendered through an ngTemplateOutlet; the '
+      + 'one untuned fill is .tn-stepper__step-indicator, the numbered circle this component '
+      + 'fills itself with a digit or a tn-icon, and the caller content step.content() delivers '
+      + 'lands in .tn-stepper__step-content, which fills --tn-bg1 — a surface both covered '
+      + 'tokens ARE tuned for, which is why the scan does not see it as a fill at all',
+  },
+  {
+    file: 'stepper/stepper.component.scss',
+    token: '--tn-primary-text',
+    why: 'same indicator, same reason — no caller content is ever on that fill',
+  },
+  {
     file: 'tab/tab.component.scss',
     token: '--tn-error-text',
     why: 'the hovered inactive tab fills --tn-alt-bg1, so this is rebindable; held as a hover '
@@ -174,6 +197,30 @@ const PENDING_A_DECISION: readonly {
     file: 'tab/tab.component.scss',
     token: '--tn-primary-text',
     why: 'same hover',
+  },
+  {
+    file: 'table/table.component.scss',
+    token: '--tn-error-text',
+    why: 'four untuned fills under caller templates, and they do not take one answer. A '
+      + 'tnColumnDef cellTemplate lands on rows filling --tn-alt-bg1 (hover, expanded) and '
+      + '--tn-bg3 (active), where --tn-error clears AA in all nine at 4.62:1 and 4.63:1 worst; '
+      + 'a tnHeaderCellDef template lands in a header cell filling --tn-topbar/--tn-topbar-hover, '
+      + 'where the only token clearing AA in all nine is --tn-topbar-txt (4.58:1, 6.16:1 worst) '
+      + 'and every semantic token fails in five palettes or more (--tn-error 1.24:1 worst on '
+      + '--tn-topbar, 1.02:1 on --tn-topbar-hover). So '
+      + 'the header half discards the red for the same reason --tn-alt-bg2 does, and rebinding '
+      + 'only the rows would leave the header drawing the untuned token on the same component. '
+      + 'Held as one decision about the table, as button-toggle above is held as one about its pair',
+  },
+  {
+    file: 'table/table.component.scss',
+    token: '--tn-primary-text',
+    why: 'the same four fills, and this half has no tuned accent on ANY of them: --tn-primary '
+      + 'is 1.82:1 worst on --tn-bg3 and --tn-alt-bg1 and 1.00:1 on --tn-topbar. The --tn-fg1 '
+      + 'answer form-list-item takes does not reach across this component either — it clears '
+      + 'the two row surfaces and fails --tn-topbar in five palettes (1.32:1 worst) and '
+      + '--tn-topbar-hover in three — so the header would have to take --tn-topbar-txt, which '
+      + 'is a body-text token rather than an accent. Held with the error half',
   },
   {
     file: 'tabs/tabs.component.scss',
@@ -335,6 +382,30 @@ function templateFor(file: string): string {
     .join('\n');
 }
 
+/**
+ * A template that renders content the CALLER supplies.
+ *
+ * TWO MECHANISMS, NOT ONE, and the second is the one that was missed.
+ * `<ng-content>` is the obvious half. The other is `ngTemplateOutlet` over a
+ * template a caller handed in, which is how every structural-directive API in
+ * this library takes content: `tn-table` renders a `tnColumnDef`'s
+ * `cellTemplate()` into `.tn-table__cell`, a `tnHeaderCellDef`'s into
+ * `.tn-table__header-text` and `detailRowDef().template` into
+ * `.tn-table__detail-row`, and `tn-stepper` renders each `step.content()`.
+ * `table.component.html` holds no `<ng-content` at all, so a detector matching
+ * only that read it as projecting nothing, dropped it out of `governed`, and
+ * left this suite green over a `<tn-checkbox>` in a cell template drawing
+ * `--tn-error-text` on `--tn-alt-bg1` — the same defect as the banner's.
+ *
+ * Deliberately a source-level match rather than a check that the outlet's
+ * template came from outside the component: several outlets here render a
+ * template the component itself declares (`tn-stepper`'s `stepHeader`,
+ * `tn-table`'s `cardField`), so this OVER-collects. That is the direction to err
+ * in — over-collecting costs a `PENDING_A_DECISION` entry saying why a component
+ * is exempt, and under-collecting costs the check.
+ */
+const PROJECTS = /<ng-content|ngTemplateOutlet/;
+
 describe('a fill that holds projected content rebinds the tokens tuned above it (#356)', () => {
   const scanned = scssFiles(LIB_DIR).map((file) => {
     const scss = withoutComments(readFileSync(join(LIB_DIR, file), 'utf8'));
@@ -343,7 +414,7 @@ describe('a fill that holds projected content rebinds the tokens tuned above it 
       file,
       fills: decls.filter((one) => UNTUNED_FILL.test(one.text)),
       decls,
-      projects: /<ng-content/.test(templateFor(file)),
+      projects: PROJECTS.test(templateFor(file)),
     };
   });
 
