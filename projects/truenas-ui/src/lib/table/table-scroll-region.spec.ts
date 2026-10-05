@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnTableTesting } from './table-testing';
@@ -51,6 +51,7 @@ const ROWS: Row[] = [
   selector: 'tn-table-scroll-region-host',
   standalone: true,
   imports: [TnTableComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <button type="button" id="trigger">Elsewhere</button>

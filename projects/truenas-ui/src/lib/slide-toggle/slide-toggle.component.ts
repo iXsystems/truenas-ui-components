@@ -1,7 +1,7 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
-import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, forwardRef, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
@@ -21,6 +21,7 @@ export type SlideToggleColor = 'primary' | 'accent' | 'warn';
     // nothing to fill.
     '[class.tn-slide-toggle-host--full-width]': 'fullWidth()',
   },
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

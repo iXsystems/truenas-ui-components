@@ -1,6 +1,6 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
-import { Component, viewChild, inject, input, output, computed, signal, linkedSignal, forwardRef } from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, linkedSignal, forwardRef, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
@@ -30,6 +30,7 @@ let nextId = 0;
     }
   ],
   templateUrl: './input.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './input.component.scss',
 })
 export class TnInputComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {

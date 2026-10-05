@@ -1,6 +1,6 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import type { HarnessLoader } from '@angular/cdk/testing';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnDialogShellComponent } from './dialog-shell.component';
@@ -15,10 +15,11 @@ import { TnButtonComponent } from '../button/button.component';
   selector: 'tn-test-dialog',
   standalone: true,
   imports: [TnDialogShellComponent, TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-dialog-shell
       [title]="data?.title ?? 'Test Dialog'"
-      [testId]="data?.testId"
+      [testId]="$safeNavigationMigration(data?.testId)"
       [showFullscreenButton]="data?.showFullscreen ?? false"
       [showCloseButton]="data?.showCloseButton ?? true"
       [hideContent]="data?.hideContent ?? false"
@@ -45,6 +46,7 @@ class TestDialogComponent {
 @Component({
   selector: 'tn-test-host',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '',
 })
 class TestHostComponent {}
@@ -56,6 +58,7 @@ class TestHostComponent {}
   selector: 'tn-empty-dialog',
   standalone: true,
   imports: [TnDialogShellComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-dialog-shell [title]="'Empty'" />`,
 })
 class EmptyDialogComponent {}

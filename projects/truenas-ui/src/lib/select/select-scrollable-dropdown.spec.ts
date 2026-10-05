@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { TnSelectOption } from './select.component';
@@ -43,6 +43,7 @@ import { scrollingTo, staticScroller } from '../a11y/scrollable-region-testing';
   selector: 'tn-select-scroll-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<tn-select placeholder="Select a fruit" [options]="options()" />',
 })
 class SelectScrollHostComponent {

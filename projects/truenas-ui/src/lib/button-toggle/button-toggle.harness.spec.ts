@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TnButtonToggleGroupComponent } from './button-toggle-group.component';
@@ -11,6 +11,7 @@ import { TnButtonToggleHarness, TnButtonToggleGroupHarness } from './button-togg
   selector: 'tn-button-toggle-harness-test',
   standalone: true,
   imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-button-toggle-group>
@@ -182,6 +183,7 @@ describe('TnButtonToggleGroupHarness', () => {
   selector: 'tn-button-toggle-cva-test',
   standalone: true,
   imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-button-toggle-group [formControl]="control">
@@ -206,6 +208,7 @@ class ButtonToggleCvaTestComponent {
   selector: 'tn-button-toggle-initial-value-test',
   standalone: true,
   imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-button-toggle-group [formControl]="control">
@@ -230,6 +233,7 @@ class ButtonToggleInitialValueTestComponent {
   selector: 'tn-button-toggle-for-loop-test',
   standalone: true,
   imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-button-toggle-group [formControl]="control">
@@ -385,6 +389,7 @@ describe('TnButtonToggleGroup — initial FormControl value with @for loop', () 
   selector: 'tn-button-toggle-checked-style-test',
   standalone: true,
   imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-button-toggle-group
@@ -447,6 +452,7 @@ describe('TnButtonToggleGroup — checked style inputs', () => {
 @Component({
   standalone: true,
   imports: [TnButtonToggleComponent, TnButtonToggleGroupComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button-toggle-group testId="format"><tn-button-toggle testId="bold" value="b">B</tn-button-toggle></tn-button-toggle-group>`,
 })
 class ButtonToggleTestIdHostComponent {}

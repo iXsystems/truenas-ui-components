@@ -131,24 +131,36 @@ valueChange = output<string>();
 
 ### 2. Change Detection Strategy
 
-**Decision:** Use `OnPush` when appropriate, `Default` otherwise.
+**Decision:** omit `changeDetection` on a new component. Angular 22 made
+`OnPush` the default, so leaving it out is choosing it.
 
-**Use OnPush when:**
-- Component relies only on `@Input()` properties
-- No internal mutable state
-- Performance is critical
+The two strategies are `OnPush` and **`Eager`** — the latter is what Angular 21
+and earlier called `Default`, and it is checked on every traversal rather than
+only when something marks it dirty.
 
-**Use Default when:**
-- Component has complex internal state
-- Uses Observable subscriptions
-- Performance is not critical
+**Use `Eager` only when** a component cannot report its own changes: it mutates
+state outside Angular's knowledge, or reads a value that changes without a
+signal or an input behind it.
 
-**Implementation:**
+**Components that predate the Angular 22 upgrade mostly carry an explicit
+`changeDetection: ChangeDetectionStrategy.Eager`**, written there by the v22
+migration to preserve the behaviour they had when `Default` was the default.
+Every one of the 69 components under `src/lib/` does, so nothing the package
+ships changed strategy silently. The migration only rewrote decorators at the
+top level of a file, though, so a few dozen spec-local hosts declared inside a
+`describe()` or `it()` body were left at the new default — they are all static
+or signal-backed, which is why the suites pass unchanged.
+
+The blanket `Eager` is not the house style for new work and it is not an
+inconsistency to clean up — a component with no legacy behaviour to preserve
+should be `OnPush`, which means writing nothing.
+
+**Implementation** (only when you need the non-default strategy):
 ```typescript
 import { ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,  // Optional
+  changeDetection: ChangeDetectionStrategy.Eager,
 })
 ```
 
@@ -794,13 +806,9 @@ Provide visible focus indicators:
 ## Performance Considerations
 
 ### OnPush Change Detection
-Use for performance-critical components:
-
-```typescript
-@Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-```
+It is Angular 22's default, so a component gets it by writing nothing. Reach for
+`ChangeDetectionStrategy.Eager` only for the cases in
+[Change Detection Strategy](#2-change-detection-strategy) above.
 
 ### Track Expression for @for
 Optimize list rendering with the built-in `track` expression:

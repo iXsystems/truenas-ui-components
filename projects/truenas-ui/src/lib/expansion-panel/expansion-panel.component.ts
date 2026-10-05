@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, output, computed, signal } from '@angular/core';
+import { Component, input, output, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
 @Component({
@@ -7,6 +7,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
   standalone: true,
   imports: [CommonModule, TnTestIdDirective],
   templateUrl: './expansion-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./expansion-panel.component.scss']
 })
 export class TnExpansionPanelComponent {

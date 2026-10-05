@@ -1,5 +1,5 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TnButtonComponent } from '../../lib/button/button.component';
@@ -19,6 +19,7 @@ import { TnTabsComponent } from '../../lib/tabs/tabs.component';
   selector: 'tabbed-wizard-dialog',
   templateUrl: './tabbed-wizard.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TnDialogShellComponent,
     TnTabsComponent,
@@ -113,6 +114,7 @@ class TabbedWizardDialogComponent {
   selector: 'tabbed-wizard-demo',
   templateUrl: './tabbed-wizard-2.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnButtonComponent]
 })
 class TabbedWizardDemoComponent {

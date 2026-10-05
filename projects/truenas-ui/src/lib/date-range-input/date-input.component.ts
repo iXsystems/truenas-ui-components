@@ -4,7 +4,7 @@ import { Overlay } from '@angular/cdk/overlay';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import type { ElementRef, OnInit, TemplateRef, OnDestroy } from '@angular/core';
-import { ViewContainerRef } from '@angular/core';
+import { ViewContainerRef, ChangeDetectionStrategy } from '@angular/core';
 import { Component, input, forwardRef, signal, computed, viewChild, inject } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -25,6 +25,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
   ],
   templateUrl: './date-input.component.html',
   styleUrl: './date-input.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-date-input',
     // Escape only, and deliberately HERE rather than beside the segments' own

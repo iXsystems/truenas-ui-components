@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TnExpansionPanelComponent } from './expansion-panel.component';
@@ -10,6 +10,7 @@ import { TnExpansionPanelHarness } from './expansion-panel.harness';
   selector: 'tn-expansion-panel-harness-test',
   standalone: true,
   imports: [TnExpansionPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-expansion-panel title="Settings">

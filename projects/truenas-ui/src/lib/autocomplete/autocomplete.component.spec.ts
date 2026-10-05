@@ -1,5 +1,5 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -25,6 +25,7 @@ const countryOptions = countries.map((c) => ({ label: c.name, value: c.code }));
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-autocomplete
@@ -52,6 +53,7 @@ class TestHostComponent {
   selector: 'tn-disabled-input-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-autocomplete [options]="options" [disabled]="disabled()" />
   `
@@ -65,6 +67,7 @@ class DisabledInputHostComponent {
   selector: 'tn-async-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-autocomplete
@@ -92,6 +95,7 @@ class AsyncTestHostComponent {
   selector: 'tn-label-value-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-autocomplete
@@ -110,6 +114,7 @@ class LabelValueHostComponent {
   selector: 'tn-disabled-options-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-autocomplete
@@ -137,6 +142,7 @@ class DisabledOptionsHostComponent {
   selector: 'tn-test-id-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-autocomplete
@@ -159,6 +165,7 @@ class TestIdHostComponent {
   selector: 'tn-control-name-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-autocomplete formControlName="country" [options]="options" />
@@ -176,6 +183,7 @@ interface City { id: string; }
   selector: 'tn-object-value-test-host',
   standalone: true,
   imports: [TnAutocompleteComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-autocomplete

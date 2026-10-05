@@ -13,7 +13,7 @@ Testing patterns and best practices for TrueNAS UI Components using Jest.
 ## The suite is zoneless, and two habits do not survive that
 
 `setup-jest.ts` calls `setupZonelessTestEnv()`, so every spec runs the change
-detection an Angular 21 application gets by default. Two things follow, and both
+detection an Angular 22 application gets by default. Two things follow, and both
 of them fail in ways that name the wrong culprit.
 
 **1. `fakeAsync` and `tick` are gone.** They are Zone APIs. A spec that reaches

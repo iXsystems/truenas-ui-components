@@ -1,5 +1,5 @@
 import { FocusMonitor } from '@angular/cdk/a11y';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -855,6 +855,7 @@ describe('TnInputComponent', () => {
   selector: 'tn-test-cva-host',
   standalone: true,
   imports: [TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-input [formControl]="control" />`
 })
 class TestCvaHostComponent {
@@ -918,6 +919,7 @@ describe('TnInputComponent with FormControl', () => {
   selector: 'tn-test-form-name-host',
   standalone: true,
   imports: [TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-input formControlName="sshPort" />
@@ -950,6 +952,7 @@ describe('TnInputComponent test-id fallback', () => {
   selector: 'tn-test-number-cva-host',
   standalone: true,
   imports: [TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-input [inputType]="numberType" [formControl]="control" />`
 })
 class TestNumberCvaHostComponent {
@@ -1006,6 +1009,7 @@ describe('TnInputComponent number type with FormControl', () => {
   selector: 'tn-test-number-validators-host',
   standalone: true,
   imports: [TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-input [inputType]="numberType" [formControl]="control" />`
 })
 class TestNumberValidatorsHostComponent {
@@ -1054,6 +1058,7 @@ describe('TnInputComponent number type with consumer validators', () => {
   selector: 'tn-test-size-cva-host',
   standalone: true,
   imports: [TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-input [inputType]="sizeType" [formControl]="control" />`
 })
 class TestSizeCvaHostComponent {

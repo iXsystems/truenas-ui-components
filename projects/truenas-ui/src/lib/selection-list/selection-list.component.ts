@@ -1,5 +1,5 @@
 
-import { Component, ElementRef, input, output, contentChildren, signal, computed, forwardRef, effect, inject } from '@angular/core';
+import { Component, ElementRef, input, output, contentChildren, signal, computed, forwardRef, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { injectTnFormFieldAria } from '../form-field/form-field-context';
@@ -28,6 +28,7 @@ export interface TnSelectionChange {
     }
   ],
   hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-selection-list',
     '[class.tn-selection-list--dense]': 'dense()',

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnSelectComponent, TN_SELECT_LABELS, type TnSelectLabels } from './select.component';
@@ -12,6 +12,7 @@ import { TnSelectComponent, TN_SELECT_LABELS, type TnSelectLabels } from './sele
   selector: 'tn-labels-test-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select [options]="[]" [showSelectAll]="true" [multiple]="true" />

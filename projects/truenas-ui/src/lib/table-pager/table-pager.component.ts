@@ -184,7 +184,13 @@ export class TnTablePagerComponent {
   /** 1-based index of the currently displayed page. */
   currentPage = model<number>(1);
 
-  /** Number of items per page. */
+  /**
+   * Number of items per page.
+   *
+   * A `model`, so it carries its own `pageSizeChange` output and supports
+   * `[(pageSize)]`. Angular 22 rejects a component that declares a second
+   * output of that name, which this one used to do alongside the model.
+   */
   pageSize = model<number>(50);
 
   /** Selectable page-size values rendered in the dropdown. */
@@ -315,9 +321,6 @@ export class TnTablePagerComponent {
 
   /** Emits the new 1-based page number whenever the user navigates. */
   pageChange = output<number>();
-
-  /** Emits the new page-size value when the dropdown changes. */
-  pageSizeChange = output<number>();
 
   /**
    * Total items reported by the data provider (when one is bound). Falls back
@@ -476,8 +479,8 @@ export class TnTablePagerComponent {
 
   protected onPageSizeChange(value: number): void {
     if (value === this.pageSize()) { return; }
+    // `pageSize` is a model, so setting it emits `pageSizeChange` for us.
     this.pageSize.set(value);
-    this.pageSizeChange.emit(value);
     // Resetting to page 1 is a UX expectation when the page size changes —
     // otherwise the user might land on an out-of-range page.
     this.currentPage.set(1);

@@ -1,5 +1,5 @@
 import { LEFT_ARROW, RIGHT_ARROW, UP_ARROW, DOWN_ARROW, HOME, END, ENTER, SPACE } from '@angular/cdk/keycodes';
-import { Component, signal, viewChild } from '@angular/core';
+import { Component, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnTabsComponent } from './tabs.component';
@@ -10,6 +10,7 @@ import { TnTabPanelComponent } from '../tab-panel/tab-panel.component';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/test-host.component.html'
 })
 class TestHostComponent {
@@ -35,6 +36,7 @@ class TestHostComponent {
   selector: 'tn-lazy-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/lazy-host.component.html'
 })
 class LazyHostComponent {
@@ -436,6 +438,7 @@ describe('TnTabsComponent (lazy loading)', () => {
 @Component({
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-tabs testId="settings">

@@ -1,5 +1,5 @@
 import type { OnDestroy } from '@angular/core';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { action } from 'storybook/actions';
 import { TnKeyboardShortcutComponent } from '../lib/keyboard-shortcut/keyboard-shortcut.component';
@@ -8,6 +8,7 @@ import { TnKeyboardShortcutComponent } from '../lib/keyboard-shortcut/keyboard-s
   selector: 'shortcut-test',
   standalone: true,
   imports: [TnKeyboardShortcutComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './keyboard-shortcut.stories.html'
 })
 class ShortcutTestComponent implements OnDestroy {

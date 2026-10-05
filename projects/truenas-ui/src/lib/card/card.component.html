@@ -49,7 +49,7 @@
         @if (headerStatus(); as status) {
           <div
             class="tn-card__status"
-            [ngClass]="getStatusClass(status?.type)"
+            [ngClass]="getStatusClass($safeNavigationMigration(status?.type))"
             [tnTestId]="status.testId">
             {{ status.label }}
           </div>

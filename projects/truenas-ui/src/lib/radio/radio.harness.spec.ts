@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TnRadioComponent } from './radio.component';
 import { TnRadioHarness } from './radio.harness';
@@ -9,6 +9,7 @@ import { TnRadioHarness } from './radio.harness';
   selector: 'tn-radio-harness-test',
   standalone: true,
   imports: [TnRadioComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-radio

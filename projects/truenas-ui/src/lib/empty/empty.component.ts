@@ -1,4 +1,4 @@
-import { Component, input, output, computed } from '@angular/core';
+import { Component, input, output, computed, ChangeDetectionStrategy } from '@angular/core';
 import { TnButtonComponent } from '../button/button.component';
 import { TnIconComponent } from '../icon/icon.component';
 import type { IconLibraryType } from '../icon/icon.component';
@@ -11,6 +11,7 @@ export type TnEmptySize = 'default' | 'compact';
   imports: [TnIconComponent, TnButtonComponent],
   templateUrl: './empty.component.html',
   styleUrls: ['./empty.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-empty',
     '[class.tn-empty--compact]': 'size() === "compact"',

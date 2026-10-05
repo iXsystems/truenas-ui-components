@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnListItemComponent } from './list-item.component';
@@ -13,6 +13,7 @@ import {
   selector: 'tn-list-item-side-slots-test',
   standalone: true,
   imports: [TnListItemComponent, TnListIconDirective, TnListItemTrailingDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-list-item>
     <span tnListIcon class="icon">icon</span><span tnListItemTrailing class="trailing">trailing</span>
   </tn-list-item>`,
@@ -23,6 +24,7 @@ class SideSlotsHostComponent {}
   selector: 'tn-list-item-text-slots-test',
   standalone: true,
   imports: [TnListItemComponent, TnListItemTitleDirective, TnListItemLineDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-list-item>
     <span tnListItemTitle>Title</span><span tnListItemLine>Secondary</span>
   </tn-list-item>`,
@@ -33,6 +35,7 @@ class TextSlotsHostComponent {}
   selector: 'tn-list-item-plain-test',
   standalone: true,
   imports: [TnListItemComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-list-item [dense]="dense()" [wrap]="wrap()">Just text</tn-list-item>`,
 })
 class PlainHostComponent {

@@ -1,6 +1,6 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, InjectionToken, computed, effect, input, signal, inject } from '@angular/core';
+import { Component, ElementRef, InjectionToken, computed, effect, input, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { injectTnFallbackName } from '../a11y/fallback-labels';
@@ -65,6 +65,7 @@ function firstNonBlank(...values: (string | null | undefined)[]): string | null 
   templateUrl: './dialog-shell.component.html',
   standalone: true,
   imports: [TnTestIdDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-dialog-shell'
   }

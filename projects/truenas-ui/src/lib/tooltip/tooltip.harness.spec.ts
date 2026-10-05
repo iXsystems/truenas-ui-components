@@ -1,5 +1,5 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnTooltipTesting } from './tooltip-testing';
@@ -11,6 +11,7 @@ import { TnIconTesting } from '../icon/icon-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnTooltipDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button type="button" [tnTooltip]="message()">host</button>
     <button type="button" id="plain" [tnTooltip]="'Pool is healthy'">plain host</button>

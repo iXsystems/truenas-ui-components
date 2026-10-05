@@ -1,7 +1,7 @@
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import type { OnDestroy, TemplateRef } from '@angular/core';
-import { Component, contentChildren, input, output, viewChild, computed, inject, ViewContainerRef } from '@angular/core';
+import { Component, contentChildren, input, output, viewChild, computed, inject, ViewContainerRef, ChangeDetectionStrategy } from '@angular/core';
 import type { Subscription } from 'rxjs';
 import type { TnTestIdValue } from '../test-id';
 import { TnMenuItemComponent } from './menu-item.component';
@@ -36,6 +36,7 @@ export interface TnMenuItem {
   standalone: true,
   imports: [TnMenuPanelComponent],
   templateUrl: './menu.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./menu.component.scss'],
 })
 export class TnMenuComponent implements OnDestroy {

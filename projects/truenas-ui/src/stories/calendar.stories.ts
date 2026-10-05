@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, input, linkedSignal, signal } from '@angular/core';
+import { Component, input, linkedSignal, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCalendarComponent } from '../lib/calendar/calendar.component';
@@ -17,6 +17,7 @@ const harnessDoc = loadHarnessDoc('calendar');
   selector: 'sb-calendar-demo',
   standalone: true,
   imports: [TnCalendarComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-calendar
@@ -64,6 +65,7 @@ class CalendarDemoComponent {
     />
     <p>Showing: {{ activeDate() | date: 'MMMM yyyy' }}</p>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnCalendarComponent, DatePipe],
 })
 class CalendarActiveDateDemoComponent {

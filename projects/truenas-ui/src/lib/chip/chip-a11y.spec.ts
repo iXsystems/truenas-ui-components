@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnChipComponent } from './chip.component';
@@ -26,6 +26,7 @@ import { TnSpriteLoaderService } from '../icon/sprite-loader.service';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnChipComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-chip [label]="label()" [icon]="icon()" [closable]="closable()"
     [disabled]="disabled()" (onClick)="clickCount = clickCount + 1"
     (onClose)="closeCount = closeCount + 1" />`

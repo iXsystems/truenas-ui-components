@@ -1,4 +1,4 @@
-import { Component, forwardRef, input } from '@angular/core';
+import { Component, forwardRef, input, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormControl, FormGroup, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
@@ -20,6 +20,7 @@ import { TnTestIdDirective } from './test-id.directive';
       multi: true,
     },
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<span tnTestIdType="input" [tnTestId]="resolvedTestId()">x</span>`,
 })
 class TestControlComponent implements ControlValueAccessor {

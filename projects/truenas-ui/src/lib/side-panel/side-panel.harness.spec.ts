@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import {
@@ -17,6 +17,7 @@ import { TnIconTesting } from '../icon/icon-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnSidePanelActionDirective, TnSidePanelHeaderActionDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel
       [open]="open()"
@@ -41,6 +42,7 @@ class TestHostComponent {
   selector: 'tn-multi-panel-host',
   standalone: true,
   imports: [TnSidePanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="First Panel" [open]="true">
       <p>First</p>

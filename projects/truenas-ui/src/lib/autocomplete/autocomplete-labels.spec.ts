@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnAutocompleteComponent, TN_AUTOCOMPLETE_LABELS, type TnAutocompleteLabels } from './autocomplete.component';
@@ -12,6 +12,7 @@ import { TnAutocompleteComponent, TN_AUTOCOMPLETE_LABELS, type TnAutocompleteLab
   selector: 'tn-autocomplete-labels-host',
   standalone: true,
   imports: [TnAutocompleteComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-autocomplete [options]="[]" />
     <tn-autocomplete [options]="[]" [placeholder]="placeholder()" />

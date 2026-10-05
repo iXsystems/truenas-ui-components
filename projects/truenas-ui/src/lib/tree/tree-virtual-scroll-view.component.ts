@@ -8,7 +8,7 @@ import { AsyncPipe } from '@angular/common';
 import type {
   AfterViewInit,
   TrackByFunction} from '@angular/core';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, IterableDiffers, ViewContainerRef, ViewEncapsulation, booleanAttribute, computed, inject, input, output, viewChild,
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ViewEncapsulation, booleanAttribute, computed, inject, input, output, viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { animationFrameScheduler, asapScheduler, BehaviorSubject } from 'rxjs';
@@ -173,7 +173,8 @@ export class TnTreeVirtualScrollViewComponent<T, K = T> extends CdkTree<T, K>
   private scrollFrameSubscription: Subscription | null = null;
 
   constructor() {
-    super(inject(IterableDiffers), inject(ChangeDetectorRef), inject(ViewContainerRef));
+    // CdkTree injects its own dependencies as of Angular 22; `super()` takes none.
+    super();
     this.listenForNodeChanges();
   }
 

@@ -3,7 +3,7 @@ import { type ConnectedPosition, Overlay, type OverlayRef } from '@angular/cdk/o
 import { OverlayModule } from '@angular/cdk/overlay';
 import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
 import type { OnDestroy, OnInit} from '@angular/core';
-import { ElementRef, type TemplateRef, ViewContainerRef, Component, computed, forwardRef, input, output, signal, viewChild, inject } from '@angular/core';
+import { ElementRef, type TemplateRef, ViewContainerRef, Component, computed, forwardRef, input, output, signal, viewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -39,6 +39,7 @@ import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTe
   ],
   templateUrl: './file-picker.component.html',
   styleUrl: './file-picker.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-file-picker',
     '[class.error]': 'hasError()',

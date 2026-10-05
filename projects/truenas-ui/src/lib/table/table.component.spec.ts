@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -18,6 +18,7 @@ import {
 @Component({
   standalone: true,
   imports: [TnTableComponent, TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-table [dataSource]="data" [displayedColumns]="['name']">
@@ -42,6 +43,7 @@ class SortableHostComponent {
     TnCellDefDirective,
     TnDetailRowDefDirective,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-table [dataSource]="data" [displayedColumns]="['name']" [expandable]="true">

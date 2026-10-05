@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnParticleProgressBarComponent } from './particle-progress-bar.component';
@@ -37,6 +37,7 @@ import { TN_PARTICLE_PROGRESS_BAR_DEFAULT_LABEL } from '../a11y/fallback-labels'
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnParticleProgressBarComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<span id="tn-external-label">Restoring pool</span>
     <tn-particle-progress-bar [width]="width()" [fill]="fill()"
       [ariaLabel]="ariaLabel()" [ariaLabelledby]="ariaLabelledby()" />`

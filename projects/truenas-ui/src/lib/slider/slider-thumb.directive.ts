@@ -21,11 +21,11 @@ function blankToNull(value: string | null): string | null {
   host: {
     'type': 'range',
     'class': 'tn-slider-thumb',
-    '[disabled]': 'slider?.isDisabled()',
+    '[disabled]': '$safeNavigationMigration(slider?.isDisabled())',
     '[attr.min]': 'slider?.min()',
     '[attr.max]': 'slider?.max()',
     '[attr.step]': 'slider?.step()',
-    '[value]': 'slider?.value()',
+    '[value]': '$safeNavigationMigration(slider?.value())',
     '[attr.aria-valuetext]': 'ariaValueText()',
     '[attr.aria-label]': 'ariaLabel()',
     '[attr.aria-labelledby]': 'ariaLabelledby()',

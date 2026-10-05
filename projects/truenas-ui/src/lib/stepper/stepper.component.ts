@@ -2,6 +2,7 @@ import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import {
   Component, input, output, contentChildren, computed, effect, model, signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { TnStepComponent } from './step.component';
 import { TnIconComponent } from '../icon/icon.component';
@@ -35,6 +36,7 @@ export const TN_STEPPER_STATUS_COMPLETED = 'Completed';
       ])
     ])
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     '(window:resize)': 'onWindowResize()'
   }

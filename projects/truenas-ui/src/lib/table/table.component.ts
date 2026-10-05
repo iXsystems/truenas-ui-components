@@ -18,6 +18,7 @@ import {
   output,
   signal,
   untracked,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import type { OnInit, Signal } from '@angular/core';
 import { tnScrollableRegion } from '../a11y/scrollable-region';
@@ -208,6 +209,7 @@ export const TN_TABLE_LABELS = new InjectionToken<TnTableLabels | Signal<TnTable
     ]),
   ],
   hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     class: 'tn-table',
     '[class.tn-table--bordered]': 'bordered()',

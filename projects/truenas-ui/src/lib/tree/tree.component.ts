@@ -1,6 +1,6 @@
 import { DataSource } from '@angular/cdk/collections';
 import { CdkTree, CdkTreeModule } from '@angular/cdk/tree';
-import { ChangeDetectorRef, IterableDiffers, ViewContainerRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import type { Observable} from 'rxjs';
 import { BehaviorSubject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -178,8 +178,6 @@ export class TnTreeFlatDataSource<T, F, K = F> extends DataSource<F> {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TnTreeComponent<T, K = T> extends CdkTree<T, K> {
-  constructor() {
-    super(inject(IterableDiffers), inject(ChangeDetectorRef), inject(ViewContainerRef));
-  }
-}
+// CdkTree takes its own dependencies through `inject()` as of Angular 22, so its
+// constructor accepts no arguments and this subclass needs no constructor at all.
+export class TnTreeComponent<T, K = T> extends CdkTree<T, K> {}

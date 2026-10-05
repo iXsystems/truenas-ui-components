@@ -4,6 +4,7 @@ import type { AfterContentInit } from '@angular/core';
 import {
   Component, ElementRef, input, output, computed, signal, contentChild, forwardRef, inject,
   viewChild, DestroyRef,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl, Validators } from '@angular/forms';
@@ -70,6 +71,7 @@ interface ControlStateSnapshot {
     },
   ],
   templateUrl: './form-field.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./form-field.component.scss']
 })
 export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContext {

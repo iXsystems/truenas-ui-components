@@ -1,7 +1,7 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { TemplateRef, AfterContentInit} from '@angular/core';
-import { Component, input, output, ElementRef, inject, contentChild, computed, signal } from '@angular/core';
+import { Component, input, output, ElementRef, inject, contentChild, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { tabDomId, tabPanelDomId } from '../tabs/tab-ids';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -13,6 +13,7 @@ let nextUnownedGroupId = 0;
   standalone: true,
   imports: [CommonModule, A11yModule, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './tab.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './tab.component.scss'
 })
 export class TnTabComponent implements AfterContentInit {

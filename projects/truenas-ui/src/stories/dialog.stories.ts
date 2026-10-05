@@ -1,6 +1,6 @@
 import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { JsonPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
@@ -18,6 +18,7 @@ const harnessDoc = loadHarnessDoc('dialog');
   selector: 'user-edit-dialog',
   templateUrl: './dialog.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TnDialogShellComponent,
     TnButtonComponent,
@@ -53,6 +54,7 @@ class UserEditDialogComponent {
   selector: 'system-settings-dialog',
   templateUrl: './dialog-2.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnDialogShellComponent, TnButtonComponent]
 })
 class SystemSettingsDialogComponent {
@@ -64,6 +66,7 @@ class SystemSettingsDialogComponent {
   selector: 'fullscreen-settings-dialog',
   templateUrl: './dialog-3.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnDialogShellComponent, TnButtonComponent]
 })
 class FullscreenSettingsDialogComponent {
@@ -78,6 +81,7 @@ class FullscreenSettingsDialogComponent {
   selector: 'job-progress-dialog',
   templateUrl: './dialog-5.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnDialogShellComponent, TnButtonComponent]
 })
 class JobProgressDialogComponent {
@@ -92,6 +96,7 @@ class JobProgressDialogComponent {
   selector: 'dialog-demo',
   templateUrl: './dialog-4.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnButtonComponent, JsonPipe]
 })
 class DialogDemoComponent {
@@ -407,6 +412,7 @@ export const ComponentHarness: Story = {
   selector: 'tn-dialog-testid-demo',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button label="Open confirm dialog" (onClick)="open()" />`,
 })
 class DialogTestIdDemoComponent {
@@ -452,6 +458,7 @@ export const TestIds: Story = {
   selector: 'tn-dialog-job-demo',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button type="button" label="Open job dialog" (click)="open()" />`,
 })
 class DialogJobDemoComponent {
@@ -499,6 +506,7 @@ const LONG_ZVOL_PATH = 'dozer/TEST_ANOTHER_ZVOL_WITH_A_LONG_NAME';
   imports: [TnDialogShellComponent, TnButtonComponent, TnFormFieldComponent, TnInputComponent, FormsModule],
   // 400px is webui's delete-dataset dialog — the width the report was filed against.
   styles: [':host { display: block; width: 400px; }'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './dialog-6.stories.html',
 })
 class DialogLongTitleComponent {
@@ -511,6 +519,7 @@ class DialogLongTitleComponent {
   selector: 'tn-dialog-long-title-demo',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button type="button" label="Delete zvol" (click)="open()" />`,
 })
 class DialogLongTitleDemoComponent {

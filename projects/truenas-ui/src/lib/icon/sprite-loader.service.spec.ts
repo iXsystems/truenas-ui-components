@@ -1,4 +1,4 @@
-import { HttpBackend, HttpClient, HttpErrorResponse, HttpXhrBackend, provideHttpClient } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse, HttpXhrBackend, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
@@ -73,7 +73,7 @@ describe('TnSpriteLoaderService with a sprite config the spec supplies', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
 
     httpMock = TestBed.inject(HttpTestingController);

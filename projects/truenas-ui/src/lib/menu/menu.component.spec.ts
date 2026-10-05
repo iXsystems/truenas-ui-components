@@ -1,5 +1,5 @@
 import { CdkMenu } from '@angular/cdk/menu';
-import { Component, getDebugNode, signal, viewChild } from '@angular/core';
+import { Component, getDebugNode, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnMenuItemComponent } from './menu-item.component';
@@ -31,6 +31,7 @@ function getBackdrop(): HTMLElement | null {
 @Component({
   standalone: true,
   imports: [TnMenuComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="trigger" [tnMenuTriggerFor]="menu" [tnMenuPosition]="position()">Open</button>
     <tn-menu
@@ -67,6 +68,7 @@ class MenuTestHostComponent {
 @Component({
   standalone: true,
   imports: [TnMenuComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-menu
       #menu
@@ -507,6 +509,7 @@ describe('tn-menu as context menu', () => {
 @Component({
   standalone: true,
   imports: [TnMenuComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
     <tn-menu #menu [items]="items" />
@@ -575,6 +578,7 @@ describe('tn-menu selected items', () => {
 @Component({
   standalone: true,
   imports: [TnMenuComponent, TnMenuItemComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
     <tn-menu #menu (menuItemClick)="menuClicked = true">
@@ -715,6 +719,7 @@ describe('tn-menu with projected <tn-menu-item>', () => {
 @Component({
   standalone: true,
   imports: [TnButtonComponent, TnMenuComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-button label="Open" [tnMenuTriggerFor]="menu" />
     <tn-menu #menu [items]="items" />
@@ -728,6 +733,7 @@ class WrapperTriggerHostComponent {
 @Component({
   standalone: true,
   imports: [TnIconButtonComponent, TnMenuComponent, TnMenuItemComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-icon-button name="menu-down" library="mdi" ariaLabel="Open menu" [tnMenuTriggerFor]="menu" />
     <tn-menu #menu>
@@ -791,6 +797,7 @@ describe('tn-menu focus restoration with <tn-button> trigger', () => {
 @Component({
   standalone: true,
   imports: [TnMenuComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
     <tn-menu #menu [items]="items()" [testId]="testId()" />

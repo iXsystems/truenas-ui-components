@@ -1,6 +1,6 @@
 
 import type { AfterContentInit} from '@angular/core';
-import { ElementRef, ChangeDetectorRef, inject } from '@angular/core';
+import { ElementRef, ChangeDetectorRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Component, input, output, computed, signal, HostListener } from '@angular/core';
 import { TnCheckboxComponent } from '../checkbox/checkbox.component';
 
@@ -10,6 +10,7 @@ import { TnCheckboxComponent } from '../checkbox/checkbox.component';
   imports: [TnCheckboxComponent],
   templateUrl: './list-option.component.html',
   styleUrl: './list-option.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-list-option',
     '[class.tn-list-option--selected]': 'effectiveSelected()',

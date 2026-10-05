@@ -1,6 +1,5 @@
-import { CdkTree } from '@angular/cdk/tree';
-import { CdkNestedTreeNode, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE } from '@angular/cdk/tree';
-import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, DestroyRef, ViewEncapsulation, computed, inject, input, booleanAttribute } from '@angular/core';
+import { CdkNestedTreeNode, CdkTreeNode } from '@angular/cdk/tree';
+import { ChangeDetectorRef, Component, ChangeDetectionStrategy, DestroyRef, ViewEncapsulation, computed, inject, input, booleanAttribute } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, scopeTestId } from '../test-id';
 import type { TnTestIdValue } from '../test-id';
@@ -71,12 +70,8 @@ export class TnNestedTreeNodeComponent<T, K = T> extends CdkNestedTreeNode<T, K>
   });
 
   constructor() {
-    super(
-      inject(ElementRef<HTMLElement>),
-      inject(CdkTree, { optional: true }),
-      inject(CDK_TREE_NODE_OUTLET_NODE, { optional: true }),
-      inject(ChangeDetectorRef, { optional: true })
-    );
+    // CdkNestedTreeNode injects its own dependencies as of Angular 22; `super()` takes none.
+    super();
     inject(DestroyRef).onDestroy(() => this.destroyed = true);
   }
 

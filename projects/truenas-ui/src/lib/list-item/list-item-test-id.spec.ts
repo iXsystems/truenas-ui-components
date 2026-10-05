@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnListItemComponent } from './list-item.component';
@@ -23,6 +23,7 @@ import type { TnTestIdValue } from '../test-id';
   selector: 'tn-list-item-test-id-host',
   standalone: true,
   imports: [TnListItemComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-list-item [clickable]="true" [testId]="testId()" (itemClick)="clicks = clicks + 1">
       Mirror

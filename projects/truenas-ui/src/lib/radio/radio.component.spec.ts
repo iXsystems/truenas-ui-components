@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnRadioComponent } from './radio.component';
@@ -7,6 +7,7 @@ import { TnRadioComponent } from './radio.component';
   selector: 'tn-radio-change-test',
   standalone: true,
   imports: [TnRadioComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-radio label="Option A" value="a" name="group" (change)="changeCount = changeCount + 1" />
   `,

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnSlideToggleComponent } from './slide-toggle.component';
@@ -7,6 +7,7 @@ import { TnSlideToggleComponent } from './slide-toggle.component';
   selector: 'tn-slide-toggle-change-test',
   standalone: true,
   imports: [TnSlideToggleComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-slide-toggle label="Enable" [fullWidth]="fullWidth()" (change)="changeCount = changeCount + 1" />
   `,

@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnListOptionComponent } from './list-option.component';
@@ -30,6 +30,7 @@ import { axeResult } from '../a11y/axe-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnListOptionComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-list-option [selected]="selected()" [disabled]="disabled()">Option one</tn-list-option>`
 })
 class TestHostComponent {

@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -11,6 +11,7 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 @Component({
   standalone: true,
   imports: [TnFormSectionComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-form-section [heading]="heading()" [tooltip]="tooltip()" [tooltipSticky]="tooltipSticky()">
       <p class="projected">Projected field content</p>

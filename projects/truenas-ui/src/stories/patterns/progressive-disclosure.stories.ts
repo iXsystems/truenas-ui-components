@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TnButtonComponent } from '../../lib/button/button.component';
@@ -32,6 +32,7 @@ import { TnStepperComponent, TnStepComponent } from '../../lib/stepper';
     TnStepperComponent,
     TnStepComponent
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './progressive-disclosure.stories.html'
 })
 class ZfsPoolSetupComponent {

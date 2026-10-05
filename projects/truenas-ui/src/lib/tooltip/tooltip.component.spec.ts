@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { hasInteractiveContent, plainTextMessage } from './interactive-content';
 import { TnTooltipComponent } from './tooltip.component';
@@ -285,6 +285,7 @@ describe('plainTextMessage', () => {
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<button class="interactive-host" tnTooltip="Button reason">Direct</button>
     <div class="wrapper" tnTooltip="Wrapper reason"><button>Only control</button></div>
     <div class="container" tnTooltip="Container reason"><button>First</button><button>Second</button></div>`,
@@ -294,6 +295,7 @@ class DescriptionHostComponent {}
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<button class="null-host" [tnTooltip]="message()">Null message</button>`,
 })
 class NullMessageHostComponent {

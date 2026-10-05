@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { TnSelectOption, TnSelectOptionGroup } from './select.component';
@@ -32,6 +32,7 @@ import { axeResult } from '../a11y/axe-testing';
   selector: 'tn-select-a11y-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Both separator sites at once: the select-all row puts one above the
   // options, and a group preceded by ungrouped options puts one above itself.
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations

@@ -1,5 +1,5 @@
 
-import { Component, input, computed } from '@angular/core';
+import { Component, input, computed, ChangeDetectionStrategy } from '@angular/core';
 import type { PlatformType } from '../enums/modifier-keys.enum';
 
 @Component({
@@ -7,6 +7,7 @@ import type { PlatformType } from '../enums/modifier-keys.enum';
   standalone: true,
   imports: [],
   templateUrl: './keyboard-shortcut.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./keyboard-shortcut.component.scss'],
 })
 export class TnKeyboardShortcutComponent {

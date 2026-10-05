@@ -39,6 +39,7 @@ import { TnSelectionListComponent } from '../selection-list/selection-list.compo
     TnDividerDirective,
     TnListItemTitleDirective,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // The story the ticket reproduced on, in miniature: a list composed with the
   // subheader and the divider from the same library. `TnDividerDirective` is
   // imported because the story imports it, and it used to match `tn-divider` as
@@ -67,6 +68,7 @@ class TestHostComponent {}
   selector: 'tn-nested-divider-a11y-host',
   standalone: true,
   imports: [TnListComponent, TnListItemComponent, TnDividerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-list>
@@ -89,6 +91,7 @@ class NestedDividerHostComponent {}
   selector: 'tn-presentational-wrapper-a11y-host',
   standalone: true,
   imports: [TnListComponent, TnListItemComponent, TnDividerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-list>
@@ -109,6 +112,7 @@ class PresentationalWrapperHostComponent {}
   selector: 'tn-projecting-list',
   standalone: true,
   imports: [TnListComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<tn-list><ng-content /></tn-list>',
 })
 class ProjectingListComponent {}
@@ -117,6 +121,7 @@ class ProjectingListComponent {}
   selector: 'tn-projected-a11y-host',
   standalone: true,
   imports: [ProjectingListComponent, TnListItemComponent, TnDividerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-projecting-list>
@@ -169,6 +174,7 @@ class GatedHostComponent {}
   selector: 'tn-listbox-a11y-host',
   standalone: true,
   imports: [TnSelectionListComponent, TnListOptionComponent, TnDividerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-selection-list aria-label="Mailboxes">
@@ -188,6 +194,7 @@ class ListboxHostComponent {}
   selector: 'tn-listbox-subheader-a11y-host',
   standalone: true,
   imports: [TnSelectionListComponent, TnListOptionComponent, TnListSubheaderComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-selection-list aria-label="Mailboxes">
@@ -203,6 +210,7 @@ class ListboxSubheaderHostComponent {}
   selector: 'tn-standalone-a11y-host',
   standalone: true,
   imports: [TnDividerComponent, TnListSubheaderComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-list-subheader>Settings</tn-list-subheader>
     <tn-divider />

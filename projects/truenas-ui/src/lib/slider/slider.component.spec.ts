@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -9,6 +9,7 @@ import { TnSliderComponent } from './slider.component';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnSliderComponent, TnSliderThumbDirective, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-slider [min]="min()" [max]="max()" [step]="step()">
       <input tnSliderThumb [formControl]="control" />
@@ -26,6 +27,7 @@ class ThumbBoundHostComponent {
   selector: 'tn-test-host-slider',
   standalone: true,
   imports: [TnSliderComponent, TnSliderThumbDirective, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Form bound to the tn-slider host; the inner thumb is left unbound.
   template: `
     <tn-slider [formControl]="control" [min]="0" [max]="100" [step]="1">
@@ -42,6 +44,7 @@ class SliderBoundHostComponent {
   selector: 'tn-test-host-aria-slider',
   standalone: true,
   imports: [TnSliderComponent, TnSliderThumbDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-slider [aria-label]="sliderLabel()" [aria-labelledby]="sliderLabelledby()">
       <input tnSliderThumb />
@@ -58,6 +61,7 @@ class AriaSliderHostComponent {
   selector: 'tn-test-host-valuetext',
   standalone: true,
   imports: [TnSliderComponent, TnSliderThumbDirective, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-slider [labelPrefix]="prefix()" [labelSuffix]="suffix()" [min]="0" [max]="100">
       <input tnSliderThumb [formControl]="control" />
@@ -75,6 +79,7 @@ class ValueTextHostComponent {
   selector: 'tn-test-host-aria-input',
   standalone: true,
   imports: [TnSliderComponent, TnSliderThumbDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-slider [aria-label]="sliderLabel()">
       <input tnSliderThumb aria-label="Brightness" />

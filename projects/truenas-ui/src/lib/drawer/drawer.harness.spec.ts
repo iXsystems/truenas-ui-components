@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal, viewChild } from '@angular/core';
+import { Component, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnDrawerContainerComponent } from './drawer-container.component';
@@ -12,6 +12,7 @@ import { TnDrawerContainerHarness, TnDrawerHarness } from './drawer.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnDrawerContainerComponent, TnDrawerComponent, TnDrawerContentComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-drawer-container>

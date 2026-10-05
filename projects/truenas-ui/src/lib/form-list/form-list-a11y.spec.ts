@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormArray, FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -41,6 +41,7 @@ import { TnInputComponent } from '../input/input.component';
   selector: 'tn-form-list-a11y-host',
   standalone: true,
   imports: [ReactiveFormsModule, TnFormListComponent, TnFormListItemComponent, TnInputComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-form-list

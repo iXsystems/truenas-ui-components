@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, input } from '@angular/core';
+import { Component, ElementRef, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { tnScrollableRegion } from '../a11y/scrollable-region';
 
 /**
@@ -52,6 +52,7 @@ export const TN_DRAWER_CONTENT_LABEL = 'Content';
   standalone: true,
   template: '<ng-content />',
   styleUrl: './drawer-content.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     '[attr.tabindex]': 'keyboardReachable() ? "0" : null',
     '[attr.role]': 'keyboardReachable() ? "group" : null',

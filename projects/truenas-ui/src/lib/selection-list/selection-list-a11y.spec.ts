@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { TnSelectionChange } from './selection-list.component';
@@ -47,6 +47,7 @@ interface TestOption {
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnSelectionListComponent, TnListOptionComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Held to three lines by @angular-eslint/component-max-inline-declarations,
   // which is why the @for body is not broken up the way it would be in a real
   // template.

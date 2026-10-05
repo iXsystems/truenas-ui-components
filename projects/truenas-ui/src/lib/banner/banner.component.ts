@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, inject, computed, contentChildren, Directive } from '@angular/core';
+import { Component, input, inject, computed, contentChildren, Directive, ChangeDetectionStrategy } from '@angular/core';
 import {
   mdiInformation,
   mdiAlert,
@@ -42,6 +42,7 @@ const ICON_MAP = {
   standalone: true,
   imports: [CommonModule, TnIconComponent, TnTestIdDirective],
   templateUrl: './banner.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./banner.component.scss'],
 })
 export class TnBannerComponent {

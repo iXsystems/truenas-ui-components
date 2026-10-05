@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -11,6 +11,7 @@ import { TnButtonHarness } from './button.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button [label]="label()" [icon]="icon()" [disabled]="disabled()" (onClick)="handleClick($event)" />`
 })
 class TestHostComponent {
@@ -28,6 +29,7 @@ class TestHostComponent {
   selector: 'tn-link-host',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button [label]="label()" [href]="href()" [disabled]="disabled()" />`
 })
 class LinkHostComponent {
@@ -40,6 +42,7 @@ class LinkHostComponent {
   selector: 'tn-router-host',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button [label]="label()" [routerLink]="routerLink()" />`
 })
 class RouterHostComponent {

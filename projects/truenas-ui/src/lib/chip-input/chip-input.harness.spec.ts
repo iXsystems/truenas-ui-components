@@ -1,7 +1,7 @@
 import { TestKey } from '@angular/cdk/testing';
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +12,7 @@ import { TnChipInputHarness } from './chip-input.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-chip-input
@@ -238,6 +239,7 @@ describe('TnChipInputHarness', () => {
   selector: 'tn-value-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-chip-input
@@ -321,6 +323,7 @@ describe('TnChipInputComponent value mode', () => {
   selector: 'tn-control-name-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <form [formGroup]="form">
@@ -340,6 +343,7 @@ class ControlNameHostComponent {
   selector: 'tn-explicit-test-id-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-chip-input testId="tags" formControlName="isnsServers" [allowCustomValue]="true" />
@@ -356,6 +360,7 @@ interface Group { id: string; }
   selector: 'tn-object-value-test-id-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-chip-input formControlName="groups" [options]="options" [compareWith]="compareWith" />
@@ -372,6 +377,7 @@ class ObjectValueTestIdHostComponent {
   selector: 'tn-labelled-primitive-value-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-chip-input testId="tags" formControlName="regions" [options]="options" />
@@ -390,6 +396,7 @@ class LabelledPrimitiveValueHostComponent {
   selector: 'tn-async-options-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-chip-input testId="tags" formControlName="regions" [options]="options()" />
@@ -408,6 +415,7 @@ class AsyncOptionsHostComponent {
   selector: 'tn-option-key-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <form [formGroup]="form">
@@ -432,6 +440,7 @@ class OptionTestIdKeyHostComponent {
   selector: 'tn-unnormalizable-label-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-chip-input testId="tags" formControlName="langs" [options]="options" />
@@ -450,6 +459,7 @@ class UnnormalizableLabelHostComponent {
   selector: 'tn-unnormalizable-value-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <form [formGroup]="form">

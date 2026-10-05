@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * The flex row that lays a `tn-drawer` out beside a `tn-drawer-content`.
@@ -29,6 +29,7 @@ import { Component } from '@angular/core';
   selector: 'tn-drawer-container',
   standalone: true,
   template: '<ng-content />',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './drawer-container.component.scss',
 })
 export class TnDrawerContainerComponent {}

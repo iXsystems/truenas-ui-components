@@ -1,5 +1,5 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TnButtonComponent } from '../../lib/button/button.component';
@@ -79,6 +79,7 @@ interface WizardConfig {
   selector: 'onboarding-wizard-dialog',
   templateUrl: './captive-wizard.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TnDialogShellComponent,
     TnStepperComponent,
@@ -323,6 +324,7 @@ class OnboardingWizardDialogComponent {
   selector: 'captive-wizard-demo',
   templateUrl: './captive-wizard-2.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnButtonComponent]
 })
 class CaptiveWizardDemoComponent {

@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnIconButtonComponent } from './icon-button.component';
@@ -13,6 +13,7 @@ import type { IconLibraryType, IconSize } from '../icon/icon.component';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnIconButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-icon-button
     [name]="name()"
     [library]="library()"

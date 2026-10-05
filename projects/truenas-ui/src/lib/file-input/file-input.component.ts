@@ -1,5 +1,5 @@
 import type { ElementRef } from '@angular/core';
-import { Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, forwardRef, input, output, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnButtonComponent } from '../button/button.component';
@@ -40,6 +40,7 @@ import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
       multi: true
     }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-file-input'
   }

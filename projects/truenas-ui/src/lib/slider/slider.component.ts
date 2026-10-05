@@ -1,6 +1,6 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import type { ElementRef, OnDestroy, AfterViewInit, AfterContentInit} from '@angular/core';
-import { Component, contentChild, input, forwardRef, signal, computed, viewChild, effect } from '@angular/core';
+import { Component, contentChild, input, forwardRef, signal, computed, viewChild, effect, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnSliderThumbDirective } from './slider-thumb.directive';
@@ -22,6 +22,7 @@ export type LabelType = 'none' | 'handle' | 'track' | 'both';
   ],
   templateUrl: './slider.component.html',
   styleUrl: './slider.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-slider',
     '[attr.aria-disabled]': 'isDisabled()',

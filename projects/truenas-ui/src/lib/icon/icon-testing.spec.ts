@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnIconRegistryService } from './icon-registry.service';
@@ -10,6 +10,7 @@ import { TnSpriteLoaderService } from './sprite-loader.service';
   selector: 'tn-test-consumer',
   standalone: true,
   imports: [TnIconComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-icon name="test-icon" />`
 })
 class TestConsumerComponent {}
