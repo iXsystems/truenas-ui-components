@@ -20,8 +20,27 @@
   // Declared on `.tn-banner` rather than on one slot because the fill is what
   // creates the problem and the fill is this element's — scoping it to a slot
   // leaves the other slot drawing the untuned token on the same surface.
-  // `theming.mdx` states the rule under "Writing a component" (#352).
+  // `theming.mdx` states the rule under "Writing a component" (#352), and
+  // `projected-token-rebind.spec.ts` is what holds a rebind to the filling
+  // element rather than to a descendant of it (#356).
   --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+
+  // `--tn-primary-text` is the OTHER token tuned for `--tn-bg1`/`--tn-bg2`
+  // only, and #355 rebound just the error one. `.button-outline-primary` reads
+  // it for its label, so `<tn-button tnBannerAction variant="outline"
+  // color="primary">` — at least as ordinary as the `warn` spelling that
+  // produced #337's violation — draws it on this fill, where it measures
+  // 3.49:1 in `.tn-dracula` and fails AA in six of the nine palettes.
+  //
+  // It goes to `--tn-fg1` rather than to a tuned accent because there is no
+  // accent tuned for this surface: `--tn-primary` is worse here (1.82:1 at
+  // worst) and the four semantic tokens that do clear it carry a status
+  // meaning a primary action does not have. `--tn-fg1` clears AA on this fill
+  // in all nine palettes (6.24:1 at worst) and the button keeps its
+  // `--tn-primary` border, so what is lost is the label's hue and not the
+  // affordance. Same reasoning, and the same pair of declarations, as
+  // `form-list-item.component.scss`.
+  --tn-primary-text: var(--tn-fg1, #ffffff);
 
   display: grid;
   gap: 8px;
