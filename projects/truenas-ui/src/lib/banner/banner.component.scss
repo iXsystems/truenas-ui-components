@@ -38,8 +38,9 @@
   // meaning a primary action does not have. `--tn-fg1` clears AA on this fill
   // in all nine palettes (6.24:1 at worst) and the button keeps its
   // `--tn-primary` border, so what is lost is the label's hue and not the
-  // affordance. Same reasoning, and the same pair of declarations, as
-  // `form-list-item.component.scss`.
+  // affordance. Same reasoning as `form-list-item.component.scss`; the
+  // `--tn-fg1` fallback differs because the two fill fallbacks do — this one
+  // sits on `#383838` with no theme loaded, the entry card's on `transparent`.
   --tn-primary-text: var(--tn-fg1, #ffffff);
 
   display: grid;

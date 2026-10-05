@@ -278,9 +278,33 @@ function declarations(scss: string): Declaration[] {
   return found;
 }
 
+/**
+ * `:host(:hover)` and `:host` are the same element, so they compare equal.
+ *
+ * Without this a rebind on `:host` — the idiomatic place for a component-wide
+ * custom property, and the ONLY place that reaches a `::ng-deep` fill — is
+ * reported as scoped to a descendant of the fill, which is both false and the
+ * verdict the next person gets for doing the right thing. `tn-list-option`
+ * compounds it: its fills sit under `:host(:hover…)` and `:host(:focus-visible)`,
+ * which share no textual prefix with a plain `:host`.
+ */
+function hostLevel(part: string): string {
+  return part.replace(/^:host\s*\([^)]*\)/, ':host');
+}
+
+/** A declaration on the component root, which encloses everything in the file. */
+function atRoot(stack: readonly string[]): boolean {
+  return stack.length === 0 || (stack.length === 1 && /^:host\b/.test(hostLevel(stack[0])));
+}
+
 /** `outer` encloses `inner` — or is the very same element. */
 function enclosesOrEquals(outer: readonly string[], inner: readonly string[]): boolean {
-  return outer.length <= inner.length && outer.every((part, index) => part === inner[index]);
+  if (atRoot(outer)) {
+    return true;
+  }
+  const above = outer.map(hostLevel);
+  const below = inner.map(hostLevel);
+  return above.length <= below.length && above.every((part, index) => part === below[index]);
 }
 
 function scssFiles(directory: string): string[] {
@@ -369,15 +393,24 @@ describe('a fill that holds projected content rebinds the tokens tuned above it 
     // The narrowing case, which is the one that used to be invisible: a rebind
     // on `.tn-banner__action` covers one slot and leaves the other drawing the
     // untuned token on the same fill.
+    //
+    // ASKED OF EVERY FILL, NOT OF EVERY REBIND, and the direction is the whole
+    // check. "No rebind fails to cover SOME fill" passes a banner whose rebind
+    // sits on `&--error`, because that rebind does enclose one of the four
+    // severity fills — leaving `&--info`, `&--warning` and `&--success` drawing
+    // the untuned token on the same `--tn-alt-bg1`, which is exactly what the
+    // rule forbids and what this file was added to catch. "Every fill is
+    // covered by some rebind" is the claim that means what the rule says.
     it.each(live)(
-      '$file rebinds $token on the element painting the fill, not on a descendant',
+      '$file rebinds $token for every element that paints the fill, not just one',
       ({ rebinds, fills }) => {
-        const narrow = rebinds.filter(
-          (rebind) => !fills.some((fill) => enclosesOrEquals(rebind.stack, fill.stack))
+        const bare = fills.filter(
+          (fill) => !rebinds.some((rebind) => enclosesOrEquals(rebind.stack, fill.stack))
         );
-        // Listing the offenders rather than asserting a count, so a failure
-        // prints the selector the rebind was scoped to.
-        expect(narrow.map((one) => one.stack.join(' > '))).toEqual([]);
+        // Listing the uncovered fills rather than asserting a count, so a
+        // failure prints the selector that is still painting an untuned surface
+        // under a token nothing rebound for it.
+        expect(bare.map((one) => one.stack.join(' > '))).toEqual([]);
       }
     );
   });
