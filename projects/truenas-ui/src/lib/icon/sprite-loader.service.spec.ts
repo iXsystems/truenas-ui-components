@@ -1,9 +1,33 @@
-import { HttpBackend, HttpClient, HttpErrorResponse, HttpXhrBackend, provideHttpClient, withXhr } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse, HttpRequest, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import type { SpriteConfig } from './sprite-loader.service';
 import { defaultSpriteConfigPath, TnSpriteLoaderService } from './sprite-loader.service';
+
+/**
+ * Asserts the `HttpBackend` in the current injector is the one `setup-jest.ts`
+ * installs, by what it does rather than by what class it is not.
+ *
+ * These guards used to read `not.toBeInstanceOf(HttpXhrBackend)`, which stopped
+ * discriminating at Angular 22: the real root backend is `FetchBackend` from v22
+ * on and `HttpXhrBackend` before it, so the assertion now passes against the
+ * very default it was written to exclude. The failure it answers — the shim
+ * installed in a `beforeEach` instead of on the test environment, so a mid-file
+ * `resetTestingModule()` drops it — would leave this green while every icon spec
+ * after the reset went back to opening sockets (#326). Asserting the behaviour
+ * is version-independent.
+ */
+async function expectNoNetworkBackend(): Promise<void> {
+  const backend = TestBed.inject(HttpBackend);
+
+  const error = await firstValueFrom(
+    backend.handle(new HttpRequest('GET', '/anything-at-all'))
+  ).catch((e: unknown) => e);
+
+  expect(error).toBeInstanceOf(HttpErrorResponse);
+  expect((error as HttpErrorResponse).statusText).toBe('No HTTP backend in specs');
+}
 
 /**
  * The sprite loader requests its config from its own constructor, so every
@@ -13,8 +37,8 @@ import { defaultSpriteConfigPath, TnSpriteLoaderService } from './sprite-loader.
  * supply a config when it wants one.
  */
 describe('HTTP in specs, with no backend of the spec’s own', () => {
-  it('resolves HttpBackend to something other than the real XHR backend', () => {
-    expect(TestBed.inject(HttpBackend)).not.toBeInstanceOf(HttpXhrBackend);
+  it('provides its own HttpBackend at root, in place of Angular’s network one', async () => {
+    await expectNoNetworkBackend();
   });
 
   it('fails an unstubbed request instead of making one', async () => {
@@ -37,14 +61,14 @@ describe('HTTP in specs, with no backend of the spec’s own', () => {
     expect((error.error as Error).message).toContain('provideHttpClientTesting()');
   });
 
-  it('still applies after a spec resets and reconfigures the testing module', () => {
+  it('still applies after a spec resets and reconfigures the testing module', async () => {
     // The backend is installed on the test environment rather than in a global
     // beforeEach for exactly this: a dozen specs reset mid-file, and a
     // beforeEach's providers do not survive that.
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({});
 
-    expect(TestBed.inject(HttpBackend)).not.toBeInstanceOf(HttpXhrBackend);
+    await expectNoNetworkBackend();
   });
 
   it('leaves the sprite loader unloaded, resolving no icon', async () => {
