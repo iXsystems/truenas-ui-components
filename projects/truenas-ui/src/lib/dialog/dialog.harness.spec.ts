@@ -19,7 +19,7 @@ import { TnButtonComponent } from '../button/button.component';
   template: `
     <tn-dialog-shell
       [title]="data?.title ?? 'Test Dialog'"
-      [testId]="$safeNavigationMigration(data?.testId)"
+      [testId]="data?.testId"
       [showFullscreenButton]="data?.showFullscreen ?? false"
       [showCloseButton]="data?.showCloseButton ?? true"
       [hideContent]="data?.hideContent ?? false"
