@@ -14,6 +14,7 @@ import {
   signal,
   viewChild,
   afterNextRender,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { tnAccessibleName } from '../a11y/accessible-name';
 import { injectTnFallbackName } from '../a11y/fallback-labels';
@@ -50,6 +51,7 @@ export type TnDrawerPosition = 'start' | 'end';
   imports: [A11yModule, NgTemplateOutlet, TnTestIdDirective],
   templateUrl: './drawer.component.html',
   styleUrl: './drawer.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-drawer',
     '[class.tn-drawer--open]': 'opened()',

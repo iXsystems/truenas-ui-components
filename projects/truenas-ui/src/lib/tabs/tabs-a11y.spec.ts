@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnTabsComponent } from './tabs.component';
@@ -42,6 +42,7 @@ import { TnTabPanelComponent } from '../tab-panel/tab-panel.component';
   selector: 'tn-tabs-a11y-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/a11y-host.component.html',
 })
 class TabsA11yHostComponent {
@@ -53,6 +54,7 @@ class TabsA11yHostComponent {
   selector: 'tn-tabs-a11y-multi-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/multi-tabs-host.component.html',
 })
 class TabsA11yMultiHostComponent {}
@@ -62,6 +64,7 @@ class TabsA11yMultiHostComponent {}
   selector: 'tn-tabs-a11y-removable-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/removable-tabs-host.component.html',
 })
 class TabsA11yRemovableHostComponent {
@@ -73,6 +76,7 @@ class TabsA11yRemovableHostComponent {
   selector: 'tn-tabs-a11y-mismatched-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/mismatched-host.component.html',
 })
 class TabsA11yMismatchedHostComponent {}

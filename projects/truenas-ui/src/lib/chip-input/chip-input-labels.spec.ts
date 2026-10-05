@@ -1,5 +1,5 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { Subject, of } from 'rxjs';
@@ -25,6 +25,7 @@ type Option = TnChipInputOption<string>;
   selector: 'tn-chip-input-labels-host',
   standalone: true,
   imports: [TnChipInputComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-chip-input [dataSource]="source" [dataSourceDebounce]="250" [loadingText]="loadingText()" />
   `,

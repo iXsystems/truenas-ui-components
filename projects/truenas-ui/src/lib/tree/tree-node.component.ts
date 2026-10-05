@@ -1,5 +1,5 @@
-import { CdkTree, CdkTreeNode, CDK_TREE_NODE_OUTLET_NODE, CdkTreeModule } from '@angular/cdk/tree';
-import { ElementRef, ChangeDetectorRef, Component, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
+import { CdkTreeNode, CdkTreeModule } from '@angular/cdk/tree';
+import { Component, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective } from '../test-id';
 
@@ -28,16 +28,9 @@ import { TnTestIdDirective } from '../test-id';
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+// CdkTreeNode takes its own dependencies through `inject()` as of Angular 22, so its
+// constructor accepts no arguments and this subclass needs no constructor at all.
 export class TnTreeNodeComponent<T, K = T> extends CdkTreeNode<T, K> {
-  constructor() {
-    super(
-      inject(ElementRef<HTMLElement>),
-      inject(CdkTree, { optional: true }),
-      inject(CDK_TREE_NODE_OUTLET_NODE, { optional: true }),
-      inject(ChangeDetectorRef, { optional: true })
-    );
-  }
-
   /** The tree node's level in the tree */
   override get level(): number {
     return this._tree?.treeControl?.getLevel ? this._tree.treeControl.getLevel(this.data) : 0;

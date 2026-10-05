@@ -1,7 +1,7 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
-import { Component, viewChild, inject, input, output, computed, signal, forwardRef, contentChildren, Directive } from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, forwardRef, contentChildren, Directive, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
@@ -31,6 +31,7 @@ export class TnCheckboxLabelDirective {}
   imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe, LabelTextPipe],
   templateUrl: './checkbox.component.html',
   styleUrl: './checkbox.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

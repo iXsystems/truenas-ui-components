@@ -14,6 +14,7 @@ import {
   signal,
   untracked,
   viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -119,6 +120,7 @@ let nextId = 0;
   ],
   templateUrl: './chip-input.component.html',
   styleUrl: './chip-input.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Escape only, and deliberately HERE rather than beside the input's own
   // keydown binding — see `onHostKeydown`.
   host: {

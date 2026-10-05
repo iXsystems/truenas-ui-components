@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -25,6 +25,7 @@ import {
     TnTableComponent, TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective,
     TnDetailRowDefDirective, TnRowActionsDefDirective,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // `cardPrimaryCount` of 1 leaves `type` behind the "More fields" disclosure — `name` is the
   // card title and `size` the one primary field — which is the only thing that renders that label.
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations

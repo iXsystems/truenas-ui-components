@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +12,7 @@ import { TnSelectHarness } from './select.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -40,6 +41,7 @@ class TestHostComponent {
   selector: 'tn-test-multi-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -67,6 +69,7 @@ class TestMultiHostComponent {
   selector: 'tn-test-select-all-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -92,6 +95,7 @@ class TestSelectAllHostComponent {
   selector: 'tn-test-select-all-preselected-host',
   standalone: true,
   imports: [TnSelectComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -116,6 +120,7 @@ class TestSelectAllPreselectedHostComponent {
   selector: 'tn-test-compare-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -144,6 +149,7 @@ class TestCompareHostComponent {
   standalone: true,
   imports: [TnSelectComponent],
    
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-select
       [optionGroups]="groups()"
@@ -177,6 +183,7 @@ class TestGroupDisabledHostComponent {
   selector: 'tn-test-select-all-dup-host',
   standalone: true,
   imports: [TnSelectComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -211,6 +218,7 @@ class TestSelectAllDuplicateHostComponent {
   selector: 'tn-test-multi-output-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -234,6 +242,7 @@ class TestMultiOutputHostComponent {
   selector: 'tn-test-allow-empty-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -727,6 +736,7 @@ describe('TnSelectHarness - group disabled', () => {
   selector: 'tn-test-twin-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-select [options]="options" />
     <tn-select [options]="options" />
@@ -1061,6 +1071,7 @@ describe('TnSelectComponent - keyboard navigation', () => {
   selector: 'tn-test-optionid-host',
   standalone: true,
   imports: [TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-select
@@ -1157,6 +1168,7 @@ describe('TnSelectComponent — per-option test ids', () => {
   standalone: true,
   imports: [TnSelectComponent, ReactiveFormsModule],
    
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <form [formGroup]="form">
       <tn-select formControlName="disk" [options]="options" />

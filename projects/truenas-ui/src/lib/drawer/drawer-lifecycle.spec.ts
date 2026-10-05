@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnDrawerComponent } from './drawer.component';
@@ -9,6 +9,7 @@ import { TN_TRANSITION_FALLBACK_MS } from '../utils/transition-lifecycle';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnDrawerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-drawer

@@ -1,6 +1,6 @@
 
 import type { OnInit } from '@angular/core';
-import { Component, input, output, signal, linkedSignal, computed, inject, ElementRef, Injector, LOCALE_ID } from '@angular/core';
+import { Component, input, output, signal, linkedSignal, computed, inject, ElementRef, Injector, LOCALE_ID, ChangeDetectionStrategy } from '@angular/core';
 import { YEARS_PER_PAGE, addMonths, compareDays, withYear } from './calendar-dates';
 import { focusActiveCellAfterRender } from './calendar-focus';
 import { TnCalendarHeaderComponent } from './calendar-header.component';
@@ -15,6 +15,7 @@ import { TnTestIdDirective } from '../test-id';
   imports: [TnCalendarHeaderComponent, TnMonthViewComponent, TnMultiYearViewComponent],
   hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
   templateUrl: './calendar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./calendar.component.scss']
 })
 export class TnCalendarComponent implements OnInit {

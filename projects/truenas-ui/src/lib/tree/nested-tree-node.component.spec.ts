@@ -1,7 +1,7 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { CdkTreeModule } from '@angular/cdk/tree';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { TnNestedTreeDataSource } from './nested-tree-datasource';
 import { TnNestedTreeNodeComponent } from './nested-tree-node.component';
@@ -29,6 +29,7 @@ const dataset: ExampleNode[] = [
   selector: 'tn-nested-tree-node-test',
   standalone: true,
   imports: [CdkTreeModule, TnTreeComponent, TnNestedTreeNodeComponent, TnTreeNodeOutletDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-tree [dataSource]="dataSource" [treeControl]="treeControl">

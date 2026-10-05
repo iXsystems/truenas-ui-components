@@ -1,5 +1,5 @@
 
-import { Component, input, output, computed, contentChildren } from '@angular/core';
+import { Component, input, output, computed, contentChildren, ChangeDetectionStrategy } from '@angular/core';
 import {
   TnListAvatarDirective,
   TnListIconDirective,
@@ -50,6 +50,7 @@ import { TnTestIdDirective } from '../test-id';
   templateUrl: './list-item.component.html',
   styleUrl: './list-item.component.scss',
   hostDirectives: [{ directive: TnTestIdDirective, inputs: ['tnTestId: testId'] }],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-list-item',
     '[class.tn-list-item--disabled]': 'disabled()',

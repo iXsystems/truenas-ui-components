@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -48,6 +48,7 @@ const ROWS: Row[] = [
     TnHeaderCellDefDirective,
     TnCellDefDirective,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-table [dataSource]="rows()" [displayedColumns]="['id', 'name', 'actions']">
@@ -80,6 +81,7 @@ class ActionsColumnHostComponent {
     TnCellDefDirective,
     TnDetailRowDefDirective,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-table

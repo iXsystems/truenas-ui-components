@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnTablePagerComponent } from './table-pager.component';
@@ -27,6 +27,7 @@ import { axeResult } from '../a11y/axe-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnTablePagerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // The reported shape in miniature: two pagers in one view, each with the
   // distinct `testId` such a view needs anyway so their child controls do not
   // collide. The headings are what `ariaLabelledby` points at below — a table's

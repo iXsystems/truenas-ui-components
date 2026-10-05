@@ -1,5 +1,5 @@
 
-import { Component, input, output, computed, inject, ElementRef, Injector, LOCALE_ID } from '@angular/core';
+import { Component, input, output, computed, inject, ElementRef, Injector, LOCALE_ID, ChangeDetectionStrategy } from '@angular/core';
 import { addMonths, compareDays, dateKey, firstDayOfWeek, isoDateString, isSameDay } from './calendar-dates';
 import { focusActiveCellAfterRender } from './calendar-focus';
 import { injectTnCalendarIntl } from './calendar-intl';
@@ -50,6 +50,7 @@ export interface CalendarCell {
   standalone: true,
   imports: [],
   templateUrl: './month-view.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./month-view.component.scss']
 })
 export class TnMonthViewComponent {

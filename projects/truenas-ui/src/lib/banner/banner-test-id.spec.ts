@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnBannerComponent } from './banner.component';
@@ -22,6 +22,7 @@ import type { TnTestIdValue } from '../test-id';
   selector: 'tn-banner-test-id-host',
   standalone: true,
   imports: [TnBannerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-banner heading="Insecure connection" type="warning" [testId]="testId()" />`,
 })
 class BannerTestIdHostComponent {

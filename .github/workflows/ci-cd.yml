@@ -24,6 +24,20 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Every `Prepare` step below pins `node-version: '24.15.0'`, and it has to.
+# The shared action defaults to '24.13.1', which the Angular 22 CLI refuses:
+# it wants ^22.22.3 || ^24.15.0 || >=26.0.0 and exits 3 before running
+# anything. That failure is invisible in the two cheapest jobs — eslint and
+# Jest never invoke the CLI, so `Run Linter` and `Run Tests` stay green while
+# `Build Library` and `Storybook Interaction Tests` both die. Keep the pin on
+# every job, including the ones that pass without it, so the whole pipeline
+# builds on the Node that `engines.node` in package.json declares.
+#
+# Repeated per step rather than hoisted into a workflow-level `env`: a `with:`
+# expression that fails to resolve becomes the empty string, which reaches
+# setup-node as "no version" instead of failing, and this is not a value worth
+# making conditional on that.
+
 jobs:
   lint:
     name: Run Linter
@@ -36,6 +50,7 @@ jobs:
         uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
           yarn-cache: 'true'
+          node-version: '24.15.0'
 
       - name: Run linter
         run: yarn lint
@@ -51,6 +66,7 @@ jobs:
         uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
           yarn-cache: 'true'
+          node-version: '24.15.0'
 
       - name: Run component tests
         run: yarn test
@@ -69,6 +85,7 @@ jobs:
         uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
           yarn-cache: 'true'
+          node-version: '24.15.0'
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -100,6 +117,7 @@ jobs:
         uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
           yarn-cache: 'true'
+          node-version: '24.15.0'
 
       - name: Build library
         run: yarn build
@@ -123,6 +141,7 @@ jobs:
         uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
           yarn-cache: 'true'
+          node-version: '24.15.0'
 
       - name: Build Storybook
         run: yarn build-storybook
@@ -206,6 +225,7 @@ jobs:
         uses: iXsystems/ux-github-workflows/.github/actions/prepare@master
         with:
           yarn-cache: 'true'
+          node-version: '24.15.0'
 
       - name: Build library
         if: steps.changes.outputs.has_changes == 'true'

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnSelectionListComponent } from './selection-list.component';
@@ -27,6 +27,7 @@ import { TnListOptionComponent } from '../list-option/list-option.component';
   selector: 'tn-wrapped-list-host',
   standalone: true,
   imports: [TnFormFieldComponent, TnSelectionListComponent, TnListOptionComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Held to three lines by @angular-eslint/component-max-inline-declarations.
   template: `<tn-form-field [label]="label()"><tn-selection-list>
     <tn-list-option value="inbox">Inbox</tn-list-option></tn-selection-list></tn-form-field>`
@@ -39,6 +40,7 @@ class WrappedHostComponent {
   selector: 'tn-standalone-list-host',
   standalone: true,
   imports: [TnSelectionListComponent, TnListOptionComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-selection-list [aria-label]="label()">
     <tn-list-option value="inbox">Inbox</tn-list-option></tn-selection-list>`
 })

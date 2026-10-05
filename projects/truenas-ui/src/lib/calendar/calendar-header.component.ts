@@ -1,6 +1,6 @@
 
 import { _IdGenerator } from '@angular/cdk/a11y';
-import { Component, input, output, computed, inject, LOCALE_ID } from '@angular/core';
+import { Component, input, output, computed, inject, LOCALE_ID, ChangeDetectionStrategy } from '@angular/core';
 import { YEARS_PER_PAGE, yearPageStart } from './calendar-dates';
 import { injectTnCalendarIntl } from './calendar-intl';
 
@@ -9,6 +9,7 @@ import { injectTnCalendarIntl } from './calendar-intl';
   standalone: true,
   imports: [],
   templateUrl: './calendar-header.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./calendar-header.component.scss']
 })
 export class TnCalendarHeaderComponent {

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { TnCheckboxComponent, TnCheckboxLabelDirective } from './checkbox.compon
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnCheckboxComponent, TnCheckboxLabelDirective, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-checkbox

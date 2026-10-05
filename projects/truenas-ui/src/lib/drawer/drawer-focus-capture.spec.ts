@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnDrawerContainerComponent } from './drawer-container.component';
@@ -27,6 +27,7 @@ import { TnDrawerComponent } from './drawer.component';
   selector: 'tn-drawer-focus-host',
   standalone: true,
   imports: [TnDrawerContainerComponent, TnDrawerComponent, TnDrawerContentComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <button type="button" id="trigger" (click)="opened.set(true)">Toggle</button>

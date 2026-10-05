@@ -1,7 +1,7 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestKey, parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, LOCALE_ID, signal } from '@angular/core';
+import { Component, LOCALE_ID, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnCalendarComponent } from './calendar.component';
@@ -11,6 +11,7 @@ import type { DateRange } from '../date-range-input/date-range-input.component';
 @Component({
   standalone: true,
   imports: [TnCalendarComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-calendar

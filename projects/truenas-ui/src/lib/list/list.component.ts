@@ -1,5 +1,5 @@
 
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'tn-list',
@@ -7,6 +7,7 @@ import { Component, input } from '@angular/core';
   imports: [],
   templateUrl: './list.component.html',
   styleUrl: './list.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-list',
     '[class.tn-list--dense]': 'dense()',

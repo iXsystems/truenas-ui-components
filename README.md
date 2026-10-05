@@ -71,9 +71,9 @@ document.documentElement.classList.add('tn-dark');
 
 ### Prerequisites
 
-- **Node.js** >= 18.19.1
+- **Node.js** `^22.22.3 || ^24.15.0 || >=26.0.0` (Angular 22's own range)
 - **Yarn** >= 4.10.3 (Yarn Berry)
-- **Angular 20**
+- **Angular 22**
 
 ### Development Commands
 
@@ -278,21 +278,35 @@ See [CONTRIBUTE.md](./CONTRIBUTE.md) for detailed development guidelines, includ
 
 ## Peer Dependencies
 
-This library requires Angular 20:
+This library requires Angular 22. These are the peer dependencies the published
+package declares, verbatim:
 
 ```json
 {
-  "@angular/animations": "^20.0.0",
-  "@angular/cdk": "^20.0.0",
-  "@angular/common": "^20.0.0",
-  "@angular/core": "^20.0.0",
-  "@angular/forms": "^20.0.0",
-  "@angular/platform-browser": "^20.0.0",
-  "@angular/platform-browser-dynamic": "^20.0.0",
-  "@angular/router": "^20.0.0",
-  "rxjs": "^7.5.0"
+  "@angular/cdk": "^22.0.0",
+  "@angular/common": "^22.0.0",
+  "@angular/core": "^22.0.0",
+  "@angular/router": "^22.0.0",
+  "@mdi/angular-material": "^7.2.96",
+  "@mdi/js": "^7.4.47"
 }
 ```
+
+**`@angular/forms` and `rxjs` are also needed at runtime and are not in that
+list.** Components under `src/lib/` import from both, so an application needs
+them installed, but the package does not declare them as peers and so will not
+warn you. That gap predates this release and is not fixed here; a consumer on
+Angular 22 already has both. An earlier version of this section listed them
+alongside peers the package never declared, which is why it is called out
+rather than quietly dropped.
+
+**Angular 22 only, not `^21.0.0 || ^22.0.0`.** The library is built in partial
+compilation mode, so the Angular linker in the consumer's build has to be at
+least as new as the compiler that produced it — an Angular 21 application
+cannot be relied on to link an Angular 22 build. Supporting both majors would
+mean either verifying that claim against a real Angular 21 consumer or keeping
+a second build on 21; neither is in place, so the range says what is actually
+tested. Consumers move to Angular 22 in the same step as taking this version.
 
 **No `zone.js`.** Nothing under `src/lib/` touches the `Zone` global, and
 `@angular/core` marks `zone.js` optional, so this library runs the same under

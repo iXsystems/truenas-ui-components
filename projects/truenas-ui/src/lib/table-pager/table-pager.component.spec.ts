@@ -198,7 +198,9 @@ describe('TnTablePagerComponent', () => {
     it('should update pageSize and reset to page 1', () => {
       const sizeSpy = jest.fn();
       const pageSpy = jest.fn();
-      component.pageSizeChange.subscribe(sizeSpy);
+      // `pageSize` is a model, so subscribing to it is subscribing to the
+      // `pageSizeChange` output the template binds.
+      component.pageSize.subscribe(sizeSpy);
       component.pageChange.subscribe(pageSpy);
 
       component['onPageSizeChange'](50);
@@ -212,7 +214,7 @@ describe('TnTablePagerComponent', () => {
     it('should be a no-op when the value is unchanged', () => {
       const sizeSpy = jest.fn();
       const pageSpy = jest.fn();
-      component.pageSizeChange.subscribe(sizeSpy);
+      component.pageSize.subscribe(sizeSpy);
       component.pageChange.subscribe(pageSpy);
 
       component['onPageSizeChange'](20);

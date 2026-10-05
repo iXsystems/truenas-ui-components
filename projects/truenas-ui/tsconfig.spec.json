@@ -12,6 +12,9 @@
     "types": ["jest", "node"]
   },
   "files": ["src/setup-jest.ts"],
-  "include": ["**/*.spec.ts", "**/*.d.ts"]
+  "include": [
+    "**/*.spec.ts",
+    "**/*.d.ts"
+  ]
 }
 

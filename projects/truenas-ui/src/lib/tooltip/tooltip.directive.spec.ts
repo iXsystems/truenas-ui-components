@@ -1,6 +1,6 @@
 import { FocusMonitor } from '@angular/cdk/a11y';
 import { OverlayRef } from '@angular/cdk/overlay';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnTooltipDirective } from './tooltip.directive';
@@ -9,6 +9,7 @@ import { TnButtonComponent } from '../button/button.component';
 @Component({
   standalone: true,
   imports: [TnTooltipDirective, TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Each host stands for one shape the directive has to handle; splitting them across fixtures
   // would mean re-stubbing the overlay geometry four times.
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
@@ -1286,6 +1287,7 @@ describe('TnTooltipDirective sticky mode', () => {
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<button tnTooltip="Card menu">Trigger</button>`,
 })
 class FocusHostComponent {}
@@ -1371,6 +1373,7 @@ describe('TnTooltipDirective focus handling', () => {
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<button [tnTooltip]="message()">Trigger</button>`,
 })
 class ObserverHostComponent {

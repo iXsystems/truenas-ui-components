@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -60,6 +60,7 @@ interface TestOption {
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnSelectionListComponent, TnListOptionComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Held to three lines by @angular-eslint/component-max-inline-declarations,
   // which is why the @for body is not broken up the way it would be in a real
   // template.
@@ -87,6 +88,7 @@ class TestHostComponent {
   selector: 'tn-form-host',
   standalone: true,
   imports: [TnSelectionListComponent, TnListOptionComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-selection-list [formControl]="control"><tn-list-option value="a">Option A</tn-list-option>
     <tn-list-option value="b">Option B</tn-list-option>
     <tn-list-option value="c" [disabled]="true">Option C</tn-list-option></tn-selection-list>`

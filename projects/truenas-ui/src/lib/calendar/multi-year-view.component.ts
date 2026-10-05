@@ -1,5 +1,5 @@
 
-import { Component, input, output, computed, inject, ElementRef, Injector, LOCALE_ID } from '@angular/core';
+import { Component, input, output, computed, inject, ElementRef, Injector, LOCALE_ID, ChangeDetectionStrategy } from '@angular/core';
 import { YEARS_PER_PAGE, withYear, yearPageStart } from './calendar-dates';
 import { focusActiveCellAfterRender } from './calendar-focus';
 import { injectTnCalendarIntl } from './calendar-intl';
@@ -18,6 +18,7 @@ export interface YearCell {
   standalone: true,
   imports: [],
   templateUrl: './multi-year-view.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./multi-year-view.component.scss']
 })
 export class TnMultiYearViewComponent {

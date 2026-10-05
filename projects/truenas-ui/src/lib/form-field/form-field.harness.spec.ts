@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
@@ -19,6 +19,7 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnFormFieldComponent, TnInputComponent, TnCheckboxComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-form-field label="Name" testId="name" tooltip="Your full legal name" [required]="true">
@@ -390,6 +391,7 @@ describe('TnFormFieldHarness', () => {
   selector: 'tn-error-messages-host',
   standalone: true,
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-form-field label="Name" testId="name" [errorMessages]="stringMessages()">
@@ -546,6 +548,7 @@ describe('TnFormField per-field errorMessages', () => {
   selector: 'tn-resolver-host',
   standalone: true,
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-form-field label="Resolved" testId="resolved">
@@ -616,6 +619,7 @@ describe('TnFormField global error resolver', () => {
   selector: 'tn-sticky-host',
   standalone: true,
   imports: [TnFormFieldComponent, TnInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-form-field label="Dataset" [tooltip]="tooltip()" [tooltipSticky]="tooltipSticky()">
       <tn-input [formControl]="control" />

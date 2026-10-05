@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnChipComponent } from './chip.component';
@@ -11,6 +11,7 @@ import { TnChipHarness } from './chip.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnChipComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-chip [label]="label()" [icon]="icon()" [color]="color()" [closable]="closable()"
     [disabled]="disabled()" (onClick)="handleClick()" (onClose)="handleClose()" />`
 })

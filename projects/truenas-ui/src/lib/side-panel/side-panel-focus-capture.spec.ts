@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnSidePanelComponent } from './side-panel.component';
@@ -51,6 +51,7 @@ import { TnSidePanelComponent } from './side-panel.component';
   selector: 'tn-side-panel-focus-host',
   standalone: true,
   imports: [TnSidePanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <button type="button" id="trigger" (click)="open.set(true)">Open</button>

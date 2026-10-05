@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnSliderThumbDirective } from './slider-thumb.directive';
@@ -32,6 +32,7 @@ import { TnFormFieldComponent } from '../form-field/form-field.component';
   selector: 'tn-wrapped-slider-host',
   standalone: true,
   imports: [TnFormFieldComponent, TnSliderComponent, TnSliderThumbDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Held to three lines by @angular-eslint/component-max-inline-declarations.
   template: `<tn-form-field [label]="label()"><tn-slider>
     <input tnSliderThumb value="50"></tn-slider></tn-form-field>`
@@ -44,6 +45,7 @@ class WrappedHostComponent {
   selector: 'tn-standalone-slider-host',
   standalone: true,
   imports: [TnSliderComponent, TnSliderThumbDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-slider [aria-label]="label()"><input tnSliderThumb value="50"></tn-slider>`
 })
 class StandaloneHostComponent {

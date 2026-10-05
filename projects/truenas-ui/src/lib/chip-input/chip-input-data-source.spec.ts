@@ -1,5 +1,5 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -24,6 +24,7 @@ type Option = TnChipInputOption<string>;
   selector: 'tn-chip-data-source-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-chip-input
@@ -52,6 +53,7 @@ class ChipDataSourceHostComponent {
   selector: 'tn-chip-pinned-labels-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-chip-input
@@ -77,6 +79,7 @@ class ChipPinnedLabelsHostComponent {
   selector: 'tn-chip-remembered-label-host',
   standalone: true,
   imports: [TnChipInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-chip-input

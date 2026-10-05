@@ -1,5 +1,5 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TnButtonComponent } from '../../lib/button/button.component';
@@ -17,6 +17,7 @@ import { TnStepperComponent, TnStepComponent } from '../../lib/stepper';
   selector: 'backup-wizard-dialog',
   templateUrl: './stepped-wizard.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TnDialogShellComponent,
     TnStepperComponent,
@@ -113,6 +114,7 @@ class BackupWizardDialogComponent {
   selector: 'stepped-wizard-demo',
   templateUrl: './stepped-wizard-2.stories.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnButtonComponent]
 })
 class SteppedWizardDemoComponent {

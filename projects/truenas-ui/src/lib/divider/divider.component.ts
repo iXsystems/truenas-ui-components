@@ -1,5 +1,5 @@
 
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import type { DoCheck } from '@angular/core';
 import { ariaOwner, prescribesItsChildren } from '../a11y/aria-owner';
 
@@ -19,6 +19,7 @@ import { ariaOwner, prescribesItsChildren } from '../a11y/aria-owner';
   imports: [],
   templateUrl: './divider.component.html',
   styleUrl: './divider.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-divider',
     '[class.tn-divider--vertical]': 'vertical()',

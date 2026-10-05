@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -341,6 +341,7 @@ describe('TnButtonComponent', () => {
 @Component({
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button label="First" /><tn-button label="Second" />`,
 })
 class TwoButtonsComponent {}
@@ -388,6 +389,7 @@ describe('TnButtonComponent focus delegation', () => {
 @Component({
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button label="Open" [disabled]="disabled()" (click)="clicks = clicks + 1" />`,
 })
 class ClickHostComponent {

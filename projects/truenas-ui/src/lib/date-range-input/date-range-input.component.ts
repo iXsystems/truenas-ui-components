@@ -3,7 +3,7 @@ import { Overlay, type OverlayRef, type ConnectedPosition } from '@angular/cdk/o
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
 import type { OnInit, TemplateRef, OnDestroy , ElementRef} from '@angular/core';
-import { Component, input, forwardRef, signal, computed, viewChild, ViewContainerRef, inject, afterNextRender, Injector } from '@angular/core';
+import { Component, input, forwardRef, signal, computed, viewChild, ViewContainerRef, inject, afterNextRender, Injector, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TnCalendarComponent } from '../calendar/calendar.component';
@@ -28,6 +28,7 @@ export interface DateRange {
   ],
   templateUrl: './date-range-input.component.html',
   styleUrl: './date-range-input.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-date-range-input',
     // Escape only, and deliberately HERE rather than beside the segments' own

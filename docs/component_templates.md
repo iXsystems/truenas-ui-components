@@ -139,7 +139,13 @@ export class Tn[Name]Component {
 }
 ```
 
-### Component with OnPush Change Detection
+### Component with Eager Change Detection
+
+`OnPush` is Angular 22's default, so the common case needs no
+`changeDetection` line at all — the template above omits one and is `OnPush`
+because of that. This is the opt-out, for a component that cannot report its
+own changes; see
+[Change Detection Strategy](./component_conventions.md#2-change-detection-strategy).
 
 ```typescript
 import { CommonModule } from '@angular/common';
@@ -151,10 +157,9 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
   imports: [CommonModule],
   templateUrl: './[name].component.html',
   styleUrls: ['./[name].component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.Eager,
 })
 export class Tn[Name]Component {
-  // Input signals work perfectly with OnPush
   value = input<string>('');
 }
 ```

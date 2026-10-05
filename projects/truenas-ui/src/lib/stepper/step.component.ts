@@ -1,5 +1,5 @@
 import type { TemplateRef} from '@angular/core';
-import { Component, input, viewChild } from '@angular/core';
+import { Component, input, viewChild, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'tn-step',
@@ -8,6 +8,7 @@ import { Component, input, viewChild } from '@angular/core';
       <ng-content />
     </ng-template>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class TnStepComponent {

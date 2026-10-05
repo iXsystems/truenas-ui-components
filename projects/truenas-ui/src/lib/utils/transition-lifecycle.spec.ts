@@ -1,4 +1,4 @@
-import { Component, NgZone, signal } from '@angular/core';
+import { Component, NgZone, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TN_TRANSITION_FALLBACK_MS, tnTransitionLifecycle } from './transition-lifecycle';
@@ -14,6 +14,7 @@ import type { TnTransitionLifecycle } from './transition-lifecycle';
  */
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '',
 })
 class LifecycleHostComponent {

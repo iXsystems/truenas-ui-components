@@ -1,5 +1,5 @@
 
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import type { DoCheck } from '@angular/core';
 import { ariaOwner } from '../a11y/aria-owner';
 
@@ -51,6 +51,7 @@ let nextId = 0;
   imports: [],
   templateUrl: './list-subheader.component.html',
   styleUrl: './list-subheader.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-list-subheader',
     '[class.tn-list-subheader--inset]': 'inset()',

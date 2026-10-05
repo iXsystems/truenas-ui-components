@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import type { AfterViewInit } from '@angular/core';
-import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import type { IconSize, IconLibraryType } from '../icon/icon.component';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -13,6 +13,7 @@ import { defineFocusDelegate } from '../utils/focus-delegate';
   standalone: true,
   imports: [CommonModule, TnIconComponent, TnTestIdDirective, TnTooltipDirective],
   templateUrl: './icon-button.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./icon-button.component.scss'],
 })
 export class TnIconButtonComponent implements AfterViewInit {

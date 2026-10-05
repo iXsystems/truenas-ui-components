@@ -1,7 +1,7 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
-import { Component, input, output, computed, viewChild, inject } from '@angular/core';
+import { Component, input, output, computed, viewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { LabelTextPipe } from '../pipes/label-markup/label-text.pipe';
@@ -14,6 +14,7 @@ export type ChipColor = 'primary' | 'secondary' | 'accent';
   standalone: true,
   imports: [CommonModule, A11yModule, TnIconComponent, TnTestIdDirective, LabelMarkupPipe, LabelTextPipe],
   templateUrl: './chip.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./chip.component.scss'],
 })
 export class TnChipComponent implements AfterViewInit, OnDestroy {

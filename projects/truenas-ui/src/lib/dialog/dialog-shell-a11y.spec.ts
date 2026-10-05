@@ -1,6 +1,6 @@
 import { Dialog, DIALOG_DATA } from '@angular/cdk/dialog';
 import type { DialogConfig } from '@angular/cdk/dialog';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -57,6 +57,7 @@ interface DialogShellA11yState {
   selector: 'tn-dialog-shell-a11y-content',
   standalone: true,
   imports: [TnDialogShellComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-dialog-shell
       [title]="state.title()"
@@ -75,6 +76,7 @@ class DialogShellA11yContentComponent {
 @Component({
   selector: 'tn-dialog-shell-a11y-host',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<h2 id="external-dialog-title">Delete dataset</h2>',
 })
 class DialogShellA11yHostComponent {}

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnBannerComponent, TnBannerActionDirective } from './banner.component';
@@ -6,6 +6,7 @@ import { TnBannerComponent, TnBannerActionDirective } from './banner.component';
 @Component({
   standalone: true,
   imports: [TnBannerComponent, TnBannerActionDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-banner heading="Test Heading" type="error">
       <button tnBannerAction>Action Button</button>
@@ -17,6 +18,7 @@ class BannerWithActionTestComponent {}
 @Component({
   standalone: true,
   imports: [TnBannerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-banner heading="Test Heading" />
   `
@@ -26,6 +28,7 @@ class BannerWithoutActionTestComponent {}
 @Component({
   standalone: true,
   imports: [TnBannerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-banner [heading]="heading()" [message]="message()">
       <div class="projected-content">Projected Content</div>

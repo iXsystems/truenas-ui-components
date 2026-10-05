@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import type { TemplateRef } from '@angular/core';
-import { Component, computed, input, output, viewChild } from '@angular/core';
+import { Component, computed, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import type { TnTestIdValue } from '../test-id';
 
 /**
@@ -53,6 +53,7 @@ import type { TnTestIdValue } from '../test-id';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './menu-item.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: { style: 'display: none;' },
 })
 export class TnMenuItemComponent {

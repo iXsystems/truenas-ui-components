@@ -1,7 +1,7 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import type { AfterViewChecked } from '@angular/core';
-import { Component, computed, ElementRef, input, output, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, input, output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import type {
   FileSystemItem, FileSystemItemType, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
 } from './file-picker.interfaces';
@@ -57,6 +57,7 @@ interface DisplayedFileItem extends FileSystemItem {
 ],
   templateUrl: './file-picker-popup.component.html',
   styleUrl: './file-picker-popup.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-file-picker-popup'
   }

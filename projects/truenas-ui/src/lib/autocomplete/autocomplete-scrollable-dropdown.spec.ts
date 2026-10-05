@@ -1,5 +1,5 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { TnAutocompleteOption } from './autocomplete.component';
@@ -44,6 +44,7 @@ import { scrollingTo, staticScroller } from '../a11y/scrollable-region-testing';
   selector: 'tn-autocomplete-scroll-host',
   standalone: true,
   imports: [TnAutocompleteComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<tn-autocomplete placeholder="Search..." [options]="options()" />',
 })
 class AutocompleteScrollHostComponent {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TestIdInspectorComponent } from './testid-inspector.component';
@@ -13,6 +13,7 @@ const harnessDoc = loadHarnessDoc('button-toggle');
   selector: 'button-toggle-demo',
   templateUrl: './button-toggle-demo.component.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TnButtonToggleComponent,
     TnButtonToggleGroupComponent,

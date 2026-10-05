@@ -1,6 +1,6 @@
 import { Dialog } from '@angular/cdk/dialog';
 import type { DialogRef } from '@angular/cdk/dialog';
-import { Component, afterNextRender, signal } from '@angular/core';
+import { Component, afterNextRender, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnSidePanelComponent } from './side-panel.component';
@@ -42,6 +42,7 @@ import { TnSidePanelComponent } from './side-panel.component';
 @Component({
   selector: 'tn-side-panel-stacking-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<p>Dialog body</p>',
 })
 class StackingDialogComponent {}
@@ -50,6 +51,7 @@ class StackingDialogComponent {}
   selector: 'tn-side-panel-stacking-host',
   standalone: true,
   imports: [TnSidePanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Edit dataset" [(open)]="open">
       <p>Panel body</p>

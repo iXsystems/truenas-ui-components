@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TnBannerComponent, TnBannerActionDirective } from './banner.component';
@@ -13,6 +13,7 @@ import { TnIconTesting } from '../icon/icon-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnBannerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-banner [heading]="heading()" [message]="message()" [type]="type()" />`
 })
 class TestHostComponent {
@@ -29,6 +30,7 @@ class TestHostComponent {
   selector: 'tn-action-host',
   standalone: true,
   imports: [TnBannerComponent, TnBannerActionDirective, TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-banner heading="Disk Error Detected" message="Pool 'tank' has degraded disks." type="error">
@@ -64,6 +66,7 @@ class ActionHostComponent {
   selector: 'tn-mixed-content-host',
   standalone: true,
   imports: [TnBannerComponent, TnBannerActionDirective, TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-banner type="warning">

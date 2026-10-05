@@ -1,7 +1,7 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, LOCALE_ID } from '@angular/core';
+import { Component, LOCALE_ID, ChangeDetectionStrategy } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TnDateInputComponent } from './date-input.component';
@@ -12,6 +12,7 @@ import { TnCalendarHarness } from '../calendar/calendar.harness';
   selector: 'tn-date-input-harness-test',
   standalone: true,
   imports: [TnDateInputComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-date-input [formControl]="control" />`,
 })
 class DateInputHarnessTestComponent {

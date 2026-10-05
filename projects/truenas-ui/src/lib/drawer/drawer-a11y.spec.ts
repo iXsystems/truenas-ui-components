@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnDrawerContainerComponent } from './drawer-container.component';
@@ -49,6 +49,7 @@ import { TN_DRAWER_DEFAULT_LABEL } from '../a11y/fallback-labels';
   selector: 'tn-drawer-a11y-host',
   standalone: true,
   imports: [TnDrawerContainerComponent, TnDrawerComponent, TnDrawerContentComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <button type="button" id="trigger">Toggle</button>
@@ -78,6 +79,7 @@ class DrawerA11yHostComponent {
   selector: 'tn-bare-container-host',
   standalone: true,
   imports: [TnDrawerContainerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<tn-drawer-container><p>Nothing but content</p></tn-drawer-container>',
 })
 class BareContainerHostComponent {}

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnSpinnerComponent } from './spinner.component';
@@ -26,6 +26,7 @@ import { TN_SPINNER_DEFAULT_LABEL } from '../a11y/fallback-labels';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnSpinnerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<span id="tn-external-label">Restoring pool</span>
     <tn-spinner [mode]="mode()" [value]="value()"
       [ariaLabel]="ariaLabel()" [ariaLabelledby]="ariaLabelledby()" />`

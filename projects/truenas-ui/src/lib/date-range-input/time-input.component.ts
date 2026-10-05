@@ -1,5 +1,5 @@
 
-import { Component, input, signal, forwardRef, computed } from '@angular/core';
+import { Component, input, signal, forwardRef, computed, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import type { TnSelectOption } from '../select/select.component';
@@ -19,6 +19,7 @@ import type { TnTestIdValue } from '../test-id';
   ],
   templateUrl: './time-input.component.html',
   styleUrl: './time-input.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-time-input'
   }

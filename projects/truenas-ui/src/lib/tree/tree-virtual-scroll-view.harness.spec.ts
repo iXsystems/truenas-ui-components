@@ -1,7 +1,7 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { CdkTreeModule, FlatTreeControl } from '@angular/cdk/tree';
-import { Component, viewChild } from '@angular/core';
+import { Component, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { TnTreeNodeComponent } from './tree-node.component';
 import { TnTreeVirtualScrollViewComponent } from './tree-virtual-scroll-view.component';
@@ -28,6 +28,7 @@ const dataset: ExampleNode[] = [
   selector: 'tn-tree-virtual-scroll-harness-host',
   standalone: true,
   imports: [CdkTreeModule, TnTreeVirtualScrollViewComponent, TnTreeNodeComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <tn-tree-virtual-scroll-view

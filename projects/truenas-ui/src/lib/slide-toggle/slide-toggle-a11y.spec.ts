@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -34,6 +34,7 @@ import { axeResult } from '../a11y/axe-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnSlideToggleComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-slide-toggle [label]="label()" [labelPosition]="labelPosition()"
     [disabled]="disabled()" (change)="changeCount = changeCount + 1" />`
 })
@@ -49,6 +50,7 @@ class TestHostComponent {
   selector: 'tn-form-test-host',
   standalone: true,
   imports: [TnSlideToggleComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-slide-toggle label="Enable notifications" [formControl]="control"
     (change)="changeCount = changeCount + 1" />`
 })

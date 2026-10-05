@@ -1,6 +1,6 @@
 import { DialogRef} from '@angular/cdk/dialog';
 import { DIALOG_DATA } from '@angular/cdk/dialog';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TnDialogShellComponent } from './dialog-shell.component';
 import { TnButtonComponent } from '../button/button.component';
 
@@ -24,6 +24,7 @@ export interface TnConfirmDialogData {
   templateUrl: './confirm-dialog.component.html',
   standalone: true,
   imports: [TnDialogShellComponent, TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-dialog-shell',
     '[class.tn-dialog--destructive]': 'data.destructive'

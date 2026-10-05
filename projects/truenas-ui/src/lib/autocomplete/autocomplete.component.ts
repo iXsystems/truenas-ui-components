@@ -15,6 +15,7 @@ import {
   signal,
   untracked,
   viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import type { EmbeddedViewRef, OnDestroy, Signal, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
@@ -85,6 +86,7 @@ export const TN_AUTOCOMPLETE_LABELS = new InjectionToken<TnAutocompleteLabels | 
   ],
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   // Escape only, and deliberately HERE rather than beside the input's own
   // keydown binding — see `onHostKeydown`.
   host: {

@@ -1,4 +1,4 @@
-import { Component, viewChild } from '@angular/core';
+import { Component, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnMenuTriggerDirective } from './menu-trigger.directive';
@@ -8,6 +8,7 @@ import { TnMenuComponent } from './menu.component';
 @Component({
   standalone: true,
   imports: [TnMenuComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
     <tn-menu #menu [items]="items" />
@@ -116,6 +117,7 @@ describe('tn-menu arrow-key navigation', () => {
 @Component({
   standalone: true,
   imports: [TnMenuComponent, TnMenuTriggerDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="trigger" [tnMenuTriggerFor]="menu">Open</button>
     <tn-menu #menu [items]="items" />

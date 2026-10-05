@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TN_TEST_ATTR } from './test-attr.token';
 import { TnTestIdDirective } from './test-id.directive';
@@ -15,6 +15,7 @@ import { TnTestIdDirective } from './test-id.directive';
 @Component({
   standalone: true,
   imports: [TnTestIdDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <!-- eslint-disable-next-line tn-local/require-tn-testid-type -- exercises verbatim (no tnTestIdType) directive behavior -->
     <button [tnTestId]="value()">click</button>

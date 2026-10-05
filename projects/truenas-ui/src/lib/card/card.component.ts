@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, computed, inject, contentChild, TemplateRef } from '@angular/core';
+import { Component, input, computed, inject, contentChild, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { mdiDotsVertical, mdiHelpCircle, mdiOpenInNew } from '@mdi/js';
 import { TnCardFooterActionsDirective, TnCardHeaderActionsDirective } from './card-action.directive';
@@ -38,6 +38,7 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
   ],
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     '[class.tn-card-host--content-height]': '!fillHeight()',
   },

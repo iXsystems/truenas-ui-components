@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import type { AfterViewInit } from '@angular/core';
-import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
@@ -13,6 +13,7 @@ import { defineFocusDelegate } from '../utils/focus-delegate';
   imports: [CommonModule, RouterLink, TnTestIdDirective, LabelMarkupPipe, TnIconComponent],
   templateUrl: './button.component.html',
   styleUrls: ['./button.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     '[class.tn-button--full-width]': 'fullWidth()',
   },

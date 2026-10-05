@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { axeResult, axeScan } from './axe-testing';
 import * as axeTesting from './axe-testing';
@@ -15,6 +15,7 @@ import { TnDividerComponent } from '../divider/divider.component';
   selector: 'tn-conditional-template-host',
   standalone: true,
   template: '@if (show) {<div role="button" tabindex="0"><button type="button">x</button></div>}',
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: { 'role': 'status' },
 })
 class ConditionalTemplateHostComponent {

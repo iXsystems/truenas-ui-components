@@ -1,5 +1,5 @@
 import { DialogRef } from '@angular/cdk/dialog';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TnDialogShellComponent } from './dialog-shell.component';
 import { TN_DIALOG_SHELL_DEFAULT_LABEL } from '../a11y/fallback-labels';
@@ -22,6 +22,7 @@ import { TN_DIALOG_SHELL_DEFAULT_LABEL } from '../a11y/fallback-labels';
 @Component({
   selector: 'tn-mocked-ref-host',
   imports: [TnDialogShellComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-dialog-shell [title]="title()" [ariaLabel]="ariaLabel()">
       <p>Content</p>

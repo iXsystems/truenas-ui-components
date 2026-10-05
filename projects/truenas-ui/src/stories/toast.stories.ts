@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { TnToastService } from '../lib/toast/toast.service';
@@ -8,6 +8,7 @@ import { TnToastPosition, TnToastType } from '../lib/toast/toast.types';
   selector: 'tn-toast-demo',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './toast-demo.component.html',
 })
 class ToastDemoComponent {
@@ -27,6 +28,7 @@ class ToastDemoComponent {
   selector: 'tn-toast-position-demo',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './toast-position-demo.component.html',
 })
 class ToastPositionDemoComponent {
@@ -46,6 +48,7 @@ class ToastPositionDemoComponent {
   selector: 'tn-toast-testid-demo',
   standalone: true,
   imports: [TnButtonComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-button label="Show toast with action" (onClick)="show()" />`,
 })
 class ToastTestIdDemoComponent {

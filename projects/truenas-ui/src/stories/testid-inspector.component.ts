@@ -1,5 +1,5 @@
 import type { AfterViewInit } from '@angular/core';
-import { Component, ElementRef, inject, signal } from '@angular/core';
+import { Component, ElementRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 /**
  * Storybook docs helper for "Test IDs" stories.
@@ -23,6 +23,7 @@ import { Component, ElementRef, inject, signal } from '@angular/core';
 @Component({
   selector: 'tn-testid-inspector',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <div #scope><ng-content /></div>

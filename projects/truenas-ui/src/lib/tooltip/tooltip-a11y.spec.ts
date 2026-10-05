@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnTooltipComponent } from './tooltip.component';
@@ -21,6 +21,7 @@ import { axeResult } from '../a11y/axe-testing';
 @Component({
   standalone: true,
   imports: [TnTooltipDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<div class="wrapper" tnTooltip="Pool is degraded"><button>Details</button></div>`,
 })
 class WrapperHostComponent {}

@@ -1,5 +1,5 @@
 import { FocusMonitor } from '@angular/cdk/a11y';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -19,6 +19,7 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 @Component({
   standalone: true,
   imports: [TnCardComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-card [headerStatus]="status()" [headerControl]="control()" [headerMenu]="menu()" [headerMenuTriggerTestId]="menuTriggerTestId()" [headerMenuTriggerAriaLabel]="menuAriaLabel()" [headerMenuTriggerTooltip]="menuTooltip()" [tooltipSticky]="tooltipSticky()" [primaryAction]="primary()" [secondaryAction]="secondary()" [footerLink]="footerLink()">Content</tn-card>`,
 })
 class HostComponent {
@@ -253,6 +254,7 @@ describe('TnCardComponent testId support', () => {
 @Component({
   standalone: true,
   imports: [TnCardComponent, TnCardHeaderActionsDirective, TnCardFooterActionsDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-card [primaryAction]="primary()">`
     + `@if (showHeaderAction()) {<ng-template tnCardHeaderActions><button type="button" class="projected-header-action">Toggle</button></ng-template>}`
     + `@if (showFooterAction()) {<ng-template tnCardFooterActions><button type="button" class="projected-footer-action">Add</button></ng-template>}`
@@ -567,6 +569,7 @@ describe('TnCardComponent projected action templates', () => {
 @Component({
   standalone: true,
   imports: [TnCardComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-card [title]="title()" [titleRouterLink]="routerLink()" [titleTooltip]="tooltip()" [titleTooltipAriaLabel]="tooltipAriaLabel()" [tooltipSticky]="sticky()">Content</tn-card>`,
 })
 class TitleHostComponent {
@@ -663,6 +666,7 @@ describe('TnCardComponent title router link & tooltip', () => {
 @Component({
   standalone: true,
   imports: [TnCardComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<tn-card [fillHeight]="fillHeight()">Content</tn-card>`,
 })
 class HeightHostComponent {

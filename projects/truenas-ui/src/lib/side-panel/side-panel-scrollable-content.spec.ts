@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import {
@@ -58,6 +58,7 @@ import { axeResult } from '../a11y/axe-testing';
   selector: 'tn-side-panel-scroll-host',
   standalone: true,
   imports: [TnSidePanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `
     <button type="button" id="trigger" (click)="open.set(true)">Open</button>

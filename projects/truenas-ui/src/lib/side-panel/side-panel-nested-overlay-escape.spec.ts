@@ -1,5 +1,5 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -70,6 +70,7 @@ import { TnTooltipDirective } from '../tooltip/tooltip.directive';
   selector: 'tn-escape-file-picker-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnFilePickerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Add SMB share" [(open)]="open">
       <tn-file-picker />
@@ -84,6 +85,7 @@ class FilePickerPanelHostComponent {
   selector: 'tn-escape-date-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnDateInputComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Add API key" [(open)]="open">
       <tn-date-input />
@@ -98,6 +100,7 @@ class DateInputPanelHostComponent {
   selector: 'tn-escape-date-range-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnDateRangeInputComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Filter" [(open)]="open">
       <tn-date-range-input />
@@ -112,6 +115,7 @@ class DateRangeInputPanelHostComponent {
   selector: 'tn-escape-autocomplete-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnAutocompleteComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Edit dataset" [(open)]="open">
       <tn-autocomplete [options]="options" />
@@ -130,6 +134,7 @@ class AutocompletePanelHostComponent {
   selector: 'tn-escape-chip-input-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnChipInputComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Edit ACL" [(open)]="open">
       <tn-chip-input [suggestions]="suggestions" />
@@ -145,6 +150,7 @@ class ChipInputPanelHostComponent {
   selector: 'tn-escape-select-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Edit share" [(open)]="open">
       <tn-select [options]="options" />
@@ -163,6 +169,7 @@ class SelectPanelHostComponent {
   selector: 'tn-escape-context-menu-host',
   standalone: true,
   imports: [TnSidePanelComponent, TnMenuComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-side-panel title="Datasets" [(open)]="open">
       <tn-menu [contextMenu]="true" [items]="items" />
@@ -321,6 +328,7 @@ const CASES: PopupCase[] = [
     TnFilePickerComponent,
     TnSelectComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-drawer mode="over" ariaLabel="Filters" [(opened)]="opened">
       <tn-select [options]="options" /><tn-autocomplete [options]="options" /><tn-chip-input [suggestions]="suggestions" /><tn-file-picker /><tn-date-input /><tn-date-range-input />
@@ -431,6 +439,7 @@ describe('Escape in a popup opened over a tn-side-panel (#324)', () => {
   selector: 'tn-escape-tooltip-host',
   standalone: true,
   imports: [TnSelectComponent, TnTooltipDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<tn-select tnTooltip="Pick a pool" [options]="options" />',
 })
 class TooltipHostComponent {

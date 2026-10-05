@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import type { HarnessLoader } from '@angular/cdk/testing';
-import { Component, signal, viewChild } from '@angular/core';
+import { Component, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TnMenuTesting } from './menu-testing';
@@ -14,6 +14,7 @@ import { TnIconTesting } from '../icon/icon-testing';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnMenuComponent, TnMenuTriggerDirective, OverlayModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button data-testid="trigger" [tnMenuTriggerFor]="menu">Open</button>
     <tn-menu #menu [items]="items()" />

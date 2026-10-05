@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { userEvent, within } from 'storybook/test';
 import { TnButtonComponent } from '../../../lib/button/button.component';
@@ -10,6 +10,7 @@ import { TnInputComponent } from '../../../lib/input/input.component';
   templateUrl: './login.example.html',
   styleUrl: './login.example.scss',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TnInputComponent, TnButtonComponent],
 })
 class LoginFormDocComponent {

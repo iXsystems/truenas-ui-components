@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,6 +21,7 @@ function bothOrNeither(group: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'tn-form-errors-host',
   imports: [ReactiveFormsModule, TnFormErrorsComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   // eslint-disable-next-line @angular-eslint/component-max-inline-declarations
   template: `<tn-form-errors
     [control]="control()" [errorMessages]="errorMessages()" [showWhenUntouched]="showWhenUntouched()"

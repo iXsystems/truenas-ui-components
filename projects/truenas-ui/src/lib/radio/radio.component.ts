@@ -1,7 +1,7 @@
 import { FocusMonitor, A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { ElementRef, AfterViewInit, OnDestroy} from '@angular/core';
-import { Component, viewChild, inject, input, output, computed, signal, forwardRef } from '@angular/core';
+import { Component, viewChild, inject, input, output, computed, signal, forwardRef, ChangeDetectionStrategy } from '@angular/core';
 import type { ControlValueAccessor} from '@angular/forms';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TN_RADIO_GROUP } from './radio-group.token';
@@ -14,6 +14,7 @@ import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id
   imports: [CommonModule, FormsModule, A11yModule, TnTestIdDirective, LabelMarkupPipe],
   templateUrl: './radio.component.html',
   styleUrl: './radio.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

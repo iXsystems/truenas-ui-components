@@ -1,6 +1,6 @@
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { TnTabsComponent } from './tabs.component';
@@ -14,6 +14,7 @@ import { TnTabPanelHarness } from '../tab-panel/tab-panel.harness';
   selector: 'tn-test-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/harness-host.component.html'
 })
 class TestHostComponent {
@@ -26,6 +27,7 @@ class TestHostComponent {
   selector: 'tn-multi-tabs-host',
   standalone: true,
   imports: [TnTabsComponent, TnTabComponent, TnTabPanelComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './test-hosts/multi-tabs-host.component.html'
 })
 class MultiTabsHostComponent {}

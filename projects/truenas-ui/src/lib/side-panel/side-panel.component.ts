@@ -10,6 +10,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   Component, Directive, Injector, input, output, model, computed, effect, inject, signal,
   contentChildren, viewChild, afterNextRender, DestroyRef,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import type { ElementRef, OnDestroy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -177,6 +178,7 @@ export class TnSidePanelHeaderActionDirective {}
   imports: [CommonModule, A11yModule, TnIconButtonComponent, TnTestIdDirective],
   templateUrl: './side-panel.component.html',
   styleUrls: ['./side-panel.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   host: {
     'class': 'tn-side-panel',
     '[attr.data-tn-panel]': 'panelId',
