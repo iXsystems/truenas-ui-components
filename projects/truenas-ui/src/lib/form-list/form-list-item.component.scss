@@ -3,6 +3,47 @@
 }
 
 .tn-form-list-item {
+  // WHY THIS REBINDS TWO THEME TOKENS, AND WHY ON THE WHOLE FILL
+  // The entry card fills `--tn-alt-bg1` and its whole content is projected:
+  // `<ng-content />` sits inside `.tn-form-list-item__content`, which is inside
+  // this element. So every control a caller puts in an entry draws on this
+  // fill, and the two tokens tuned for `--tn-bg1`/`--tn-bg2` only are the wrong
+  // colour here — `theming.mdx` states the rule under "Writing a component".
+  //
+  // `--tn-error-text` is what tn-checkbox and tn-radio paint their error text
+  // with, and a required field in an entry card is ordinary markup. It measures
+  // 3.43:1 on this fill in `.tn-dracula` and fails AA in six of the nine
+  // palettes. `--tn-error` is the token tuned for this surface — 4.62:1 at
+  // worst, measured in all nine by `semantic-status-contrast.spec.ts` — and it
+  // keeps the error red, so the status still reads as a status.
+  //
+  // `--tn-primary-text` is what tn-form-field paints a FOCUSED label with
+  // (`form-field.component.scss`), so this one is reached by tabbing into any
+  // field in any entry. It measures 3.49:1 here in `.tn-dracula` and fails in
+  // the same six palettes. Nothing in the palettes is a primary accent tuned
+  // for this fill: `--tn-primary` itself is worse (1.82:1 at worst), and the
+  // semantic tokens that do clear it mean "info"/"warning"/"error", which a
+  // focus cue is not. `--tn-fg1` is the surface's own primary text colour and
+  // clears AA on it in all nine (6.24:1 at worst).
+  //
+  // BE PRECISE ABOUT WHAT THAT COSTS, because it is more than a hue. The label's
+  // resting colour is ALREADY `--tn-fg1` (`form-field.component.scss`), so
+  // rebinding the focused colour to the same token makes the focused label
+  // identical to the unfocused one: inside an entry card that cue is not
+  // recoloured, it is gone. It was a redundant secondary one —
+  // `.tn-input-container:focus-within` still draws a `--tn-primary` border and a
+  // 2px ring, so WCAG 2.4.7 holds on the control itself — and a cue that is
+  // absent beats one that is present and unreadable in six of the nine
+  // palettes. Restoring it properly needs an accent tuned for this fill, which
+  // is the palette decision `projected-token-rebind.spec.ts` records.
+  //
+  // Declared here rather than on `__content` because the fill is what creates
+  // the problem and the fill is this element's; a rebind on a descendant leaves
+  // any slot outside it drawing the untuned token on the same surface.
+  // `projected-token-rebind.spec.ts` is what holds both of those.
+  --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+  --tn-primary-text: var(--tn-fg1, #222222);
+
   position: relative;
   border: 1px solid var(--tn-lines, var(--tn-fg4, #d0d5dd));
   border-radius: var(--tn-radius, 4px);
