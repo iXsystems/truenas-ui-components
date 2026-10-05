@@ -286,19 +286,39 @@ package declares, verbatim:
   "@angular/cdk": "^22.0.0",
   "@angular/common": "^22.0.0",
   "@angular/core": "^22.0.0",
+  "@angular/forms": "^22.0.0",
   "@angular/router": "^22.0.0",
   "@mdi/angular-material": "^7.2.96",
-  "@mdi/js": "^7.4.47"
+  "@mdi/js": "^7.4.47",
+  "rxjs": "^7.8.2"
 }
 ```
 
-**`@angular/forms` and `rxjs` are also needed at runtime and are not in that
-list.** Components under `src/lib/` import from both, so an application needs
-them installed, but the package does not declare them as peers and so will not
-warn you. That gap predates this release and is not fixed here; a consumer on
-Angular 22 already has both. An earlier version of this section listed them
-alongside peers the package never declared, which is why it is called out
-rather than quietly dropped.
+That block is checked against `projects/truenas-ui/package.json` by
+`scripts/package-contract/declared-dependencies.spec.ts`, so it cannot drift
+from what the package declares. The same test walks the published entry point's
+import graph and fails when the library imports a package the contract does not
+declare — which is how the `@angular/forms` and `rxjs` omission above was found,
+after it had shipped.
+
+**`rxjs` says `^7.8.2`, which is narrower than `@angular/core`'s own
+`^6.5.3 || ^7.4.0`.** 7.8.2 is what this library is built and tested against,
+and the range says what is tested rather than what might work — the same reason
+the Angular range below names one major. An application already on Angular 22
+with an older rxjs 7 will see a peer warning it did not see before; that is the
+cost of the range being honest, and it is a warning rather than a failure.
+
+**Two packages are still imported and still undeclared:
+`@angular/animations` and `@angular/platform-browser`.** `tn-table` and
+`tn-stepper` build animations with the first; the icon components use
+`DomSanitizer` from the second. Declaring a peer can emit install warnings for
+consumers who are fine today, so the range for each is a decision of its own
+rather than something to fold in silently. The test above pins both: it fails if
+either stops being imported or gets declared, so neither can be quietly
+forgotten. Every Angular browser application already has
+`@angular/platform-browser`; `@angular/animations` is the one an Angular 22
+application may genuinely be missing, and an application using `tn-table` or
+`tn-stepper` needs it installed.
 
 **Angular 22 only, not `^21.0.0 || ^22.0.0`.** The library is built in partial
 compilation mode, so the Angular linker in the consumer's build has to be at
