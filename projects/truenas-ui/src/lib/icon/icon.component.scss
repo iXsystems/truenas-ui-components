@@ -103,12 +103,19 @@ tn-icon {
     text-align: center;
   }
 
+  // The two-letter abbreviation shown when an icon cannot be resolved. It is
+  // TEXT, so axe measures its contrast and composites any `opacity` into the
+  // foreground before doing so — the `opacity: 0.7` that used to be here took
+  // `--tn-primary-txt` on `--tn-primary` from 4.58:1 to 3.03:1, which is the
+  // `color-contrast` violation the Storybook a11y run reported on
+  // Components/Chip > With Icon (#337). Dimming cannot be traded against the
+  // contrast floor: being an abbreviation rather than a glyph is already what
+  // marks it as a fallback.
   &__text {
     font-size: 0.75em;
     font-weight: 600;
     line-height: 1;
     color: inherit;
     text-align: center;
-    opacity: 0.7;
   }
 }

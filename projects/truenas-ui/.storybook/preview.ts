@@ -17,6 +17,28 @@ export const parameters: Preview['parameters'] = {
   backgrounds: {
     disabled: true,
   },
+  // DELIBERATELY ABSENT: `a11y: { test: 'error' }`, which would make an axe
+  // violation FAIL the Storybook Interaction Tests job.
+  //
+  // `@storybook/addon-a11y` defaults it to `'todo'`, which runs the same scan
+  // on every story and then only logs the count — so a violation cannot fail
+  // the job and the log never names the rule (#337, which asks for `'error'`
+  // here). Both modes share one scan; they differ only in the status the addon
+  // reports, `'warning'` against `'failed'`
+  // (`addon-a11y/dist/_browser-chunks/chunk-CQ2APV2R.js`, `getMode`).
+  //
+  // WHY IT IS NOT SET YET. `'error'` turns this job into a merge gate, and a
+  // gate may only land green. On the attempt that set it (#339) the job went
+  // red and STAYED red after every violation #337 enumerated had been
+  // addressed — so at least one more is reaching the scan, and naming it needs
+  // the report that only `'error'` prints, from a browser. A red required check
+  // here blocks every later pull request, which is worse than warnings nobody
+  // reads, so the flip belongs with whoever can read one run of it.
+  //
+  // The per-story half of #337 is done: a story that renders something axe is
+  // right to object to says so for itself with `parameters.a11y`, which is
+  // reviewable per story, and `API/Color Palette` is the worked example.
+
   /**
    * The theme Storybook renders DOCS PAGES with. `manager.ts` gives the same
    * object to the manager UI; this is the preview's half of the pair, and it

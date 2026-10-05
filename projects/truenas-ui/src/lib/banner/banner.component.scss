@@ -134,7 +134,24 @@
     margin-top: 4px;
   }
 
+  // WHY THIS REBINDS A THEME TOKEN
+  // Anything projected into this slot is drawn on `--tn-alt-bg1`, the banner's
+  // own fill — and `--tn-error-text` is tuned for `--tn-bg1`/`--tn-bg2` only
+  // (`error-text-contrast.spec.ts` says so in as many words, and names 3.64:1
+  // on this surface as the reason). tn-button's `outline`+`warn` variant reads
+  // that token for its label, so `<tn-button tnBannerAction variant="outline"
+  // color="warn">` landed at exactly that ratio: the `color-contrast`
+  // violation the Storybook a11y run reported on Components/Banner > With
+  // Action Button (#337).
+  //
+  // `--tn-error` is the token tuned for THIS surface, measured on it in all
+  // nine palettes by `semantic-status-contrast.spec.ts`, and it is already
+  // what an error banner paints its own heading with. Rebinding the custom
+  // property rather than setting `color` on a button class keeps this out of
+  // tn-button's internals and covers every control the slot can hold.
   &__action {
+    --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+
     display: flex;
     align-items: center;
     gap: 8px 16px;
