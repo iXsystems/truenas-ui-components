@@ -308,17 +308,31 @@ the Angular range below names one major. An application already on Angular 22
 with an older rxjs 7 will see a peer warning it did not see before; that is the
 cost of the range being honest, and it is a warning rather than a failure.
 
-**Two packages are still imported and still undeclared:
-`@angular/animations` and `@angular/platform-browser`.** `tn-table` and
-`tn-stepper` build animations with the first; the icon components use
-`DomSanitizer` from the second. Declaring a peer can emit install warnings for
-consumers who are fine today, so the range for each is a decision of its own
-rather than something to fold in silently. The test above pins both: it fails if
-either stops being imported or gets declared, so neither can be quietly
-forgotten. Every Angular browser application already has
-`@angular/platform-browser`; `@angular/animations` is the one an Angular 22
-application may genuinely be missing, and an application using `tn-table` or
-`tn-stepper` needs it installed.
+**The entry point still reaches three things this package does not declare**,
+each left for a decision of its own rather than folded in silently — declaring a
+peer can emit install warnings for consumers who are fine today. The test above
+pins all three: it fails if one stops being imported or gets declared, so none
+can be quietly forgotten.
+
+- **`@angular/animations`** — `tn-table` and `tn-stepper` build animations with
+  it. This is the one an Angular 22 application may genuinely be missing, so an
+  application using either component needs it installed.
+- **`@angular/platform-browser`** — `DomSanitizer`, in the icon components.
+  Every Angular browser application already has it.
+- **`@types/jest`** — `icon-testing.ts` is exported from the public API and its
+  mocks are typed `jest.Mock`. Those types reach the published `.d.ts` while the
+  `/// <reference types="jest" />` that resolved them does not, so a consumer
+  without jest's types in scope sees `Cannot find namespace 'jest'`. A component
+  library declaring a test framework's types as a peer is the wrong shape; the
+  alternative is moving those helpers out of the main entry point, which is an
+  API change.
+
+**What that check does not cover:** it walks the import graph from
+`src/public-api.ts`, and the published package is more than that graph.
+`ng-package.json` also copies `projects/truenas-ui/scripts/` in as assets, which
+is what the `truenas-icons` bin runs, and those files import `fast-glob` —
+declared in the workspace root's `package.json` and not in this one. So the list
+above is complete for what a consumer `import`s and not for what the bin needs.
 
 **Angular 22 only, not `^21.0.0 || ^22.0.0`.** The library is built in partial
 compilation mode, so the Angular linker in the consumer's build has to be at

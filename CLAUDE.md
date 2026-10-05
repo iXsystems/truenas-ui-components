@@ -221,10 +221,14 @@ you did not touch.**
 
 The fix is to declare it, not to work around the check. Which block it belongs
 in is a contract call: a peer can emit install warnings for consumers who are
-fine today, so if the answer is not obvious, propose it rather than picking one
-(#354 did exactly this, and left `@angular/animations` and
-`@angular/platform-browser` deferred with the reasons in the spec's own
-comment).
+fine today, so if the answer is not obvious, propose it rather than picking one.
+#354 did exactly that for the gaps it found but was not scoped to decide — they
+are listed in the spec with the reason for each, and the same check fails if one
+is fixed and left in the list.
+
+The check reads `/// <reference types="..." />` as well as imports, because
+ng-packagr's flattened `.d.ts` keeps the types a directive resolved and drops the
+directive.
 
 `ng-packagr` does not cover this. `allowedNonPeerDependencies` in
 `ng-package.json` whitelists packages already in the library's `dependencies`;

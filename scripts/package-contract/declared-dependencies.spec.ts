@@ -64,7 +64,25 @@ const declared = new Set([
  */
 const UNDECLARED_PENDING_A_DECISION = ['@angular/animations', '@angular/platform-browser'];
 
+/**
+ * The same thing for `/// <reference types="..." />`, which names a types package rather
+ * than an import.
+ *
+ * - `jest` — `icon-testing.ts` is exported from `public-api.ts` and its mocks are typed
+ *   `jest.Mock`, which reaches the published `.d.ts`. The directive itself does not: flattening
+ *   drops it, so a consumer without `@types/jest` in scope gets `Cannot find namespace 'jest'`.
+ *   Declaring a test framework's types as a peer of a component library is the wrong shape, and
+ *   the alternative — moving the jest-typed helpers out of the main entry point — is an API
+ *   change. Either way it is a decision rather than a range.
+ */
+const TYPES_PENDING_A_DECISION = ['jest'];
+
 const builtins = new Set(builtinModules);
+
+/** Whether `name` from a types directive resolves: `@types/name` counts, as does `name` itself. */
+function typesAreDeclared(name: string): boolean {
+  return declared.has(name) || declared.has(`@types/${name}`);
+}
 
 /**
  * The installable package a specifier names, or null when it names nothing installable —
@@ -94,15 +112,27 @@ function resolveRelative(importer: string, specifier: string): string | null {
   return null;
 }
 
+interface FileDependencies {
+  /** Module specifiers, relative ones included. */
+  specifiers: string[];
+  /** Packages named by a `/// <reference types="..." />` directive. */
+  typeReferences: string[];
+}
+
 /**
- * Every module specifier one file imports, read with the compiler's own parser.
+ * Everything one file depends on, read with the compiler's own parser.
  *
  * A regex over the source cannot do this: `src/lib/` is full of JSDoc examples showing a
  * consumer's `import { X } from '@truenas/ui-components'`, and of prose inside template
  * strings that happens to put a quote after the word `from`. Both read as imports to a
  * pattern and to neither the parser nor the compiler.
+ *
+ * `typeReferences` is the half it would be easy to leave out, and the harder half to notice
+ * missing: ng-packagr's flattened `.d.ts` drops the directive while keeping the types that
+ * needed it, so the consumer's error names a namespace and nothing names a package. The
+ * parser populates them for free beside the imports.
  */
-function specifiersOf(file: string): string[] {
+function dependenciesOf(file: string): FileDependencies {
   const source = ts.createSourceFile(
     file,
     readFileSync(file, 'utf8'),
@@ -141,12 +171,17 @@ function specifiersOf(file: string): string[] {
 
   visit(source);
 
-  return specifiers;
+  return {
+    specifiers,
+    typeReferences: source.typeReferenceDirectives.map((directive) => directive.fileName),
+  };
 }
 
 interface Graph {
   /** Package name to the repo-relative files that import it. */
   packages: Map<string, string[]>;
+  /** `/// <reference types="x" />` name to the repo-relative files that carry it. */
+  typeReferences: Map<string, string[]>;
   /** Every file reached from the entry point, repo-relative. */
   files: string[];
   /** Relative specifiers that resolved to no file — a walk that stopped short. */
@@ -155,14 +190,30 @@ interface Graph {
 
 function walkFromEntryPoint(): Graph {
   const packages = new Map<string, string[]>();
+  const typeReferences = new Map<string, string[]>();
   const unresolved: string[] = [];
   const queue = [entryPoint];
   const seen = new Set(queue);
 
+  const record = (into: Map<string, string[]>, name: string, file: string): void => {
+    const importers = into.get(name) ?? [];
+    const importer = relative(repoRoot, file);
+
+    if (!importers.includes(importer)) {
+      importers.push(importer);
+      into.set(name, importers);
+    }
+  };
+
   for (let next = 0; next < queue.length; next += 1) {
     const file = queue[next];
+    const dependencies = dependenciesOf(file);
 
-    for (const specifier of specifiersOf(file)) {
+    for (const name of dependencies.typeReferences) {
+      record(typeReferences, name, file);
+    }
+
+    for (const specifier of dependencies.specifiers) {
       if (specifier.startsWith('.')) {
         const target = resolveRelative(file, specifier);
 
@@ -178,22 +229,15 @@ function walkFromEntryPoint(): Graph {
 
       const name = packageOf(specifier);
 
-      if (name === null) {
-        continue;
-      }
-
-      const importers = packages.get(name) ?? [];
-      const importer = relative(repoRoot, file);
-
-      if (!importers.includes(importer)) {
-        importers.push(importer);
-        packages.set(name, importers);
+      if (name !== null) {
+        record(packages, name, file);
       }
     }
   }
 
   return {
     packages,
+    typeReferences,
     files: queue.map((file) => relative(repoRoot, file)),
     unresolved,
   };
@@ -222,6 +266,12 @@ describe('the walk itself', () => {
     expect(graph.packages.get('@angular/forms')?.length).toBeGreaterThan(0);
     expect(graph.packages.get('rxjs')?.length).toBeGreaterThan(0);
   });
+
+  it('reads the type reference directive the flattened .d.ts drops', () => {
+    expect(graph.typeReferences.get('jest')).toContain(
+      'projects/truenas-ui/src/lib/icon/icon-testing.ts'
+    );
+  });
 });
 
 describe('projects/truenas-ui/package.json', () => {
@@ -238,11 +288,48 @@ describe('projects/truenas-ui/package.json', () => {
     expect(undeclared).toEqual({});
   });
 
-  it.each(UNDECLARED_PENDING_A_DECISION)('still has no declaration for %s', (name) => {
-    // A deferred gap that has since been declared, or whose last import has gone, must be
-    // deleted from the list above rather than left standing.
-    expect(graph.packages.get(name)?.length ?? 0).toBeGreaterThan(0);
-    expect(declared.has(name)).toBe(false);
+  it('declares the types every file it reaches references', () => {
+    const undeclared: Record<string, string[]> = {};
+
+    for (const [name, referrers] of graph.typeReferences) {
+      if (!typesAreDeclared(name) && !TYPES_PENDING_A_DECISION.includes(name)) {
+        undeclared[name] = referrers;
+      }
+    }
+
+    expect(undeclared).toEqual({});
+  });
+
+  /**
+   * Both deferred lists are asserted in one test, iterating rather than `it.each`, because
+   * `it.each([])` throws `.each called with an empty Array of table data` — so the moment
+   * someone does the thing the comments above ask for and empties a list, the suite goes red
+   * with a message about table data. A tripwire that fails on being disarmed is not one.
+   */
+  it('has no deferred entry that has since been fixed', () => {
+    const stale: string[] = [];
+
+    for (const name of UNDECLARED_PENDING_A_DECISION) {
+      if (declared.has(name)) {
+        stale.push(`${name}: now declared — delete it from UNDECLARED_PENDING_A_DECISION`);
+      }
+
+      if ((graph.packages.get(name)?.length ?? 0) === 0) {
+        stale.push(`${name}: no longer imported — delete it from UNDECLARED_PENDING_A_DECISION`);
+      }
+    }
+
+    for (const name of TYPES_PENDING_A_DECISION) {
+      if (typesAreDeclared(name)) {
+        stale.push(`${name}: types now declared — delete it from TYPES_PENDING_A_DECISION`);
+      }
+
+      if ((graph.typeReferences.get(name)?.length ?? 0) === 0) {
+        stale.push(`${name}: no longer referenced — delete it from TYPES_PENDING_A_DECISION`);
+      }
+    }
+
+    expect(stale).toEqual([]);
   });
 });
 
