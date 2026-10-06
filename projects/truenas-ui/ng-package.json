@@ -14,6 +14,7 @@
     "@mdi/svg",
     "@material-design-icons/svg",
     "cheerio",
+    "fast-glob",
     "filesize",
     "svg-sprite",
     "vinyl",
