@@ -1,6 +1,23 @@
 // List Option Component Styles
 // Based on Angular Material Design patterns
 
+// Hover and focus-visible fill --tn-alt-bg2, and the whole body of an option is
+// projected — [ixListItemTitle], [ixListIcon], the trailing slot a caller puts a
+// <tn-checkbox> in. Those read the tokens they were written against, and two of
+// those are tuned for --tn-bg1/--tn-bg2 and for nothing above them. #361 brought
+// --tn-alt-bg2 into the semantic tokens' guarantee row, so --tn-error is a legal
+// target here (4.52:1 at worst of nine, and still red) and --tn-fg1 is 5.62:1.
+//
+// ON :host, NOT ON .tn-list-option__content. Both fills are painted by that
+// element, but it is declared twice — once under :host(:hover…) and once under
+// :host(:focus-visible) — so a rebind inside either one is not in force in the
+// other. :host is the only place in force for both. theming.mdx states the rule
+// under "Writing a component" and projected-token-rebind.spec.ts holds it.
+:host {
+  --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+  --tn-primary-text: var(--tn-fg1, #222222);
+}
+
 .tn-list-option {
   display: block;
   position: relative;

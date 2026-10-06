@@ -64,6 +64,21 @@
 }
 
 .tn-menu-item {
+  // Hover, focus and both selected states fill --tn-alt-bg2, and `tnMenuItem`
+  // content is whatever the caller put in the row — so a projected
+  // <tn-checkbox> with a validation error, or an outline <tn-button
+  // color="warn">, reads a token tuned for --tn-bg1/--tn-bg2 on a fill well
+  // above them. #361 brought --tn-alt-bg2 into the semantic tokens' guarantee
+  // row, which is what makes --tn-error a legal target here: 4.52:1 at worst of
+  // nine, and still red. --tn-fg1 is 5.62:1 there.
+  //
+  // Declared on .tn-menu-item rather than inside one state block because the
+  // fill is this element's in four of them, and a rebind under &:hover is not
+  // in force under &[aria-selected="true"]. theming.mdx states the rule under
+  // "Writing a component" and projected-token-rebind.spec.ts holds it.
+  --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+  --tn-primary-text: var(--tn-fg1, #222222);
+
   display: flex;
   align-items: center;
   gap: 8px;
@@ -95,12 +110,21 @@
     font-weight: 600;
     // Left on --tn-primary deliberately. --tn-primary-text is tuned, and
     // measured, against --tn-bg1 and --tn-bg2; this row paints on --tn-alt-bg2,
-    // where it measures 2.37:1 in :root and fails in six of the nine palettes.
-    // Reading it here would be claiming a guarantee the token does not make.
-    // --tn-alt-bg2 has no foreground that clears AA across the palettes at all
-    // — even --tn-fg1 is 1.45:1 on it in Solarized Dark — so this row needs the
-    // surface reconsidered rather than a different colour on it, which is a
-    // wider change than #242.
+    // where it measures 2.37:1 in :root and fails in seven of the nine
+    // palettes. Reading it here would be claiming a guarantee the token does
+    // not make, and primary-text-contrast.spec.ts records this one declaration
+    // for that reason.
+    //
+    // The sentence that used to follow — that --tn-alt-bg2 has no foreground
+    // clearing AA across the palettes at all, "even --tn-fg1 is 1.45:1 on it in
+    // Solarized Dark" — was already wrong when #361 measured it: --tn-fg1 is
+    // 7.23:1 on that palette's --tn-alt-bg2 and 5.62:1 at worst of nine, and
+    // --tn-alt-fg2 (5.46:1) and --tn-fg2 (4.54:1) clear it too. #361 then added
+    // the four semantic tokens to that list. So this row's colour is now a
+    // VISUAL choice between keeping the accent hue and taking a legible token,
+    // not the forced wait for a palette decision it was recorded as. Changing
+    // it is its own ticket: #361 was scoped to the projected-content rebind,
+    // which is the custom property above and not this declaration.
     color: var(--tn-primary, #007bff);
   }
 

@@ -77,57 +77,50 @@ const COVERED_TOKENS: Readonly<Record<string, string>> = {
  * `text-token-surface-contrast.spec.ts`. An entry whose component has since been
  * rebound is a stale exclusion and has to come out.
  *
- * THE REASON IS THE SAME FOR MOST OF THEM, and it is not "not worth doing": a
- * rebind has to point at a token measured on the surface being painted, and for
- * `--tn-error-text` on `--tn-alt-bg2` there is none. Measured across the nine
- * palettes, worst case, on `--tn-alt-bg2`: `--tn-error` 2.98:1, `--tn-info`
- * 3.00:1, `--tn-warning` 2.97:1, `--tn-success` 3.33:1 — every semantic token
- * fails AA there, where on `--tn-alt-bg1` every one of them clears it. The only
- * tokens clearing `--tn-alt-bg2` in all nine are the text ones — `--tn-fg1`
- * (5.62:1), `--tn-alt-fg2` (5.46:1) and `--tn-fg2` (4.54:1) — and
- * rebinding error text to any of them discards the red, which is the status itself
- * rather than decoration. Whether to retune a token or move the fill is "a
- * decision about how a theme looks rather than something this file settles", in
- * `text-token-surface-contrast.spec.ts`'s words, which is why these are recorded
- * for a person instead of being chosen here.
+ * THIS LIST USED TO HOLD TWENTY-FOUR ENTRIES over twelve components, and the
+ * reason for most of them was one palette gap rather than twelve component
+ * decisions: a rebind has to point at a token measured on the surface being
+ * painted, and on `--tn-alt-bg2` there was none. Every semantic token then
+ * measured under 3.4:1 there, worst of nine, where every one of them cleared
+ * `--tn-alt-bg1`. #361 closed that by bringing `--tn-alt-bg2` and `--tn-bg3`
+ * into the four semantic tokens' guarantee row in `themes.css` — a
+ * hue-preserving lightness shift in the six dark palettes, the same method
+ * #282/#283/#284 used, with the four light palettes already clearing both. So
+ * `--tn-error` is now 4.52:1 at worst of nine on `--tn-alt-bg2` and 4.64:1 on
+ * `--tn-bg3`, and still red; `--tn-fg1` is 5.62:1 and 5.81:1. Moving the fill
+ * instead was not available: for the old values to clear `--tn-alt-bg2` it
+ * would have had to come down until the `--tn-alt-bg1` → `--tn-alt-bg2` step
+ * measured 1.02:1–1.08:1, against the 1.17–1.55:1 the six dark palettes use
+ * today — and that step is what tells a SELECTED row from a hovered one in
+ * `tn-list-item`, `tn-tree-node` and `tn-button-toggle`.
  *
- * `--tn-topbar` AND `--tn-topbar-hover` ARE THE SAME SHAPE WITH A DIFFERENT
- * SURVIVOR, and `tn-table`'s header is the one entry on them: measured the same
- * way, the only token clearing AA on those two in all nine palettes is
- * `--tn-topbar-txt` (4.58:1 and 6.16:1 worst), and every semantic token fails in
- * at least five — `--tn-error` reaches 1.24:1 on `--tn-topbar` and 1.02:1 on
- * `--tn-topbar-hover`. So the gap is "no tuned STATUS
- * colour above the page", not something peculiar to `--tn-alt-bg2`.
+ * The other half of that list was held on a VISUAL question rather than a
+ * measurement — whether a projected status should change colour as the pointer
+ * crosses a row or a header. #361 answered that it should: `--tn-error` is a
+ * hue-preserving shift of `--tn-red` rather than a different colour, so what
+ * the pointer changes is lightness, and the alternative is error text under AA
+ * in six of the nine palettes precisely while the control is being interacted
+ * with, which WCAG 1.4.3 exempts no state from.
+ *
+ * `--tn-topbar` AND `--tn-topbar-hover` ARE WHAT IS LEFT, and `tn-table`'s
+ * header is the one entry on them. They are not the same shape as
+ * `--tn-alt-bg2` was, and that is why #361 did not close them too: the only
+ * token clearing AA on those two in all nine palettes is `--tn-topbar-txt`
+ * (4.58:1 and 6.16:1 worst), every semantic token fails in at least five —
+ * `--tn-error` reaches 1.24:1 on `--tn-topbar` and 1.02:1 on
+ * `--tn-topbar-hover` — and no lightness shift can fix it, hue preserved or
+ * not. In `.tn-blue`, `.tn-paper` and `.tn-high-contrast` the bar is dark while
+ * the page is light, so one value would have to be lighter than a light surface
+ * and darker than a dark one at once; `themes.css`'s own note and
+ * `theming.mdx` carry the arithmetic. The gap that remains is a tuned status
+ * colour for the TOPBAR, which is a second colour family rather than one more
+ * step in the background ramp.
  */
 const PENDING_A_DECISION: readonly {
   file: string;
   token: string;
   why: string;
 }[] = [
-  {
-    file: 'button-toggle/button-toggle.component.scss',
-    token: '--tn-error-text',
-    why: 'the checked and disabled buttons fill --tn-alt-bg2, where no semantic token clears '
-      + 'AA; its hover fills --tn-alt-bg1, which would be rebindable on its own, but splitting '
-      + 'one component across two answers is worse than one decision about the pair',
-  },
-  {
-    file: 'button-toggle/button-toggle.component.scss',
-    token: '--tn-primary-text',
-    why: 'same component, same pair of fills — held with the error half so the two land together',
-  },
-  {
-    file: 'expansion-panel/expansion-panel.component.scss',
-    token: '--tn-error-text',
-    why: 'the hovered header fills --tn-alt-bg1 and projects [slot=title], so this one IS '
-      + 'rebindable; held only because it is a hover state, and whether a projected status '
-      + 'should change red as the pointer crosses the header is a visual call, not a contrast one',
-  },
-  {
-    file: 'expansion-panel/expansion-panel.component.scss',
-    token: '--tn-primary-text',
-    why: 'same header hover, same call',
-  },
   {
     file: 'icon-button/icon-button.component.scss',
     token: '--tn-error-text',
@@ -138,40 +131,6 @@ const PENDING_A_DECISION: readonly {
     file: 'icon-button/icon-button.component.scss',
     token: '--tn-primary-text',
     why: 'same slot, same reason',
-  },
-  {
-    file: 'list-item/list-item.component.scss',
-    token: '--tn-error-text',
-    why: 'a clickable row hovers and focuses to --tn-alt-bg1 and goes active on --tn-alt-bg2, '
-      + 'and [tnListItemTrailing] is exactly where a caller puts a tn-checkbox or a tn-button. '
-      + 'The active state is the --tn-alt-bg2 gap above; the hover and focus states are '
-      + 'rebindable and are held with it rather than leaving one row state wrong',
-  },
-  {
-    file: 'list-item/list-item.component.scss',
-    token: '--tn-primary-text',
-    why: 'same three row states',
-  },
-  {
-    file: 'list-option/list-option.component.scss',
-    token: '--tn-error-text',
-    why: 'hover and focus-visible fill --tn-alt-bg2, the gap above',
-  },
-  {
-    file: 'list-option/list-option.component.scss',
-    token: '--tn-primary-text',
-    why: 'same two fills',
-  },
-  {
-    file: 'menu/menu.component.scss',
-    token: '--tn-error-text',
-    why: 'hover, focus and both selected states fill --tn-alt-bg2, the gap above',
-  },
-  {
-    file: 'menu/menu.component.scss',
-    token: '--tn-primary-text',
-    why: 'same four fills — and the selected row deliberately keeps --tn-primary for its own '
-      + 'text, recorded in primary-text-contrast.spec.ts for this same surface',
   },
   {
     file: 'stepper/stepper.component.scss',
@@ -188,29 +147,20 @@ const PENDING_A_DECISION: readonly {
     why: 'same indicator, same reason — no caller content is ever on that fill',
   },
   {
-    file: 'tab/tab.component.scss',
-    token: '--tn-error-text',
-    why: 'the hovered inactive tab fills --tn-alt-bg1, so this is rebindable; held as a hover '
-      + 'state with expansion-panel above',
-  },
-  {
-    file: 'tab/tab.component.scss',
-    token: '--tn-primary-text',
-    why: 'same hover',
-  },
-  {
     file: 'table/table.component.scss',
     token: '--tn-error-text',
-    why: 'four untuned fills under caller templates, and they do not take one answer. A '
-      + 'tnColumnDef cellTemplate lands on rows filling --tn-alt-bg1 (hover, expanded) and '
-      + '--tn-bg3 (active), where --tn-error clears AA in all nine at 4.62:1 and 4.63:1 worst; '
-      + 'a tnHeaderCellDef template lands in a header cell filling --tn-topbar/--tn-topbar-hover, '
-      + 'where the only token clearing AA in all nine is --tn-topbar-txt (4.58:1, 6.16:1 worst) '
-      + 'and every semantic token fails in five palettes or more (--tn-error 1.24:1 worst on '
-      + '--tn-topbar, 1.02:1 on --tn-topbar-hover). So '
-      + 'the header half discards the red for the same reason --tn-alt-bg2 does, and rebinding '
-      + 'only the rows would leave the header drawing the untuned token on the same component. '
-      + 'Held as one decision about the table, as button-toggle above is held as one about its pair',
+    why: 'four untuned fills under caller templates, and the header half is the one surface '
+      + '#361 could not close. A tnColumnDef cellTemplate lands on rows filling --tn-alt-bg1 '
+      + '(hover, expanded) and --tn-bg3 (active), where --tn-error now clears AA in all nine at '
+      + '5.29:1 and 4.89:1 worst, so those two ARE rebindable today; a tnHeaderCellDef template '
+      + 'lands in a header cell filling --tn-topbar/--tn-topbar-hover, where the only token '
+      + 'clearing AA in all nine is --tn-topbar-txt (4.58:1, 6.16:1 worst) and every semantic '
+      + 'token fails in five palettes or more (--tn-error 1.24:1 worst on --tn-topbar, 1.02:1 on '
+      + '--tn-topbar-hover) — and no lightness shift reaches it, since in .tn-blue, .tn-paper '
+      + 'and .tn-high-contrast the bar is dark while the page is light. So the header half '
+      + 'discards the red, and rebinding only the rows would leave the header drawing the '
+      + 'untuned token on the same component. Held as one decision about the table, which is '
+      + 'now a decision about the topbar pair alone',
   },
   {
     file: 'table/table.component.scss',
@@ -218,42 +168,10 @@ const PENDING_A_DECISION: readonly {
     why: 'the same four fills, and this half has no tuned accent on ANY of them: --tn-primary '
       + 'is 1.82:1 worst on --tn-bg3 and --tn-alt-bg1 and 1.00:1 on --tn-topbar. The --tn-fg1 '
       + 'answer form-list-item takes does not reach across this component either — it clears '
-      + 'the two row surfaces and fails --tn-topbar in five palettes (1.32:1 worst) and '
-      + '--tn-topbar-hover in three — so the header would have to take --tn-topbar-txt, which '
-      + 'is a body-text token rather than an accent. Held with the error half',
-  },
-  {
-    file: 'tabs/tabs.component.scss',
-    token: '--tn-error-text',
-    why: 'the hovered vertical tab fills --tn-alt-bg1 — the same hover state as tab above, '
-      + 'declared in the parent stylesheet',
-  },
-  {
-    file: 'tabs/tabs.component.scss',
-    token: '--tn-primary-text',
-    why: 'same hover',
-  },
-  {
-    file: 'tree/nested-tree-node.component.scss',
-    token: '--tn-error-text',
-    why: 'the node content hovers and focuses within to --tn-alt-bg2, the gap above; the '
-      + 'toggle fills --tn-bg3 and is an icon',
-  },
-  {
-    file: 'tree/nested-tree-node.component.scss',
-    token: '--tn-primary-text',
-    why: 'same two fills',
-  },
-  {
-    file: 'tree/tree-node.component.scss',
-    token: '--tn-error-text',
-    why: 'hover fills --tn-alt-bg2, the gap above; an expandable node goes active on '
-      + '--tn-alt-bg1, which is the same split as list-item',
-  },
-  {
-    file: 'tree/tree-node.component.scss',
-    token: '--tn-primary-text',
-    why: 'same fills',
+      + 'the two row surfaces (5.81:1 and 6.24:1 worst) and fails --tn-topbar in five palettes '
+      + '(1.32:1 worst) and --tn-topbar-hover in three — so the header would have to take '
+      + '--tn-topbar-txt, which is a body-text token rather than an accent. Held with the error '
+      + 'half',
   },
 ];
 
@@ -519,7 +437,7 @@ describe('a fill that holds projected content rebinds the tokens tuned above it 
     });
   });
 
-  it('the components rebound today are the two the rule has been applied to', () => {
+  it('the components rebound today are the eleven the rule has been applied to', () => {
     // Not a redundant restatement of the cases above: those ask whether each
     // GOVERNED component is rebound, and this asks the opposite question — what
     // is rebound at all. It is what makes the count visible when a pending
@@ -534,7 +452,16 @@ describe('a fill that holds projected content rebinds the tokens tuned above it 
       .map((one) => one.file);
     expect(rebound).toEqual([
       'banner/banner.component.scss',
+      'button-toggle/button-toggle.component.scss',
+      'expansion-panel/expansion-panel.component.scss',
       'form-list/form-list-item.component.scss',
+      'list-item/list-item.component.scss',
+      'list-option/list-option.component.scss',
+      'menu/menu.component.scss',
+      'tab/tab.component.scss',
+      'tabs/tabs.component.scss',
+      'tree/nested-tree-node.component.scss',
+      'tree/tree-node.component.scss',
     ]);
   });
 });

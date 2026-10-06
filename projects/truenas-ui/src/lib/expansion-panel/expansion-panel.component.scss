@@ -125,6 +125,28 @@
 }
 
 .tn-expansion-panel__header {
+  // The hovered header fills --tn-alt-bg1 and projects [slot=title], so a
+  // caller's control in the title draws the two tokens tuned only for
+  // --tn-bg1/--tn-bg2 on a fill above them: --tn-error-text measures 3.43:1
+  // there at worst of nine and fails AA in six palettes, --tn-primary-text
+  // 3.49:1 in the same six.
+  //
+  // This one was always rebindable and was held on a visual question — whether a
+  // projected status should change colour as the pointer crosses the header.
+  // #361 answered it: it should. --tn-error IS the red, a hue-preserving shift
+  // of --tn-red rather than a different colour, so what the pointer changes is
+  // lightness (5.29:1 at worst of nine here). The alternative is error text
+  // under AA precisely while the header is being interacted with, and WCAG
+  // 1.4.3 exempts no state. --tn-primary-text goes to --tn-fg1 (6.24:1) for the
+  // reason tn-banner gives: there is no accent tuned for a fill above the page.
+  //
+  // On the header rather than on __title, because [slot=title] content does not
+  // receive the __title class — the same reason the `color` below is here.
+  // theming.mdx states the rule under "Writing a component" and
+  // projected-token-rebind.spec.ts holds it.
+  --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+  --tn-primary-text: var(--tn-fg1, #222222);
+
   width: 100%;
   background: none;
   border: none;

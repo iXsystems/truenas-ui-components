@@ -33,10 +33,21 @@
     }
     
     .tn-tab {
+      // The vertical layout declares its own hover fill for the tab here, in the
+      // parent stylesheet, so this file carries the same --tn-alt-bg1 fill under
+      // projected tab-label content that tab.component.scss does — and needs its
+      // own rebind, since a rebind in that file is a different stylesheet and
+      // this scan is per file. Same answer, same reasons: --tn-error is 5.29:1
+      // on --tn-alt-bg1 at worst of nine and still red, --tn-fg1 is 6.24:1, and
+      // #361 settled that a projected status does change under the pointer
+      // rather than staying illegible there.
+      --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+      --tn-primary-text: var(--tn-fg1, #222222);
+
       justify-content: flex-start;
       text-align: left;
       width: 100%;
-      
+
       &:hover:not(.tn-tab--disabled) {
         background-color: var(--tn-alt-bg1, #f5f5f5);
         color: var(--tn-fg1, #333);
