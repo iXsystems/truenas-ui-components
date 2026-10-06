@@ -67,9 +67,30 @@ const declared = new Set([
 const UNDECLARED_PENDING_A_DECISION: string[] = [];
 
 /**
- * Types packages a `/// <reference types="..." />` in the graph names, that the contract does
- * not declare and deliberately will not.
+ * A types package the contract does not declare and deliberately will not, together with the
+ * namespace roots it is claiming cannot reach the published declarations.
  *
+ * **The two fields are different strings, and they coincide only for `jest`.** `types` is the
+ * package a directive names, which `typesAreDeclared` resolves through `@types/`; `namespaces`
+ * are the leftmost identifiers of the qualified references that package puts in scope, which
+ * is what `graph.exposedNamespaces` is keyed by. `@types/node` names `node` and puts `NodeJS`
+ * in scope, and the vitest support `icon-testing.ts` signposts would name `vitest` and leak
+ * `vi`. One string serving both lookups meant the leak guard below asked for a key that cannot
+ * exist, found nothing, and reported that as containment — the failure this file argues
+ * hardest against, since a check that goes quiet also reads as an answer.
+ *
+ * So an exemption cannot be added without naming the namespaces it claims are contained, and
+ * a misspelled or retired one is caught by 'has no deferred entry that has since been fixed'
+ * rather than passing silently.
+ */
+interface InternalTypesExemption {
+  /** The package a `/// <reference types="..." />` names. */
+  types: string;
+  /** Every namespace root that package puts in scope and some file in the graph uses. */
+  namespaces: string[];
+}
+
+/**
  * - `jest` — `icon-testing.ts` is exported from `public-api.ts`, and the directive resolves the
  *   `jest.fn()` calls in its own body. Those are values in this repo's build and reach no
  *   consumer. Declaring a test framework's types as a peer of a component library is the wrong
@@ -83,7 +104,9 @@ const UNDECLARED_PENDING_A_DECISION: string[] = [];
  * to the published declarations' below, which goes red naming the file if `jest.Mock` comes
  * back, or if a `jest.fn()` is written where declaration emit would infer it.
  */
-const TYPES_USED_ONLY_INTERNALLY = ['jest'];
+const TYPES_USED_ONLY_INTERNALLY: InternalTypesExemption[] = [
+  { types: 'jest', namespaces: ['jest'] },
+];
 
 const builtins = new Set(builtinModules);
 
@@ -136,10 +159,21 @@ interface FileDependencies {
    *
    * Ordinary identifiers land here too — `Math`, `Array`, any `x.y` outside an annotated
    * function. That is deliberate and costs nothing: only the names in
-   * `TYPES_USED_ONLY_INTERNALLY` are ever consulted, and a reader that knew which names
-   * mattered would be a reader that had to be kept in step with the exemption list.
+   * `TYPES_USED_ONLY_INTERNALLY`'s `namespaces` are ever consulted, and a reader that knew
+   * which names mattered would be a reader that had to be kept in step with the exemption
+   * list.
    */
   exposedNamespaces: string[];
+  /**
+   * Every qualified reference root in the file — `exposedNamespaces` plus the ones an
+   * annotated function's body shields.
+   *
+   * This is what makes a claimed namespace checkable at all. A contained namespace is absent
+   * from `exposedNamespaces` by definition, so that map cannot tell containment from a name
+   * that is misspelled, or that the code stopped using: all three are a missing key. A root
+   * that is used and contained appears here and not there.
+   */
+  namespaceRoots: string[];
 }
 
 /**
@@ -163,6 +197,7 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
   const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
   const specifiers: string[] = [];
   const exposedNamespaces: string[] = [];
+  const namespaceRoots: string[] = [];
 
   /** `jest` from `jest.Mock`, and nothing from an unqualified `Mock`. */
   const leftmostOf = (name: ts.EntityName): string | null => {
@@ -254,10 +289,12 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
    * leave undeclared.
    */
   const visit = (node: ts.Node, shielded: boolean): void => {
-    if (!shielded) {
-      const root = rootOf(node);
+    const root = rootOf(node);
 
-      if (root !== null) {
+    if (root !== null) {
+      namespaceRoots.push(root);
+
+      if (!shielded) {
         exposedNamespaces.push(root);
       }
     }
@@ -299,6 +336,7 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
     // Deduped: a heritage clause matches twice over, once as the clause and once as the
     // property access inside it, and one file naming `jest` once is the same fact as twice.
     exposedNamespaces: [...new Set(exposedNamespaces)],
+    namespaceRoots: [...new Set(namespaceRoots)],
   };
 }
 
@@ -314,6 +352,8 @@ interface Graph {
   typeReferences: Map<string, string[]>;
   /** Qualified reference root (`jest` of `jest.Mock`) to the files exposing it. */
   exposedNamespaces: Map<string, string[]>;
+  /** The same roots to every file using one, exposed or shielded. */
+  namespaceRoots: Map<string, string[]>;
   /** Every file reached from the entry point, repo-relative. */
   files: string[];
   /** Relative specifiers that resolved to no file — a walk that stopped short. */
@@ -324,6 +364,7 @@ function walkFromEntryPoint(): Graph {
   const packages = new Map<string, string[]>();
   const typeReferences = new Map<string, string[]>();
   const exposedNamespaces = new Map<string, string[]>();
+  const namespaceRoots = new Map<string, string[]>();
   const unresolved: string[] = [];
   const queue = [entryPoint];
   const seen = new Set(queue);
@@ -348,6 +389,10 @@ function walkFromEntryPoint(): Graph {
 
     for (const name of dependencies.exposedNamespaces) {
       record(exposedNamespaces, name, file);
+    }
+
+    for (const name of dependencies.namespaceRoots) {
+      record(namespaceRoots, name, file);
     }
 
     for (const specifier of dependencies.specifiers) {
@@ -376,6 +421,7 @@ function walkFromEntryPoint(): Graph {
     packages,
     typeReferences,
     exposedNamespaces,
+    namespaceRoots,
     files: queue.map((file) => relative(repoRoot, file)),
     unresolved,
   };
@@ -481,6 +527,26 @@ describe('the reader', () => {
     ).toEqual([]);
   });
 
+  /**
+   * And the other half of that shape, which is what `TYPES_USED_ONLY_INTERNALLY`'s namespace
+   * claims are checked against. Containment and a misspelling are the same missing key in
+   * `exposedNamespaces`; `namespaceRoots` is what separates them, so it has to hold a root the
+   * shield hid. A reader that returned nothing here would let a typo'd claim pass.
+   */
+  it('still records a shielded namespace as a root the file uses', () => {
+    expect(
+      read('export function make(): Shape { return { f: jest.fn() }; }').namespaceRoots
+    ).toEqual(['jest']);
+  });
+
+  it('records an exposed namespace as a root as well', () => {
+    expect(read('export interface M { f: jest.Mock; }').namespaceRoots).toEqual(['jest']);
+  });
+
+  it('records no root for an unqualified type, the same as exposure', () => {
+    expect(read('export interface M { f: Mock; }').namespaceRoots).toEqual([]);
+  });
+
   it('ignores an unqualified type, which names no namespace', () => {
     expect(read('export interface M { f: Mock; }').exposedNamespaces).toEqual([]);
   });
@@ -534,6 +600,20 @@ describe('the walk itself', () => {
     expect(graph.exposedNamespaces.size).toBeGreaterThan(20);
   });
 
+  /**
+   * This one can name `jest` where the test above cannot, because it is the fact the exemption
+   * rests on rather than an accident of how some component was annotated: `icon-testing.ts`
+   * uses the namespace, inside factories that keep it out of the published declarations. If
+   * the walk dropped shielded roots, the namespace claims in `TYPES_USED_ONLY_INTERNALLY`
+   * would all read as stale.
+   */
+  it('carries a shielded namespace root through too', () => {
+    expect(graph.namespaceRoots.get('jest')).toContain(
+      'projects/truenas-ui/src/lib/icon/icon-testing.ts'
+    );
+    expect(graph.exposedNamespaces.get('jest')).toBeUndefined();
+  });
+
   it('reads the type reference directive the flattened .d.ts drops', () => {
     expect(graph.typeReferences.get('jest')).toContain(
       'projects/truenas-ui/src/lib/icon/icon-testing.ts'
@@ -559,7 +639,10 @@ describe('projects/truenas-ui/package.json', () => {
     const undeclared: Record<string, string[]> = {};
 
     for (const [name, referrers] of graph.typeReferences) {
-      if (!typesAreDeclared(name) && !TYPES_USED_ONLY_INTERNALLY.includes(name)) {
+      if (
+        !typesAreDeclared(name) &&
+        !TYPES_USED_ONLY_INTERNALLY.some((exemption) => exemption.types === name)
+      ) {
         undeclared[name] = referrers;
       }
     }
@@ -586,13 +669,37 @@ describe('projects/truenas-ui/package.json', () => {
       }
     }
 
-    for (const name of TYPES_USED_ONLY_INTERNALLY) {
-      if (typesAreDeclared(name)) {
-        stale.push(`${name}: types now declared — delete it from TYPES_USED_ONLY_INTERNALLY`);
+    for (const { types, namespaces } of TYPES_USED_ONLY_INTERNALLY) {
+      if (typesAreDeclared(types)) {
+        stale.push(`${types}: types now declared — delete it from TYPES_USED_ONLY_INTERNALLY`);
       }
 
-      if ((graph.typeReferences.get(name)?.length ?? 0) === 0) {
-        stale.push(`${name}: no longer referenced — delete it from TYPES_USED_ONLY_INTERNALLY`);
+      const referrers = graph.typeReferences.get(types) ?? [];
+
+      if (referrers.length === 0) {
+        stale.push(`${types}: no longer referenced — delete it from TYPES_USED_ONLY_INTERNALLY`);
+
+        // Every `namespaces` claim is vacuous once the directive is gone, and reporting each
+        // one as well buries the single fact a reader needs to act on.
+        continue;
+      }
+
+      /**
+       * The claimed namespaces have to be real, because the leak guard below can only look
+       * them up: a misspelled root returns no exposures, which is indistinguishable from a
+       * contained one. `namespaceRoots` holds the shielded uses too, so a root that is used
+       * and contained is present here — and one that is typo'd, or that the code has stopped
+       * using, is not.
+       */
+      for (const namespace of namespaces) {
+        const users = graph.namespaceRoots.get(namespace) ?? [];
+
+        if (!users.some((file) => referrers.includes(file))) {
+          stale.push(
+            `${types}: no file carrying its directive uses the namespace '${namespace}' — ` +
+              'fix the spelling, or drop it from that entry'
+          );
+        }
       }
     }
 
@@ -615,15 +722,22 @@ describe('projects/truenas-ui/package.json', () => {
    * So `jest.fn()` inside `createSpriteLoaderMock(): MockSpriteLoader` passes; the same call at
    * the top level, or inside a function that does not say what it returns, fails and names the
    * file.
+   *
+   * It iterates each entry's `namespaces` rather than its `types`, because that is the key
+   * space `exposedNamespaces` uses — see `InternalTypesExemption`. Asking for the package name
+   * finds nothing for every entry whose namespace is spelled differently, and reports it as
+   * containment. That the two strings are both `jest` today is what hid it.
    */
   it('exposes no exempted types namespace to the published declarations', () => {
     const leaked: Record<string, string[]> = {};
 
-    for (const name of TYPES_USED_ONLY_INTERNALLY) {
-      const users = graph.exposedNamespaces.get(name) ?? [];
+    for (const { namespaces } of TYPES_USED_ONLY_INTERNALLY) {
+      for (const namespace of namespaces) {
+        const users = graph.exposedNamespaces.get(namespace) ?? [];
 
-      if (users.length > 0) {
-        leaked[name] = users;
+        if (users.length > 0) {
+          leaked[namespace] = users;
+        }
       }
     }
 

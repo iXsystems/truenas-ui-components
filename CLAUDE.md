@@ -240,8 +240,8 @@ what it returns** — `TYPES_USED_ONLY_INTERNALLY`, which holds `jest` for
 That exemption is checked rather than promised: a separate test fails, naming
 the file, if an exempted namespace is exposed to the published declarations by
 a **qualified** reference. A bare root — `export const j = jest` — is not
-covered. Two things about the condition are easy to get wrong, and the check has
-been wrong about each of them in turn:
+covered. Three things about the condition are easy to get wrong, and the check
+has been wrong about each of them in turn:
 
 - **"It is a value, not a type" is not enough.** Declaration emit infers the
   type of an exported declaration that carries no annotation, so
@@ -250,6 +250,11 @@ been wrong about each of them in turn:
 - **A function shields its body, not itself.** Its signature is emitted
   verbatim, so `export function f(): jest.Mock` and
   `interface M { f(): jest.Mock }` both leak however annotated they are.
+- **A types package and its namespace are two different strings**, so an entry
+  names both: `{ types: 'jest', namespaces: ['jest'] }`. They coincide for
+  `jest` and almost nowhere else — `@types/node` puts `NodeJS` in scope, and
+  vitest puts `vi`. The leak test looks up `namespaces`, so an entry that gave
+  only the package name would find no exposures and call that containment.
 
 `ng-packagr` does not cover this. `allowedNonPeerDependencies` in
 `ng-package.json` whitelists packages already in the library's `dependencies`;
