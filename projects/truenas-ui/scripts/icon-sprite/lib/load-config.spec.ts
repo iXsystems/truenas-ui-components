@@ -123,24 +123,40 @@ const CASES = {
     contents: "export const srcDirs = ['./src/named-esm'];",
   },
 
-  // Top-level await is the shape `require` cannot take, so this is the case that
-  // reaches the second loader at all. Also counted: reaching the second loader is
-  // the situation where a file can be run twice.
+  // Top-level await is a shape `require` cannot take at all, so it pins that the
+  // ESM loader is the one reading an ESM config rather than a fallback reached
+  // after a failure.
   'esm-config-using-top-level-await': {
     packageJson: { type: 'module' },
     configFile: 'truenas-icons.config.js',
     contents: [
       EVALUATION_COUNTER,
-      'const srcDirs = await Promise.resolve([\'./src/awaited\']);',
+      "const srcDirs = await Promise.resolve(['./src/awaited']);",
       'export default { srcDirs };',
     ].join('\n'),
   },
 
-  // `--config` takes any path, so a JSON config is a shape that turns up. Node's
-  // own ESM loader refuses it without an import attribute; tsx's transform reads
-  // it through `import()`, so under the shipped CLI this case does not reach the
-  // second loader — the test is here to pin that it loads, not to prove which
-  // route carried it.
+  /**
+   * `import.meta.dirname` is the case that makes the loader choice matter beyond
+   * counting evaluations. tsx's CommonJS transform shims `import.meta.url` and
+   * leaves `dirname` **undefined**, so a config read by the wrong loader does not
+   * fail — it loads with a wrong value in it. Deriving a value the assertion can
+   * check is what turns that from invisible into a failure.
+   */
+  'esm-config-using-import-meta': {
+    packageJson: { type: 'module' },
+    configFile: 'truenas-icons.config.js',
+    contents: [
+      EVALUATION_COUNTER,
+      "import path from 'path';",
+      '',
+      'export default { srcDirs: [path.basename(import.meta.dirname)] };',
+    ].join('\n'),
+  },
+
+  // `--config` takes any path, so a JSON config is a shape that turns up. Its
+  // extension settles its kind, so `require` reads it first and node's ESM rule
+  // about an import attribute never comes up.
   'json-config': {
     packageJson: {},
     configFile: 'icons.config.json',
@@ -360,15 +376,19 @@ describe('a CommonJS config', () => {
   });
 
   /**
-   * Trying `import()` first reads this shape as ESM, which fails on reaching
-   * `module.exports` rather than on parsing it — so everything above that line has
-   * already run by the time the second loader runs the file again. A config that
-   * writes a file or bumps a counter at its top level would do it twice, and the
-   * object that reached the sprite would be the second evaluation's. Measured both
-   * ways: this is two evaluations with the loaders the other way round.
+   * **The one shape that is read twice, asserted so that changing it is a
+   * decision.** Its package says ESM, so the ESM loader goes first and gets as far
+   * as `module.exports` before failing — at runtime, with the statements above that
+   * line already run — and `require` then runs the whole file again. Nothing can
+   * tell which kind this file is without running it, and running it twice beats
+   * dropping it, which is what used to happen.
+   *
+   * Every other shape in this matrix is read once by the loader its own package
+   * points at; see the `import.meta` and top-level-await cases, which is where
+   * getting that wrong stops being a doubled side effect and becomes a wrong value.
    */
-  it('evaluates the config once, not once per loader', () => {
-    expect(resultFor('commonjs-config-in-an-esm-project').evaluations).toBe(1);
+  it('is the one shape read twice, because only running it can tell which kind it is', () => {
+    expect(resultFor('commonjs-config-in-an-esm-project').evaluations).toBe(2);
   });
 
   it('loads from a .cjs file in a project that declares "type": "module"', () => {
@@ -409,16 +429,32 @@ describe('an ESM config', () => {
   });
 
   /**
-   * The case that reaches the second loader: `require` cannot load a module that
-   * awaits at its top level. It is also the one case where a file legitimately runs
-   * under both loaders, so the count is asserted rather than assumed to be one.
+   * `require` cannot load a module that awaits at its top level, under tsx or under
+   * node, so one evaluation here says the ESM loader was tried first rather than
+   * reached after a failure.
    */
   it('loads one that awaits at the top level, which only import() can take', () => {
     const { config, warnings, evaluations } = resultFor('esm-config-using-top-level-await');
 
     expect(config.srcDirs).toEqual(['./src/awaited']);
     expect(warnings).toEqual([]);
-    expect(evaluations).toBeLessThanOrEqual(2);
+    expect(evaluations).toBe(1);
+  });
+
+  /**
+   * The case where reading an ESM config with the CommonJS loader is not a doubled
+   * side effect but a wrong answer: under tsx's transform `import.meta.dirname` is
+   * `undefined`, so `path.basename` of it would throw or produce nonsense. The
+   * assertion is on the value, and the count rules out it having been reached by
+   * falling back.
+   */
+  it('loads one using import.meta, with import.meta actually populated', () => {
+    const { config, warnings, evaluations } = resultFor('esm-config-using-import-meta');
+
+    // The config derives this from its own directory, which is the case's name.
+    expect(config.srcDirs).toEqual(['esm-config-using-import-meta']);
+    expect(warnings).toEqual([]);
+    expect(evaluations).toBe(1);
   });
 });
 

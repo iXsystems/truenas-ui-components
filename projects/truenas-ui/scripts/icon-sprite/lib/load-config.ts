@@ -21,32 +21,78 @@ function reasonFor(error: unknown): string {
 }
 
 /**
+ * Which module kind node would read this path as: the extension where it settles
+ * the question, and otherwise the nearest `package.json`'s `type`. The same rule
+ * node applies, because the point is to agree with it.
+ */
+function readsAsEsm(configPath: string): boolean {
+  const extension = path.extname(configPath);
+
+  if (extension === '.mjs') {
+    return true;
+  }
+
+  if (extension === '.cjs' || extension === '.json') {
+    return false;
+  }
+
+  for (let dir = path.dirname(configPath); ; ) {
+    const manifest = path.join(dir, 'package.json');
+
+    if (fs.existsSync(manifest)) {
+      try {
+        return (JSON.parse(fs.readFileSync(manifest, 'utf8')) as { type?: string }).type === 'module';
+      } catch {
+        // An unparseable manifest says nothing about the config beside it; node
+        // would refuse the whole package, which is not this function's to report.
+        return false;
+      }
+    }
+
+    const parent = path.dirname(dir);
+
+    if (parent === dir) {
+      return false;
+    }
+
+    dir = parent;
+  }
+}
+
+/**
  * Loads a consumer's icon configuration file, which may be ESM or CommonJS.
  *
- * Two loaders, `createRequire()` first and `import()` second.
+ * **Ask the file which loader it wants, rather than trying one and retrying.**
+ * `import()` reads ESM; `createRequire()` reads CommonJS and the shapes the ESM
+ * loader refuses outright, JSON among them — `--config` accepts any path. The
+ * `file:` URL on the import is not decoration: a bare absolute path is not a valid
+ * ESM specifier on Windows. The other loader is still tried if the first fails,
+ * because a file can be either kind for reasons neither node's rule nor this one
+ * can see.
  *
- * - `createRequire()` reads every shape a config turns up as, measured under tsx —
- *   which is how the shipped CLI runs: CommonJS and ESM alike, whatever the
- *   project's `type` says, including JSON, which `--config` accepts as a path and
- *   which the ESM loader will not take without an import attribute.
- * - `import()` is for what `require` will not take, which is an ESM config node's
- *   own loader refuses to load synchronously — one using top-level await. The
- *   `file:` URL is not decoration: a bare absolute path is not a valid ESM
- *   specifier on Windows.
+ * **Why the order is decided per file rather than fixed**, measured across
+ * thirteen config shapes under tsx, counting evaluations rather than successes:
+ * a loader that fails does so at *runtime*, with every statement above the failing
+ * line already run, so retrying runs the whole file again — a config that appends
+ * to a log or bumps a counter at its top level does it twice, and the object that
+ * reaches the sprite is the second evaluation's. Either fixed order gets some
+ * ordinary shape wrong:
  *
- * **The order is what keeps the config file evaluated once**, and it is the reason
- * this is not the obvious way round. A CommonJS config in a project that declares
- * `"type": "module"` does not fail `import()` at parse time — it fails at runtime,
- * on reaching `module.exports`, with every statement above that line already run.
- * Retrying it then runs the whole file a second time, so a config that appends to
- * a log or bumps a counter at its top level does it twice, and the object returned
- * is the second evaluation's. Measured both ways: `require` first is one
- * evaluation for every shape that loads at all, `import` first is two for exactly
- * the shape this function exists to fix.
+ * - `import()` first runs a CommonJS config in a `"type": "module"` project twice:
+ *   `module.exports` is valid ESM syntax and fails only on execution.
+ * - `require()` first is worse than that on an ESM config using `import.meta`:
+ *   tsx's CommonJS transform shims `import.meta.url` and leaves
+ *   `import.meta.dirname` **undefined**, so such a config loads with no error and
+ *   a wrong value in it, while `import.meta.resolve` throws and costs the second
+ *   evaluation.
  *
- * A file that fails for its own reasons — a syntax error, a `throw`, a missing
- * dependency — is still tried twice and reports both objections. That costs a
- * doubled side effect in a config that was not going to load either way.
+ * Following the declared kind, every config that agrees with its own package is
+ * read once by the right loader. **One shape still runs twice: a config whose
+ * syntax contradicts what its own package declares** — `module.exports` in a `.js`
+ * file under `"type": "module"`, which is the shape #365 is about. Nothing can
+ * know that without running it, and loading it twice beats the old behaviour of
+ * dropping it. So does a file that fails for its own reasons, a syntax error or a
+ * `throw`, which reports both objections and was not going to load either way.
  *
  * What this replaced was a bare `require(configPath)` fallback that could never
  * run. The published package carries `"type": "module"` — written by ng-packagr,
@@ -66,22 +112,25 @@ export async function loadConfig(
     return {};
   }
 
-  const failures: string[] = [];
+  const loaders = [
+    { label: 'import()', load: async () => await import(pathToFileURL(configPath).href) },
+    { label: 'require()', load: async () => createRequire(configPath)(configPath) },
+  ];
 
-  try {
-    const loaded = createRequire(configPath)(configPath);
-
-    return (loaded.default ?? loaded) as SpriteGeneratorConfig;
-  } catch (error) {
-    failures.push(`require(): ${reasonFor(error)}`);
+  if (!readsAsEsm(configPath)) {
+    loaders.reverse();
   }
 
-  try {
-    const loaded = await import(pathToFileURL(configPath).href);
+  const failures: string[] = [];
 
-    return (loaded.default ?? loaded) as SpriteGeneratorConfig;
-  } catch (error) {
-    failures.push(`import(): ${reasonFor(error)}`);
+  for (const { label, load } of loaders) {
+    try {
+      const loaded = await load();
+
+      return (loaded.default ?? loaded) as SpriteGeneratorConfig;
+    } catch (error) {
+      failures.push(`${label}: ${reasonFor(error)}`);
+    }
   }
 
   // Both loaders ran and both rejected the file, so report what each one said.

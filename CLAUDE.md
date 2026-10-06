@@ -326,14 +326,21 @@ crash the CLI, which is why #362 did not cover it. `createRequire()` is the
 route that works from ESM, and `lib/load-config.ts` is where that now lives,
 with the reason each loader exists written next to it.
 
-**It tries `createRequire()` before `import()`, and the order is load-bearing** —
-the obvious way round costs the consumer's config a second evaluation. A
-CommonJS config in a `"type": "module"` project fails `import()` at *runtime*, on
-reaching `module.exports`, with everything above that line already run; retrying
-then runs the whole file again, and the object that reaches the sprite is the
-second run's. `require` reads every shape that loads at all under tsx, so it goes
-first and `import()` is left for what it cannot take — an ESM config using
-top-level await.
+**Which loader goes first is decided per file, from node's own rule — the
+extension, else the nearest `package.json`'s `type` — and that is load-bearing
+rather than tidy.** A loader that fails does so at *runtime*, with everything
+above the failing line already run, so retrying runs the whole file again: the
+consumer's config gets its top-level side effects twice and the object that
+reaches the sprite is the second run's. Both fixed orders get an ordinary shape
+wrong, measured across thirteen shapes. `import()` first runs a CommonJS config
+in a `"type": "module"` project twice — `module.exports` is valid ESM syntax and
+fails only on execution. `require()` first is worse on an ESM config using
+`import.meta`: **tsx's CommonJS transform shims `import.meta.url` and leaves
+`import.meta.dirname` undefined**, so that config loads with no error and a wrong
+value in it. Following the declared kind reads every config that agrees with its
+own package once, and leaves exactly one shape read twice — `module.exports` in a
+`.js` file under `"type": "module"`, which nothing can identify without running
+it, and which used to be dropped entirely.
 
 **Testing one of these costs a process, and the reason is worth knowing before
 you write the test.** What a loader does is decided by the module system reading
