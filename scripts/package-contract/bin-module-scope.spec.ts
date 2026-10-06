@@ -91,7 +91,12 @@ interface ModuleSyntax {
   module: string[];
 }
 
-/** The CommonJS globals whose mere presence in an ESM file is a `ReferenceError`. */
+/**
+ * The names CommonJS puts in a module's scope and ESM does not. Reading one in an ES module is
+ * a `ReferenceError` in the normal case — `require('x')`, `__dirname`, `module.exports = y` —
+ * though a guarded read such as `typeof module !== 'undefined'` is legal and is still reported
+ * here, because a shipped wrapper has no reason to carry one.
+ */
 const CJS_GLOBALS = ['require', '__dirname', '__filename', 'module', 'exports'];
 
 /**
@@ -298,13 +303,15 @@ describe('the scan itself', () => {
     expect(syntax.commonjs).toEqual([]);
   });
 
-  it('agrees with the two wrappers actually on disk', () => {
-    const wrapper = join(shippedScripts, 'icon-sprite', 'cli.cjs');
+  it('agrees with both wrappers actually on disk', () => {
+    // Both are CommonJS and must stay readable as such: the point of the extension is that they
+    // may keep using `require`, not that the `require` went away.
+    for (const name of ['cli.cjs', 'cli-wrapper.cjs']) {
+      const syntax = moduleSyntaxOf(join(shippedScripts, 'icon-sprite', name));
 
-    // `cli.cjs` is CommonJS and must stay readable as such: the point of the extension is that
-    // it may keep using `require`, not that the `require` went away.
-    expect(moduleSyntaxOf(wrapper).commonjs).not.toEqual([]);
-    expect(moduleSyntaxOf(wrapper).module).toEqual([]);
+      expect(syntax.commonjs).not.toEqual([]);
+      expect(syntax.module).toEqual([]);
+    }
   });
 });
 
