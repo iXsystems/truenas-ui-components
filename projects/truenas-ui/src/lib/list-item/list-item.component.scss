@@ -1,6 +1,37 @@
 // List Item Component Styles
 // Based on Angular Material Design patterns
 
+// A clickable row hovers and focuses to --tn-alt-bg1 and goes active on
+// --tn-alt-bg2, and [tnListItemTrailing] is exactly where a caller puts a
+// <tn-checkbox> or a <tn-button variant="outline" color="warn">. #361 brought
+// --tn-alt-bg2 into the semantic tokens' guarantee row, which is what lets ONE
+// answer cover all three row states instead of splitting the component:
+// --tn-error is 4.52:1 on --tn-alt-bg2 and 5.29:1 on --tn-alt-bg1 at worst of
+// nine, and still red; --tn-fg1 is 5.62:1 and 6.24:1.
+//
+// The hover and focus half was held on a question about state rather than a
+// measurement: should the rebind be scoped to those states, since that is where
+// the fill is? No — it is declared unconditionally, so a caller's error message
+// is the same colour at rest and under the pointer instead of being recoloured
+// as the pointer crosses the row and back again when it leaves. --tn-error is
+// guaranteed on the resting surface too, so one colour is the right one in every
+// state. Not rebinding at all is what that avoids: error text at 3.43:1 or worse
+// in six of the nine palettes precisely while the row is being interacted with,
+// and WCAG 1.4.3 exempts no state.
+//
+// ON :host, NOT ON .tn-list-item--clickable. The row states are not the only
+// untuned fill here: the projected [tnListAvatar] styled at the bottom of this
+// file fills --tn-alt-bg1 too, and that rule is a top-level block, a sibling of
+// .tn-list-item's in the stylesheet. projected-token-rebind.spec.ts compares
+// selector stacks rather than DOM ancestry, so a rebind nested inside
+// .tn-list-item does not count as covering it. :host is the one declaration the
+// scan reads as covering every fill, and it is where tn-list-option puts the same
+// pair. theming.mdx states the rule under "Writing a component".
+:host {
+  --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+  --tn-primary-text: var(--tn-fg1, #222222);
+}
+
 .tn-list-item {
   display: block;
   position: relative;

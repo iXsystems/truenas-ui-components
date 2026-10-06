@@ -1,7 +1,31 @@
 .tn-button-toggle {
+  // The button hovers to --tn-alt-bg1 and fills --tn-alt-bg2 when checked or
+  // disabled, and its label is a projected <ng-content> — so a caller's
+  // <tn-icon> alongside text, or any control reading the two tokens tuned only
+  // for --tn-bg1/--tn-bg2, draws them on a fill above those. #361 brought
+  // --tn-alt-bg2 into the semantic tokens' guarantee row, which is what lets one
+  // answer cover the hover and the checked fills together: --tn-error is 4.52:1
+  // on --tn-alt-bg2 and 5.29:1 on --tn-alt-bg1 at worst of nine, and still red;
+  // --tn-fg1 is 5.62:1 and 6.24:1.
+  //
+  // A consumer that overrides --tn-button-toggle-checked-bg paints a fill this
+  // cannot have measured, and the rebind holds whatever it is: that override is
+  // the consumer's claim about its own surface, exactly as a consumer theme's
+  // --tn-alt-bg2 is.
+  //
+  // On .tn-button-toggle rather than on .tn-button-toggle__button: that class is
+  // this component's own host element (set through `host` in the decorator, and
+  // reachable as a plain class selector because the component uses
+  // ViewEncapsulation.None), so one declaration here is in force for every state
+  // of the button nested inside it — which a rebind inside &:hover or &--checked
+  // would not be. theming.mdx states the rule under "Writing a component" and
+  // projected-token-rebind.spec.ts holds it.
+  --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
+  --tn-primary-text: var(--tn-fg1, #222222);
+
   display: inline-block;
   position: relative;
-  
+
   &:first-child .tn-button-toggle__button {
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;

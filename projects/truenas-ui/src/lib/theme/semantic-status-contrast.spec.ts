@@ -18,9 +18,10 @@ import {
  * light themes. This measures the values now shipped in `themes.css`, and holds
  * every reader to the fallback chain in `EXPECTED_CHAIN`.
  *
- * WHAT THE TOKENS CLAIM: 4.5:1 on `--tn-alt-bg1`, `--tn-bg1` and `--tn-bg2` —
- * the banner surface, the page and file-picker popup, and the card and toast.
- * That is the full set of surfaces a status colour is painted on in this
+ * WHAT THE TOKENS CLAIM: 4.5:1 on `--tn-alt-bg2`, `--tn-alt-bg1`, `--tn-bg3`,
+ * `--tn-bg1` and `--tn-bg2` — the hovered and selected rows, the banner
+ * surface, the elevated fill, the page and file-picker popup, and the card and
+ * toast. That is the full set of surfaces a status colour is painted on in this
  * library, so unlike `--tn-primary-text` (which covers `--tn-bg1`/`--tn-bg2`
  * only) there is no allowlist of call sites that keep something else.
  *
@@ -49,13 +50,43 @@ const STORIES_DIR = join(__dirname, '../../stories');
 const STATUS_TOKENS = ['--tn-info', '--tn-warning', '--tn-error', '--tn-success'];
 
 /**
- * Every surface a status colour is drawn on, and what draws it there. All three
+ * Every surface a status colour is drawn on, and what draws it there. All five
  * are measured for all four tokens rather than per call site: a status colour
  * is a palette-wide promise, and tying each token to the components that happen
  * to use it today would let the next component pick the wrong surface.
+ *
+ * `--tn-alt-bg2` AND `--tn-bg3` JOINED THE ROW IN #361, and that is what these
+ * four tokens' values in the six dark palettes are now set by. They are here
+ * because of the rebind rule rather than because a status colour is painted on
+ * them directly: a component that fills an untuned surface and accepts
+ * projected content rebinds `--tn-error-text` to `--tn-error` for the whole
+ * fill (`projected-token-rebind.spec.ts`), so every surface such a component
+ * fills is a surface a status colour is drawn on — through the rebind, by a
+ * control the caller supplied. `--tn-alt-bg2` is the hovered and selected row
+ * in tn-menu, tn-list-option, tn-tree-node and tn-button-toggle; `--tn-bg3` is
+ * the elevated fill tn-icon-button and tn-table's active row use.
+ *
+ * `--tn-alt-bg2` is the binding surface in all six dark palettes: it is the
+ * only one of the five where any of the four lands under 5:1 there, and it is
+ * what made each of them pale. The three light palettes cleared both new
+ * surfaces with the values they already had.
+ *
+ * `--tn-topbar` and `--tn-topbar-hover` are deliberately NOT here, and cannot
+ * be. The three light palettes are what rules it out, on direction rather than
+ * distance: their page and row surfaces are near-white, so clearing those means
+ * going darker (relative luminance at most 0.140 in `.tn-blue` and `.tn-paper`,
+ * 0.122 in `.tn-high-contrast`), while their bar is dark, so clearing
+ * `--tn-topbar-hover` means going lighter (at least 0.717, 0.412 and 0.175).
+ * Those intervals do not meet, so no value clears all six — hue preserved or
+ * not. The six dark palettes could manage it, and `:root`/`.tn-dark` already do
+ * at 11.30:1 and 8.47:1, but a row either holds in all nine or is not a
+ * guarantee. `theming.mdx` states that with the numbers, and `tn-table`'s header
+ * cell is the one place a caller's template reaches those two.
  */
 const SURFACES: Readonly<Record<string, string>> = {
-  '--tn-alt-bg1': 'tn-banner',
+  '--tn-alt-bg2': 'a hovered or selected row, through the rebind rule',
+  '--tn-alt-bg1': 'tn-banner, and the same rows in their other states',
+  '--tn-bg3': 'an elevated fill, through the rebind rule',
   '--tn-bg1': 'the page, and the file-picker popup',
   '--tn-bg2': 'tn-card and tn-toast',
 };
