@@ -80,8 +80,10 @@ Configuration File:
     srcDirs: ['./src/lib', './src/app']
   };
 
-  A .cjs or .mjs config names its own kind and is read that way either way, and
-  a --config pointing at a .json file is read as JSON.
+  Only truenas-icons.config.js is looked for by default. A .cjs, .mjs or .json
+  config is read correctly but is not discovered, so name it with --config:
+
+  npx truenas-icons generate --config truenas-icons.config.cjs
 
 Examples:
   # Generate with defaults

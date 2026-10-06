@@ -333,10 +333,12 @@ field, so the file under test is CommonJS there rather than the ESM it ships as,
 and Jest's CommonJS runtime rewrites `import()` into its own `require`, which
 ignores a package's `type` and wraps every file as CommonJS. An in-process test
 of `loadConfig` therefore passes while asserting something node cannot do.
-`lib/load-config.spec.ts` instead copies the files under test into a package
-that declares `"type": "module"` and runs them under tsx — one spawn for the
-whole case matrix, reporting through a file — which is the publish step
-reproduced for two files.
+`lib/load-config.spec.ts` instead reproduces the publish step for the files it
+covers: it copies them into a package that declares `"type": "module"` and runs
+them under tsx, one spawn for the whole case matrix, reporting through a file.
+**It also asserts that `typeof require` is `undefined` there**, because that is
+the premise — in CommonJS scope the old fallback works, so every case would pass
+while discriminating nothing.
 
 **The two bin maps and the lockfile hold the same paths three times.** The repo
 root's `package.json` declares the commands against `dist/`, and `yarn.lock`

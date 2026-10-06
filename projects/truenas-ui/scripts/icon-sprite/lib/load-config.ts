@@ -31,11 +31,13 @@ function reasonFor(error: unknown): string {
  *   here, as does a `.cjs` config inside one that declares `"type": "module"`. The
  *   `file:` URL is not decoration: a bare absolute path is not a valid ESM
  *   specifier on Windows.
- * - `createRequire()` covers what the first loader will not read. Two shapes
- *   reach it, measured rather than assumed: CommonJS syntax in a `.js` file whose
- *   own package says `"type": "module"`, which no ESM loader will take; and a
- *   JSON config, which `--config` accepts as a path and which needs an import
- *   attribute to be imported but has always been requirable.
+ * - `createRequire()` covers what the first loader will not read. Under tsx, which
+ *   is how the shipped CLI runs, exactly one shape reaches it — measured, not
+ *   assumed: CommonJS syntax in a `.js` file whose own package says
+ *   `"type": "module"`, which no ESM loader will take. Under node's own loader it
+ *   also catches a JSON config, which `--config` accepts as a path and which
+ *   needs an import attribute to be imported but has always been requirable;
+ *   tsx's transform reads that one through `import()` already.
  *
  * This replaced a bare `require(configPath)` fallback that could never run. The
  * published package carries `"type": "module"` — written by ng-packagr, not by

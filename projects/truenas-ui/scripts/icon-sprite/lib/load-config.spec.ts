@@ -103,9 +103,11 @@ const CASES: Record<string, CaseDefinition> = {
     contents: "export const srcDirs = ['./src/named-esm'];",
   },
 
-  // `--config` takes any path, and JSON is the shape node's ESM loader refuses
-  // outright: importing it needs an import attribute, while `require` has always
-  // read it. It is why the second loader is still here rather than deleted.
+  // `--config` takes any path, so a JSON config is a shape that turns up. Node's
+  // own ESM loader refuses it without an import attribute; tsx's transform reads
+  // it through `import()`, so under the shipped CLI this case does not reach the
+  // second loader — the test is here to pin that it loads, not to prove which
+  // route carried it.
   'json-config': {
     packageJson: {},
     configFile: 'icons.config.json',
@@ -137,8 +139,15 @@ import { pathToFileURL } from 'url';
 
 const root = process.argv[2];
 const cases = JSON.parse(fs.readFileSync(path.join(root, 'cases.json'), 'utf8'));
-const loaderPath = path.join(root, 'published', 'lib', 'load-config.ts');
+const published = path.join(root, 'published', 'lib');
+const loaderPath = path.join(published, 'load-config.ts');
 const { loadConfig } = await import(pathToFileURL(loaderPath).href);
+
+// Whether the loader is in ESM scope at all -- read from a file beside it, so the
+// answer is the one its own directory and manifest produce.
+const { requireInScope } = await import(
+  pathToFileURL(path.join(published, 'module-scope.ts')).href
+);
 
 const realWarn = console.warn;
 const results = {};
@@ -161,18 +170,24 @@ for (const [name, configFile] of cases) {
   results[name] = { config: config ? { ...config } : config, warnings, threw };
 }
 
-fs.writeFileSync(path.join(root, 'results.json'), JSON.stringify(results));
+fs.writeFileSync(
+  path.join(root, 'results.json'),
+  JSON.stringify({ requireInScope, cases: results })
+);
 `;
 
-let workspace: string;
+let workspace = '';
+let requireInScope: string;
 let results: Record<string, CaseResult & { threw: string | null }>;
 
 beforeAll(() => {
   workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'truenas-icons-load-config-'));
 
-  // The publish step, for the two files under test: into a package whose manifest
-  // says `"type": "module"`, in the same relative layout, so that the loader's own
-  // import of the config interface still resolves.
+  // The publish step, for the files under test: into a package whose manifest says
+  // `"type": "module"`, in the same relative layout the published one has. The
+  // interface is copied because the loader imports it by a relative path — only as
+  // a type today, which the transform erases, but a value import later should not
+  // turn into a puzzling resolution failure here.
   const published = path.join(workspace, 'published');
   fs.mkdirSync(path.join(published, 'lib'), { recursive: true });
   fs.writeFileSync(
@@ -184,6 +199,13 @@ beforeAll(() => {
     path.join(published, 'sprite-config-interface.ts')
   );
   fs.copyFileSync(path.join(__dirname, 'load-config.ts'), path.join(published, 'lib', 'load-config.ts'));
+
+  // Beside the loader, sharing its directory and so its module kind: what this
+  // reports is what the loader itself gets.
+  fs.writeFileSync(
+    path.join(published, 'lib', 'module-scope.ts'),
+    'export const requireInScope = typeof require;\n'
+  );
 
   // One throwaway consumer project per case. `absent-config` gets the manifest and
   // no config file, which is the case it is testing.
@@ -211,6 +233,9 @@ beforeAll(() => {
   const run = spawnSync(process.execPath, [tsxCli, driverPath, workspace], {
     cwd: repoRoot,
     encoding: 'utf8',
+    // Jest's own timeout cannot interrupt a synchronous spawn, so a wedged tsx
+    // would hold the worker open rather than failing. This is the one that fires.
+    timeout: 120_000,
   });
 
   const resultsPath = path.join(workspace, 'results.json');
@@ -224,11 +249,15 @@ beforeAll(() => {
     );
   }
 
-  results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
-}, 120_000);
+  ({ requireInScope, cases: results } = JSON.parse(fs.readFileSync(resultsPath, 'utf8')));
+}, 180_000);
 
 afterAll(() => {
-  fs.rmSync(workspace, { recursive: true, force: true });
+  // Guarded because `afterAll` runs even when `beforeAll` threw, and removing a
+  // path that was never made would replace the real failure with this one.
+  if (workspace !== '') {
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
 });
 
 function resultFor(name: keyof typeof CASES): CaseResult {
@@ -240,9 +269,19 @@ function resultFor(name: keyof typeof CASES): CaseResult {
 }
 
 describe('the setup itself', () => {
-  /** Both ways this file could pass while having tested nothing. */
+  /** The ways this file could pass while having tested nothing. */
   it('runs the loader through tsx, the way the shipped CLI is run', () => {
     expect(fs.existsSync(tsxCli)).toBe(true);
+  });
+
+  /**
+   * The premise every case below rests on. `require` being absent is what the old
+   * fallback died of, so in CommonJS scope the loader this file is checking and the
+   * one it replaced behave the same and nothing here discriminates them. If this
+   * goes green while reporting `function`, the suite is measuring the wrong thing.
+   */
+  it('evaluates the loader in ESM scope, where require does not exist', () => {
+    expect(requireInScope).toBe('undefined');
   });
 
   it('produced a result for every case', () => {
@@ -315,7 +354,7 @@ describe('an ESM config', () => {
 });
 
 describe('a JSON config', () => {
-  it('loads, which is what keeps a second loader worth having', () => {
+  it('loads when --config names one', () => {
     const { config, warnings } = resultFor('json-config');
 
     expect(config.srcDirs).toEqual(['./src/json']);
