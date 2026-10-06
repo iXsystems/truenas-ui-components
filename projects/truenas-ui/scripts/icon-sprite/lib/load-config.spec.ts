@@ -252,6 +252,25 @@ const CASES = {
     contents: IMPORT_META_CONFIG,
   },
 
+  /**
+   * The rest of the family in `.ts`'s position. tsx recognises
+   * `/\.([cm]?ts|[tj]sx)($|\?)/` and settles only `.mts` and `.cts` by extension,
+   * so `.tsx` and `.jsx` take their kind from package scope exactly as `.ts` does
+   * — and were silently mis-read while the check was a literal `'.ts'`. `--config`
+   * takes any path, so these turn up whether or not anyone recommends them.
+   */
+  'tsx-config-in-a-plain-project': {
+    packageJson: {},
+    configFile: 'truenas-icons.config.tsx',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  'jsx-config-in-a-plain-project': {
+    packageJson: {},
+    configFile: 'truenas-icons.config.jsx',
+    contents: IMPORT_META_CONFIG,
+  },
+
   // The CommonJS half of that pair: an extension that rules ESM out, so the
   // CommonJS loader is the one that reads it.
   'commonjs-config-named-cts': {
@@ -662,6 +681,22 @@ describe('a .ts config that tsx will read as CommonJS', () => {
     expect(config.srcDirs).toEqual(['undefined']);
     expect(warnings.join('\n')).toContain('will be read as CommonJS');
   });
+
+  /**
+   * **The other two extensions in `.ts`'s position**, which a literal `'.ts'` check
+   * missed: tsx settles only `.mts` and `.cts` by extension, so everything else it
+   * recognises is decided by package scope. Each asserts the mis-read value as well
+   * as the warning, so the case cannot go green against a file that loaded as ESM.
+   */
+  it.each([['tsx-config-in-a-plain-project'], ['jsx-config-in-a-plain-project']] as const)(
+    'warns for %s, which package scope decides the same way',
+    (name) => {
+      const { config, warnings } = resultFor(name);
+
+      expect(config.srcDirs).toEqual(['undefined']);
+      expect(warnings.join('\n')).toContain('will be read as CommonJS');
+    }
+  );
 });
 
 describe('a JSON config', () => {

@@ -34,13 +34,33 @@ function reasonFor(error: unknown): string {
  * extension already names is the one that should answer, not because an outcome
  * depends on it — do not read the measured asymmetry below as applying to it.
  *
- * `.ts` is deliberately not here and is not safe either: tsx reads a typeless `.ts`
- * as CommonJS whatever its syntax, with no ESM reparse, so `--config` pointing at
- * one gets an undefined `import.meta.dirname`. Neither order changes that, which is
- * why no ordering entry fixes it — `warnAboutTypeScriptConfigReadAsCommonJS` reports
- * it instead, and the reasoning for reporting rather than refusing lives there.
+ * `.ts` is deliberately not here and is not safe either: tsx reads one whose scope
+ * is not ESM as CommonJS whatever its syntax, with no ESM reparse, so `--config`
+ * pointing at it gets an undefined `import.meta.dirname`. Neither order changes
+ * that, which is why no ordering entry fixes it —
+ * `warnAboutTypeScriptConfigReadAsCommonJS` reports it instead, for `.ts` and for
+ * the two other extensions in the same position (`SCOPE_DECIDES_THE_KIND`), and the
+ * reasoning for reporting rather than refusing lives there.
  */
 const NEVER_ESM = ['.cjs', '.cts', '.json'];
+
+/**
+ * The extensions tsx transforms but does not settle, so their module kind comes
+ * from the file's package scope — which is the set that can be read as CommonJS
+ * while meaning ESM, and so the set `warnAboutTypeScriptConfigReadAsCommonJS`
+ * covers.
+ *
+ * Derived from tsx's own resolver rather than guessed: it recognises
+ * `/\.([cm]?ts|[tj]sx)($|\?)/`, and `getFormatFromExtension` answers for exactly
+ * two of those — `.mts` is module, `.cts` is commonjs. Everything else it
+ * recognises falls through to `getPackageType`. Taking `.mts` and `.cts` out of
+ * that set leaves these three.
+ *
+ * **Case-sensitive, because tsx's pattern is.** A `--config` naming `.TS` is not
+ * transformed at all, loads as ESM through node, and correctly draws no warning
+ * here. That looks like an oversight and is the accurate answer.
+ */
+const SCOPE_DECIDES_THE_KIND = ['.ts', '.tsx', '.jsx'];
 
 /**
  * The `type` declared by the `package.json` that decides `configPath`'s module
@@ -116,10 +136,12 @@ function packageScopeType(configPath: string): string | undefined {
 }
 
 /**
- * Reports a `--config` naming a `.ts` file that tsx is about to read as CommonJS.
- * Such a config loads, says nothing, and gets `undefined` for
- * `import.meta.dirname` and `import.meta.filename` — so the sprite is generated
- * from a path the consumer never wrote and no output mentions it. That is #369.
+ * Reports a `--config` naming a file tsx is about to read as CommonJS on the
+ * strength of its package scope — `SCOPE_DECIDES_THE_KIND`, which is `.ts` and the
+ * two extensions in the same position. Such a config loads, says nothing, and gets
+ * `undefined` for `import.meta.dirname` and `import.meta.filename` — so the sprite
+ * is generated from a path the consumer never wrote and no output mentions it.
+ * That is #369.
  *
  * **It warns rather than refusing, because the mis-read file and a perfectly
  * correct one are the same file to everything that can be inspected.** A `.ts`
@@ -130,17 +152,23 @@ function packageScopeType(configPath: string): string | undefined {
  * names the condition it fired on so that reads as what it is. The other way round
  * is the silent wrong value this exists to end.
  *
+ * **It covers the extension and not what the file imports.** A `.mts` config —
+ * correctly silent — importing a `.ts` helper in a typeless scope gets that helper
+ * read as CommonJS, with `import.meta.dirname` undefined inside it and nothing
+ * said. Naming the config's own extension cannot reach that; only the loader
+ * reading each file could, and `--config` is the only path this one is given.
+ *
  * **Reading `type` here is not the rule the docblocks above rule out.** That one
  * guesses which kind an unknowable `.js` file *is*, in order to choose a loader,
  * and is wrong because node itself reparses. This computes what tsx *will do* with
- * a `.ts` file, which is fully determined by exactly these two inputs: an explicit
+ * the file, which is fully determined by exactly these two inputs: an explicit
  * `.mts` or `.cts` settles it, and otherwise the file's package scope does, with no
  * reparse to upset the answer — read off tsx's own resolver in `packageScopeType`.
  * **No loader choice turns on it** — both still run, in the same order, and the
  * file loads either way.
  */
 function warnAboutTypeScriptConfigReadAsCommonJS(configPath: string): void {
-  if (path.extname(configPath) !== '.ts') {
+  if (!SCOPE_DECIDES_THE_KIND.includes(path.extname(configPath))) {
     return;
   }
 
