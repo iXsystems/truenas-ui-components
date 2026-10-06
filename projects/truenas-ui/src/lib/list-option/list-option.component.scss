@@ -8,11 +8,13 @@
 // --tn-alt-bg2 into the semantic tokens' guarantee row, so --tn-error is a legal
 // target here (4.52:1 at worst of nine, and still red) and --tn-fg1 is 5.62:1.
 //
-// ON :host, NOT ON .tn-list-option__content. Both fills are painted by that
-// element, but it is declared twice — once under :host(:hover…) and once under
-// :host(:focus-visible) — so a rebind inside either one is not in force in the
-// other. :host is the only place in force for both. theming.mdx states the rule
-// under "Writing a component" and projected-token-rebind.spec.ts holds it.
+// ON :host, NOT ON .tn-list-option__content. This file has three untuned fills:
+// that element paints --tn-alt-bg2 twice, in two separate blocks — one under
+// :host(:hover…) and one under :host(:focus-visible) — and the projected
+// [ixListAvatar] fills --tn-alt-bg1 in a third, top-level block. No one block
+// encloses the other two, and projected-token-rebind.spec.ts compares selector
+// stacks rather than DOM ancestry, so :host is the only declaration it reads as
+// covering all three. theming.mdx states the rule under "Writing a component".
 :host {
   --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
   --tn-primary-text: var(--tn-fg1, #222222);

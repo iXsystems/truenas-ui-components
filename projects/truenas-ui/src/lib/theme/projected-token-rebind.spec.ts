@@ -85,8 +85,8 @@ const COVERED_TOKENS: Readonly<Record<string, string>> = {
  * `--tn-alt-bg1`. #361 closed that by bringing `--tn-alt-bg2` and `--tn-bg3`
  * into the four semantic tokens' guarantee row in `themes.css` — a
  * hue-preserving lightness shift in the six dark palettes, the same method
- * #282/#283/#284 used, with the four light palettes already clearing both. So
- * `--tn-error` is now 4.52:1 at worst of nine on `--tn-alt-bg2` and 4.64:1 on
+ * #282/#283/#284 used, with the three light palettes already clearing both. So
+ * `--tn-error` is now 4.52:1 at worst of nine on `--tn-alt-bg2` and 4.89:1 on
  * `--tn-bg3`, and still red; `--tn-fg1` is 5.62:1 and 5.81:1. Moving the fill
  * instead was not available: for the old values to clear `--tn-alt-bg2` it
  * would have had to come down until the `--tn-alt-bg1` → `--tn-alt-bg2` step
@@ -94,13 +94,16 @@ const COVERED_TOKENS: Readonly<Record<string, string>> = {
  * today — and that step is what tells a SELECTED row from a hovered one in
  * `tn-list-item`, `tn-tree-node` and `tn-button-toggle`.
  *
- * The other half of that list was held on a VISUAL question rather than a
- * measurement — whether a projected status should change colour as the pointer
- * crosses a row or a header. #361 answered that it should: `--tn-error` is a
- * hue-preserving shift of `--tn-red` rather than a different colour, so what
- * the pointer changes is lightness, and the alternative is error text under AA
- * in six of the nine palettes precisely while the control is being interacted
- * with, which WCAG 1.4.3 exempts no state from.
+ * The other half of that list was held on a question about STATE rather than a
+ * measurement: `tn-expansion-panel`, `tn-tab`, `tn-tabs` and `tn-list-item` fill
+ * an untuned surface only on hover or focus, so should the rebind be scoped
+ * there too? #361 answered no — every rebind below is unconditional, so a
+ * caller's error message is one colour at rest and under the pointer rather than
+ * being recoloured as the pointer crosses and uncoloured when it leaves.
+ * `--tn-error` is guaranteed on the resting surface as well, so one colour is
+ * the right one in both. What that avoids is not rebinding at all: error text
+ * under AA in six of the nine palettes precisely while the control is being
+ * interacted with, which WCAG 1.4.3 exempts no state from.
  *
  * `--tn-topbar` AND `--tn-topbar-hover` ARE WHAT IS LEFT, and `tn-table`'s
  * header is the one entry on them. They are not the same shape as
@@ -108,13 +111,18 @@ const COVERED_TOKENS: Readonly<Record<string, string>> = {
  * token clearing AA on those two in all nine palettes is `--tn-topbar-txt`
  * (4.58:1 and 6.16:1 worst), every semantic token fails in at least five —
  * `--tn-error` reaches 1.24:1 on `--tn-topbar` and 1.02:1 on
- * `--tn-topbar-hover` — and no lightness shift can fix it, hue preserved or
- * not. In `.tn-blue`, `.tn-paper` and `.tn-high-contrast` the bar is dark while
- * the page is light, so one value would have to be lighter than a light surface
- * and darker than a dark one at once; `themes.css`'s own note and
- * `theming.mdx` carry the arithmetic. The gap that remains is a tuned status
- * colour for the TOPBAR, which is a second colour family rather than one more
- * step in the background ramp.
+ * `--tn-topbar-hover` — and no lightness shift closes it, hue preserved or not.
+ * The three LIGHT palettes are where it breaks, and on direction rather than
+ * distance: their page and row surfaces are near-white, so clearing those means
+ * going darker (relative luminance at most 0.140 in `.tn-blue`, 0.140 in
+ * `.tn-paper`, 0.122 in `.tn-high-contrast`), while their bar is dark, so
+ * clearing `--tn-topbar-hover` means going lighter (at least 0.717, 0.412 and
+ * 0.175). Those intervals do not meet. The six dark palettes are not in that
+ * position — `:root` and `.tn-dark` already clear both bar surfaces with the
+ * values shipped here, at 11.30:1 and 8.47:1 — but a row is a palette-wide
+ * guarantee or it is nothing. `theming.mdx` carries the same arithmetic. The gap
+ * that remains is a tuned status colour for the TOPBAR, which is a second colour
+ * family rather than one more step in the background ramp.
  */
 const PENDING_A_DECISION: readonly {
   file: string;

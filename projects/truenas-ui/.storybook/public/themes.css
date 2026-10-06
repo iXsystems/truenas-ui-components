@@ -146,7 +146,7 @@
      across the six dark palettes, against the 1.17-1.55:1 they use today — and
      that step is what tells a SELECTED row from a hovered one in tn-list-item,
      tn-tree-node and tn-button-toggle. The hue tokens are untouched, and the
-     four light palettes needed no change at all.
+     three light palettes needed no change at all.
 
      --tn-error is NOT --tn-error-text. That one is --tn-red's companion and
      guarantees 4.5:1 on --tn-bg1 and --tn-bg2 only; it measures 3.64:1 on

@@ -68,16 +68,20 @@ const STATUS_TOKENS = ['--tn-info', '--tn-warning', '--tn-error', '--tn-success'
  *
  * `--tn-alt-bg2` is the binding surface in all six dark palettes: it is the
  * only one of the five where any of the four lands under 5:1 there, and it is
- * what made each of them pale. The four light palettes cleared both new
+ * what made each of them pale. The three light palettes cleared both new
  * surfaces with the values they already had.
  *
  * `--tn-topbar` and `--tn-topbar-hover` are deliberately NOT here, and cannot
- * be: in `.tn-blue`, `.tn-paper` and `.tn-high-contrast` the bar is dark while
- * the page is light, so one value would have to be lighter than a light surface
- * and darker than a dark one at the same time — there is no lightness, hue
- * preserved or not, that clears all six. `theming.mdx` states that with the
- * numbers, and `tn-table`'s header cell is the one place a caller's template
- * reaches those two.
+ * be. The three light palettes are what rules it out, on direction rather than
+ * distance: their page and row surfaces are near-white, so clearing those means
+ * going darker (relative luminance at most 0.140 in `.tn-blue` and `.tn-paper`,
+ * 0.122 in `.tn-high-contrast`), while their bar is dark, so clearing
+ * `--tn-topbar-hover` means going lighter (at least 0.717, 0.412 and 0.175).
+ * Those intervals do not meet, so no value clears all six — hue preserved or
+ * not. The six dark palettes could manage it, and `:root`/`.tn-dark` already do
+ * at 11.30:1 and 8.47:1, but a row either holds in all nine or is not a
+ * guarantee. `theming.mdx` states that with the numbers, and `tn-table`'s header
+ * cell is the one place a caller's template reaches those two.
  */
 const SURFACES: Readonly<Record<string, string>> = {
   '--tn-alt-bg2': 'a hovered or selected row, through the rebind rule',

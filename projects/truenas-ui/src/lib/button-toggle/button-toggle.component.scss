@@ -13,10 +13,12 @@
   // the consumer's claim about its own surface, exactly as a consumer theme's
   // --tn-alt-bg2 is.
   //
-  // On .tn-button-toggle rather than on .tn-button-toggle__button because this
-  // component uses ViewEncapsulation.None and this class is the group's own
-  // element, so the declaration is in force for every state of the button
-  // nested in it. theming.mdx states the rule under "Writing a component" and
+  // On .tn-button-toggle rather than on .tn-button-toggle__button: that class is
+  // this component's own host element (set through `host` in the decorator, and
+  // reachable as a plain class selector because the component uses
+  // ViewEncapsulation.None), so one declaration here is in force for every state
+  // of the button nested inside it — which a rebind inside &:hover or &--checked
+  // would not be. theming.mdx states the rule under "Writing a component" and
   // projected-token-rebind.spec.ts holds it.
   --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
   --tn-primary-text: var(--tn-fg1, #222222);

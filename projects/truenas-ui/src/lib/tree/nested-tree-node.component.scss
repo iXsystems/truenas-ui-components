@@ -6,13 +6,17 @@
   // The node content hovers and focuses-within to --tn-alt-bg2 and the toggle
   // hovers to --tn-bg3, under a template whose node content is the caller's.
   // #361 brought both of those into the semantic tokens' guarantee row, so
-  // --tn-error is a legal target on each (4.52:1 on --tn-alt-bg2 and 4.64:1 on
+  // --tn-error is a legal target on each (4.52:1 on --tn-alt-bg2 and 4.89:1 on
   // --tn-bg3, worst of nine, and still red); --tn-fg1 is 5.62:1 and 5.81:1.
   //
-  // On :host because the two fills sit on .tn-nested-tree-node__content and
-  // .tn-nested-tree-node__toggle, which are siblings — no element inside the
-  // template encloses both. theming.mdx states the rule under "Writing a
-  // component" and projected-token-rebind.spec.ts holds it.
+  // On :host because the two fills are declared in sibling BLOCKS of this
+  // stylesheet — .tn-nested-tree-node__content and .tn-nested-tree-node__toggle
+  // each at top level — and projected-token-rebind.spec.ts compares selector
+  // stacks rather than DOM ancestry, so a rebind inside either block does not
+  // count as covering the other's fill however the elements nest at runtime.
+  // :host is the one declaration the scan reads as covering both, and the one a
+  // reader can check without tracing the template. theming.mdx states the rule
+  // under "Writing a component".
   --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
   --tn-primary-text: var(--tn-fg1, #222222);
 

@@ -33,14 +33,24 @@
     }
     
     .tn-tab {
-      // The vertical layout declares its own hover fill for the tab here, in the
-      // parent stylesheet, so this file carries the same --tn-alt-bg1 fill under
-      // projected tab-label content that tab.component.scss does — and needs its
-      // own rebind, since a rebind in that file is a different stylesheet and
-      // this scan is per file. Same answer, same reasons: --tn-error is 5.29:1
-      // on --tn-alt-bg1 at worst of nine and still red, --tn-fg1 is 6.24:1, and
-      // #361 settled that a projected status does change under the pointer
-      // rather than staying illegible there.
+      // The vertical layout declares its own hover fill for the tab below, in
+      // this parent stylesheet, so this FILE carries an --tn-alt-bg1 fill under
+      // projected tab-label content and projected-token-rebind.spec.ts scans per
+      // file — a rebind in tab.component.scss is a different stylesheet and does
+      // not satisfy it here. Same answer and same reasons as that file:
+      // --tn-error is 5.29:1 on --tn-alt-bg1 at worst of nine and still red,
+      // --tn-fg1 is 6.24:1, both unconditional rather than scoped to the hover.
+      //
+      // At runtime neither this rebind nor the fill below it matches anything:
+      // `.tn-tab` is the <button> inside tab.component.html, so it carries THAT
+      // component's emulated-encapsulation attribute and not this one's, and a
+      // descendant selector written here cannot reach it. That is why the width
+      // rule for the same element lives in tab.component.scss behind
+      // `:host-context(.tn-tabs--vertical)` instead. tab.component.scss carries
+      // both the fill and the rebind that actually render, so nothing is wrong
+      // with the output — but the dead fill, which predates #361, is what puts
+      // this file inside the rule at all. Removing it would take this rebind with
+      // it; that is a cleanup of its own, not part of #361.
       --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
       --tn-primary-text: var(--tn-fg1, #222222);
 

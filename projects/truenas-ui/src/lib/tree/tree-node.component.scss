@@ -6,10 +6,14 @@
   // --tn-error is a legal target on all three (4.52:1 at worst of nine, and
   // still red); --tn-fg1 is 5.62:1 on --tn-alt-bg2 and 6.24:1 on --tn-alt-bg1.
   //
-  // On :host because the fills sit on .tn-tree-node and .tn-tree-node__toggle,
-  // which are siblings — no element inside the template encloses both.
-  // theming.mdx states the rule under "Writing a component" and
-  // projected-token-rebind.spec.ts holds it.
+  // On :host because the fills are declared in sibling BLOCKS of this
+  // stylesheet — .tn-tree-node and .tn-tree-node__toggle each at top level — and
+  // projected-token-rebind.spec.ts compares selector stacks rather than DOM
+  // ancestry, so a rebind inside .tn-tree-node does not count as covering the
+  // toggle's fill even though the toggle is nested inside it at runtime. :host
+  // is the one declaration the scan reads as covering all three, and the one a
+  // reader can check without tracing the template. theming.mdx states the rule
+  // under "Writing a component".
   --tn-error-text: var(--tn-error, var(--tn-red, #bd2626));
   --tn-primary-text: var(--tn-fg1, #222222);
 
