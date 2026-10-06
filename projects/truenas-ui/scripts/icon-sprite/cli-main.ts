@@ -17,8 +17,7 @@
  *
  * Configuration File:
  *   Create truenas-icons.config.js in your project root, as ESM or as CommonJS —
- *   whichever your own package.json's `type` makes a `.js` file. See
- *   `lib/load-config.ts` for which shapes are read and how.
+ *   either is read. See `lib/load-config.ts` for which shapes are read and how.
  *
  *   export default {
  *     srcDirs: ['./src/lib', './src/app'],
@@ -64,17 +63,14 @@ Options:
   --help              Show this help message
 
 Configuration File:
-  Create truenas-icons.config.js in your project root, written the way the rest
-  of your project's .js files are. ESM, if your package.json sets
-  "type": "module":
+  Create truenas-icons.config.js in your project root. Either module form is
+  read, so write it the way the rest of your project's .js files are written.
 
   export default {
     srcDirs: ['./src/lib', './src/app'],
     outputDir: './src/assets/icons',
     customIconsDir: './custom-icons'
   };
-
-  CommonJS, if it does not:
 
   module.exports = {
     srcDirs: ['./src/lib', './src/app']

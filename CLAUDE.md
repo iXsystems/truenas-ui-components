@@ -327,8 +327,11 @@ route that works from ESM, and `lib/load-config.ts` is where that now lives,
 with the reason each loader exists written next to it.
 
 **`import()` goes first unless the extension rules ESM out — `.cjs`, `.cts`,
-`.json` — and that asymmetry is load-bearing rather than tidy.** A loader that
-fails does so at *runtime*, with everything above the failing line already run, so
+`.json` — and `import()` going first is the load-bearing half.** (The extension
+list only spares a futile first attempt: `import()` reads a `.cjs` correctly
+anyway and fails on JSON before executing anything, so no outcome turns on it.)
+A loader that fails does so at *runtime*, with everything above the failing line
+already run, so
 retrying runs the whole file again: the consumer's config gets its top-level side
 effects twice and the object that reaches the sprite is the second run's. That is
 what guessing `import()` wrong costs. Guessing `require()` wrong costs something

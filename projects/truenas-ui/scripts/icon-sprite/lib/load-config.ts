@@ -21,11 +21,24 @@ function reasonFor(error: unknown): string {
 }
 
 /**
- * Extensions that rule an ES module out whatever any manifest says, so the
- * CommonJS loader can be preferred for them without guessing. Everything else —
- * `.mjs`, `.mts`, a `.js` or `.ts` whose kind depends on its package, an extension
- * nobody anticipated — goes to `import()` first. See `loadConfig` for why that
- * asymmetry is the right default rather than a coin toss.
+ * Extensions that rule an ES module out whatever any manifest says, so the CommonJS
+ * loader can be tried first for them without guessing. Everything else — `.mjs`,
+ * `.mts`, a `.js` whose kind depends on its package, an extension nobody
+ * anticipated — goes to `import()` first, which is the half of the ordering that
+ * carries the weight; see `loadConfig`.
+ *
+ * **This half spares a futile first attempt rather than changing an outcome.**
+ * Measured: `import()` reads a `.cjs` or `.cts` correctly anyway, and fails on JSON
+ * before executing anything, so putting those three second costs nothing but a
+ * caught error. It is here because a loader that is asked for the kind the
+ * extension already names is the one that should answer, not because an outcome
+ * depends on it — do not read the measured asymmetry below as applying to it.
+ *
+ * `.ts` is deliberately not here and is not safe either: tsx reads a typeless `.ts`
+ * as CommonJS whatever its syntax, with no ESM reparse, so `--config` pointing at
+ * one gets an undefined `import.meta.dirname` and no warning. Neither order changes
+ * that, it predates this function, and a `.ts` config is not a documented shape —
+ * so it is recorded here rather than worked around.
  */
 const NEVER_ESM = ['.cjs', '.cts', '.json'];
 
