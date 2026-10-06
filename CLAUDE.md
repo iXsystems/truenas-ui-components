@@ -313,13 +313,30 @@ too.
 
 The `.ts` files there are mostly ESM already — `make-sprite.ts` and
 `lib/add-custom-icons.ts` derive `__dirname` from `import.meta.url`, which is
-the idiom to copy, and tsx reads them as whatever the manifest says. One
-exception is still open: `cli-main.ts`'s `loadConfig` falls back to a bare
+the idiom to copy, and tsx reads them as whatever the manifest says.
+
+**A `require` reached for inside one of them is the same bug wearing a `.ts`
+extension**, and #365 was that: `cli-main.ts`'s `loadConfig` fell back to a bare
 `require(configPath)` when a dynamic `import()` of the consumer's
-`truenas-icons.config.js` fails. Under ESM that `require` is itself a
-`ReferenceError`, and the surrounding `catch` swallows it — so a CommonJS config
-file degrades to `{}` with only a warning rather than being loaded. It does not
-crash the CLI, which is why #362 did not cover it.
+`truenas-icons.config.js` failed, so a config it could not import was dropped to
+`{}` behind a one-line warning rather than loaded. `typeof require` is
+`undefined` in that scope — measured, under tsx, in a package carrying the
+generated `"type": "module"` — so the fallback had never once run. It did not
+crash the CLI, which is why #362 did not cover it. `createRequire()` is the
+route that works from ESM, and `lib/load-config.ts` is where that now lives,
+with the reason each loader exists written next to it.
+
+**Testing one of these costs a process, and the reason is worth knowing before
+you write the test.** What a loader does is decided by the module system reading
+it, and Jest is neither of the two that matter: the source tree has no `type`
+field, so the file under test is CommonJS there rather than the ESM it ships as,
+and Jest's CommonJS runtime rewrites `import()` into its own `require`, which
+ignores a package's `type` and wraps every file as CommonJS. An in-process test
+of `loadConfig` therefore passes while asserting something node cannot do.
+`lib/load-config.spec.ts` instead copies the files under test into a package
+that declares `"type": "module"` and runs them under tsx — one spawn for the
+whole case matrix, reporting through a file — which is the publish step
+reproduced for two files.
 
 **The two bin maps and the lockfile hold the same paths three times.** The repo
 root's `package.json` declares the commands against `dist/`, and `yarn.lock`
