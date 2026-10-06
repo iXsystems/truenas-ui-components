@@ -125,9 +125,10 @@ interface FileDependencies {
   /** Packages named by a `/// <reference types="..." />` directive. */
   typeReferences: string[];
   /**
-   * The leftmost name of every qualified type reference — `jest` for `jest.Mock`. A global
-   * namespace used in a type position is the half of a types directive that survives into the
-   * published `.d.ts`, so it is the half a consumer can be broken by.
+   * The leftmost name of every qualified type reference — `jest` for `jest.Mock`, and for
+   * `extends jest.Mocked<T>`. A global namespace used in a type position is the half of a
+   * types directive that survives into the published `.d.ts`, so it is the half a consumer
+   * can be broken by.
    */
   typeNamespaces: string[];
 }
@@ -165,9 +166,35 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
     return current === name ? null : current.text;
   };
 
+  /**
+   * The same thing for a heritage clause, which the parser gives as an expression rather than
+   * an `EntityName`: `extends jest.Mocked<T>` is an `ExpressionWithTypeArguments` wrapping a
+   * property access, not a `TypeReferenceNode`.
+   *
+   * Worth its own branch because `jest.Mocked<TnSpriteLoaderService>` is the idiomatic way to
+   * write the very interfaces #358 just took the namespace out of, declaration emit keeps a
+   * heritage clause verbatim, and a reader that only knew type references would have gone
+   * green on it.
+   */
+  const leftmostOfExpression = (expression: ts.Expression): string | null => {
+    let current = expression;
+
+    while (ts.isPropertyAccessExpression(current)) {
+      current = current.expression;
+    }
+
+    return current === expression || !ts.isIdentifier(current) ? null : current.text;
+  };
+
   const visit = (node: ts.Node): void => {
     if (ts.isTypeReferenceNode(node) || ts.isTypeQueryNode(node)) {
       const root = leftmostOf(ts.isTypeReferenceNode(node) ? node.typeName : node.exprName);
+
+      if (root !== null) {
+        typeNamespaces.push(root);
+      }
+    } else if (ts.isExpressionWithTypeArguments(node)) {
+      const root = leftmostOfExpression(node.expression);
 
       if (root !== null) {
         typeNamespaces.push(root);
@@ -305,6 +332,25 @@ describe('the reader', () => {
 
   it('sees one behind `typeof`', () => {
     expect(read('export type F = typeof jest.fn;').typeNamespaces).toEqual(['jest']);
+  });
+
+  /**
+   * A heritage clause is the shape that nearly got away: `jest.Mocked<T>` is how someone would
+   * idiomatically rewrite the interfaces #358 just cleaned, the parser models it as an
+   * expression rather than a type reference, and declaration emit keeps it verbatim.
+   */
+  it('sees one in an extends clause', () => {
+    expect(read('export interface M extends jest.Mocked<S> {}').typeNamespaces).toEqual(['jest']);
+  });
+
+  it('sees one in an implements clause', () => {
+    expect(read('export declare class T implements jest.Mock {}').typeNamespaces).toEqual([
+      'jest',
+    ]);
+  });
+
+  it('ignores an unqualified heritage clause', () => {
+    expect(read('export interface M extends Mocked<S> {}').typeNamespaces).toEqual([]);
   });
 
   it('ignores the same name in a value position', () => {
