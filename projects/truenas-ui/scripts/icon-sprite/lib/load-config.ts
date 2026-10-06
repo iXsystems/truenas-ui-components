@@ -43,22 +43,55 @@ function reasonFor(error: unknown): string {
 const NEVER_ESM = ['.cjs', '.cts', '.json'];
 
 /**
- * The `type` the nearest `package.json` above `fromDirectory` declares, or
- * `undefined` when the one it finds declares none.
+ * The `type` declared by the `package.json` that decides `configPath`'s module
+ * kind — its *package scope* — or `undefined` when nothing in that scope declares
+ * one.
  *
- * **The closest manifest decides and the walk stops at it**, whether or not it
- * carries the field — that is node's rule, and so tsx's. A manifest further up
- * gets no say, so walking past one would answer a different question than the
- * loader reading the file is going to.
+ * **Two things decide where the walk stops, and both have to be here**, because a
+ * walk that answers `"module"` where tsx computes `"commonjs"` suppresses the
+ * warning in exactly the silent case this file exists to end:
  *
- * Unreadable or malformed reads as `undefined` rather than throwing: this feeds a
- * warning, and a config that loads perfectly well should not be turned into a
- * crash by a sibling file it never mentions.
+ * - **The closest manifest decides**, whether or not it carries the field. A
+ *   manifest further up gets no say, so skipping a typeless one to find a typed
+ *   one answers a different question than the loader is going to.
+ * - **The walk stops at a `node_modules` directory**, and does not look past it.
+ *   So a config under `node_modules/` is CommonJS however the project above it is
+ *   declared.
+ *
+ * Both read off tsx's own resolver, not inferred from node's documentation:
+ * `findPackageJson` in `tsx/dist/esm/index.mjs` is
+ * `for (; !url.pathname.endsWith('/node_modules/package.json');)` returning the
+ * first manifest that parses, and `getPackageType` is that `?.type ?? 'commonjs'`.
+ * Node's two loaders agree — `readPackageScope` returns false on `node_modules`,
+ * and `getPackageScopeConfig` breaks on `node_modules/package.json`.
+ *
+ * The path is resolved through `fs.realpathSync` first, because node resolves a
+ * symlinked module to its real path before any loader hook sees it: a config
+ * symlinked into a project takes its scope from where the file really lives, not
+ * from where it is linked.
+ *
+ * Unreadable or malformed reads as `undefined` rather than throwing. tsx itself
+ * throws on a nearest manifest it cannot parse, so that config was not going to
+ * load either way — this only decides which message the consumer gets, and the
+ * warning is the less confusing of the two.
  */
-function nearestPackageType(fromDirectory: string): string | undefined {
-  let directory = fromDirectory;
+function packageScopeType(configPath: string): string | undefined {
+  let directory: string;
+
+  try {
+    directory = path.dirname(fs.realpathSync(configPath));
+  } catch {
+    directory = path.dirname(configPath);
+  }
 
   for (;;) {
+    // Checked before the manifest is read, which is where tsx checks it: the
+    // boundary is the candidate path, so a `node_modules` directory's own
+    // `package.json` is not consulted either.
+    if (path.basename(directory) === 'node_modules') {
+      return undefined;
+    }
+
     const manifest = path.join(directory, 'package.json');
 
     if (fs.existsSync(manifest)) {
@@ -101,23 +134,30 @@ function nearestPackageType(fromDirectory: string): string | undefined {
  * guesses which kind an unknowable `.js` file *is*, in order to choose a loader,
  * and is wrong because node itself reparses. This computes what tsx *will do* with
  * a `.ts` file, which is fully determined by exactly these two inputs: an explicit
- * `.mts` or `.cts` settles it, and otherwise the nearest manifest's `type` does,
- * with no reparse to upset the answer. **No loader choice turns on it** — both
- * still run, in the same order, and the file loads either way.
+ * `.mts` or `.cts` settles it, and otherwise the file's package scope does, with no
+ * reparse to upset the answer — read off tsx's own resolver in `packageScopeType`.
+ * **No loader choice turns on it** — both still run, in the same order, and the
+ * file loads either way.
  */
 function warnAboutTypeScriptConfigReadAsCommonJS(configPath: string): void {
   if (path.extname(configPath) !== '.ts') {
     return;
   }
 
-  if (nearestPackageType(path.dirname(configPath)) === 'module') {
+  if (packageScopeType(configPath) === 'module') {
     return;
   }
 
+  // "its package scope" rather than "the nearest package.json": there may be no
+  // manifest at all, or one past a `node_modules` boundary that declares
+  // `"type": "module"` and still does not apply. Naming the scope is true in
+  // every one of those cases, and the parenthesis says what the scope is.
   console.warn(
-    `Warning: ${configPath} will be read as CommonJS, because the nearest ` +
-      'package.json does not declare "type": "module".'
+    `Warning: ${configPath} will be read as CommonJS, because its package scope ` +
+      'does not declare "type": "module".'
   );
+  console.warn('  (That scope is the nearest package.json above the file, and stops at a');
+  console.warn('  node_modules directory — nothing past one is consulted.)');
   console.warn('  tsx applies its CommonJS transform with no ESM reparse, which leaves');
   console.warn('  import.meta.dirname and import.meta.filename undefined — so an ESM config');
   console.warn('  reading either one loads with no error and a wrong value in it.');

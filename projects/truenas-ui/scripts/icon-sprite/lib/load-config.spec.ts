@@ -34,10 +34,17 @@ const tsxCli = path.join(repoRoot, 'node_modules', 'tsx', 'dist', 'cli.mjs');
 interface CaseDefinition {
   /** What the consumer's own `package.json` says — `type` is what decides the config's kind. */
   packageJson: Record<string, unknown>;
+  /** Relative to the project root, so a `/` in it puts the config in a subdirectory. */
   configFile: string;
   contents: string;
   /** Set on the case that is about the file not being there. Defaults to writing it. */
   write?: false;
+  /**
+   * Extra files, by path relative to the project root. Only the walk cases need
+   * this: where a config's *package scope* is depends on what sits between it and
+   * the project root, which a single `packageJson` cannot express.
+   */
+  extraFiles?: Record<string, string>;
 }
 
 interface CaseResult {
@@ -219,6 +226,32 @@ const CASES = {
     contents: "module.exports = { srcDirs: ['./src/ts'] };",
   },
 
+  /**
+   * Where the walk stops, half one: the closest manifest decides even when it
+   * declares nothing. The project root says `"type": "module"` and the config's own
+   * directory has a manifest that does not, so tsx reads the config as CommonJS —
+   * an implementation that skipped the typeless manifest to find a typed one would
+   * answer `"module"` and say nothing.
+   */
+  'ts-config-under-a-typeless-nested-manifest': {
+    packageJson: { type: 'module' },
+    configFile: 'tools/truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+    extraFiles: { 'tools/package.json': '{ "name": "nested-tools", "version": "1.0.0" }' },
+  },
+
+  /**
+   * Where the walk stops, half two: a `node_modules` directory ends it. There is no
+   * manifest inside it, so a walk that merely looks for the nearest one keeps going
+   * and finds the project root's `"type": "module"` — which is not what tsx does,
+   * and the config loads as CommonJS with nothing said.
+   */
+  'ts-config-inside-node-modules': {
+    packageJson: { type: 'module' },
+    configFile: 'node_modules/truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+  },
+
   // The CommonJS half of that pair: an extension that rules ESM out, so the
   // CommonJS loader is the one that reads it.
   'commonjs-config-named-cts': {
@@ -348,8 +381,19 @@ beforeAll(() => {
       JSON.stringify({ name, version: '1.0.0', ...definition.packageJson })
     );
 
+    // Before the config, since a case may place one inside a directory that an
+    // extra file is what creates.
+    for (const [relativePath, contents] of Object.entries(definition.extraFiles ?? {})) {
+      const target = path.join(projectRoot, relativePath);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, contents);
+    }
+
     if (definition.write !== false) {
-      fs.writeFileSync(path.join(projectRoot, definition.configFile), definition.contents);
+      const configTarget = path.join(projectRoot, definition.configFile);
+      // `configFile` may name a subdirectory — that is what the walk cases vary.
+      fs.mkdirSync(path.dirname(configTarget), { recursive: true });
+      fs.writeFileSync(configTarget, definition.contents);
     }
   }
 
@@ -599,6 +643,25 @@ describe('a .ts config that tsx will read as CommonJS', () => {
       expect(resultFor(name as keyof typeof CASES).warnings).toEqual([]);
     }
   );
+
+  /**
+   * **Where the walk stops, which is the half that cannot be checked by varying the
+   * project root's own manifest.** Both cases sit under a project declaring
+   * `"type": "module"` and are still read as CommonJS, so each one fails if the
+   * scope is computed by looking for the nearest manifest that *has* a `type`, or
+   * by walking past `node_modules`. Read off tsx's own `findPackageJson`; the
+   * asserted `['undefined']` is that resolver's answer, measured here rather than
+   * predicted.
+   */
+  it.each([
+    ['ts-config-under-a-typeless-nested-manifest'],
+    ['ts-config-inside-node-modules'],
+  ] as const)('warns for %s, whose scope is not the project root', (name) => {
+    const { config, warnings } = resultFor(name);
+
+    expect(config.srcDirs).toEqual(['undefined']);
+    expect(warnings.join('\n')).toContain('will be read as CommonJS');
+  });
 });
 
 describe('a JSON config', () => {

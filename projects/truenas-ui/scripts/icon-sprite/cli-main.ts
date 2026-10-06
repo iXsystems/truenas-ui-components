@@ -19,9 +19,10 @@
  *   Create truenas-icons.config.js in your project root, as ESM or as CommonJS —
  *   either is read. A .cjs, .mjs, .cts, .mts or .json file is read too when named
  *   with --config. For TypeScript prefer .mts or .cts: a bare .ts takes its module
- *   kind from the nearest package.json, so without "type": "module" tsx reads it as
- *   CommonJS and leaves import.meta undefined — which is warned about rather than
- *   loaded quietly. See `lib/load-config.ts` for which shapes are read and how.
+ *   kind from its package scope, so without "type": "module" tsx reads it as
+ *   CommonJS and leaves import.meta.dirname undefined — which is warned about
+ *   rather than loaded quietly. See `lib/load-config.ts` for which shapes are read
+ *   and how.
  *
  *   export default {
  *     srcDirs: ['./src/lib', './src/app'],
@@ -86,10 +87,11 @@ Configuration File:
   npx truenas-icons generate --config truenas-icons.config.cjs
 
   For a TypeScript config, name it .mts if it is ESM or .cts if it is CommonJS.
-  Both are decided by their extension. A bare .ts takes its module kind from the
-  nearest package.json instead, so unless that declares "type": "module" it is
-  read as CommonJS whatever it contains, leaving import.meta.dirname undefined;
-  that case is warned about rather than loaded quietly.
+  Both are decided by their extension. A bare .ts takes its module kind from its
+  package scope instead — the nearest package.json above it, stopping at any
+  node_modules directory — so unless that declares "type": "module" it is read as
+  CommonJS whatever it contains, leaving import.meta.dirname undefined; that case
+  is warned about rather than loaded quietly.
 
   npx truenas-icons generate --config truenas-icons.config.mts
 
