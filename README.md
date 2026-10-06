@@ -290,7 +290,6 @@ package declares, verbatim:
   "@angular/forms": "^22.0.0",
   "@angular/platform-browser": "^22.0.0",
   "@angular/router": "^22.0.0",
-  "@mdi/angular-material": "^7.2.96",
   "@mdi/js": "^7.4.47",
   "rxjs": "^7.5.0"
 }
@@ -298,10 +297,11 @@ package declares, verbatim:
 
 That block is checked against `projects/truenas-ui/package.json` by
 `scripts/package-contract/declared-dependencies.spec.ts`, so it cannot drift
-from what the package declares. The same test walks the published entry point's
-import graph and fails when the library imports a package the contract does not
-declare — which is how the `@angular/forms` and `rxjs` omission above was found,
-after it had shipped.
+from what the package declares. The same test walks the published package's
+import graphs and fails when something it ships imports a package the contract
+does not declare — which is how the `@angular/forms` and `rxjs` omission above
+was found, after it had shipped — and also when the contract declares a package
+nothing shipped imports. See "the check covers both halves" below.
 
 **`rxjs` says `^7.5.0`, not the `^7.8.2` this workspace builds against.** The
 newest rxjs feature the library's source uses is the top-level operator
@@ -365,12 +365,38 @@ The check guards every namespace `@types/jest` declares, not just `jest`:
 here uses it, which is exactly why it is listed — an unguarded namespace only
 leaks once someone writes it.
 
-**What that check does not cover:** it walks the import graph from
-`src/public-api.ts`, and the published package is more than that graph.
-`ng-package.json` also copies `projects/truenas-ui/scripts/` in as assets, which
-is what the `truenas-icons` bin runs, and those files import `fast-glob` —
-declared in the workspace root's `package.json` and not in this one. So the list
-above is complete for what a consumer `import`s and not for what the bin needs.
+**The check covers both halves of the published package, because it has two.** A
+consumer reaches this library by importing it and by running the `truenas-icons`
+bin, and those are different trees: the first is the graph under
+`ng-package.json`'s `lib.entryFile`, the second is `projects/truenas-ui/scripts/`,
+copied in wholesale by the `assets` globs and run through tsx rather than
+compiled. For a while only the first was walked, which is how `fast-glob` came to
+be imported by the shipped bin and declared nowhere — `npx truenas-icons` hit an
+unresolvable module in a consumer install while the suite stayed green (#359).
+
+Both roots are read out of the manifests rather than written into the test, so a
+new `bin` command or a changed asset glob is picked up without the test being
+edited. The bin's chain is joined by a `spawn` rather than an import — `cli.cjs`
+names `cli-main.ts` in a string and hands it to `npx tsx` — so the walk follows a
+string literal that resolves to a file, which is the only edge there is.
+
+**A package the bin needs belongs in `dependencies`**, not in
+`peerDependencies`: the bin is run rather than compiled against, so there is no
+consumer tree to resolve a range against. Adding one means adding it to
+`ng-package.json`'s `allowedNonPeerDependencies` as well, or `yarn build` fails.
+
+**The check also runs in the other direction: a declared package that nothing
+shipped imports fails it.** `peerDependencies` is a demand on the consumer's
+tree, and since npm 7 an unsatisfiable one aborts their install, so a peer this
+library never touches can break an install for no benefit — `@mdi/angular-material`
+was declared that way for an unknown length of time and is gone (#359). The
+legitimate cases are listed in the spec's `DECLARED_WITHOUT_AN_IMPORT` with the
+route that reaches each, because every one of them is reached by something an
+import graph cannot see: `tslib` through the helper calls the compiler emits,
+`tsx` through the bin's `spawn`, and `@mdi/svg` and
+`@material-design-icons/svg` through files read out of `node_modules` by path.
+`@types/*` needs no entry — a types package is reached through the package it
+types.
 
 **Angular 22 only, not `^21.0.0 || ^22.0.0`.** The library is built in partial
 compilation mode, so the Angular linker in the consumer's build has to be at

@@ -9,35 +9,74 @@
  * packages that sit in the library's own `dependencies` and would otherwise have to be
  * peers; nothing there looks at a package that is imported and declared nowhere.
  *
- * So this walks the published entry point's own import graph and checks every bare module
- * specifier against the declared set. Walking from `src/public-api.ts` rather than globbing
- * `src/lib/**` is what makes "shipped" mean shipped: specs, stories and helpers no entry
- * point reaches are excluded because nothing imports them, not because a filename pattern
- * said so.
+ * So this walks the published package's import graphs and checks every bare module specifier
+ * against the declared set. Walking from an entry point rather than globbing `src/lib/**` is
+ * what makes "shipped" mean shipped: specs, stories and helpers no entry point reaches are
+ * excluded because nothing imports them, not because a filename pattern said so.
+ *
+ * **There are two entry points, and the first version of this check only knew one.** A
+ * consumer reaches the library by importing it, and also by running the `truenas-icons` bin
+ * that `package.json`'s `bin` map declares — and the bin is a different tree, copied in
+ * wholesale by `ng-package.json`'s `assets` rather than compiled through
+ * `lib.entryFile`. Walking only the latter is how `fast-glob` came to be imported by the
+ * shipped `truenas-icons` bin and declared nowhere (#359): `npx truenas-icons` in a consumer
+ * install hit an unresolvable module, and the suite was green, because the only file that could
+ * have reported it was looking at the other half of the package.
+ *
+ * Both halves are read out of the manifests rather than written down here, because the manifests
+ * are what actually decide: `lib.entryFile` is the import surface, `bin` is the executable one,
+ * and `assets` is what makes the second one reach a consumer at all. Hardcoding a second path
+ * would have fixed `fast-glob` and nothing after it.
  *
  * It lives out here rather than under `projects/truenas-ui/scripts/` for the reason given in
  * `projects/truenas-ui/scripts/jest.config.ts`: `ng-package.json` copies that directory into
  * the published package as an asset, so a test placed there would ship to consumers and cut
- * a release every time it changed.
+ * a release every time it changed. That is also why this file may import `fast-glob` freely —
+ * it is not in either shipped graph, so its own imports are not part of the contract it checks.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { builtinModules } from 'node:module';
-import { dirname, join, relative } from 'node:path';
+import { dirname, extname, join, relative } from 'node:path';
+import fg from 'fast-glob';
 import ts from 'typescript';
 
 const repoRoot = join(__dirname, '..', '..');
 const libRoot = join(repoRoot, 'projects', 'truenas-ui');
-const entryPoint = join(libRoot, 'src', 'public-api.ts');
 
 interface PackageJson {
   name: string;
+  /** Command name to the script it runs, lib-relative. */
+  bin?: Record<string, string>;
   dependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
+}
+
+interface NgPackage {
+  /** Globs copied into the published package verbatim, lib-relative. */
+  assets: string[];
+  lib: { entryFile: string };
+  allowedNonPeerDependencies?: string[];
 }
 
 const libPackage = JSON.parse(
   readFileSync(join(libRoot, 'package.json'), 'utf8')
 ) as PackageJson;
+
+const ngPackage = JSON.parse(
+  readFileSync(join(libRoot, 'ng-package.json'), 'utf8')
+) as NgPackage;
+
+/** The import surface, as ng-packagr is told it rather than as this file assumes it. */
+const entryPoint = join(libRoot, ngPackage.lib.entryFile);
+
+/**
+ * Every file the asset globs copy into the published package, lib-relative.
+ *
+ * Globbed with a real glob engine rather than matched by hand: `assets` takes arbitrary
+ * patterns, and a hand-rolled matcher that quietly failed to match would report the shipped
+ * tree as empty — which reads as "nothing ships" and passes every check below.
+ */
+const shippedAssets = new Set(fg.sync(ngPackage.assets, { cwd: libRoot, dot: true }));
 
 /**
  * What a consumer is guaranteed to have: npm installs a `dependencies` entry outright, and
@@ -126,6 +165,49 @@ const TYPES_USED_ONLY_INTERNALLY: InternalTypesExemption[] = [
   { types: 'jest', namespaces: ['jest', 'jasmine'] },
 ];
 
+/**
+ * A declared package that no shipped file imports, and why it is declared anyway.
+ *
+ * **This is the other direction of the same contract, and it was unchecked.** Everything above
+ * asks whether an import is declared; nothing asked whether a declaration is reached. A peer
+ * nothing needs is not harmless — `peerDependencies` is a demand on the consumer's tree, and
+ * since npm 7 an unsatisfiable one is an `ERESOLVE` install failure, so declaring a package the
+ * library never touches makes someone else's install our problem for no benefit. #359 found
+ * `@mdi/angular-material` in exactly that state and removed it.
+ *
+ * A reason is mandatory because the legitimate cases are all the same shape — **a package that
+ * reaches the published artefact by some route other than a module specifier** — and that route
+ * is the only thing distinguishing them from a stale declaration. None of them can be inferred
+ * from an import graph, which is the whole point:
+ *
+ * - `tslib` — the compiler emits calls to it. `importHelpers` means nothing in the source names
+ *   it and every build output depends on it.
+ * - `tsx` — `scripts/icon-sprite/cli.cjs` *spawns* `npx tsx`, so the bin cannot run without it
+ *   while no file imports it. A spawn is a dependency the graph cannot see.
+ * - `@mdi/svg` and `@material-design-icons/svg` — SVG source packages, read off disk by path
+ *   (`resolve(nodeModulesPath, '@mdi/svg/svg/<name>.svg')` in `lib/get-icon-paths.ts`) rather
+ *   than imported. The sprite build fails without them.
+ *
+ * `@types/*` is deliberately absent: a types package is reached through the package it types,
+ * not through a specifier of its own, so `isReached` resolves that itself rather than asking
+ * for an exemption per entry. Writing them down here would mean a new `@types/x` beside a
+ * declared `x` needed a hand-written note to say the obvious.
+ */
+interface UnimportedDeclaration {
+  name: string;
+  reason: string;
+}
+
+const DECLARED_WITHOUT_AN_IMPORT: UnimportedDeclaration[] = [
+  { name: 'tslib', reason: 'the compiler emits helper calls to it; importHelpers' },
+  { name: 'tsx', reason: 'scripts/icon-sprite/cli.cjs spawns `npx tsx` to run cli-main.ts' },
+  { name: '@mdi/svg', reason: 'SVG sources the sprite build reads from node_modules by path' },
+  {
+    name: '@material-design-icons/svg',
+    reason: 'SVG sources the sprite build reads from node_modules by path',
+  },
+];
+
 const builtins = new Set(builtinModules);
 
 /** Whether `name` from a types directive resolves: `@types/name` counts, as does `name` itself. */
@@ -148,12 +230,49 @@ function packageOf(specifier: string): string | null {
   return builtins.has(name) ? null : name;
 }
 
+/**
+ * The TypeScript source extension an ESM-style specifier stands in for.
+ *
+ * `import { generateSprite } from './generate-sprite.js'` is the correct way to write that
+ * import under `Node16` resolution, and the file on disk is `generate-sprite.ts` — the `.js` is
+ * what the emitted JavaScript will name, not what exists. The bin tree is written this way
+ * throughout, and a resolver that only appended `.ts` looked for `generate-sprite.js.ts`,
+ * found nothing, and stopped the walk one file in — with `fast-glob` three files further on.
+ */
+const SOURCE_FOR_EMITTED: Record<string, string> = {
+  '.js': '.ts',
+  '.mjs': '.mts',
+  '.cjs': '.cts',
+};
+
+/** Extensions a specifier may name outright, where the file on disk is the file named. */
+const SCRIPT_EXTENSIONS = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs'];
+
+function isFile(path: string): boolean {
+  return existsSync(path) && statSync(path).isFile();
+}
+
 /** The file a relative specifier resolves to, or null when nothing on disk matches it. */
 function resolveRelative(importer: string, specifier: string): string | null {
   const base = join(dirname(importer), specifier);
+  const extension = extname(base);
+  const source = SOURCE_FOR_EMITTED[extension];
 
-  for (const candidate of [`${base}.ts`, join(base, 'index.ts'), `${base}.d.ts`]) {
-    if (existsSync(candidate)) {
+  const candidates = [
+    // Before the literal path, because where both exist the `.ts` is the one this repo keeps
+    // and the `.js` would be build output.
+    ...(source === undefined ? [] : [`${base.slice(0, -extension.length)}${source}`]),
+    `${base}.ts`,
+    join(base, 'index.ts'),
+    `${base}.d.ts`,
+    // A specifier that names its own extension, which is how the `.cjs` wrappers refer to each
+    // other. Guarded on the extension because an extensionless specifier's `base` is usually a
+    // directory, and a directory passes `existsSync` while being unreadable as a module.
+    ...(SCRIPT_EXTENSIONS.includes(extension) ? [base] : []),
+  ];
+
+  for (const candidate of candidates) {
+    if (isFile(candidate)) {
       return candidate;
     }
   }
@@ -192,6 +311,24 @@ interface FileDependencies {
    * that is used and contained appears here and not there.
    */
   namespaceRoots: string[];
+  /**
+   * String literals that name a script file — `cli-main.ts` from
+   * `path.join(scriptDir, 'cli-main.ts')`.
+   *
+   * **This is the edge the bin chain is joined by, and no import expresses it.** `cli.cjs` does
+   * not import its real entry point; it `spawn`s `npx tsx <that file>`, because the published
+   * package ships TypeScript and runs it through tsx rather than compiling it. So the static
+   * graph out of the bin target is two node builtins and nothing else — which is to say that
+   * walking from `bin` without this finds no packages, reports no undeclared ones, and is
+   * indistinguishable from a bin whose dependencies are all declared.
+   *
+   * A literal is collected on the strength of its extension alone, and resolution is what
+   * filters it: an unrelated string that happens to end in `.ts` resolves to no file and is
+   * dropped. That errs towards following an edge that is not there rather than missing one that
+   * is, which is the right way round — a spurious root adds files to a walk that was going to
+   * read them anyway, while a missing one silently empties it.
+   */
+  spawnedScripts: string[];
 }
 
 /**
@@ -216,6 +353,7 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
   const specifiers: string[] = [];
   const exposedNamespaces: string[] = [];
   const namespaceRoots: string[] = [];
+  const spawnedScripts: string[] = [];
 
   /** `jest` from `jest.Mock`, and nothing from an unqualified `Mock`. */
   const leftmostOf = (name: ts.EntityName): string | null => {
@@ -332,13 +470,26 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
       specifiers.push(node.argument.literal.text);
     } else if (
       ts.isCallExpression(node) &&
-      node.expression.kind === ts.SyntaxKind.ImportKeyword
+      (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+        // `require('x')`, which the walk now meets for real: the shipped `.cjs` wrappers are
+        // CommonJS by extension (#362) and that is the only form they have.
+        (ts.isIdentifier(node.expression) && node.expression.text === 'require'))
     ) {
       const [first] = node.arguments;
 
       if (first !== undefined && ts.isStringLiteral(first)) {
         specifiers.push(first.text);
       }
+    }
+
+    if (
+      (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
+      SCRIPT_EXTENSIONS.includes(extname(node.text))
+    ) {
+      // An import specifier lands here too — `'./generate-sprite.js'` is a string literal
+      // naming a script. That costs nothing: it resolves to the file the import already
+      // queued, and the walk's `seen` set drops it.
+      spawnedScripts.push(node.text);
     }
 
     const body = shielded ? undefined : shieldedBodyOf(node);
@@ -355,6 +506,7 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
     // property access inside it, and one file naming `jest` once is the same fact as twice.
     exposedNamespaces: [...new Set(exposedNamespaces)],
     namespaceRoots: [...new Set(namespaceRoots)],
+    spawnedScripts: [...new Set(spawnedScripts)],
   };
 }
 
@@ -372,19 +524,33 @@ interface Graph {
   exposedNamespaces: Map<string, string[]>;
   /** The same roots to every file using one, exposed or shielded. */
   namespaceRoots: Map<string, string[]>;
-  /** Every file reached from the entry point, repo-relative. */
+  /** Every file reached from the roots, repo-relative. */
   files: string[];
   /** Relative specifiers that resolved to no file — a walk that stopped short. */
   unresolved: string[];
 }
 
-function walkFromEntryPoint(): Graph {
+/**
+ * Every file reachable from `roots`, and what they depend on.
+ *
+ * Takes its roots rather than naming one, because the published package has two unrelated
+ * entries into it — the import surface and the bin — and they are discovered differently. One
+ * walk over the union would have done for the package check alone; they are kept apart because
+ * the *types* half of this file is a statement about declaration emit, which only happens for
+ * `lib.entryFile`. The bin tree ships as raw source and is run under tsx, so a types directive
+ * or an exposed namespace in it reaches nobody's compiler and would be a false positive there.
+ *
+ * @param followSpawned whether to treat a script-naming string literal as an edge. Only the bin
+ * needs it — see `FileDependencies.spawnedScripts` — and switching it off for the entry point
+ * keeps a path in a component's string constant from pulling a file into the import graph.
+ */
+function walk(roots: string[], followSpawned = false): Graph {
   const packages = new Map<string, string[]>();
   const typeReferences = new Map<string, string[]>();
   const exposedNamespaces = new Map<string, string[]>();
   const namespaceRoots = new Map<string, string[]>();
   const unresolved: string[] = [];
-  const queue = [entryPoint];
+  const queue = [...roots];
   const seen = new Set(queue);
 
   const record = (into: Map<string, string[]>, name: string, file: string): void => {
@@ -433,6 +599,21 @@ function walkFromEntryPoint(): Graph {
         record(packages, name, file);
       }
     }
+
+    if (!followSpawned) {
+      continue;
+    }
+
+    for (const script of dependencies.spawnedScripts) {
+      const target = resolveRelative(file, script);
+
+      // Silently, unlike an unresolved import: a literal is a guess at an edge, so one that
+      // names no file is the ordinary case rather than a walk that stopped short.
+      if (target !== null && !seen.has(target)) {
+        seen.add(target);
+        queue.push(target);
+      }
+    }
   }
 
   return {
@@ -445,7 +626,60 @@ function walkFromEntryPoint(): Graph {
   };
 }
 
-const graph = walkFromEntryPoint();
+/**
+ * The scripts `package.json`'s `bin` map points at, lib-relative and as declared.
+ *
+ * Read from the manifest rather than written down, because the manifest is what a consumer's
+ * `npx` reads. #362 renamed this target from `cli.js` to `cli.cjs`; a hardcoded path here would
+ * have survived that rename as a file that no longer exists, and a walk from a file that does
+ * not exist is a walk that finds nothing.
+ */
+const binTargets = Object.values(libPackage.bin ?? {});
+
+const binRoots = binTargets.map((target) => join(libRoot, target)).filter(isFile);
+
+/** Reached by importing the package. */
+const graph = walk([entryPoint]);
+
+/** Reached by running the `truenas-icons` command the package declares. */
+const binGraph = walk(binRoots, true);
+
+/** Every package either half of the published artefact reaches through a specifier. */
+const imported = new Set([...graph.packages.keys(), ...binGraph.packages.keys()]);
+
+/**
+ * The package a `@types/...` name provides types for, undoing npm's scope mangling —
+ * `@types/svg-sprite` types `svg-sprite`, and `@types/scope__name` types `@scope/name`.
+ */
+function packageTypedBy(types: string): string | null {
+  const match = /^@types\/(.+)$/.exec(types);
+
+  if (match === null) {
+    return null;
+  }
+
+  const [scope, name] = match[1].split('__');
+
+  return name === undefined ? scope : `@${scope}/${name}`;
+}
+
+/**
+ * Whether a declared package is reached by anything that ships.
+ *
+ * A types package is reached through the package it types rather than through a specifier of its
+ * own — nothing writes `import '@types/vinyl'` — so `@types/vinyl` counts as reached while
+ * `vinyl` is imported. Resolving that here rather than in `DECLARED_WITHOUT_AN_IMPORT` is what
+ * keeps the exemption list down to the four packages whose route genuinely cannot be inferred.
+ */
+function isReached(name: string): boolean {
+  if (imported.has(name)) {
+    return true;
+  }
+
+  const typed = packageTypedBy(name);
+
+  return typed !== null && (imported.has(typed) || graph.typeReferences.has(typed));
+}
 
 describe('the reader', () => {
   /**
@@ -573,10 +807,81 @@ describe('the reader', () => {
     expect(read('export interface M extends Mocked<S> {}').exposedNamespaces).toEqual([]);
   });
 
+  /**
+   * The CommonJS half, which the walk only started meeting when it reached the bin: the shipped
+   * wrappers are `.cjs` by extension (#362) and `require` is the only import form they have.
+   */
+  it('sees a package behind require()', () => {
+    expect(read("const fg = require('fast-glob');").specifiers).toEqual(['fast-glob']);
+  });
+
+  it('ignores a require of something that is not a literal', () => {
+    expect(read('const config = require(configPath);').specifiers).toEqual([]);
+  });
+
+  /**
+   * And the spawn edge. `cli.cjs` names its real entry point in a string and hands it to `npx
+   * tsx`, so without this the bin's graph is two builtins — which reports no undeclared
+   * packages and looks exactly like a bin with none.
+   */
+  it('sees a script named in a string literal', () => {
+    expect(read("const cliPath = path.join(scriptDir, 'cli-main.ts');").spawnedScripts).toEqual([
+      'cli-main.ts',
+    ]);
+  });
+
+  it('sees one in a template literal with no substitutions', () => {
+    expect(read('const p = `cli-main.ts`;').spawnedScripts).toEqual(['cli-main.ts']);
+  });
+
+  it('ignores a string that names no script', () => {
+    expect(
+      read("const p = path.join(scriptDir, '../../node_modules/.bin/tsx');").spawnedScripts
+    ).toEqual([]);
+  });
+
   it('reads the types directive beside them', () => {
     expect(read('/// <reference types="jest" />\nexport const x = 1;').typeReferences).toEqual([
       'jest',
     ]);
+  });
+});
+
+/**
+ * Exercised on files that really exist, because the thing it has to get right is how this
+ * repo's two halves spell their imports — and both spellings are on disk.
+ */
+describe('the resolver', () => {
+  const spriteDir = join(libRoot, 'scripts', 'icon-sprite');
+
+  /**
+   * The one that silently emptied the bin walk. `./generate-sprite.js` is correct under `Node16`
+   * resolution and the file is `generate-sprite.ts`; appending `.ts` looks for
+   * `generate-sprite.js.ts`, finds nothing, and stops one file short of `fast-glob`.
+   */
+  it('resolves an ESM-style .js specifier to the .ts file on disk', () => {
+    expect(resolveRelative(join(spriteDir, 'cli-main.ts'), './generate-sprite.js')).toBe(
+      join(spriteDir, 'generate-sprite.ts')
+    );
+  });
+
+  it('still resolves the extensionless form the library itself uses', () => {
+    expect(resolveRelative(join(spriteDir, 'generate-sprite.ts'), './lib/build-sprite')).toBe(
+      join(spriteDir, 'lib', 'build-sprite.ts')
+    );
+  });
+
+  /**
+   * A directory passes `existsSync`, so admitting the literal path for every specifier would
+   * have queued one and crashed the walk on `readFileSync`. The extension guard is what stops
+   * it, and `scripts/icon-sprite/lib` is a real directory with no `index.ts`.
+   */
+  it('does not resolve a specifier that names a directory', () => {
+    expect(resolveRelative(join(spriteDir, 'generate-sprite.ts'), './lib')).toBeNull();
+  });
+
+  it('resolves nothing for a specifier naming no file', () => {
+    expect(resolveRelative(join(spriteDir, 'cli-main.ts'), './not-a-file.js')).toBeNull();
   });
 });
 
@@ -639,6 +944,62 @@ describe('the walk itself', () => {
   });
 });
 
+/**
+ * Every one of these is a way the bin half could pass while having examined nothing, and it has
+ * more of them than the entry point does: its root comes out of a manifest field, its first edge
+ * is a string literal rather than an import, and its files spell their imports in a form the
+ * original resolver did not handle. Any one of those failing leaves an empty graph, and an empty
+ * graph reports no undeclared packages — which is the same output as a bin with none.
+ */
+describe('the walk from the bin', () => {
+  it('has a root to walk from at all', () => {
+    expect(binRoots.length).toBeGreaterThan(0);
+  });
+
+  it('starts from the file the bin map actually names', () => {
+    expect(binGraph.files).toContain('projects/truenas-ui/scripts/icon-sprite/cli.cjs');
+  });
+
+  /**
+   * The spawn edge, end to end. `cli.cjs` reaches `cli-main.ts` through a string literal and a
+   * `spawn`, and nothing else connects them — so this failing means the bin's whole chain is
+   * missing while the suite still reports a green contract.
+   */
+  it('crosses the spawn into the TypeScript entry point', () => {
+    expect(binGraph.files).toContain('projects/truenas-ui/scripts/icon-sprite/cli-main.ts');
+  });
+
+  it('follows the chain past it to the files that import packages', () => {
+    expect(binGraph.files).toContain(
+      'projects/truenas-ui/scripts/icon-sprite/lib/find-icons-in-templates.ts'
+    );
+  });
+
+  /**
+   * The package #359 was filed about. Named rather than counted, because it is the one the
+   * published bin could not resolve and the reason this walk exists.
+   */
+  it('sees the fast-glob the published bin needs', () => {
+    expect(binGraph.packages.get('fast-glob')).toContain(
+      'projects/truenas-ui/scripts/icon-sprite/lib/find-icons-in-templates.ts'
+    );
+  });
+
+  it('resolves every relative specifier it meets', () => {
+    expect(binGraph.unresolved).toEqual([]);
+  });
+
+  /**
+   * The two halves are different trees, and conflating them would make the entry-point tests
+   * above meaningless — `graph.files` is asserted to be large, so a bin graph that had somehow
+   * become the same object would pass everything.
+   */
+  it('is a different tree from the entry point, not the same one twice', () => {
+    expect(binGraph.files).not.toContain(relative(repoRoot, entryPoint));
+    expect(graph.files).not.toContain('projects/truenas-ui/scripts/icon-sprite/cli.cjs');
+  });
+});
+
 describe('projects/truenas-ui/package.json', () => {
   it('declares every package the published entry point imports', () => {
     const undeclared: Record<string, string[]> = {};
@@ -651,6 +1012,53 @@ describe('projects/truenas-ui/package.json', () => {
     }
 
     expect(undeclared).toEqual({});
+  });
+
+  /**
+   * The same question for the other entry point, and the one #359 is about. A consumer runs
+   * `npx truenas-icons`; the package has to resolve everything that chain imports, and nothing
+   * about the import surface's own graph says whether it does.
+   *
+   * `UNDECLARED_PENDING_A_DECISION` is deliberately not consulted here. Everything the bin
+   * reaches belongs in `dependencies` — the bin is run, not compiled against, so there is no
+   * peer range to get wrong and nothing to defer. That list exists for the judgement call a peer
+   * needs; a missing runtime dependency of a command is just missing.
+   */
+  it('declares every package the published bin imports', () => {
+    const undeclared: Record<string, string[]> = {};
+
+    for (const [name, importers] of binGraph.packages) {
+      if (!declared.has(name)) {
+        undeclared[name] = importers;
+      }
+    }
+
+    expect(undeclared).toEqual({});
+  });
+
+  /**
+   * And the direction nothing checked until #359. A declaration nothing reaches is not tidy-up:
+   * a `peerDependencies` entry is a demand on the consumer's tree that npm 7 enforces by failing
+   * the install, so an unnecessary one can break an install that would otherwise work, for a
+   * package the library never touches. `@mdi/angular-material` was declared that way and is gone.
+   *
+   * The legitimate cases are in `DECLARED_WITHOUT_AN_IMPORT` with the route that reaches them,
+   * because every one of them is reached by something an import graph cannot see — emitted
+   * helper calls, a spawn, a file read from `node_modules` by path.
+   */
+  it('declares nothing that no shipped file reaches', () => {
+    const unreached: Record<string, string> = {};
+    const exempt = new Set(DECLARED_WITHOUT_AN_IMPORT.map(({ name }) => name));
+
+    for (const name of declared) {
+      if (!isReached(name) && !exempt.has(name)) {
+        unreached[name] =
+          'declared but imported by neither the entry point nor the bin — remove it, or ' +
+          'add it to DECLARED_WITHOUT_AN_IMPORT with the route that reaches it';
+      }
+    }
+
+    expect(unreached).toEqual({});
   });
 
   it('declares the types every file it reaches references', () => {
@@ -669,7 +1077,7 @@ describe('projects/truenas-ui/package.json', () => {
   });
 
   /**
-   * Both deferred lists are asserted in one test, iterating rather than `it.each`, because
+   * All three deferred lists are asserted in one test, iterating rather than `it.each`, because
    * `it.each([])` throws `.each called with an empty Array of table data` — so the moment
    * someone does the thing the comments above ask for and empties a list, the suite goes red
    * with a message about table data. A tripwire that fails on being disarmed is not one.
@@ -684,6 +1092,26 @@ describe('projects/truenas-ui/package.json', () => {
 
       if ((graph.packages.get(name)?.length ?? 0) === 0) {
         stale.push(`${name}: no longer imported — delete it from UNDECLARED_PENDING_A_DECISION`);
+      }
+    }
+
+    /**
+     * An exemption here is a claim about a route an import graph cannot see, so the only part of
+     * it that can be checked mechanically is whether it still applies at all: a package that has
+     * stopped being declared needs no exemption, and one that is now imported outright is covered
+     * by the ordinary check and should stop claiming a special route.
+     *
+     * The reason itself is not checkable, which is why it is required to be written rather than
+     * implied by membership.
+     */
+    for (const { name } of DECLARED_WITHOUT_AN_IMPORT) {
+      if (!declared.has(name)) {
+        stale.push(`${name}: no longer declared — delete it from DECLARED_WITHOUT_AN_IMPORT`);
+      } else if (imported.has(name)) {
+        stale.push(
+          `${name}: now imported by a shipped file, so it needs no exemption — delete it from ` +
+            'DECLARED_WITHOUT_AN_IMPORT'
+        );
       }
     }
 
@@ -762,6 +1190,54 @@ describe('projects/truenas-ui/package.json', () => {
     }
 
     expect(leaked).toEqual({});
+  });
+});
+
+/**
+ * Declaring the bin's dependencies is only half of making `npx truenas-icons` work: the files
+ * themselves reach a consumer as ng-package *assets*, so a bin target the asset globs do not
+ * match is a command the published package declares and does not contain.
+ *
+ * `bin-module-scope.spec.ts` checks these targets exist in the source tree and that their
+ * extensions fix their module kind. It takes the `scripts` directory as given, which is the one
+ * thing that is not: it is given by the glob list here.
+ */
+describe("ng-package.json's assets, and the bin they have to carry", () => {
+  it('matches files at all, rather than silently matching nothing', () => {
+    expect(shippedAssets.size).toBeGreaterThan(0);
+  });
+
+  it('copies every file the bin map points at', () => {
+    const missing = binTargets.filter((target) => !shippedAssets.has(target));
+
+    expect(missing).toEqual([]);
+  });
+
+  /**
+   * Not just the entry: a wrapper that ships without the chain it spawns is the same broken
+   * command one file further in, and the whole chain is only knowable by walking it.
+   */
+  it('copies every file the bin chain reaches', () => {
+    const missing = binGraph.files
+      .map((file) => relative(libRoot, join(repoRoot, file)))
+      .filter((file) => !shippedAssets.has(file));
+
+    expect(missing).toEqual([]);
+  });
+
+  /**
+   * One direction only, deliberately. ng-packagr enforces the other one itself — a package in
+   * `dependencies` that is missing from this list fails the build — so a test for it would only
+   * restate what `yarn build` already says. A *stale* entry is what nothing reports: it names a
+   * package that is no longer a dependency, and ng-packagr has no reason to mind.
+   */
+  it('whitelists no package that is no longer a dependency', () => {
+    const dependencies = new Set(Object.keys(libPackage.dependencies ?? {}));
+    const stale = (ngPackage.allowedNonPeerDependencies ?? []).filter(
+      (name) => !dependencies.has(name)
+    );
+
+    expect(stale).toEqual([]);
   });
 });
 

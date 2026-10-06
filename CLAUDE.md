@@ -210,14 +210,23 @@ last slot on a summary naming the rest, so **the detailed message is only
 there for the first nine** — and the summary's list of names is itself cut
 after a few dozen. Its title always carries the exact total.
 
-## A new import under `src/lib/` needs a declaration
+## A new import in anything shipped needs a declaration
 
-`yarn test:scripts` walks the published entry point's import graph and fails
-when the library imports a package that `projects/truenas-ui/package.json`
+`yarn test:scripts` walks the published package's import graphs and fails when
+something it ships imports a package that `projects/truenas-ui/package.json`
 declares in neither `dependencies` nor `peerDependencies`
 (`scripts/package-contract/declared-dependencies.spec.ts`). So **adding
 `import … from '<package>'` to a shipped file can turn `Run Tests` red in a file
 you did not touch.**
+
+**"Shipped" is two trees, not one.** The library's own graph starts at
+`ng-package.json`'s `lib.entryFile`; the `truenas-icons` bin's starts at the
+`bin` map and runs through `projects/truenas-ui/scripts/`, which the `assets`
+globs copy in wholesale. Both are read out of the manifests, so a new `bin` or a
+changed glob needs no test edit. A package the *bin* needs goes in
+`dependencies` — it is run, not compiled against, so there is no range for a
+consumer tree to resolve — and must be added to `allowedNonPeerDependencies` too
+or `yarn build` fails.
 
 The fix is to declare it, not to work around the check. Which block it belongs
 in — and, for a peer, which range — is a contract call: since npm 7 a peer the
@@ -229,6 +238,16 @@ it found but was not scoped to decide, listing them in the spec's
 `UNDECLARED_PENDING_A_DECISION` with the reason for each; #358 then decided
 them, so **that list is empty today and is meant to stay that way** — the same
 check fails if an entry is fixed and left in it.
+
+**Sometimes the fix is to remove a declaration instead, and the check reports
+that too:** a declared package nothing shipped imports fails it, because an
+unnecessary `peerDependencies` entry can abort a consumer's npm install for a
+package this library never touches. If it really is needed by a route no import
+graph can see — the compiler emitting `tslib` helpers, the bin spawning `tsx`, an
+SVG package read out of `node_modules` by path — add it to
+`DECLARED_WITHOUT_AN_IMPORT` **with the route written down**, which is the part
+that cannot be inferred. A `@types/*` package needs no entry: it is reached
+through the package it types.
 
 The check reads `/// <reference types="..." />` as well as imports, because
 ng-packagr's flattened `.d.ts` keeps the types a directive resolved and drops the
