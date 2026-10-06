@@ -313,13 +313,56 @@ too.
 
 The `.ts` files there are mostly ESM already — `make-sprite.ts` and
 `lib/add-custom-icons.ts` derive `__dirname` from `import.meta.url`, which is
-the idiom to copy, and tsx reads them as whatever the manifest says. One
-exception is still open: `cli-main.ts`'s `loadConfig` falls back to a bare
+the idiom to copy, and tsx reads them as whatever the manifest says.
+
+**A `require` reached for inside one of them is the same bug wearing a `.ts`
+extension**, and #365 was that: `cli-main.ts`'s `loadConfig` fell back to a bare
 `require(configPath)` when a dynamic `import()` of the consumer's
-`truenas-icons.config.js` fails. Under ESM that `require` is itself a
-`ReferenceError`, and the surrounding `catch` swallows it — so a CommonJS config
-file degrades to `{}` with only a warning rather than being loaded. It does not
-crash the CLI, which is why #362 did not cover it.
+`truenas-icons.config.js` failed, so a config it could not import was dropped to
+`{}` behind a one-line warning rather than loaded. `typeof require` is
+`undefined` in that scope — measured, under tsx, in a package carrying the
+generated `"type": "module"` — so the fallback had never once run. It did not
+crash the CLI, which is why #362 did not cover it. `createRequire()` is the
+route that works from ESM, and `lib/load-config.ts` is where that now lives,
+with the reason each loader exists written next to it.
+
+**`import()` goes first unless the extension rules ESM out — `.cjs`, `.cts`,
+`.json` — and `import()` going first is the load-bearing half.** (The extension
+list only spares a futile first attempt: `import()` reads a `.cjs` correctly
+anyway and fails on JSON before executing anything, so no outcome turns on it.)
+A loader that fails does so at *runtime*, with everything above the failing line
+already run, so
+retrying runs the whole file again: the consumer's config gets its top-level side
+effects twice and the object that reaches the sprite is the second run's. That is
+what guessing `import()` wrong costs. Guessing `require()` wrong costs something
+worse and silent — **tsx's CommonJS transform shims `import.meta.url` and leaves
+`import.meta.dirname` undefined**, so an ESM config read that way loads with no
+error and a wrong value in it.
+
+**Do not replace that with a rule that reads the nearest `package.json`'s
+`type`.** It looks more precise and is wrong in the common case: node has read a
+typeless `.js` as CommonJS *and reparsed it as ESM when that fails* since 22.7, so
+"declares no type" does not mean CommonJS, and treating it that way hands every
+typeless ESM config an undefined `import.meta.dirname`. The kind of a `.js` file
+is not statically knowable — node does not claim to know it either. The only
+question worth asking is the one the extension answers.
+
+One shape that loads is still read twice: `module.exports` in a `.js` file under
+`"type": "module"`, which used to be dropped entirely.
+
+**Testing one of these costs a process, and the reason is worth knowing before
+you write the test.** What a loader does is decided by the module system reading
+it, and Jest is neither of the two that matter: the source tree has no `type`
+field, so the file under test is CommonJS there rather than the ESM it ships as,
+and Jest's CommonJS runtime rewrites `import()` into its own `require`, which
+ignores a package's `type` and wraps every file as CommonJS. An in-process test
+of `loadConfig` therefore passes while asserting something node cannot do.
+`lib/load-config.spec.ts` instead reproduces the publish step for the files it
+covers: it copies them into a package that declares `"type": "module"` and runs
+them under tsx, one spawn for the whole case matrix, reporting through a file.
+**It also asserts that `typeof require` is `undefined` there**, because that is
+the premise — in CommonJS scope the old fallback works, so every case would pass
+while discriminating nothing.
 
 **The two bin maps and the lockfile hold the same paths three times.** The repo
 root's `package.json` declares the commands against `dist/`, and `yarn.lock`

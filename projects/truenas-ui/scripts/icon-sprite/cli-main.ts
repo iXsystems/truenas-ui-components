@@ -16,7 +16,8 @@
  *   --help              Show help
  *
  * Configuration File:
- *   Create truenas-icons.config.js in your project root:
+ *   Create truenas-icons.config.js in your project root, as ESM or as CommonJS —
+ *   either is read. See `lib/load-config.ts` for which shapes are read and how.
  *
  *   export default {
  *     srcDirs: ['./src/lib', './src/app'],
@@ -26,10 +27,9 @@
  */
 
 import { generateSprite } from './generate-sprite.js';
+import { loadConfig } from './lib/load-config.js';
 import { validateIcons, printValidationReport } from './lib/validate-icons.js';
 import { resolveConfig } from './sprite-config-interface.js';
-import fs from 'fs';
-import path from 'path';
 
 const HELP_TEXT = `
 truenas-icons - Icon sprite generation for TrueNAS UI components
@@ -63,13 +63,23 @@ Options:
   --help              Show this help message
 
 Configuration File:
-  Create truenas-icons.config.js in your project root:
+  Create truenas-icons.config.js in your project root. Either module form is
+  read, so write it the way the rest of your project's .js files are written.
 
   export default {
     srcDirs: ['./src/lib', './src/app'],
     outputDir: './src/assets/icons',
     customIconsDir: './custom-icons'
   };
+
+  module.exports = {
+    srcDirs: ['./src/lib', './src/app']
+  };
+
+  Only truenas-icons.config.js is looked for by default. A .cjs, .mjs or .json
+  config is read correctly but is not discovered, so name it with --config:
+
+  npx truenas-icons generate --config truenas-icons.config.cjs
 
 Examples:
   # Generate with defaults
@@ -121,29 +131,6 @@ function parseArgs() {
   }
 
   return parsed;
-}
-
-async function loadConfig(configFile: string) {
-  const configPath = path.resolve(process.cwd(), configFile);
-
-  if (!fs.existsSync(configPath)) {
-    return {};
-  }
-
-  try {
-    // Try to load as ES module
-    const config = await import(configPath);
-    return config.default || config;
-  } catch (error) {
-    // Fallback to CommonJS
-    try {
-      const config = require(configPath);
-      return config.default || config;
-    } catch (err) {
-      console.warn(`Warning: Could not load config file: ${configPath}`);
-      return {};
-    }
-  }
 }
 
 async function main() {
