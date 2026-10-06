@@ -39,8 +39,9 @@ function reasonFor(error: unknown): string {
  * pointing at it gets an undefined `import.meta.dirname`. Neither order changes
  * that, which is why no ordering entry fixes it —
  * `warnAboutTypeScriptConfigReadAsCommonJS` reports it instead, for `.ts` and for
- * the two other extensions in the same position (`SCOPE_DECIDES_THE_KIND`), and the
- * reasoning for reporting rather than refusing lives there.
+ * the two other extensions in the same position, and the reasoning for reporting
+ * rather than refusing lives there — see `willBeReadAsCommonJS` for the set and for
+ * what decides each member of it.
  */
 const NEVER_ESM = ['.cjs', '.cts', '.json'];
 
@@ -90,10 +91,13 @@ const NEVER_ESM = ['.cjs', '.cts', '.json'];
  * Not worth a branch, and not an ESM load either.
  *
  * **Case-sensitive, because tsx's pattern is.** A `--config` naming `.TS` draws no
- * warning and is right not to, though not by the route it looks like: `import()` of
- * it fails with an unknown extension, `loadConfig`'s `createRequire` fallback loads
- * it, and tsx's CommonJS hook populates `import.meta.dirname` there — so the value
- * that reaches the sprite is correct.
+ * warning and is right not to, though not by the route it looks like: tsx does not
+ * recognise the extension, `import()` fails on it as unknown, and `loadConfig`'s
+ * `createRequire` fallback is what loads it — with `import.meta.dirname` populated
+ * and `typeof require` still `undefined` inside it, so node's own `require()` of an
+ * ES module is doing the work rather than any CommonJS transform. The value that
+ * reaches the sprite is correct, on a node new enough for that (22.12); before it
+ * both loaders fail and the config falls back to `{}` with both reasons reported.
  */
 function willBeReadAsCommonJS(configPath: string): boolean {
   const extension = path.extname(configPath);
@@ -242,9 +246,11 @@ function warnAboutTypeScriptConfigReadAsCommonJS(configPath: string): void {
   console.warn('  tsx applies its CommonJS transform with no ESM reparse, which leaves');
   console.warn('  import.meta.dirname and import.meta.filename undefined — so an ESM config');
   console.warn('  reading either one loads with no error and a wrong value in it.');
-  console.warn('  Name it .mts to be read as ESM, or .cts if it really is CommonJS —');
-  console.warn('  neither extension depends on a manifest — or declare "type": "module"');
-  console.warn('  in the package.json above it.');
+  // Both extension pairs, because this also fires for a `.jsx` config, whose
+  // equivalents are `.mjs` and `.cjs` rather than the TypeScript pair.
+  console.warn('  Name it .mts or .mjs to be read as ESM, or .cts or .cjs if it really is');
+  console.warn('  CommonJS — none of those depends on a manifest — or declare');
+  console.warn('  "type": "module" in the package.json above it.');
 }
 
 /**
