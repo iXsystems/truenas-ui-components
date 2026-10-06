@@ -264,8 +264,23 @@ on a file whose syntax contradicts the extension it claims — so a rename that
 does not fix the body, or a body change that does not fix the rename, is caught
 too.
 
-The `.ts` files there are already ESM and need nothing: they derive `__dirname`
-from `import.meta.url`, and tsx reads them as whatever the manifest says.
+The `.ts` files there are mostly ESM already — `make-sprite.ts` and
+`lib/add-custom-icons.ts` derive `__dirname` from `import.meta.url`, which is
+the idiom to copy, and tsx reads them as whatever the manifest says. One
+exception is still open: `cli-main.ts`'s `loadConfig` falls back to a bare
+`require(configPath)` when a dynamic `import()` of the consumer's
+`truenas-icons.config.js` fails. Under ESM that `require` is itself a
+`ReferenceError`, and the surrounding `catch` swallows it — so a CommonJS config
+file degrades to `{}` with only a warning rather than being loaded. It does not
+crash the CLI, which is why #362 did not cover it.
+
+**The two bin maps and the lockfile hold the same paths three times.** The repo
+root's `package.json` declares the commands against `dist/`, and `yarn.lock`
+records the workspace's `bin` map as well. Yarn 4 treats an install as immutable
+whenever `CI` is set, so a lockfile that disagrees with `package.json` fails
+`yarn install` with `YN0028` and takes out every job in `ci-cd.yml` at the shared
+`Prepare` step, before lint, test or build runs. **Change a `bin` path and run
+`yarn install --mode=update-lockfile`.**
 
 ## Important Notes for Agents
 

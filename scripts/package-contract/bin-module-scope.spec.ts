@@ -30,7 +30,7 @@
  * changed.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { extname, join, relative } from 'node:path';
+import { basename, extname, join, relative } from 'node:path';
 import ts from 'typescript';
 
 const repoRoot = join(__dirname, '..', '..');
@@ -85,61 +85,110 @@ const shippedJs = filesUnder(shippedScripts).filter((file) =>
 );
 
 interface ModuleSyntax {
-  /** CommonJS-only constructs: `require(...)`, `__dirname`, `module.exports`. */
+  /** CommonJS-only constructs: `require(...)`, `__dirname`, `module.exports`, `exports.x`. */
   commonjs: string[];
-  /** ESM-only constructs: `import`/`export` declarations, `import.meta`. */
+  /** ESM-only constructs: any `import`/`export`, in any of their forms, and `import.meta`. */
   module: string[];
+}
+
+/** The CommonJS globals whose mere presence in an ESM file is a `ReferenceError`. */
+const CJS_GLOBALS = ['require', '__dirname', '__filename', 'module', 'exports'];
+
+/**
+ * The names a file binds itself anywhere in its own scope.
+ *
+ * This is what keeps the check off the standard ESM shim. `const __filename =
+ * fileURLToPath(import.meta.url)` followed by `const __dirname = dirname(__filename)` is the
+ * correct way to get those two in an ES module — it is what `make-sprite.ts` and
+ * `lib/add-custom-icons.ts` already do, and what the rule in `CLAUDE.md` points new shipped
+ * scripts at. A check that reported it as CommonJS would fail a *correct* file, and would
+ * fail it for doing the very thing the rule asks for.
+ *
+ * A name is collected wherever it is bound rather than per-scope, which is deliberately
+ * coarse: this is asking "does this file define the name itself, or expect the module system
+ * to hand it over", and for a 30-line wrapper script that question has one answer per file.
+ */
+function selfBoundNames(source: ts.SourceFile): Set<string> {
+  const bound = new Set<string>();
+
+  const visit = (node: ts.Node): void => {
+    if (
+      (ts.isVariableDeclaration(node) ||
+        ts.isParameter(node) ||
+        ts.isFunctionDeclaration(node) ||
+        ts.isClassDeclaration(node) ||
+        ts.isImportSpecifier(node) ||
+        ts.isImportClause(node)) &&
+      node.name !== undefined &&
+      ts.isIdentifier(node.name)
+    ) {
+      bound.add(node.name.text);
+    }
+
+    ts.forEachChild(node, visit);
+  };
+
+  visit(source);
+
+  return bound;
+}
+
+/** Whether `node` is the property half of `x.node` or the key half of `{ node: x }`. */
+function isPropertyName(node: ts.Identifier): boolean {
+  const { parent } = node;
+
+  return (
+    (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
+    (ts.isPropertyAssignment(parent) && parent.name === node) ||
+    ts.isPropertySignature(parent)
+  );
 }
 
 /**
  * Which module system a file's syntax commits it to, read with the compiler's own parser.
  *
- * A regex cannot answer this. Both of these files carry prose about `require` in a comment
- * and strings naming `tsx`, and `cli-main.ts`'s help text is a template literal full of
- * example command lines — all of which read as code to a pattern and as text to the parser.
- * The parser also distinguishes the cases that matter from the ones that do not: a free
- * `require(...)` call is CommonJS, while `foo.require` is a property named `require` and
- * means nothing here.
+ * A regex cannot answer this, and the files being scanned are the proof: `cli.cjs`'s own
+ * docblock explains the `require` problem in prose and quotes the `ReferenceError` text, so a
+ * pattern looking for `require` matches the comment that documents it. The parser also
+ * separates the cases that matter from the ones that do not — a free `require(...)` call is
+ * CommonJS, while `foo.require` is a property named `require` and means nothing here, and a
+ * `__dirname` the file declared itself is a local `const` rather than the CommonJS global.
  */
-function moduleSyntaxOf(file: string): ModuleSyntax {
-  const source = ts.createSourceFile(
-    file,
-    readFileSync(file, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
+function moduleSyntaxOfSource(fileName: string, text: string): ModuleSyntax {
+  const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
   const commonjs: string[] = [];
   const module: string[] = [];
+  const selfBound = selfBoundNames(source);
 
   const at = (node: ts.Node): number =>
     source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
 
+  /** A CommonJS global the file expects the module system to provide. */
+  const inherited = (name: string): boolean =>
+    CJS_GLOBALS.includes(name) && !selfBound.has(name);
+
   const visit = (node: ts.Node): void => {
-    if (
-      ts.isCallExpression(node) &&
-      ts.isIdentifier(node.expression) &&
-      node.expression.text === 'require'
-    ) {
-      commonjs.push(`line ${at(node)}: require(...)`);
-    } else if (
-      ts.isIdentifier(node) &&
-      (node.text === '__dirname' || node.text === '__filename') &&
-      // `{ __dirname: x }` and `foo.__dirname` name a property, not the CommonJS global.
-      !ts.isPropertyAccessExpression(node.parent) &&
-      !ts.isPropertyAssignment(node.parent)
-    ) {
+    if (ts.isIdentifier(node) && inherited(node.text) && !isPropertyName(node)) {
+      // Covers all of them at once: `require(...)`, a bare `__dirname`, `__dirname.split('/')`,
+      // `module.exports = x` and `exports.run = x` all read the name as a free identifier.
       commonjs.push(`line ${at(node)}: ${node.text}`);
-    } else if (
-      ts.isPropertyAccessExpression(node) &&
-      ts.isIdentifier(node.expression) &&
-      node.expression.text === 'module' &&
-      node.name.text === 'exports'
-    ) {
-      commonjs.push(`line ${at(node)}: module.exports`);
-    } else if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
-      module.push(`line ${at(node)}: ${ts.isImportDeclaration(node) ? 'import' : 'export'}`);
     } else if (ts.isMetaProperty(node) && node.keywordToken === ts.SyntaxKind.ImportKeyword) {
       module.push(`line ${at(node)}: import.meta`);
+    } else if (ts.isImportDeclaration(node) || ts.isImportEqualsDeclaration(node)) {
+      module.push(`line ${at(node)}: import`);
+    } else if (ts.isExportDeclaration(node)) {
+      module.push(`line ${at(node)}: export ... from`);
+    } else if (ts.isExportAssignment(node) && node.isExportEquals !== true) {
+      module.push(`line ${at(node)}: export default`);
+    } else if (
+      // `export const x`, `export function f`, `export class C` — an export modifier on a
+      // declaration rather than a statement of its own, which is the form a node-targeting
+      // `export {...}` check misses.
+      ts.canHaveModifiers(node) &&
+      ts.getModifiers(node)?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ===
+        true
+    ) {
+      module.push(`line ${at(node)}: export declaration`);
     }
 
     ts.forEachChild(node, visit);
@@ -148,6 +197,10 @@ function moduleSyntaxOf(file: string): ModuleSyntax {
   visit(source);
 
   return { commonjs, module };
+}
+
+function moduleSyntaxOf(file: string): ModuleSyntax {
+  return moduleSyntaxOfSource(file, readFileSync(file, 'utf8'));
 }
 
 describe('the scan itself', () => {
@@ -164,6 +217,94 @@ describe('the scan itself', () => {
     expect(shippedJs.map((file) => relative(repoRoot, file))).toContain(
       'projects/truenas-ui/scripts/icon-sprite/cli.cjs'
     );
+  });
+
+  /**
+   * The checks below are only worth their green when the reader underneath them can go red, so
+   * these hand it the two shapes that matter and assert what it says about them. Without this
+   * pair, a reader that returned nothing at all would pass every test in the file.
+   */
+  it('reads the CommonJS constructs that cannot survive in an ES module', () => {
+    const syntax = moduleSyntaxOfSource(
+      'probe.mjs',
+      [
+        "const { spawn } = require('child_process');",
+        'const here = __dirname;',
+        "const parts = __filename.split('/');",
+        'module.exports = { spawn, here, parts };',
+        'exports.alias = here;',
+        '// require, __dirname and module.exports in a comment are not code',
+        "const text = 'require(__dirname)';",
+        'const notThese = { __dirname: 1, require: 2 };',
+        'const alsoNot = notThese.__dirname + text.require;',
+      ].join('\n')
+    );
+
+    expect(syntax.commonjs).toEqual([
+      'line 1: require',
+      'line 2: __dirname',
+      'line 3: __filename',
+      'line 4: module',
+      'line 5: exports',
+    ]);
+    expect(syntax.module).toEqual([]);
+  });
+
+  it('reads every form of import and export, not only the braced one', () => {
+    const syntax = moduleSyntaxOfSource(
+      'probe.cjs',
+      [
+        "import { spawn } from 'node:child_process';",
+        "export { spawn } from 'node:child_process';",
+        'export default spawn;',
+        'export const a = 1;',
+        'export function b() {}',
+        'export class C {}',
+        'const url = import.meta.url;',
+      ].join('\n')
+    );
+
+    expect(syntax.module).toEqual([
+      'line 1: import',
+      'line 2: export ... from',
+      'line 3: export default',
+      'line 4: export declaration',
+      'line 5: export declaration',
+      'line 6: export declaration',
+      'line 7: import.meta',
+    ]);
+    expect(syntax.commonjs).toEqual([]);
+  });
+
+  /**
+   * The false positive this is here to prevent is the expensive one: it would fail a correct
+   * `.mjs` for using the one idiom the rule in `CLAUDE.md` tells new shipped scripts to use,
+   * which is how a check gets deleted rather than fixed.
+   */
+  it('does not mistake the standard ESM __dirname shim for a CommonJS global', () => {
+    const syntax = moduleSyntaxOfSource(
+      'probe.mjs',
+      [
+        "import { dirname } from 'node:path';",
+        "import { fileURLToPath } from 'node:url';",
+        '',
+        'const __filename = fileURLToPath(import.meta.url);',
+        'const __dirname = dirname(__filename);',
+        '',
+        "export const assets = `${__dirname}/../assets`;",
+      ].join('\n')
+    );
+
+    expect(syntax.commonjs).toEqual([]);
+  });
+
+  it('agrees with the two wrappers actually on disk', () => {
+    const wrapper = join(shippedScripts, 'icon-sprite', 'cli.cjs');
+
+    // `cli.cjs` is CommonJS and must stay readable as such: the point of the extension is that
+    // it may keep using `require`, not that the `require` went away.
+    expect(moduleSyntaxOf(wrapper).commonjs).not.toEqual([]);
+    expect(moduleSyntaxOf(wrapper).module).toEqual([]);
   });
 });
 
@@ -219,5 +360,56 @@ describe("projects/truenas-ui/package.json's bin map", () => {
     const ambiguous = bin.filter(([, target]) => SELF_DESCRIBING[extname(target)] === undefined);
 
     expect(ambiguous).toEqual([]);
+  });
+});
+
+/**
+ * The repo root declares the same commands against the built output, and `yarn.lock` records
+ * the workspace's `bin` map a third time. All three have to move together, and the two outside
+ * `projects/truenas-ui/package.json` are the easy ones to miss: the rename in #362 was done
+ * once and left both behind.
+ *
+ * The lockfile is the one with teeth. Yarn 4 treats an install as immutable whenever `CI` is
+ * set, so a lockfile recording a `bin` path that `package.json` no longer agrees with fails
+ * `yarn install` with `YN0028: The lockfile would have been modified by this install` — which
+ * takes out the shared `Prepare` step and with it every job in `ci-cd.yml`, before lint, test
+ * or build gets to run. Nothing else in the suite would have said why.
+ */
+describe("the repo root's own copies of the bin map", () => {
+  const rootPackage = JSON.parse(
+    readFileSync(join(repoRoot, 'package.json'), 'utf8')
+  ) as PackageJson;
+
+  const rootBin = Object.entries(rootPackage.bin ?? {});
+
+  it('declares the same commands as the published package', () => {
+    expect(Object.keys(rootPackage.bin ?? {})).toEqual(Object.keys(libPackage.bin ?? {}));
+  });
+
+  it('points every command at a file whose extension fixes its module kind', () => {
+    const ambiguous = rootBin.filter(
+      ([, target]) => SELF_DESCRIBING[extname(target)] === undefined
+    );
+
+    expect(ambiguous).toEqual([]);
+  });
+
+  it('names the same file the published package does, under dist', () => {
+    const mismatched = rootBin.filter(
+      ([command, target]) => basename(target) !== basename(libPackage.bin?.[command] ?? '')
+    );
+
+    expect(mismatched).toEqual([]);
+  });
+
+  it('matches what yarn.lock records for the workspace', () => {
+    const lockfile = readFileSync(join(repoRoot, 'yarn.lock'), 'utf8');
+    const recorded = [...lockfile.matchAll(/^ {4}(\S+): (\S+)$/gm)]
+      .filter(([, command]) => rootPackage.bin?.[command] !== undefined)
+      .map(([, command, target]) => [command, target]);
+
+    // A `bin` the lockfile does not mention at all is the other way this can be wrong, so the
+    // recorded set is compared whole rather than entry by entry.
+    expect(recorded).toEqual(rootBin);
   });
 });
