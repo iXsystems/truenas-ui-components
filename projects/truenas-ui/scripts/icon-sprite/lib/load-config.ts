@@ -23,29 +23,38 @@ function reasonFor(error: unknown): string {
 /**
  * Loads a consumer's icon configuration file, which may be ESM or CommonJS.
  *
- * Two loaders, in this order, because neither covers the other's cases:
+ * Two loaders, `createRequire()` first and `import()` second.
  *
- * - `import()` reads both module kinds. A `.js` file's kind comes from the nearest
- *   `package.json` `type`, and a CommonJS `module.exports` arrives as the default
- *   export — so a plain `.js` config in a project that declares no type loads
- *   here, as does a `.cjs` config inside one that declares `"type": "module"`. The
+ * - `createRequire()` reads every shape a config turns up as, measured under tsx —
+ *   which is how the shipped CLI runs: CommonJS and ESM alike, whatever the
+ *   project's `type` says, including JSON, which `--config` accepts as a path and
+ *   which the ESM loader will not take without an import attribute.
+ * - `import()` is for what `require` will not take, which is an ESM config node's
+ *   own loader refuses to load synchronously — one using top-level await. The
  *   `file:` URL is not decoration: a bare absolute path is not a valid ESM
  *   specifier on Windows.
- * - `createRequire()` covers what the first loader will not read. Under tsx, which
- *   is how the shipped CLI runs, exactly one shape reaches it — measured, not
- *   assumed: CommonJS syntax in a `.js` file whose own package says
- *   `"type": "module"`, which no ESM loader will take. Under node's own loader it
- *   also catches a JSON config, which `--config` accepts as a path and which
- *   needs an import attribute to be imported but has always been requirable;
- *   tsx's transform reads that one through `import()` already.
  *
- * This replaced a bare `require(configPath)` fallback that could never run. The
- * published package carries `"type": "module"` — written by ng-packagr, not by
- * this repo (#362) — so tsx reads the CLI as ESM, where `require` is not
+ * **The order is what keeps the config file evaluated once**, and it is the reason
+ * this is not the obvious way round. A CommonJS config in a project that declares
+ * `"type": "module"` does not fail `import()` at parse time — it fails at runtime,
+ * on reaching `module.exports`, with every statement above that line already run.
+ * Retrying it then runs the whole file a second time, so a config that appends to
+ * a log or bumps a counter at its top level does it twice, and the object returned
+ * is the second evaluation's. Measured both ways: `require` first is one
+ * evaluation for every shape that loads at all, `import` first is two for exactly
+ * the shape this function exists to fix.
+ *
+ * A file that fails for its own reasons — a syntax error, a `throw`, a missing
+ * dependency — is still tried twice and reports both objections. That costs a
+ * doubled side effect in a config that was not going to load either way.
+ *
+ * What this replaced was a bare `require(configPath)` fallback that could never
+ * run. The published package carries `"type": "module"` — written by ng-packagr,
+ * not by this repo (#362) — so tsx reads the CLI as ESM, where `require` is not
  * defined. That `ReferenceError` was caught by the same `catch` as a genuine
- * failure, which then reported `Could not load config file` and returned `{}`:
- * the consumer lost their whole configuration, and the message named neither the
- * real reason nor the fact that the second loader had not run at all.
+ * failure, which then reported `Could not load config file` and returned `{}`: the
+ * consumer lost their whole configuration, and the message named neither the real
+ * reason nor the fact that the second loader had not run at all.
  */
 export async function loadConfig(
   configFile: string,
@@ -60,19 +69,19 @@ export async function loadConfig(
   const failures: string[] = [];
 
   try {
-    const loaded = await import(pathToFileURL(configPath).href);
-
-    return (loaded.default ?? loaded) as SpriteGeneratorConfig;
-  } catch (error) {
-    failures.push(`import(): ${reasonFor(error)}`);
-  }
-
-  try {
     const loaded = createRequire(configPath)(configPath);
 
     return (loaded.default ?? loaded) as SpriteGeneratorConfig;
   } catch (error) {
     failures.push(`require(): ${reasonFor(error)}`);
+  }
+
+  try {
+    const loaded = await import(pathToFileURL(configPath).href);
+
+    return (loaded.default ?? loaded) as SpriteGeneratorConfig;
+  } catch (error) {
+    failures.push(`import(): ${reasonFor(error)}`);
   }
 
   // Both loaders ran and both rejected the file, so report what each one said.

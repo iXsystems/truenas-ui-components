@@ -36,14 +36,29 @@ interface CaseDefinition {
   packageJson: Record<string, unknown>;
   configFile: string;
   contents: string;
+  /** Set on the case that is about the file not being there. Defaults to writing it. */
+  write?: false;
 }
 
 interface CaseResult {
   config: Record<string, unknown>;
   warnings: string[];
+  /** How many times the config file's own body ran. See `EVALUATION_COUNTER`. */
+  evaluations: number;
 }
 
-const CASES: Record<string, CaseDefinition> = {
+/**
+ * Prepended to a config fixture to count its own evaluations. Counts into
+ * `globalThis` because both module scopes have it: anything reached through
+ * `require` cannot run in the ESM scope that half these cases are about, and a
+ * counter that cannot run is a counter that reads zero and proves nothing.
+ */
+const EVALUATION_COUNTER = 'globalThis.__timesEvaluated = (globalThis.__timesEvaluated || 0) + 1;';
+
+// `satisfies` rather than an annotation, so `keyof typeof CASES` stays the union of
+// the names below. Annotated as `Record<string, CaseDefinition>` it widens to
+// `string`, and `resultFor`'s parameter type stops checking anything.
+const CASES = {
   // The shape in the report: no `type` field, so a plain `.js` config is
   // CommonJS. The config uses `require` itself, not just `module.exports`.
   'commonjs-config-in-a-plain-project': {
@@ -61,11 +76,16 @@ const CASES: Record<string, CaseDefinition> = {
 
   // The one the old loader actually dropped: CommonJS syntax in a `.js` file that
   // its own package declares to be ESM. `import()` cannot read it, so everything
-  // depended on a fallback that could not run.
+  // depended on a fallback that could not run. It counts its own evaluations
+  // because it is also the shape that gets run twice if the loaders are tried the
+  // other way round.
   'commonjs-config-in-an-esm-project': {
     packageJson: { type: 'module' },
     configFile: 'truenas-icons.config.js',
-    contents: "module.exports = { srcDirs: ['./src/mixed'], outputDir: './dist/mixed' };",
+    contents: [
+      EVALUATION_COUNTER,
+      "module.exports = { srcDirs: ['./src/mixed'], outputDir: './dist/mixed' };",
+    ].join('\n'),
   },
 
   'commonjs-config-named-cjs': {
@@ -103,6 +123,19 @@ const CASES: Record<string, CaseDefinition> = {
     contents: "export const srcDirs = ['./src/named-esm'];",
   },
 
+  // Top-level await is the shape `require` cannot take, so this is the case that
+  // reaches the second loader at all. Also counted: reaching the second loader is
+  // the situation where a file can be run twice.
+  'esm-config-using-top-level-await': {
+    packageJson: { type: 'module' },
+    configFile: 'truenas-icons.config.js',
+    contents: [
+      EVALUATION_COUNTER,
+      'const srcDirs = await Promise.resolve([\'./src/awaited\']);',
+      'export default { srcDirs };',
+    ].join('\n'),
+  },
+
   // `--config` takes any path, so a JSON config is a shape that turns up. Node's
   // own ESM loader refuses it without an import attribute; tsx's transform reads
   // it through `import()`, so under the shipped CLI this case does not reach the
@@ -124,8 +157,9 @@ const CASES: Record<string, CaseDefinition> = {
     packageJson: {},
     configFile: 'truenas-icons.config.js',
     contents: '',
+    write: false,
   },
-};
+} satisfies Record<string, CaseDefinition>;
 
 /**
  * Runs inside the spawned process. Written out as a `.mjs` so it is ESM whatever
@@ -155,6 +189,7 @@ const results = {};
 for (const [name, configFile] of cases) {
   const warnings = [];
   console.warn = (...args) => warnings.push(args.map(String).join(' '));
+  globalThis.__timesEvaluated = 0;
 
   let config = null;
   let threw = null;
@@ -167,7 +202,12 @@ for (const [name, configFile] of cases) {
   console.warn = realWarn;
   // A namespace object does not survive JSON.stringify as a plain object, so
   // spread it: the caller only ever reads configuration keys off it.
-  results[name] = { config: config ? { ...config } : config, warnings, threw };
+  results[name] = {
+    config: config ? { ...config } : config,
+    warnings,
+    threw,
+    evaluations: globalThis.__timesEvaluated,
+  };
 }
 
 fs.writeFileSync(
@@ -207,9 +247,11 @@ beforeAll(() => {
     'export const requireInScope = typeof require;\n'
   );
 
-  // One throwaway consumer project per case. `absent-config` gets the manifest and
-  // no config file, which is the case it is testing.
-  for (const [name, definition] of Object.entries(CASES)) {
+  // One throwaway consumer project per case: the manifest always, and the config
+  // file unless the case is the one about it being missing — which the definition
+  // says, rather than a name compared here, so that renaming a case cannot quietly
+  // turn "absent" into "present and empty". Both load as `{}`.
+  for (const [name, definition] of Object.entries(CASES as Record<string, CaseDefinition>)) {
     const projectRoot = path.join(workspace, 'projects', name);
     fs.mkdirSync(projectRoot, { recursive: true });
     fs.writeFileSync(
@@ -217,7 +259,7 @@ beforeAll(() => {
       JSON.stringify({ name, version: '1.0.0', ...definition.packageJson })
     );
 
-    if (name !== 'absent-config') {
+    if (definition.write !== false) {
       fs.writeFileSync(path.join(projectRoot, definition.configFile), definition.contents);
     }
   }
@@ -244,8 +286,10 @@ beforeAll(() => {
   // confusing one about a missing file, with tsx's own diagnosis thrown away.
   if (!fs.existsSync(resultsPath)) {
     throw new Error(
-      `the config loader driver produced no results (exit ${String(run.status)})\n` +
-        `stdout: ${run.stdout}\nstderr: ${run.stderr}`
+      // `run.error` and not only the exit status: a spawn killed by the timeout
+      // above reports a null status and says why in nothing else.
+      `the config loader driver produced no results (exit ${String(run.status)}, ` +
+        `error ${String(run.error)})\nstdout: ${run.stdout}\nstderr: ${run.stderr}`
     );
   }
 
@@ -261,7 +305,7 @@ afterAll(() => {
 });
 
 function resultFor(name: keyof typeof CASES): CaseResult {
-  const result = results[name as string];
+  const result = results[name];
 
   expect(result.threw).toBeNull();
 
@@ -315,6 +359,18 @@ describe('a CommonJS config', () => {
     expect(warnings).toEqual([]);
   });
 
+  /**
+   * Trying `import()` first reads this shape as ESM, which fails on reaching
+   * `module.exports` rather than on parsing it — so everything above that line has
+   * already run by the time the second loader runs the file again. A config that
+   * writes a file or bumps a counter at its top level would do it twice, and the
+   * object that reached the sprite would be the second evaluation's. Measured both
+   * ways: this is two evaluations with the loaders the other way round.
+   */
+  it('evaluates the config once, not once per loader', () => {
+    expect(resultFor('commonjs-config-in-an-esm-project').evaluations).toBe(1);
+  });
+
   it('loads from a .cjs file in a project that declares "type": "module"', () => {
     const { config, warnings } = resultFor('commonjs-config-named-cjs');
 
@@ -350,6 +406,19 @@ describe('an ESM config', () => {
     const { config } = resultFor('esm-config-without-a-default-export');
 
     expect(config.srcDirs).toEqual(['./src/named-esm']);
+  });
+
+  /**
+   * The case that reaches the second loader: `require` cannot load a module that
+   * awaits at its top level. It is also the one case where a file legitimately runs
+   * under both loaders, so the count is asserted rather than assumed to be one.
+   */
+  it('loads one that awaits at the top level, which only import() can take', () => {
+    const { config, warnings, evaluations } = resultFor('esm-config-using-top-level-await');
+
+    expect(config.srcDirs).toEqual(['./src/awaited']);
+    expect(warnings).toEqual([]);
+    expect(evaluations).toBeLessThanOrEqual(2);
   });
 });
 

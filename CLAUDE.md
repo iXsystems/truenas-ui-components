@@ -326,6 +326,15 @@ crash the CLI, which is why #362 did not cover it. `createRequire()` is the
 route that works from ESM, and `lib/load-config.ts` is where that now lives,
 with the reason each loader exists written next to it.
 
+**It tries `createRequire()` before `import()`, and the order is load-bearing** —
+the obvious way round costs the consumer's config a second evaluation. A
+CommonJS config in a `"type": "module"` project fails `import()` at *runtime*, on
+reaching `module.exports`, with everything above that line already run; retrying
+then runs the whole file again, and the object that reaches the sprite is the
+second run's. `require` reads every shape that loads at all under tsx, so it goes
+first and `import()` is left for what it cannot take — an ESM config using
+top-level await.
+
 **Testing one of these costs a process, and the reason is worth knowing before
 you write the test.** What a loader does is decided by the module system reading
 it, and Jest is neither of the two that matter: the source tree has no `type`
