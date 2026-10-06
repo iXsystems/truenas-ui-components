@@ -34,13 +34,224 @@ function reasonFor(error: unknown): string {
  * extension already names is the one that should answer, not because an outcome
  * depends on it — do not read the measured asymmetry below as applying to it.
  *
- * `.ts` is deliberately not here and is not safe either: tsx reads a typeless `.ts`
- * as CommonJS whatever its syntax, with no ESM reparse, so `--config` pointing at
- * one gets an undefined `import.meta.dirname` and no warning. Neither order changes
- * that, it predates this function, and a `.ts` config is not a documented shape —
- * so it is recorded here rather than worked around.
+ * `.ts` is deliberately not here and is not safe either: tsx reads one whose scope
+ * is not ESM as CommonJS whatever its syntax, with no ESM reparse, so `--config`
+ * pointing at it gets an undefined `import.meta.dirname`. Neither order changes
+ * that, which is why no ordering entry fixes it —
+ * `warnAboutTypeScriptConfigReadAsCommonJS` reports it instead, for `.ts` and for
+ * the two other extensions in the same position, and the reasoning for reporting
+ * rather than refusing lives there — see `willBeReadAsCommonJS` for the set and for
+ * what decides each member of it.
  */
 const NEVER_ESM = ['.cjs', '.cts', '.json'];
+
+/**
+ * Whether tsx will read `configPath` as CommonJS — meaning its `import.meta`
+ * accessors come back undefined — for an extension whose kind is not settled by
+ * the extension itself.
+ *
+ * **The three extensions do not answer to the same condition, and one of them
+ * depends on the node running the CLI.** Measured under tsx 4.19.4 on node 26.7.0
+ * with native TypeScript stripping both on and off — the latter via
+ * `--no-experimental-strip-types`, which is also how every node before 22.18
+ * behaves — over scopes declaring nothing, `commonjs`, `module`, and an invalid
+ * string:
+ *
+ * | extension | typeless | `commonjs` | `module` | invalid string |
+ * |---|---|---|---|---|
+ * | `.ts`, node strips TS | **CommonJS** | ESM | ESM | ESM |
+ * | `.ts`, node does not | **CommonJS** | **CommonJS** | ESM | ESM |
+ * | `.tsx`, `.jsx` | **CommonJS** | **CommonJS** | ESM | ESM |
+ * | `.mts`, `.cts` | ESM | ESM | ESM | ESM |
+ *
+ * `.ts` is the only row with two states, and `process.features.typescript` tells
+ * them apart. Where node recognises `.ts` natively it supplies a format for any
+ * declared `type`, so tsx's own `!resolved.format &&
+ * (resolved.format = getFormatFromFileUrl(url))` never runs and its `load` hook
+ * returns `{ format: 'module' }` for a TS extension it did not transform. Where it
+ * does not, `.ts` reaches tsx's `getPackageType` exactly as `.tsx` does and a
+ * literal `"type": "commonjs"` transforms. Node never recognises `.tsx` or `.jsx`,
+ * so those have one row.
+ *
+ * **The second row is a real environment, and CI never exercises it.** The
+ * published manifest declares no `engines`, `cli.cjs` runs `tsx` on whatever node
+ * the consumer has, and tsx supports node 18 — while CI pins 24.15.0, where native
+ * stripping is on. So this is detected rather than assumed: reading the row off the
+ * repo's own development range would be correct about CI and wrong about the
+ * consumer the bin actually runs for.
+ *
+ * `.mts` and `.cts` are absent because `getFormatFromExtension` answers for them
+ * outright, in every scope and on both node behaviours. The three covered here are
+ * tsx's pattern `/\.([cm]?ts|[tj]sx)($|\?)/` minus those two — tsx's own internal
+ * `['.ts', '.tsx', '.jsx']`.
+ *
+ * An invalid `type` loads as ESM only when it is a *string*. A non-string
+ * `"type": 123` throws out of the loader instead, and `packageScopeType` reports it
+ * as `undefined`, so a warning is printed just before the real failure is reported.
+ * Not worth a branch, and not an ESM load either.
+ *
+ * **Case-sensitive, because tsx's pattern is.** A `--config` naming `.TS` draws no
+ * warning and is right not to, though not by the route it looks like: tsx does not
+ * recognise the extension, `import()` fails on it as unknown, and `loadConfig`'s
+ * `createRequire` fallback is what loads it — with `import.meta.dirname` populated
+ * and `typeof require` still `undefined` inside it, so node's own `require()` of an
+ * ES module is doing the work rather than any CommonJS transform. The value that
+ * reaches the sprite is correct, on a node new enough for that (22.12); before it
+ * both loaders fail and the config falls back to `{}` with both reasons reported.
+ */
+function willBeReadAsCommonJS(configPath: string): boolean {
+  const extension = path.extname(configPath);
+
+  if (extension !== '.ts' && extension !== '.tsx' && extension !== '.jsx') {
+    return false;
+  }
+
+  const scope = packageScopeType(configPath);
+
+  // A scope declaring nothing is read as CommonJS for all three, on either node.
+  if (scope === undefined) {
+    return true;
+  }
+
+  // Read off `process.features` rather than a version comparison, and widened
+  // because `@types/node` only grew the field in 22.x: it is absent before 22.10,
+  // `false` when the flag turns stripping off, and a string when it is on.
+  const nodeStripsTypeScript = Boolean((process.features as { typescript?: unknown }).typescript);
+
+  // Past that, only `.ts` on a node that strips TypeScript escapes an explicit
+  // `"type": "commonjs"`, because that is what supplies a format and keeps tsx's
+  // own override from running. See the table above.
+  return scope === 'commonjs' && !(extension === '.ts' && nodeStripsTypeScript);
+}
+
+/**
+ * The `type` declared by the `package.json` that decides `configPath`'s module
+ * kind — its *package scope* — or `undefined` when nothing in that scope declares
+ * one.
+ *
+ * **Two things decide where the walk stops, and both have to be here**, because a
+ * walk that answers `"module"` where tsx computes `"commonjs"` suppresses the
+ * warning in exactly the silent case this file exists to end:
+ *
+ * - **The closest manifest decides**, whether or not it carries the field. A
+ *   manifest further up gets no say, so skipping a typeless one to find a typed
+ *   one answers a different question than the loader is going to.
+ * - **The walk stops at a `node_modules` directory**, and does not look past it.
+ *   So a config under `node_modules/` is CommonJS however the project above it is
+ *   declared.
+ *
+ * Both read off tsx's own resolver, not inferred from node's documentation:
+ * `findPackageJson` in `tsx/dist/esm/index.mjs` is
+ * `for (; !url.pathname.endsWith('/node_modules/package.json');)` returning the
+ * first manifest that parses, and `getPackageType` is that `?.type ?? 'commonjs'`.
+ * Node's two loaders agree — `readPackageScope` returns false on `node_modules`,
+ * and `getPackageScopeConfig` breaks on `node_modules/package.json`.
+ *
+ * The path is resolved through `fs.realpathSync` first, because node resolves a
+ * symlinked module to its real path before any loader hook sees it: a config
+ * symlinked into a project takes its scope from where the file really lives, not
+ * from where it is linked.
+ *
+ * Unreadable or malformed reads as `undefined` rather than throwing. tsx itself
+ * throws on a nearest manifest it cannot parse, so that config was not going to
+ * load either way — this only decides which message the consumer gets, and the
+ * warning is the less confusing of the two.
+ */
+function packageScopeType(configPath: string): string | undefined {
+  let directory: string;
+
+  try {
+    directory = path.dirname(fs.realpathSync(configPath));
+  } catch {
+    directory = path.dirname(configPath);
+  }
+
+  for (;;) {
+    // Checked before the manifest is read, which is where tsx checks it: the
+    // boundary is the candidate path, so a `node_modules` directory's own
+    // `package.json` is not consulted either.
+    if (path.basename(directory) === 'node_modules') {
+      return undefined;
+    }
+
+    const manifest = path.join(directory, 'package.json');
+
+    if (fs.existsSync(manifest)) {
+      try {
+        const parsed: unknown = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+        const declared = (parsed as { type?: unknown }).type;
+
+        return typeof declared === 'string' ? declared : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+
+    const parent = path.dirname(directory);
+
+    if (parent === directory) {
+      return undefined;
+    }
+
+    directory = parent;
+  }
+}
+
+/**
+ * Reports a `--config` naming a file tsx is about to read as CommonJS, which
+ * `willBeReadAsCommonJS` decides. Such a config loads, says nothing, and gets
+ * `undefined` for `import.meta.dirname` and `import.meta.filename` — so the sprite
+ * is generated from a path the consumer never wrote and no output mentions it.
+ * That is #369.
+ *
+ * **It warns rather than refusing, because the mis-read file and a perfectly
+ * correct one are the same file to everything that can be inspected.** A `.ts`
+ * config written as CommonJS is read exactly right, and refusing every `.ts`
+ * would break it; which kind a file *means* to be is not knowable without running
+ * it, which is the same reason `loadConfig` does not pick a loader by kind. So the
+ * accepted cost is a warning on a config that did not need one, and the message
+ * names the condition it fired on so that reads as what it is. The other way round
+ * is the silent wrong value this exists to end.
+ *
+ * **It covers the extension and not what the file imports.** A `.mts` config —
+ * correctly silent — importing a `.ts` helper in a typeless scope gets that helper
+ * read as CommonJS, with `import.meta.dirname` undefined inside it and nothing
+ * said. Naming the config's own extension cannot reach that; only the loader
+ * reading each file could, and `--config` is the only path this one is given.
+ *
+ * **Reading `type` here is not the rule the docblocks above rule out.** That one
+ * guesses which kind an unknowable `.js` file *is*, in order to choose a loader,
+ * and is wrong because node itself reparses. This computes what tsx *will do* with
+ * the file, which for these extensions is settled rather than guessed — there is no
+ * reparse to upset the answer, and the inputs that decide it are enumerated in
+ * `willBeReadAsCommonJS`, measured rather than reasoned from. **No loader choice
+ * turns on it** — both still run, in the same order, and the file loads either way.
+ */
+function warnAboutTypeScriptConfigReadAsCommonJS(configPath: string): void {
+  if (!willBeReadAsCommonJS(configPath)) {
+    return;
+  }
+
+  // "does not make it ESM" rather than naming a manifest condition. The condition
+  // differs by extension and there may be no manifest at all, so any sentence
+  // specific enough to name one is false for some input that reaches here — which
+  // is what the first version of this message got wrong. The scope is described
+  // below, the fixes are listed, and neither claim depends on which case fired.
+  console.warn(
+    `Warning: ${configPath} will be read as CommonJS, because its package scope ` +
+      'does not make it ESM.'
+  );
+  console.warn('  (That scope is the nearest package.json above the file, and stops at a');
+  console.warn('  node_modules directory — nothing past one is consulted.)');
+  console.warn('  tsx applies its CommonJS transform with no ESM reparse, which leaves');
+  console.warn('  import.meta.dirname and import.meta.filename undefined — so an ESM config');
+  console.warn('  reading either one loads with no error and a wrong value in it.');
+  // Both extension pairs, because this also fires for a `.jsx` config, whose
+  // equivalents are `.mjs` and `.cjs` rather than the TypeScript pair.
+  console.warn('  Name it .mts or .mjs to be read as ESM, or .cts or .cjs if it really is');
+  console.warn('  CommonJS — none of those depends on a manifest — or declare');
+  console.warn('  "type": "module" in the package.json above it.');
+}
 
 /**
  * Loads a consumer's icon configuration file, which may be ESM or CommonJS.
@@ -91,6 +302,10 @@ export async function loadConfig(
   if (!fs.existsSync(configPath)) {
     return {};
   }
+
+  // Before the loaders, so it is said even for a file that then fails to load for
+  // its own reasons — the extension is the consumer's problem either way.
+  warnAboutTypeScriptConfigReadAsCommonJS(configPath);
 
   const loaders = [
     { label: 'import()', load: async () => await import(pathToFileURL(configPath).href) },

@@ -31,13 +31,29 @@ import { resolveConfig } from '../sprite-config-interface';
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const tsxCli = path.join(repoRoot, 'node_modules', 'tsx', 'dist', 'cli.mjs');
 
+/**
+ * Whether this node strips TypeScript itself, which is what decides a `.ts` file's
+ * kind when its package scope declares an explicit `"type": "commonjs"`. Absent
+ * before 22.10, `false` when `--no-experimental-strip-types` turns it off, a string
+ * when on; widened because `@types/node` only grew the field in 22.x. The spawn
+ * below uses `process.execPath`, so this is the child's behaviour too.
+ */
+const nodeStripsTypeScript = Boolean((process.features as { typescript?: unknown }).typescript);
+
 interface CaseDefinition {
   /** What the consumer's own `package.json` says — `type` is what decides the config's kind. */
   packageJson: Record<string, unknown>;
+  /** Relative to the project root, so a `/` in it puts the config in a subdirectory. */
   configFile: string;
   contents: string;
   /** Set on the case that is about the file not being there. Defaults to writing it. */
   write?: false;
+  /**
+   * Extra files, by path relative to the project root. Only the walk cases need
+   * this: where a config's *package scope* is depends on what sits between it and
+   * the project root, which a single `packageJson` cannot express.
+   */
+  extraFiles?: Record<string, string>;
 }
 
 interface CaseResult {
@@ -184,6 +200,112 @@ const CASES = {
     contents: IMPORT_META_CONFIG,
   },
 
+  /**
+   * #369, the shape nothing can load correctly: a bare `.ts` whose project
+   * declares no type. Unlike the typeless `.js` above, tsx reads this one as
+   * CommonJS whatever its syntax and never reparses it as ESM, so
+   * `import.meta.dirname` is `undefined` and the value that reaches the sprite is
+   * wrong. The extension is what has to change, so what is asserted is that the
+   * loader says so instead of loading it quietly.
+   */
+  [`${IMPORT_META}-named-ts-in-a-plain-project`]: {
+    packageJson: {},
+    configFile: 'truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /**
+   * The same file where its own project declares ESM, which is the half of `.ts`
+   * that works — and so the half a warning must stay out of.
+   */
+  [`${IMPORT_META}-named-ts-in-an-esm-project`]: {
+    packageJson: { type: 'module' },
+    configFile: 'truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /**
+   * A `.ts` config that really is CommonJS, in a project declaring no type: read
+   * exactly right, and warned about regardless. Here so the false positive the
+   * warning accepts is on the record as a decision rather than found as a surprise.
+   */
+  'commonjs-config-named-ts': {
+    packageJson: {},
+    configFile: 'truenas-icons.config.ts',
+    contents: "module.exports = { srcDirs: ['./src/ts'] };",
+  },
+
+  /**
+   * Where the walk stops, half one: the closest manifest decides even when it
+   * declares nothing. The project root says `"type": "module"` and the config's own
+   * directory has a manifest that does not, so tsx reads the config as CommonJS —
+   * an implementation that skipped the typeless manifest to find a typed one would
+   * answer `"module"` and say nothing.
+   */
+  'ts-config-under-a-typeless-nested-manifest': {
+    packageJson: { type: 'module' },
+    configFile: 'tools/truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+    extraFiles: { 'tools/package.json': '{ "name": "nested-tools", "version": "1.0.0" }' },
+  },
+
+  /**
+   * Where the walk stops, half two: a `node_modules` directory ends it. There is no
+   * manifest inside it, so a walk that merely looks for the nearest one keeps going
+   * and finds the project root's `"type": "module"` — which is not what tsx does,
+   * and the config loads as CommonJS with nothing said.
+   */
+  'ts-config-inside-node-modules': {
+    packageJson: { type: 'module' },
+    configFile: 'node_modules/truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /**
+   * The rest of the family in `.ts`'s position. tsx recognises
+   * `/\.([cm]?ts|[tj]sx)($|\?)/` and settles only `.mts` and `.cts` by extension,
+   * so `.tsx` and `.jsx` take their kind from package scope exactly as `.ts` does
+   * — and were silently mis-read while the check was a literal `'.ts'`. `--config`
+   * takes any path, so these turn up whether or not anyone recommends them.
+   */
+  'tsx-config-in-a-plain-project': {
+    packageJson: {},
+    configFile: 'truenas-icons.config.tsx',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  'jsx-config-in-a-plain-project': {
+    packageJson: {},
+    configFile: 'truenas-icons.config.jsx',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /**
+   * **The asymmetry between `.ts` and the other two, which one predicate gets
+   * wrong.** Node recognises `.ts` natively and supplies a format whenever the
+   * scope declares a `type` at all, so tsx's format override never runs and an
+   * explicit `"type": "commonjs"` still has the file read as ESM — correctly, with
+   * `import.meta.dirname` populated. A check for "scope is not module" warns here
+   * and every sentence it prints is false of this file.
+   */
+  [`${IMPORT_META}-named-ts-under-an-explicit-commonjs-type`]: {
+    packageJson: { type: 'commonjs' },
+    configFile: 'truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /**
+   * The same scope with the extension node does *not* recognise, where the answer
+   * is the opposite: `getPackageType` decides, `"type": "commonjs"` is taken
+   * literally, and the file really is transformed. So this one must warn while the
+   * case above must not.
+   */
+  'tsx-config-under-an-explicit-commonjs-type': {
+    packageJson: { type: 'commonjs' },
+    configFile: 'truenas-icons.config.tsx',
+    contents: IMPORT_META_CONFIG,
+  },
+
   // The CommonJS half of that pair: an extension that rules ESM out, so the
   // CommonJS loader is the one that reads it.
   'commonjs-config-named-cts': {
@@ -313,8 +435,19 @@ beforeAll(() => {
       JSON.stringify({ name, version: '1.0.0', ...definition.packageJson })
     );
 
+    // Before the config, since a case may place one inside a directory that an
+    // extra file is what creates.
+    for (const [relativePath, contents] of Object.entries(definition.extraFiles ?? {})) {
+      const target = path.join(projectRoot, relativePath);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, contents);
+    }
+
     if (definition.write !== false) {
-      fs.writeFileSync(path.join(projectRoot, definition.configFile), definition.contents);
+      const configTarget = path.join(projectRoot, definition.configFile);
+      // `configFile` may name a subdirectory — that is what the walk cases vary.
+      fs.mkdirSync(path.dirname(configTarget), { recursive: true });
+      fs.writeFileSync(configTarget, definition.contents);
     }
   }
 
@@ -495,16 +628,19 @@ describe('an ESM config', () => {
    * no warning. So the assertion is on the value, and the count rules out it having
    * been reached by falling back after a failure.
    *
-   * Three projects, because what decides the kind differs in each and a rule can be
+   * Four projects, because what decides the kind differs in each and a rule can be
    * right about one and wrong about the others: `"type": "module"` says so; a
    * typeless project says nothing and is still ESM, since node reads a typeless
-   * `.js` as CommonJS and reparses it as ESM when that fails; and `.mts` says so in
-   * its own extension.
+   * `.js` as CommonJS and reparses it as ESM when that fails; `.mts` says so in its
+   * own extension; and a `.ts` under `"type": "module"` is ESM by its manifest,
+   * which is the one `.ts` shape that works — the typeless one cannot, and has its
+   * own describe below.
    */
   it.each([
     [`${IMPORT_META}-in-an-esm-project`],
     [`${IMPORT_META}-in-a-plain-project`],
     [`${IMPORT_META}-named-mts`],
+    [`${IMPORT_META}-named-ts-in-an-esm-project`],
   ])('loads %s with import.meta actually populated', (name) => {
     const { config, warnings, evaluations } = resultFor(name as keyof typeof CASES);
 
@@ -512,6 +648,162 @@ describe('an ESM config', () => {
     expect(config.srcDirs).toEqual([name]);
     expect(warnings).toEqual([]);
     expect(evaluations).toBe(1);
+  });
+});
+
+/**
+ * #369. A `.ts`, `.tsx` or `.jsx` config takes its module kind from its package
+ * scope rather than from its own extension, and a scope that does not make it ESM
+ * has tsx read it as CommonJS with no reparse. The value cannot be fixed from here
+ * — nothing makes tsx reparse the file — so the criterion is that the loader
+ * reports the condition rather than loading quietly, and stays quiet when there is
+ * nothing to report. Both halves are below, and the last case states them as one
+ * invariant.
+ */
+describe('what decides a TypeScript config module kind', () => {
+  it('warns and names .mts rather than loading a wrong import.meta silently', () => {
+    const { config, warnings } = resultFor(`${IMPORT_META}-named-ts-in-a-plain-project`);
+
+    // Still the wrong value. What changed is that it is announced: this is the
+    // measurement in the report, now with something said about it.
+    expect(config.srcDirs).toEqual(['undefined']);
+
+    const said = warnings.join('\n');
+    expect(said).toContain('truenas-icons.config.ts');
+    expect(said).toContain('will be read as CommonJS');
+    expect(said).toContain('import.meta.dirname');
+    expect(said).toContain('.mts');
+  });
+
+  it('says nothing when the project declares "type": "module"', () => {
+    expect(resultFor(`${IMPORT_META}-named-ts-in-an-esm-project`).warnings).toEqual([]);
+  });
+
+  /**
+   * The accepted false positive, asserted so that narrowing it later is a decision
+   * made against a failing test rather than a quiet change. Which kind a `.ts` file
+   * means to be is not knowable without running it, so a correct CommonJS config
+   * gets the warning too — and still loads.
+   */
+  it('still loads a .ts config that really is CommonJS, warning about it anyway', () => {
+    const { config, warnings } = resultFor('commonjs-config-named-ts');
+
+    expect(config.srcDirs).toEqual(['./src/ts']);
+    expect(warnings.join('\n')).toContain('will be read as CommonJS');
+  });
+
+  // The pair that needs no manifest to be right, and so draws no warning. `.cts`
+  // and `.mts` are covered for loading above; this is about staying quiet.
+  it.each([[`${IMPORT_META}-named-mts`], ['commonjs-config-named-cts']])(
+    'leaves %s alone, since its extension settles its kind',
+    (name) => {
+      expect(resultFor(name as keyof typeof CASES).warnings).toEqual([]);
+    }
+  );
+
+  /**
+   * **Where the walk stops, which is the half that cannot be checked by varying the
+   * project root's own manifest.** Both cases sit under a project declaring
+   * `"type": "module"` and are still read as CommonJS, so each one fails if the
+   * scope is computed by looking for the nearest manifest that *has* a `type`, or
+   * by walking past `node_modules`. Read off tsx's own `findPackageJson`; the
+   * asserted `['undefined']` is that resolver's answer, measured here rather than
+   * predicted.
+   */
+  it.each([
+    ['ts-config-under-a-typeless-nested-manifest'],
+    ['ts-config-inside-node-modules'],
+  ] as const)('warns for %s, whose scope is not the project root', (name) => {
+    const { config, warnings } = resultFor(name);
+
+    expect(config.srcDirs).toEqual(['undefined']);
+    expect(warnings.join('\n')).toContain('will be read as CommonJS');
+  });
+
+  /**
+   * **The other two extensions in `.ts`'s position**, which a literal `'.ts'` check
+   * missed: tsx settles only `.mts` and `.cts` by extension, so everything else it
+   * recognises is decided by package scope. Each asserts the mis-read value as well
+   * as the warning, so the case cannot go green against a file that loaded as ESM.
+   */
+  it.each([['tsx-config-in-a-plain-project'], ['jsx-config-in-a-plain-project']] as const)(
+    'warns for %s, which package scope decides the same way',
+    (name) => {
+      const { config, warnings } = resultFor(name);
+
+      expect(config.srcDirs).toEqual(['undefined']);
+      expect(warnings.join('\n')).toContain('will be read as CommonJS');
+    }
+  );
+
+  /**
+   * **What an explicit `"type": "commonjs"` does, which is not the same for `.ts`
+   * as for the other two.** Node recognises `.ts` natively and supplies a format
+   * for any declared `type`, so tsx never transforms it and the config is read as
+   * ESM; node does not recognise `.tsx`, so there `getPackageType` takes
+   * `commonjs` literally and the transform runs. A single "scope is not module"
+   * predicate passes the second of these and fails the first — which is why both
+   * are here, asserting opposite outcomes against one shared manifest.
+   */
+  /**
+   * **This one is decided by the node running the suite, so it asks that node.**
+   * `.ts` escapes an explicit `"type": "commonjs"` only where node strips
+   * TypeScript itself; with stripping off — every node before 22.18, and the
+   * `--no-experimental-strip-types` flag — it is transformed like `.tsx`. Jest
+   * spawns tsx with `process.execPath`, so the flag read here is the one the child
+   * ran under. Asserting either outcome unconditionally would be asserting CI's
+   * node rather than the loader.
+   */
+  it('matches the node it runs on for a .ts config under "type": "commonjs"', () => {
+    const name = `${IMPORT_META}-named-ts-under-an-explicit-commonjs-type`;
+    const { config, warnings } = resultFor(name);
+
+    if (nodeStripsTypeScript) {
+      // Populated, so the config reports its own directory rather than 'undefined'.
+      expect(config.srcDirs).toEqual([name]);
+      expect(warnings).toEqual([]);
+    } else {
+      expect(config.srcDirs).toEqual(['undefined']);
+      expect(warnings.join('\n')).toContain('will be read as CommonJS');
+    }
+  });
+
+  it('warns for a .tsx config under the same "type": "commonjs"', () => {
+    const { config, warnings } = resultFor('tsx-config-under-an-explicit-commonjs-type');
+
+    expect(config.srcDirs).toEqual(['undefined']);
+    expect(warnings.join('\n')).toContain('will be read as CommonJS');
+  });
+
+  /**
+   * **The invariant the whole warning exists to hold, stated once over every case
+   * whose config reports its own `import.meta`: it is said exactly when the value
+   * is wrong.** Both directions can fail — a silent mis-read, which is #369, and a
+   * warning on a config that loaded correctly, which is noise that teaches a
+   * consumer to ignore it.
+   *
+   * Worth having alongside the cases above because it needs no table: it holds on
+   * any node and any tsx, and it is what a new case is checked against for free.
+   * Every defect three review rounds found here — a walk that stopped in the wrong
+   * place, an extension missed, a predicate that was right for one extension and
+   * wrong for another — breaks it.
+   *
+   * The set is derived from the shared config rather than listed, so a case added
+   * with `contents: IMPORT_META_CONFIG` joins it without anyone remembering to.
+   */
+  it.each(
+    Object.entries(CASES)
+      .filter(([, definition]) => definition.contents === IMPORT_META_CONFIG)
+      .map(([name]) => [name])
+  )('says something for %s exactly when import.meta was not populated', (name) => {
+    const { config, warnings } = resultFor(name as keyof typeof CASES);
+
+    // The config reports `path.basename(String(import.meta.dirname))`, so the
+    // literal string 'undefined' is what a mis-read looks like from out here.
+    const misread = (config.srcDirs as string[])[0] === 'undefined';
+    const warned = warnings.join('\n').includes('will be read as CommonJS');
+
+    expect(warned).toBe(misread);
   });
 });
 
