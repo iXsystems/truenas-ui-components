@@ -3,6 +3,11 @@
 /**
  * CLI wrapper that uses tsx to run the TypeScript CLI
  * This allows us to distribute TypeScript files without needing to compile them
+ *
+ * No `bin` entry and nothing else in the repo points here — `cli.cjs` is what `truenas-icons`
+ * runs. This file still ships, because `ng-package.json` copies the whole `scripts` directory
+ * as an asset, so it carries the #362 hazard too and is `.cjs` for the same reason; see
+ * `cli.cjs` for the full account.
  */
 
 const { spawn } = require('child_process');

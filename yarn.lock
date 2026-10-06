@@ -24117,7 +24117,7 @@ __metadata:
   peerDependencies:
     rxjs: ^7.5.0
   bin:
-    truenas-icons: ./dist/truenas-ui/scripts/icon-sprite/cli.js
+    truenas-icons: ./dist/truenas-ui/scripts/icon-sprite/cli.cjs
   languageName: unknown
   linkType: soft
 

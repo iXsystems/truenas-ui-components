@@ -239,6 +239,49 @@ it says nothing about one that is imported and declared nowhere.
 The README's "Peer Dependencies" block is asserted to match that package.json
 verbatim by the same spec — **edit both or neither.**
 
+## A shipped script says `.cjs` or `.mjs`, never `.js`
+
+`ng-package.json` copies `projects/truenas-ui/scripts/**` into the published
+package as an asset, so everything under there ships — including the
+`truenas-icons` bin a consumer's build runs. **Whether node reads a shipped
+`.js` file as CommonJS or as ESM is decided by the `type` field of the generated
+`dist/truenas-ui/package.json`, which ng-packagr writes and this repo does
+not.** `projects/truenas-ui/package.json` has no `type` field; the built one has
+`"type": "module"`.
+
+So a `.js` file that runs correctly from the source tree can be read the other
+way once published. That is #362: `cli.js` used `require('child_process')` and
+worked in 0.7.12, then ng-packagr started emitting `"type": "module"` and the
+identical bytes became ESM in 0.8.2 — every consumer's build died with
+`ReferenceError: require is not defined in ES module scope` before the sprite
+was touched.
+
+**The rule is not "pick CommonJS" or "pick ESM" — it is don't let a generated
+field decide.** `.cjs` and `.mjs` are read the same way whatever a manifest
+says. `scripts/package-contract/bin-module-scope.spec.ts` fails on a shipped
+`.js` under that directory, on a `bin` target whose extension is ambiguous, and
+on a file whose syntax contradicts the extension it claims — so a rename that
+does not fix the body, or a body change that does not fix the rename, is caught
+too.
+
+The `.ts` files there are mostly ESM already — `make-sprite.ts` and
+`lib/add-custom-icons.ts` derive `__dirname` from `import.meta.url`, which is
+the idiom to copy, and tsx reads them as whatever the manifest says. One
+exception is still open: `cli-main.ts`'s `loadConfig` falls back to a bare
+`require(configPath)` when a dynamic `import()` of the consumer's
+`truenas-icons.config.js` fails. Under ESM that `require` is itself a
+`ReferenceError`, and the surrounding `catch` swallows it — so a CommonJS config
+file degrades to `{}` with only a warning rather than being loaded. It does not
+crash the CLI, which is why #362 did not cover it.
+
+**The two bin maps and the lockfile hold the same paths three times.** The repo
+root's `package.json` declares the commands against `dist/`, and `yarn.lock`
+records the workspace's `bin` map as well. Yarn 4 treats an install as immutable
+whenever `CI` is set, so a lockfile that disagrees with `package.json` fails
+`yarn install` with `YN0028` and takes out every job in `ci-cd.yml` at the shared
+`Prepare` step, before lint, test or build runs. **Change a `bin` path and run
+`yarn install --mode=update-lockfile`.**
+
 ## Important Notes for Agents
 
 - **Don't read all files at once** - Load only what you need for the current task

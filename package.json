@@ -5,7 +5,7 @@
   "module": "./dist/truenas-ui/fesm2022/truenas-ui.mjs",
   "typings": "./dist/truenas-ui/index.d.ts",
   "bin": {
-    "truenas-icons": "./dist/truenas-ui/scripts/icon-sprite/cli.js"
+    "truenas-icons": "./dist/truenas-ui/scripts/icon-sprite/cli.cjs"
   },
   "exports": {
     "./package.json": {
