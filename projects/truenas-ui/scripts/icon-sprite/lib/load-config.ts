@@ -36,11 +36,94 @@ function reasonFor(error: unknown): string {
  *
  * `.ts` is deliberately not here and is not safe either: tsx reads a typeless `.ts`
  * as CommonJS whatever its syntax, with no ESM reparse, so `--config` pointing at
- * one gets an undefined `import.meta.dirname` and no warning. Neither order changes
- * that, it predates this function, and a `.ts` config is not a documented shape —
- * so it is recorded here rather than worked around.
+ * one gets an undefined `import.meta.dirname`. Neither order changes that, which is
+ * why no ordering entry fixes it — `warnAboutTypeScriptConfigReadAsCommonJS` reports
+ * it instead, and the reasoning for reporting rather than refusing lives there.
  */
 const NEVER_ESM = ['.cjs', '.cts', '.json'];
+
+/**
+ * The `type` the nearest `package.json` above `fromDirectory` declares, or
+ * `undefined` when the one it finds declares none.
+ *
+ * **The closest manifest decides and the walk stops at it**, whether or not it
+ * carries the field — that is node's rule, and so tsx's. A manifest further up
+ * gets no say, so walking past one would answer a different question than the
+ * loader reading the file is going to.
+ *
+ * Unreadable or malformed reads as `undefined` rather than throwing: this feeds a
+ * warning, and a config that loads perfectly well should not be turned into a
+ * crash by a sibling file it never mentions.
+ */
+function nearestPackageType(fromDirectory: string): string | undefined {
+  let directory = fromDirectory;
+
+  for (;;) {
+    const manifest = path.join(directory, 'package.json');
+
+    if (fs.existsSync(manifest)) {
+      try {
+        const parsed: unknown = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+        const declared = (parsed as { type?: unknown }).type;
+
+        return typeof declared === 'string' ? declared : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+
+    const parent = path.dirname(directory);
+
+    if (parent === directory) {
+      return undefined;
+    }
+
+    directory = parent;
+  }
+}
+
+/**
+ * Reports a `--config` naming a `.ts` file that tsx is about to read as CommonJS.
+ * Such a config loads, says nothing, and gets `undefined` for
+ * `import.meta.dirname` and `import.meta.filename` — so the sprite is generated
+ * from a path the consumer never wrote and no output mentions it. That is #369.
+ *
+ * **It warns rather than refusing, because the mis-read file and a perfectly
+ * correct one are the same file to everything that can be inspected.** A `.ts`
+ * config written as CommonJS is read exactly right, and refusing every `.ts`
+ * would break it; which kind a file *means* to be is not knowable without running
+ * it, which is the same reason `loadConfig` does not pick a loader by kind. So the
+ * accepted cost is a warning on a config that did not need one, and the message
+ * names the condition it fired on so that reads as what it is. The other way round
+ * is the silent wrong value this exists to end.
+ *
+ * **Reading `type` here is not the rule the docblocks above rule out.** That one
+ * guesses which kind an unknowable `.js` file *is*, in order to choose a loader,
+ * and is wrong because node itself reparses. This computes what tsx *will do* with
+ * a `.ts` file, which is fully determined by exactly these two inputs: an explicit
+ * `.mts` or `.cts` settles it, and otherwise the nearest manifest's `type` does,
+ * with no reparse to upset the answer. **No loader choice turns on it** — both
+ * still run, in the same order, and the file loads either way.
+ */
+function warnAboutTypeScriptConfigReadAsCommonJS(configPath: string): void {
+  if (path.extname(configPath) !== '.ts') {
+    return;
+  }
+
+  if (nearestPackageType(path.dirname(configPath)) === 'module') {
+    return;
+  }
+
+  console.warn(
+    `Warning: ${configPath} will be read as CommonJS, because the nearest ` +
+      'package.json does not declare "type": "module".'
+  );
+  console.warn('  tsx applies its CommonJS transform with no ESM reparse, which leaves');
+  console.warn('  import.meta.dirname and import.meta.filename undefined — so an ESM config');
+  console.warn('  reading either one loads with no error and a wrong value in it.');
+  console.warn('  Name it .mts to be read as ESM, or .cts if it really is CommonJS;');
+  console.warn('  neither extension depends on a manifest.');
+}
 
 /**
  * Loads a consumer's icon configuration file, which may be ESM or CommonJS.
@@ -91,6 +174,10 @@ export async function loadConfig(
   if (!fs.existsSync(configPath)) {
     return {};
   }
+
+  // Before the loaders, so it is said even for a file that then fails to load for
+  // its own reasons — the extension is the consumer's problem either way.
+  warnAboutTypeScriptConfigReadAsCommonJS(configPath);
 
   const loaders = [
     { label: 'import()', load: async () => await import(pathToFileURL(configPath).href) },
