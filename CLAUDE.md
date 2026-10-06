@@ -238,9 +238,10 @@ what it returns** — `TYPES_USED_ONLY_INTERNALLY`, which holds `jest` for
 `icon-testing.ts`'s own `jest.fn()` calls.
 
 That exemption is checked rather than promised: a separate test fails, naming
-the file, if an exempted namespace is exposed to the published declarations.
-Two things about that condition are easy to get wrong, and the check has been
-wrong about each of them in turn:
+the file, if an exempted namespace is exposed to the published declarations by
+a **qualified** reference. A bare root — `export const j = jest` — is not
+covered. Two things about the condition are easy to get wrong, and the check has
+been wrong about each of them in turn:
 
 - **"It is a value, not a type" is not enough.** Declaration emit infers the
   type of an exported declaration that carries no annotation, so

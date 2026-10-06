@@ -356,8 +356,9 @@ type position anywhere and still emits `declare const m: jest.Mock<…>` into th
 published `.d.ts`. And it is the *body* that is covered and not the signature,
 which is emitted verbatim — `export function f(): jest.Mock` leaks the
 namespace no matter how deliberately it was written. The mock factories in
-`icon-testing.ts` are on the right side of both halves; anything that is not
-fails the test, naming the file.
+`icon-testing.ts` are on the right side of both halves; a **qualified**
+reference that is not fails the test, naming the file. A bare root with no
+property access after it — `export const j = jest` — is not covered.
 
 **What that check does not cover:** it walks the import graph from
 `src/public-api.ts`, and the published package is more than that graph.
