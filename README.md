@@ -360,6 +360,11 @@ namespace no matter how deliberately it was written. The mock factories in
 reference that is not fails the test, naming the file. A bare root with no
 property access after it — `export const j = jest` — is not covered.
 
+The check guards every namespace `@types/jest` declares, not just `jest`:
+`jasmine` is in there too, because `spyOn` returns a `jasmine.Spy`. Nothing
+here uses it, which is exactly why it is listed — an unguarded namespace only
+leaks once someone writes it.
+
 **What that check does not cover:** it walks the import graph from
 `src/public-api.ts`, and the published package is more than that graph.
 `ng-package.json` also copies `projects/truenas-ui/scripts/` in as assets, which

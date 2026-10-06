@@ -79,15 +79,28 @@ const UNDECLARED_PENDING_A_DECISION: string[] = [];
  * exist, found nothing, and reported that as containment — the failure this file argues
  * hardest against, since a check that goes quiet also reads as an answer.
  *
- * So an exemption cannot be added without naming the namespaces it claims are contained, and
- * a misspelled or retired one is caught by 'has no deferred entry that has since been fixed'
- * rather than passing silently.
+ * So an exemption cannot be added without naming the namespaces it claims are contained.
+ *
+ * **`namespaces` is everything the package declares, not everything this library happens to
+ * use today.** The leak guard can only look up the roots it is given, so a root left out is a
+ * root nothing checks — and the shape that leaks is one a future edit introduces, which is
+ * precisely the one that is unused when the entry is written. `@types/jest` is the live
+ * example: it declares `jest` and also `jasmine` (`spyOn` returns a `jasmine.Spy`), so an
+ * entry naming only `jest` would let `getIconUrl: jasmine.Spy` ship with the suite green.
+ *
+ * An unused entry in this list is therefore correct rather than stale, which is why the test
+ * below asks only that *some* listed root is still in use. That is a liveness check on the
+ * exemption, not a spell-check on each root: it catches an entry the code has moved past, and
+ * it cannot catch a typo in a root that was never going to be used anyway.
  */
 interface InternalTypesExemption {
   /** The package a `/// <reference types="..." />` names. */
   types: string;
-  /** Every namespace root that package puts in scope and some file in the graph uses. */
-  namespaces: string[];
+  /**
+   * Every namespace root the package declares — see above, and prefer listing one too many.
+   * Non-empty, because an empty list is an exemption the leak guard iterates past in silence.
+   */
+  namespaces: [string, ...string[]];
 }
 
 /**
@@ -103,9 +116,14 @@ interface InternalTypesExemption {
  * The exemption is therefore conditional and checked: see 'exposes no exempted types namespace
  * to the published declarations' below, which goes red naming the file if `jest.Mock` comes
  * back, or if a `jest.fn()` is written where declaration emit would infer it.
+ *
+ * `jasmine` is listed beside it because `@types/jest` declares that namespace too, and nothing
+ * in the library uses it yet. That is the point: `jasmine.Spy` on an exported field would
+ * reach the flattened `.d.ts` exactly like `jest.Mock` did, and a consumer's error would name
+ * a framework this package never mentions.
  */
 const TYPES_USED_ONLY_INTERNALLY: InternalTypesExemption[] = [
-  { types: 'jest', namespaces: ['jest'] },
+  { types: 'jest', namespaces: ['jest', 'jasmine'] },
 ];
 
 const builtins = new Set(builtinModules);
@@ -674,32 +692,30 @@ describe('projects/truenas-ui/package.json', () => {
         stale.push(`${types}: types now declared — delete it from TYPES_USED_ONLY_INTERNALLY`);
       }
 
-      const referrers = graph.typeReferences.get(types) ?? [];
-
-      if (referrers.length === 0) {
+      if ((graph.typeReferences.get(types)?.length ?? 0) === 0) {
         stale.push(`${types}: no longer referenced — delete it from TYPES_USED_ONLY_INTERNALLY`);
 
-        // Every `namespaces` claim is vacuous once the directive is gone, and reporting each
-        // one as well buries the single fact a reader needs to act on.
+        // The namespace check below is vacuous once the directive is gone, and the entry has
+        // to go either way. Reporting both buries the one fact a reader needs to act on.
         continue;
       }
 
       /**
-       * The claimed namespaces have to be real, because the leak guard below can only look
-       * them up: a misspelled root returns no exposures, which is indistinguishable from a
-       * contained one. `namespaceRoots` holds the shielded uses too, so a root that is used
-       * and contained is present here — and one that is typo'd, or that the code has stopped
-       * using, is not.
+       * Some listed root has to still be in use, because `exposedNamespaces` cannot tell
+       * containment from a name nothing would match: both are a missing key. `namespaceRoots`
+       * holds the shielded uses too, so a root that is used and contained appears there and
+       * not in `exposedNamespaces` — which is what makes this answerable at all.
+       *
+       * *Some*, not each. `namespaces` lists everything the package declares, so the roots
+       * that matter most are the unused ones — the shape a future edit introduces. Requiring
+       * each to be in use would make the complete entry the one that fails, and leave the
+       * incomplete one green.
        */
-      for (const namespace of namespaces) {
-        const users = graph.namespaceRoots.get(namespace) ?? [];
-
-        if (!users.some((file) => referrers.includes(file))) {
-          stale.push(
-            `${types}: no file carrying its directive uses the namespace '${namespace}' — ` +
-              'fix the spelling, or drop it from that entry'
-          );
-        }
+      if (!namespaces.some((namespace) => graph.namespaceRoots.has(namespace))) {
+        stale.push(
+          `${types}: nothing in the graph uses ${namespaces.join(' or ')} any more — ` +
+            'delete the entry, or correct the namespaces it names'
+        );
       }
     }
 

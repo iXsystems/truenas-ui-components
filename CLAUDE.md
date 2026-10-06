@@ -250,11 +250,15 @@ has been wrong about each of them in turn:
 - **A function shields its body, not itself.** Its signature is emitted
   verbatim, so `export function f(): jest.Mock` and
   `interface M { f(): jest.Mock }` both leak however annotated they are.
-- **A types package and its namespace are two different strings**, so an entry
-  names both: `{ types: 'jest', namespaces: ['jest'] }`. They coincide for
-  `jest` and almost nowhere else — `@types/node` puts `NodeJS` in scope, and
-  vitest puts `vi`. The leak test looks up `namespaces`, so an entry that gave
-  only the package name would find no exposures and call that containment.
+- **A types package and its namespaces are different strings, and there can be
+  more than one**, so an entry names them all:
+  `{ types: 'jest', namespaces: ['jest', 'jasmine'] }`. The package name
+  coincides with a namespace for `jest` and almost nowhere else — `@types/node`
+  puts `NodeJS` in scope, and vitest puts `vi` — and `@types/jest` declares
+  `jasmine` as well, for `spyOn`'s return type. The leak test can only look up
+  the roots it is given, so **list every namespace the package declares, not
+  the ones this repo uses today**: the unused one is the shape a future edit
+  introduces, and the entry is what decides whether anything checks it.
 
 `ng-packagr` does not cover this. `allowedNonPeerDependencies` in
 `ng-package.json` whitelists packages already in the library's `dependencies`;
