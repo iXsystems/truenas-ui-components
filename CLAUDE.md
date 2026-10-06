@@ -225,12 +225,40 @@ consumer's tree cannot satisfy is an `ERESOLVE` install failure rather than a
 warning, so a floor higher than the code actually needs breaks installs that
 work today. Pick the range the source requires, and if the answer is not
 obvious, propose it rather than picking one. #354 did exactly that for the gaps
-it found but was not scoped to decide — they are listed in the spec with the
-reason for each, and the same check fails if one is fixed and left in the list.
+it found but was not scoped to decide, listing them in the spec's
+`UNDECLARED_PENDING_A_DECISION` with the reason for each; #358 then decided
+them, so **that list is empty today and is meant to stay that way** — the same
+check fails if an entry is fixed and left in it.
 
 The check reads `/// <reference types="..." />` as well as imports, because
 ng-packagr's flattened `.d.ts` keeps the types a directive resolved and drops the
-directive.
+directive. **A types package may be exempted from declaration when every
+reference to its namespace sits inside the body of a function that declares
+what it returns** — `TYPES_USED_ONLY_INTERNALLY`, which holds `jest` for
+`icon-testing.ts`'s own `jest.fn()` calls.
+
+That exemption is checked rather than promised: a separate test fails, naming
+the file, if an exempted namespace is exposed to the published declarations by
+a **qualified** reference. A bare root — `export const j = jest` — is not
+covered. Three things about the condition are easy to get wrong, and the check
+has been wrong about each of them in turn:
+
+- **"It is a value, not a type" is not enough.** Declaration emit infers the
+  type of an exported declaration that carries no annotation, so
+  `export const m = jest.fn()` reaches a consumer's `.d.ts` as `jest.Mock<…>`
+  with no type position written anywhere.
+- **A function shields its body, not itself.** Its signature is emitted
+  verbatim, so `export function f(): jest.Mock` and
+  `interface M { f(): jest.Mock }` both leak however annotated they are.
+- **A types package and its namespaces are different strings, and there can be
+  more than one**, so an entry names them all:
+  `{ types: 'jest', namespaces: ['jest', 'jasmine'] }`. The package name
+  coincides with a namespace for `jest` and almost nowhere else — `@types/node`
+  puts `NodeJS` in scope, and vitest puts `vi` — and `@types/jest` declares
+  `jasmine` as well, for `spyOn`'s return type. The leak test can only look up
+  the roots it is given, so **list every namespace the package declares, not
+  the ones this repo uses today**: the unused one is the shape a future edit
+  introduces, and the entry is what decides whether anything checks it.
 
 `ng-packagr` does not cover this. `allowedNonPeerDependencies` in
 `ng-package.json` whitelists packages already in the library's `dependencies`;

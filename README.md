@@ -283,10 +283,12 @@ package declares, verbatim:
 
 ```json
 {
+  "@angular/animations": "^22.0.0",
   "@angular/cdk": "^22.0.0",
   "@angular/common": "^22.0.0",
   "@angular/core": "^22.0.0",
   "@angular/forms": "^22.0.0",
+  "@angular/platform-browser": "^22.0.0",
   "@angular/router": "^22.0.0",
   "@mdi/angular-material": "^7.2.96",
   "@mdi/js": "^7.4.47",
@@ -318,24 +320,50 @@ stopped installing it under `^7.8.2`, for code that runs identically against
 either. The Angular range below is narrow for a different and harder reason,
 given there.
 
-**The entry point still reaches three things this package does not declare**,
-each left for a decision of its own rather than folded in silently — a peer a
-consumer cannot satisfy breaks their `npm install`, as above. The test above
-pins all three: it fails if one stops being imported or gets declared, so none
-can be quietly forgotten.
+**`@angular/animations` and `@angular/platform-browser` are required of every
+consumer, not only of the ones using the components that import them.** Both
+were held back from this block while that looked like the trade — `tn-table`
+and `tn-stepper` are the only components building animations, and
+`DomSanitizer` appears in three icon files — so declaring them read as charging
+every application for a feature some of them do not use.
 
-- **`@angular/animations`** — `tn-table` and `tn-stepper` build animations with
-  it. This is the one an Angular 22 application may genuinely be missing, so an
-  application using either component needs it installed.
-- **`@angular/platform-browser`** — `DomSanitizer`, in the icon components.
-  Every Angular browser application already has it.
-- **`@types/jest`** — `icon-testing.ts` is exported from the public API and its
-  mocks are typed `jest.Mock`. Those types reach the published `.d.ts` while the
-  `/// <reference types="jest" />` that resolved them does not, so a consumer
-  without jest's types in scope sees `Cannot find namespace 'jest'`. A component
-  library declaring a test framework's types as a peer is the wrong shape; the
-  alternative is moving those helpers out of the main entry point, which is an
-  API change.
+The published artefact is what settles it. ng-packagr flattens the whole
+library into one module, `fesm2022/truenas-ui-components.mjs`, and both
+packages are plain top-level `import` statements at the head of it. A consumer
+who imports *anything* from `@truenas/ui-components` loads that module, and
+their bundler resolves its imports before it tree-shakes anything — so a
+missing `@angular/animations` is a build failure for an application that never
+mentions `tn-table`. There is no consumer who was paying for these and not
+using them; there were only consumers with no warning that they needed them.
+
+**`@types/jest` is deliberately not declared, and no longer leaks.**
+`icon-testing.ts` is exported from the public API, and its mock types used to
+be `jest.Mock` — which reached the published `.d.ts` while the
+`/// <reference types="jest" />` that resolved them did not, so a consumer
+without jest's types in scope saw `Cannot find namespace 'jest'` from a
+declaration file they never opened. A component library declaring a test
+framework's types as a peer is the wrong shape, so the namespace came out of
+the public surface instead: those fields are typed `TnMockedMethod`, a plain
+call signature, which the `jest.fn()` you pass as an override still satisfies.
+The directive stays for the `jest.fn()` calls in that module's own body, which
+are values in this repo's build and reach nobody.
+
+The test above holds that line, and the condition it checks is narrower than
+"not in a type position" — **a jest reference must sit inside the body of a
+function that declares what it returns.** The return type is what stops
+TypeScript inferring the reference outward: `export const m = jest.fn()` has no
+type position anywhere and still emits `declare const m: jest.Mock<…>` into the
+published `.d.ts`. And it is the *body* that is covered and not the signature,
+which is emitted verbatim — `export function f(): jest.Mock` leaks the
+namespace no matter how deliberately it was written. The mock factories in
+`icon-testing.ts` are on the right side of both halves; a **qualified**
+reference that is not fails the test, naming the file. A bare root with no
+property access after it — `export const j = jest` — is not covered.
+
+The check guards every namespace `@types/jest` declares, not just `jest`:
+`jasmine` is in there too, because `spyOn` returns a `jasmine.Spy`. Nothing
+here uses it, which is exactly why it is listed — an unguarded namespace only
+leaks once someone writes it.
 
 **What that check does not cover:** it walks the import graph from
 `src/public-api.ts`, and the published package is more than that graph.
