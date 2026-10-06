@@ -713,8 +713,12 @@ describe('projects/truenas-ui/package.json', () => {
        */
       if (!namespaces.some((namespace) => graph.namespaceRoots.has(namespace))) {
         stale.push(
-          `${types}: nothing in the graph uses ${namespaces.join(' or ')} any more — ` +
-            'delete the entry, or correct the namespaces it names'
+          // Not "delete the entry": this branch is only reached while the directive is still
+          // there, so removing the exemption under it turns 'declares the types every file it
+          // reaches references' red instead.
+          `${types}: its directive is still carried, but nothing in the graph uses ` +
+            `${namespaces.join(' or ')} any more — correct the namespaces it names, or drop ` +
+            'the directive that no longer resolves anything'
         );
       }
     }
