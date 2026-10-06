@@ -271,6 +271,32 @@ const CASES = {
     contents: IMPORT_META_CONFIG,
   },
 
+  /**
+   * **The asymmetry between `.ts` and the other two, which one predicate gets
+   * wrong.** Node recognises `.ts` natively and supplies a format whenever the
+   * scope declares a `type` at all, so tsx's format override never runs and an
+   * explicit `"type": "commonjs"` still has the file read as ESM — correctly, with
+   * `import.meta.dirname` populated. A check for "scope is not module" warns here
+   * and every sentence it prints is false of this file.
+   */
+  [`${IMPORT_META}-named-ts-under-an-explicit-commonjs-type`]: {
+    packageJson: { type: 'commonjs' },
+    configFile: 'truenas-icons.config.ts',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /**
+   * The same scope with the extension node does *not* recognise, where the answer
+   * is the opposite: `getPackageType` decides, `"type": "commonjs"` is taken
+   * literally, and the file really is transformed. So this one must warn while the
+   * case above must not.
+   */
+  'tsx-config-under-an-explicit-commonjs-type': {
+    packageJson: { type: 'commonjs' },
+    configFile: 'truenas-icons.config.tsx',
+    contents: IMPORT_META_CONFIG,
+  },
+
   // The CommonJS half of that pair: an extension that rules ESM out, so the
   // CommonJS loader is the one that reads it.
   'commonjs-config-named-cts': {
@@ -697,6 +723,31 @@ describe('a .ts config that tsx will read as CommonJS', () => {
       expect(warnings.join('\n')).toContain('will be read as CommonJS');
     }
   );
+
+  /**
+   * **What an explicit `"type": "commonjs"` does, which is not the same for `.ts`
+   * as for the other two.** Node recognises `.ts` natively and supplies a format
+   * for any declared `type`, so tsx never transforms it and the config is read as
+   * ESM; node does not recognise `.tsx`, so there `getPackageType` takes
+   * `commonjs` literally and the transform runs. A single "scope is not module"
+   * predicate passes the second of these and fails the first — which is why both
+   * are here, asserting opposite outcomes against one shared manifest.
+   */
+  it('stays quiet for a .ts config under "type": "commonjs", which loads as ESM', () => {
+    const name = `${IMPORT_META}-named-ts-under-an-explicit-commonjs-type`;
+    const { config, warnings } = resultFor(name);
+
+    // Populated, so the config reports its own directory rather than 'undefined'.
+    expect(config.srcDirs).toEqual([name]);
+    expect(warnings).toEqual([]);
+  });
+
+  it('warns for a .tsx config under the same "type": "commonjs"', () => {
+    const { config, warnings } = resultFor('tsx-config-under-an-explicit-commonjs-type');
+
+    expect(config.srcDirs).toEqual(['undefined']);
+    expect(warnings.join('\n')).toContain('will be read as CommonJS');
+  });
 });
 
 describe('a JSON config', () => {

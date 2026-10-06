@@ -45,22 +45,53 @@ function reasonFor(error: unknown): string {
 const NEVER_ESM = ['.cjs', '.cts', '.json'];
 
 /**
- * The extensions tsx transforms but does not settle, so their module kind comes
- * from the file's package scope — which is the set that can be read as CommonJS
- * while meaning ESM, and so the set `warnAboutTypeScriptConfigReadAsCommonJS`
- * covers.
+ * Whether tsx will read `configPath` as CommonJS — meaning its `import.meta`
+ * accessors come back undefined — for an extension whose kind is not settled by
+ * the extension itself.
  *
- * Derived from tsx's own resolver rather than guessed: it recognises
- * `/\.([cm]?ts|[tj]sx)($|\?)/`, and `getFormatFromExtension` answers for exactly
- * two of those — `.mts` is module, `.cts` is commonjs. Everything else it
- * recognises falls through to `getPackageType`. Taking `.mts` and `.cts` out of
- * that set leaves these three.
+ * **The two families answer to different conditions, and one predicate for both
+ * is wrong.** Measured under tsx 4.19.4 on node 24.13.1 and 26.7.0, over every
+ * extension against a scope declaring nothing, `commonjs`, `module` and an
+ * invalid value:
+ *
+ * | extension | typeless | `commonjs` | `module` | invalid |
+ * |---|---|---|---|---|
+ * | `.ts` | **CommonJS** | ESM | ESM | ESM |
+ * | `.tsx`, `.jsx` | **CommonJS** | **CommonJS** | ESM | ESM |
+ * | `.mts`, `.cts` | ESM | ESM | ESM | ESM |
+ *
+ * `.ts` differs from the other two because **node recognises it natively** and so
+ * supplies a format whenever the scope declares a `type` at all. tsx's own
+ * override is `!resolved.format && (resolved.format = getFormatFromFileUrl(url))`,
+ * which therefore never runs, and its `load` hook returns `{ format: 'module' }`
+ * for any TS extension it did not transform. Only a scope declaring *nothing*
+ * leaves the format unset, reaching tsx's `getPackageType` and its
+ * `?? 'commonjs'` default. Node does not recognise `.tsx` or `.jsx`, so for those
+ * `getPackageType` always decides and a literal `"type": "commonjs"` transforms.
+ *
+ * `.mts` and `.cts` are absent because `getFormatFromExtension` answers for them
+ * outright; `.cts` reads with `import.meta` populated too, so neither is ever the
+ * silent case. The three covered here are tsx's pattern
+ * `/\.([cm]?ts|[tj]sx)($|\?)/` minus those two — which is tsx's own internal
+ * `['.ts', '.tsx', '.jsx']`.
  *
  * **Case-sensitive, because tsx's pattern is.** A `--config` naming `.TS` is not
- * transformed at all, loads as ESM through node, and correctly draws no warning
- * here. That looks like an oversight and is the accurate answer.
+ * transformed at all, loads as ESM through node, and correctly draws no warning.
+ * That looks like an oversight and is the accurate answer.
  */
-const SCOPE_DECIDES_THE_KIND = ['.ts', '.tsx', '.jsx'];
+function willBeReadAsCommonJS(configPath: string): boolean {
+  const extension = path.extname(configPath);
+
+  if (extension !== '.ts' && extension !== '.tsx' && extension !== '.jsx') {
+    return false;
+  }
+
+  const scope = packageScopeType(configPath);
+
+  // `.ts` only when the scope declares no `type` whatever; the other two also
+  // when it declares `commonjs`. See the table above for why these differ.
+  return scope === undefined || (extension !== '.ts' && scope === 'commonjs');
+}
 
 /**
  * The `type` declared by the `package.json` that decides `configPath`'s module
@@ -136,9 +167,8 @@ function packageScopeType(configPath: string): string | undefined {
 }
 
 /**
- * Reports a `--config` naming a file tsx is about to read as CommonJS on the
- * strength of its package scope — `SCOPE_DECIDES_THE_KIND`, which is `.ts` and the
- * two extensions in the same position. Such a config loads, says nothing, and gets
+ * Reports a `--config` naming a file tsx is about to read as CommonJS, which
+ * `willBeReadAsCommonJS` decides. Such a config loads, says nothing, and gets
  * `undefined` for `import.meta.dirname` and `import.meta.filename` — so the sprite
  * is generated from a path the consumer never wrote and no output mentions it.
  * That is #369.
@@ -161,36 +191,33 @@ function packageScopeType(configPath: string): string | undefined {
  * **Reading `type` here is not the rule the docblocks above rule out.** That one
  * guesses which kind an unknowable `.js` file *is*, in order to choose a loader,
  * and is wrong because node itself reparses. This computes what tsx *will do* with
- * the file, which is fully determined by exactly these two inputs: an explicit
- * `.mts` or `.cts` settles it, and otherwise the file's package scope does, with no
- * reparse to upset the answer — read off tsx's own resolver in `packageScopeType`.
- * **No loader choice turns on it** — both still run, in the same order, and the
- * file loads either way.
+ * the file, which for these extensions is settled rather than guessed — there is no
+ * reparse to upset the answer, and the inputs that decide it are enumerated in
+ * `willBeReadAsCommonJS`, measured rather than reasoned from. **No loader choice
+ * turns on it** — both still run, in the same order, and the file loads either way.
  */
 function warnAboutTypeScriptConfigReadAsCommonJS(configPath: string): void {
-  if (!SCOPE_DECIDES_THE_KIND.includes(path.extname(configPath))) {
+  if (!willBeReadAsCommonJS(configPath)) {
     return;
   }
 
-  if (packageScopeType(configPath) === 'module') {
-    return;
-  }
-
-  // "its package scope" rather than "the nearest package.json": there may be no
-  // manifest at all, or one past a `node_modules` boundary that declares
-  // `"type": "module"` and still does not apply. Naming the scope is true in
-  // every one of those cases, and the parenthesis says what the scope is.
+  // "does not make it ESM" rather than naming a manifest condition. The condition
+  // differs by extension and there may be no manifest at all, so any sentence
+  // specific enough to name one is false for some input that reaches here — which
+  // is what the first version of this message got wrong. The scope is described
+  // below, the fixes are listed, and neither claim depends on which case fired.
   console.warn(
     `Warning: ${configPath} will be read as CommonJS, because its package scope ` +
-      'does not declare "type": "module".'
+      'does not make it ESM.'
   );
   console.warn('  (That scope is the nearest package.json above the file, and stops at a');
   console.warn('  node_modules directory — nothing past one is consulted.)');
   console.warn('  tsx applies its CommonJS transform with no ESM reparse, which leaves');
   console.warn('  import.meta.dirname and import.meta.filename undefined — so an ESM config');
   console.warn('  reading either one loads with no error and a wrong value in it.');
-  console.warn('  Name it .mts to be read as ESM, or .cts if it really is CommonJS;');
-  console.warn('  neither extension depends on a manifest.');
+  console.warn('  Name it .mts to be read as ESM, or .cts if it really is CommonJS —');
+  console.warn('  neither extension depends on a manifest — or declare "type": "module"');
+  console.warn('  in the package.json above it.');
 }
 
 /**
