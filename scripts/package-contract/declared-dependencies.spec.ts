@@ -76,11 +76,12 @@ const UNDECLARED_PENDING_A_DECISION: string[] = [];
  *   shape, so #358 took the exposure out of the public surface instead of declaring it: the
  *   mocks are typed `TnMockedMethod` rather than `jest.Mock`.
  *
- * **Which is only safe while the namespace stays out of the type surface**, and flattening is
- * what makes that invisible — it keeps the types a directive resolved and drops the directive,
- * so the consumer's error names a namespace and nothing names a package. The exemption is
- * therefore conditional and checked: see 'uses no exempted types namespace in a type position'
- * below, which goes red naming the file if `jest.Mock` comes back.
+ * **Which is only safe while nothing the namespace names can reach the published `.d.ts`**,
+ * and flattening is what makes that invisible — it keeps the types a directive resolved and
+ * drops the directive, so the consumer's error names a namespace and nothing names a package.
+ * The exemption is therefore conditional and checked: see 'exposes no exempted types namespace
+ * to the published declarations' below, which goes red naming the file if `jest.Mock` comes
+ * back, or if a `jest.fn()` is written where declaration emit would infer it.
  */
 const TYPES_USED_ONLY_INTERNALLY = ['jest'];
 
@@ -125,12 +126,20 @@ interface FileDependencies {
   /** Packages named by a `/// <reference types="..." />` directive. */
   typeReferences: string[];
   /**
-   * The leftmost name of every qualified type reference — `jest` for `jest.Mock`, and for
-   * `extends jest.Mocked<T>`. A global namespace used in a type position is the half of a
-   * types directive that survives into the published `.d.ts`, so it is the half a consumer
-   * can be broken by.
+   * The leftmost name of every qualified reference the published `.d.ts` could inherit —
+   * `jest` for `jest.Mock`, for `extends jest.Mocked<T>`, and for a bare `jest.fn()` that is
+   * not inside a function with an explicit return type.
+   *
+   * This is the half of a types directive a consumer can be broken by. Flattening drops the
+   * directive and keeps everything it resolved, so their error names a namespace and nothing
+   * names a package.
+   *
+   * Ordinary identifiers land here too — `Math`, `Array`, any `x.y` outside an annotated
+   * function. That is deliberate and costs nothing: only the names in
+   * `TYPES_USED_ONLY_INTERNALLY` are ever consulted, and a reader that knew which names
+   * mattered would be a reader that had to be kept in step with the exemption list.
    */
-  typeNamespaces: string[];
+  exposedNamespaces: string[];
 }
 
 /**
@@ -153,7 +162,7 @@ interface FileDependencies {
 function dependenciesOfSource(fileName: string, text: string): FileDependencies {
   const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
   const specifiers: string[] = [];
-  const typeNamespaces: string[] = [];
+  const exposedNamespaces: string[] = [];
 
   /** `jest` from `jest.Mock`, and nothing from an unqualified `Mock`. */
   const leftmostOf = (name: ts.EntityName): string | null => {
@@ -167,14 +176,9 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
   };
 
   /**
-   * The same thing for a heritage clause, which the parser gives as an expression rather than
-   * an `EntityName`: `extends jest.Mocked<T>` is an `ExpressionWithTypeArguments` wrapping a
-   * property access, not a `TypeReferenceNode`.
-   *
-   * Worth its own branch because `jest.Mocked<TnSpriteLoaderService>` is the idiomatic way to
-   * write the very interfaces #358 just took the namespace out of, declaration emit keeps a
-   * heritage clause verbatim, and a reader that only knew type references would have gone
-   * green on it.
+   * The same thing where the parser gives an expression rather than an `EntityName`: a
+   * heritage clause (`extends jest.Mocked<T>` is an `ExpressionWithTypeArguments` wrapping a
+   * property access, not a `TypeReferenceNode`) and an ordinary `jest.fn()` alike.
    */
   const leftmostOfExpression = (expression: ts.Expression): string | null => {
     let current = expression;
@@ -186,18 +190,51 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
     return current === expression || !ts.isIdentifier(current) ? null : current.text;
   };
 
-  const visit = (node: ts.Node): void => {
-    if (ts.isTypeReferenceNode(node) || ts.isTypeQueryNode(node)) {
-      const root = leftmostOf(ts.isTypeReferenceNode(node) ? node.typeName : node.exprName);
+  /**
+   * The qualified name this node roots, in any position the consumer's `.d.ts` can inherit:
+   * a type reference, a `typeof`, a heritage clause, or a value access.
+   *
+   * The value case is not over-reach. Declaration emit *infers* the type of an exported
+   * declaration that carries no annotation, so `export const f = jest.fn(() => 1)` emits
+   * `declare const f: jest.Mock<...>` — the namespace reaches the consumer with no type
+   * position anywhere in the source. `shielded` below is what separates that from the same
+   * call inside a function whose return type is written down.
+   */
+  const rootOf = (node: ts.Node): string | null => {
+    if (ts.isTypeReferenceNode(node)) {
+      return leftmostOf(node.typeName);
+    }
+
+    if (ts.isTypeQueryNode(node)) {
+      return leftmostOf(node.exprName);
+    }
+
+    if (ts.isExpressionWithTypeArguments(node)) {
+      return leftmostOfExpression(node.expression);
+    }
+
+    // The innermost link of an access chain, so `a.b.C` is counted once rather than twice.
+    if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
+      return node.expression.text;
+    }
+
+    return null;
+  };
+
+  /**
+   * @param shielded whether everything below this node is already inside a function with an
+   * explicit return type. Inference stops at one, so nothing under it can reach the published
+   * `.d.ts` by being inferred — which is exactly the condition that makes a types directive
+   * safe to leave undeclared.
+   */
+  const visit = (node: ts.Node, shielded: boolean): void => {
+    const shieldedHere = shielded || (ts.isFunctionLike(node) && node.type !== undefined);
+
+    if (!shieldedHere) {
+      const root = rootOf(node);
 
       if (root !== null) {
-        typeNamespaces.push(root);
-      }
-    } else if (ts.isExpressionWithTypeArguments(node)) {
-      const root = leftmostOfExpression(node.expression);
-
-      if (root !== null) {
-        typeNamespaces.push(root);
+        exposedNamespaces.push(root);
       }
     }
 
@@ -225,15 +262,17 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
       }
     }
 
-    ts.forEachChild(node, visit);
+    ts.forEachChild(node, (child) => visit(child, shieldedHere));
   };
 
-  visit(source);
+  visit(source, false);
 
   return {
     specifiers,
     typeReferences: source.typeReferenceDirectives.map((directive) => directive.fileName),
-    typeNamespaces,
+    // Deduped: a heritage clause matches twice over, once as the clause and once as the
+    // property access inside it, and one file naming `jest` once is the same fact as twice.
+    exposedNamespaces: [...new Set(exposedNamespaces)],
   };
 }
 
@@ -247,8 +286,8 @@ interface Graph {
   packages: Map<string, string[]>;
   /** `/// <reference types="x" />` name to the repo-relative files that carry it. */
   typeReferences: Map<string, string[]>;
-  /** Qualified type reference root (`jest` of `jest.Mock`) to the files using it. */
-  typeNamespaces: Map<string, string[]>;
+  /** Qualified reference root (`jest` of `jest.Mock`) to the files exposing it. */
+  exposedNamespaces: Map<string, string[]>;
   /** Every file reached from the entry point, repo-relative. */
   files: string[];
   /** Relative specifiers that resolved to no file — a walk that stopped short. */
@@ -258,7 +297,7 @@ interface Graph {
 function walkFromEntryPoint(): Graph {
   const packages = new Map<string, string[]>();
   const typeReferences = new Map<string, string[]>();
-  const typeNamespaces = new Map<string, string[]>();
+  const exposedNamespaces = new Map<string, string[]>();
   const unresolved: string[] = [];
   const queue = [entryPoint];
   const seen = new Set(queue);
@@ -281,8 +320,8 @@ function walkFromEntryPoint(): Graph {
       record(typeReferences, name, file);
     }
 
-    for (const name of dependencies.typeNamespaces) {
-      record(typeNamespaces, name, file);
+    for (const name of dependencies.exposedNamespaces) {
+      record(exposedNamespaces, name, file);
     }
 
     for (const specifier of dependencies.specifiers) {
@@ -310,7 +349,7 @@ function walkFromEntryPoint(): Graph {
   return {
     packages,
     typeReferences,
-    typeNamespaces,
+    exposedNamespaces,
     files: queue.map((file) => relative(repoRoot, file)),
     unresolved,
   };
@@ -320,45 +359,73 @@ const graph = walkFromEntryPoint();
 
 describe('the reader', () => {
   /**
-   * The namespace half of the check has nothing left to find in the library once #358's fix
-   * landed, so every assertion about it against the real graph is green against a reader that
-   * returns nothing. These are the positive controls: the same code, on text that does leak.
+   * `exposedNamespaces` has nothing left to find in the library once #358's fix landed, so
+   * every assertion about it drawn from the real graph is equally green against a reader that
+   * returns nothing. These are the controls: the same code, on text that does leak, and on
+   * text that must stay quiet.
+   *
+   * Each positive case was confirmed to reach the published `.d.ts` by compiling it with
+   * `declaration: true` — including the inferred ones, which have no type position at all.
    */
   const read = (text: string): FileDependencies => dependenciesOfSource('probe.ts', text);
 
-  it('sees a namespace used in a type position', () => {
-    expect(read('export interface M { f: jest.Mock; }').typeNamespaces).toEqual(['jest']);
+  it('sees a namespace in a type position', () => {
+    expect(read('export interface M { f: jest.Mock; }').exposedNamespaces).toEqual(['jest']);
   });
 
   it('sees one behind `typeof`', () => {
-    expect(read('export type F = typeof jest.fn;').typeNamespaces).toEqual(['jest']);
+    expect(read('export type F = typeof jest.fn;').exposedNamespaces).toEqual(['jest']);
   });
 
   /**
-   * A heritage clause is the shape that nearly got away: `jest.Mocked<T>` is how someone would
-   * idiomatically rewrite the interfaces #358 just cleaned, the parser models it as an
-   * expression rather than a type reference, and declaration emit keeps it verbatim.
+   * A heritage clause is modelled as an expression rather than a type reference, and
+   * `jest.Mocked<T>` is how someone would idiomatically rewrite the interfaces #358 just
+   * cleaned. Declaration emit keeps the clause verbatim.
    */
   it('sees one in an extends clause', () => {
-    expect(read('export interface M extends jest.Mocked<S> {}').typeNamespaces).toEqual(['jest']);
-  });
-
-  it('sees one in an implements clause', () => {
-    expect(read('export declare class T implements jest.Mock {}').typeNamespaces).toEqual([
+    expect(read('export interface M extends jest.Mocked<S> {}').exposedNamespaces).toEqual([
       'jest',
     ]);
   });
 
-  it('ignores an unqualified heritage clause', () => {
-    expect(read('export interface M extends Mocked<S> {}').typeNamespaces).toEqual([]);
+  it('sees one in an implements clause', () => {
+    expect(read('export declare class T implements jest.Mock {}').exposedNamespaces).toEqual([
+      'jest',
+    ]);
   });
 
-  it('ignores the same name in a value position', () => {
-    expect(read('export const f = jest.fn(() => 1);').typeNamespaces).toEqual([]);
+  /**
+   * The two shapes with no type position anywhere. Declaration emit infers them —
+   * `declare const f: jest.Mock<number, [], any>` and a return type naming the same — so a
+   * reader that only knew type positions would call both of these clean.
+   */
+  it('sees one inferred into an exported value', () => {
+    expect(read('export const f = jest.fn(() => 1);').exposedNamespaces).toEqual(['jest']);
+  });
+
+  it('sees one inferred through an unannotated return type', () => {
+    expect(
+      read('export function make() { return { f: jest.fn() }; }').exposedNamespaces
+    ).toEqual(['jest']);
+  });
+
+  /**
+   * And the shape the exemption is *for*. An explicit return type stops inference, so nothing
+   * under it reaches a consumer — which is what makes leaving `@types/jest` undeclared safe,
+   * and is exactly how `icon-testing.ts`'s own mock factories are written.
+   */
+  it('ignores one inside a function with an explicit return type', () => {
+    expect(
+      read('export function make(): Shape { return { f: jest.fn() }; }').exposedNamespaces
+    ).toEqual([]);
   });
 
   it('ignores an unqualified type, which names no namespace', () => {
-    expect(read('export interface M { f: Mock; }').typeNamespaces).toEqual([]);
+    expect(read('export interface M { f: Mock; }').exposedNamespaces).toEqual([]);
+  });
+
+  it('ignores an unqualified heritage clause', () => {
+    expect(read('export interface M extends Mocked<S> {}').exposedNamespaces).toEqual([]);
   });
 
   it('reads the types directive beside them', () => {
@@ -391,14 +458,14 @@ describe('the walk itself', () => {
   });
 
   /**
-   * The reader's namespace half is exercised directly above, but that says nothing about the
-   * walk carrying it through — and if `graph.typeNamespaces` came back empty, the exemption
-   * guard below would pass on every input. `Intl` is the control because it is a `lib` global
-   * rather than a package, so it is never a declaration question: `calendar-dates.ts` casts to
-   * `Intl.Locale` and `month-view.component.ts` takes an `Intl.NumberFormat` parameter.
+   * The reader is exercised directly above, but that says nothing about the walk carrying it
+   * through — and if `graph.exposedNamespaces` came back empty, the exemption guard below
+   * would pass on every input. `Intl` is the control because it is a `lib` global rather than
+   * a package, so it is never a declaration question: three walked files reach it outside an
+   * annotated function, `calendar-dates.ts`'s cast to `Intl.Locale` among them.
    */
-  it('carries type-position namespaces through from the files it walks', () => {
-    expect(graph.typeNamespaces.get('Intl')?.length).toBeGreaterThan(0);
+  it('carries exposed namespaces through from the files it walks', () => {
+    expect(graph.exposedNamespaces.get('Intl')?.length).toBeGreaterThan(0);
   });
 
   it('reads the type reference directive the flattened .d.ts drops', () => {
@@ -467,20 +534,27 @@ describe('projects/truenas-ui/package.json', () => {
   });
 
   /**
-   * What `TYPES_USED_ONLY_INTERNALLY` is asserting rather than assuming. Exempting a types
-   * package is safe only while its namespace stays in value positions, because ng-packagr's
-   * flattening keeps the types a directive resolved and drops the directive: a `jest.Mock` in
-   * an exported interface lands in the consumer's `.d.ts` with nothing left to name the package
-   * it came from, and `Cannot find namespace 'jest'` is all they get (#358).
+   * What `TYPES_USED_ONLY_INTERNALLY` is asserting rather than assuming. ng-packagr's
+   * flattening keeps the types a directive resolved and drops the directive, so a `jest.Mock`
+   * reaching the published `.d.ts` leaves a consumer with `Cannot find namespace 'jest'` and
+   * nothing naming the package it came from (#358). Exempting a types package is only safe
+   * while nothing it names can get there.
    *
-   * So the exemption carries its own condition. A `jest.fn()` in a function body is a value and
-   * passes; `jest.Mock` on a field is a type and fails, naming the file.
+   * "In a type position" was the first draft of that condition and it is not enough, because
+   * declaration emit infers the type of an exported declaration that has no annotation:
+   * `export const m = jest.fn()` emits `declare const m: jest.Mock<...>` with no type position
+   * anywhere in the source. The condition is therefore the one that actually stops inference —
+   * **an explicit return type** — and `icon-testing.ts`'s mock factories already satisfy it.
+   *
+   * So `jest.fn()` inside `createSpriteLoaderMock(): MockSpriteLoader` passes; the same call at
+   * the top level, or inside a function that does not say what it returns, fails and names the
+   * file.
    */
-  it('uses no exempted types namespace in a type position', () => {
+  it('exposes no exempted types namespace to the published declarations', () => {
     const leaked: Record<string, string[]> = {};
 
     for (const name of TYPES_USED_ONLY_INTERNALLY) {
-      const users = graph.typeNamespaces.get(name) ?? [];
+      const users = graph.exposedNamespaces.get(name) ?? [];
 
       if (users.length > 0) {
         leaked[name] = users;

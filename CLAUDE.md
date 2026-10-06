@@ -232,12 +232,17 @@ check fails if an entry is fixed and left in it.
 
 The check reads `/// <reference types="..." />` as well as imports, because
 ng-packagr's flattened `.d.ts` keeps the types a directive resolved and drops the
-directive. **A types package may be exempted from declaration when its namespace
-is used only in value positions** — `TYPES_USED_ONLY_INTERNALLY`, which holds
-`jest` for `icon-testing.ts`'s own `jest.fn()` calls. That exemption is checked
-rather than promised: a separate test fails, naming the file, if an exempted
-namespace appears in a type position, since that is the half flattening carries
-into the consumer's `.d.ts`.
+directive. **A types package may be exempted from declaration when every
+reference to its namespace sits inside a function with an explicit return
+type** — `TYPES_USED_ONLY_INTERNALLY`, which holds `jest` for
+`icon-testing.ts`'s own `jest.fn()` calls.
+
+That exemption is checked rather than promised: a separate test fails, naming
+the file, if an exempted namespace is exposed to the published declarations.
+**The explicit return type is the whole condition, and "it is only a value, not
+a type" is not enough** — declaration emit infers the type of an exported
+declaration that has no annotation, so `export const m = jest.fn()` reaches a
+consumer's `.d.ts` as `jest.Mock<…>` with no type position written anywhere.
 
 `ng-packagr` does not cover this. `allowedNonPeerDependencies` in
 `ng-package.json` whitelists packages already in the library's `dependencies`;

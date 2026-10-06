@@ -346,9 +346,15 @@ framework's types as a peer is the wrong shape, so the namespace came out of
 the public surface instead: those fields are typed `TnMockedMethod`, a plain
 call signature, which the `jest.fn()` you pass as an override still satisfies.
 The directive stays for the `jest.fn()` calls in that module's own body, which
-are values in this repo's build and reach nobody. The test above holds that
-line — it fails, naming the file, if a jest type comes back to an exported
-declaration.
+are values in this repo's build and reach nobody.
+
+The test above holds that line, and the condition it checks is narrower than
+"not in a type position" — **a jest reference must sit inside a function with
+an explicit return type.** That is what stops TypeScript inferring it outward:
+`export const m = jest.fn()` has no type position anywhere and still emits
+`declare const m: jest.Mock<…>` into the published `.d.ts`. The mock factories
+in `icon-testing.ts` declare what they return, so they are already on the right
+side of it; anything that is not fails the test, naming the file.
 
 **What that check does not cover:** it walks the import graph from
 `src/public-api.ts`, and the published package is more than that graph.
