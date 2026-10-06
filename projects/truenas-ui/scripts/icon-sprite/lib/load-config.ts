@@ -21,78 +21,45 @@ function reasonFor(error: unknown): string {
 }
 
 /**
- * Which module kind node would read this path as: the extension where it settles
- * the question, and otherwise the nearest `package.json`'s `type`. The same rule
- * node applies, because the point is to agree with it.
+ * Extensions that rule an ES module out whatever any manifest says, so the
+ * CommonJS loader can be preferred for them without guessing. Everything else —
+ * `.mjs`, `.mts`, a `.js` or `.ts` whose kind depends on its package, an extension
+ * nobody anticipated — goes to `import()` first. See `loadConfig` for why that
+ * asymmetry is the right default rather than a coin toss.
  */
-function readsAsEsm(configPath: string): boolean {
-  const extension = path.extname(configPath);
-
-  if (extension === '.mjs') {
-    return true;
-  }
-
-  if (extension === '.cjs' || extension === '.json') {
-    return false;
-  }
-
-  for (let dir = path.dirname(configPath); ; ) {
-    const manifest = path.join(dir, 'package.json');
-
-    if (fs.existsSync(manifest)) {
-      try {
-        return (JSON.parse(fs.readFileSync(manifest, 'utf8')) as { type?: string }).type === 'module';
-      } catch {
-        // An unparseable manifest says nothing about the config beside it; node
-        // would refuse the whole package, which is not this function's to report.
-        return false;
-      }
-    }
-
-    const parent = path.dirname(dir);
-
-    if (parent === dir) {
-      return false;
-    }
-
-    dir = parent;
-  }
-}
+const NEVER_ESM = ['.cjs', '.cts', '.json'];
 
 /**
  * Loads a consumer's icon configuration file, which may be ESM or CommonJS.
  *
- * **Ask the file which loader it wants, rather than trying one and retrying.**
- * `import()` reads ESM; `createRequire()` reads CommonJS and the shapes the ESM
- * loader refuses outright, JSON among them — `--config` accepts any path. The
- * `file:` URL on the import is not decoration: a bare absolute path is not a valid
- * ESM specifier on Windows. The other loader is still tried if the first fails,
- * because a file can be either kind for reasons neither node's rule nor this one
- * can see.
+ * Two loaders: `import()`, which reads ESM and the CommonJS that node's ESM loader
+ * can take, and `createRequire()`, for the shapes it refuses outright — JSON among
+ * them, and `--config` accepts any path. The `file:` URL on the import is not
+ * decoration: a bare absolute path is not a valid ESM specifier on Windows.
+ * Whichever runs first, the other is tried if it fails.
  *
- * **Why the order is decided per file rather than fixed**, measured across
- * thirteen config shapes under tsx, counting evaluations rather than successes:
- * a loader that fails does so at *runtime*, with every statement above the failing
- * line already run, so retrying runs the whole file again — a config that appends
- * to a log or bumps a counter at its top level does it twice, and the object that
- * reaches the sprite is the second evaluation's. Either fixed order gets some
- * ordinary shape wrong:
+ * **`import()` goes first unless the extension rules ESM out, and that asymmetry
+ * is the whole of the ordering rule.** A loader that fails does so at *runtime*,
+ * with every statement above the failing line already run, so retrying runs the
+ * whole file again — a config that appends to a log at its top level does it twice.
+ * That is the cost of guessing `import()` wrong. Guessing `require()` wrong costs
+ * something worse, and silent: **tsx's CommonJS transform shims `import.meta.url`
+ * and leaves `import.meta.dirname` undefined**, so an ESM config read that way
+ * loads with no error and a wrong value in it. Measured, counting evaluations
+ * rather than successes, over eleven config shapes under tsx.
  *
- * - `import()` first runs a CommonJS config in a `"type": "module"` project twice:
- *   `module.exports` is valid ESM syntax and fails only on execution.
- * - `require()` first is worse than that on an ESM config using `import.meta`:
- *   tsx's CommonJS transform shims `import.meta.url` and leaves
- *   `import.meta.dirname` **undefined**, so such a config loads with no error and
- *   a wrong value in it, while `import.meta.resolve` throws and costs the second
- *   evaluation.
+ * So the question is never "which kind is this file", which cannot be answered
+ * without running it — node itself does not answer it statically, and since 22.7
+ * reads a typeless `.js` as CommonJS *and reparses it as ESM* when that fails. It
+ * is "can this extension possibly be ESM", which `NEVER_ESM` answers outright.
  *
- * Following the declared kind, every config that agrees with its own package is
- * read once by the right loader. **One shape still runs twice: a config whose
- * syntax contradicts what its own package declares** — `module.exports` in a `.js`
- * file under `"type": "module"`, which is the shape #365 is about. Nothing can
- * know that without running it, and loading it twice beats the old behaviour of
- * dropping it. So does a file that fails for its own reasons, a syntax error or a
- * `throw`, which reports both objections and was not going to load either way.
+ * **One shape that loads is still read twice: a config whose syntax contradicts
+ * what its own package declares** — `module.exports` in a `.js` file under
+ * `"type": "module"`, which is the shape #365 is about. `import()` gets as far as
+ * that line before failing, and loading it twice beats the old behaviour of
+ * dropping it. A file that fails for its own reasons, a syntax error or a `throw`,
+ * is also run twice and reports both objections; it was not going to load either
+ * way.
  *
  * What this replaced was a bare `require(configPath)` fallback that could never
  * run. The published package carries `"type": "module"` — written by ng-packagr,
@@ -117,7 +84,7 @@ export async function loadConfig(
     { label: 'require()', load: async () => createRequire(configPath)(configPath) },
   ];
 
-  if (!readsAsEsm(configPath)) {
+  if (NEVER_ESM.includes(path.extname(configPath))) {
     loaders.reverse();
   }
 

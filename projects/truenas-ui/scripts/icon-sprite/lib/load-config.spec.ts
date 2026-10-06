@@ -55,6 +55,21 @@ interface CaseResult {
  */
 const EVALUATION_COUNTER = 'globalThis.__timesEvaluated = (globalThis.__timesEvaluated || 0) + 1;';
 
+/**
+ * Shared by the `import.meta` cases below, which differ only in where they sit and
+ * what they are called. It reports its own directory's name, which is the case's
+ * own key — asserted through `IMPORT_META` rather than written out, so renaming a
+ * case cannot turn into a value mismatch that explains nothing.
+ */
+const IMPORT_META = 'esm-config-using-import-meta';
+
+const IMPORT_META_CONFIG = [
+  EVALUATION_COUNTER,
+  "import path from 'path';",
+  '',
+  'export default { srcDirs: [path.basename(String(import.meta.dirname))] };',
+].join('\n');
+
 // `satisfies` rather than an annotation, so `keyof typeof CASES` stays the union of
 // the names below. Annotated as `Record<string, CaseDefinition>` it widens to
 // `string`, and `resultFor`'s parameter type stops checking anything.
@@ -137,21 +152,44 @@ const CASES = {
   },
 
   /**
-   * `import.meta.dirname` is the case that makes the loader choice matter beyond
-   * counting evaluations. tsx's CommonJS transform shims `import.meta.url` and
-   * leaves `dirname` **undefined**, so a config read by the wrong loader does not
-   * fail — it loads with a wrong value in it. Deriving a value the assertion can
-   * check is what turns that from invisible into a failure.
+   * `import.meta.dirname` is what makes the loader choice matter beyond counting
+   * evaluations. tsx's CommonJS transform shims `import.meta.url` and leaves
+   * `dirname` **undefined**, so a config read by the wrong loader does not fail — it
+   * loads with a wrong value in it. Reporting its own directory name is what turns
+   * that from invisible into an assertion.
    */
-  'esm-config-using-import-meta': {
+  [`${IMPORT_META}-in-an-esm-project`]: {
     packageJson: { type: 'module' },
     configFile: 'truenas-icons.config.js',
-    contents: [
-      EVALUATION_COUNTER,
-      "import path from 'path';",
-      '',
-      'export default { srcDirs: [path.basename(import.meta.dirname)] };',
-    ].join('\n'),
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /**
+   * The same file in a project that declares no type at all — which is not the
+   * CommonJS case it looks like. Node has read a typeless `.js` as CommonJS *and
+   * reparsed it as ESM on failure* since 22.7, so this is an ESM config however
+   * little its package says so, and anything that treats "no type" as CommonJS
+   * hands it an undefined `import.meta.dirname`.
+   */
+  [`${IMPORT_META}-in-a-plain-project`]: {
+    packageJson: {},
+    configFile: 'truenas-icons.config.js',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  /** `.mts` is ESM by extension, the way `.cts` below is CommonJS by extension. */
+  [`${IMPORT_META}-named-mts`]: {
+    packageJson: {},
+    configFile: 'truenas-icons.config.mts',
+    contents: IMPORT_META_CONFIG,
+  },
+
+  // The CommonJS half of that pair: an extension that rules ESM out, so the
+  // CommonJS loader is the one that reads it.
+  'commonjs-config-named-cts': {
+    packageJson: { type: 'module' },
+    configFile: 'truenas-icons.config.cts',
+    contents: "module.exports = { srcDirs: ['./src/cts'] };",
   },
 
   // `--config` takes any path, so a JSON config is a shape that turns up. Its
@@ -383,11 +421,11 @@ describe('a CommonJS config', () => {
    * tell which kind this file is without running it, and running it twice beats
    * dropping it, which is what used to happen.
    *
-   * Every other shape in this matrix is read once by the loader its own package
-   * points at; see the `import.meta` and top-level-await cases, which is where
-   * getting that wrong stops being a doubled side effect and becomes a wrong value.
+   * Every other shape in this matrix that loads is read exactly once; see the
+   * `import.meta` cases, which is where getting the loader wrong stops being a
+   * doubled side effect and becomes a wrong value.
    */
-  it('is the one shape read twice, because only running it can tell which kind it is', () => {
+  it('is the one shape that loads and is still read twice', () => {
     expect(resultFor('commonjs-config-in-an-esm-project').evaluations).toBe(2);
   });
 
@@ -396,6 +434,15 @@ describe('a CommonJS config', () => {
 
     expect(config.srcDirs).toEqual(['./src/cjs']);
     expect(config.customIconsDir).toBe('./brand');
+    expect(warnings).toEqual([]);
+  });
+
+  // `.cts` rules ESM out the same way `.cjs` does, and is the pair to the `.mts`
+  // case below: both are decided by their extension and neither consults a manifest.
+  it('loads from a .cts file in a project that declares "type": "module"', () => {
+    const { config, warnings } = resultFor('commonjs-config-named-cts');
+
+    expect(config.srcDirs).toEqual(['./src/cts']);
     expect(warnings).toEqual([]);
   });
 
@@ -442,17 +489,27 @@ describe('an ESM config', () => {
   });
 
   /**
-   * The case where reading an ESM config with the CommonJS loader is not a doubled
-   * side effect but a wrong answer: under tsx's transform `import.meta.dirname` is
-   * `undefined`, so `path.basename` of it would throw or produce nonsense. The
-   * assertion is on the value, and the count rules out it having been reached by
-   * falling back.
+   * Where reading an ESM config with the CommonJS loader is not a doubled side
+   * effect but a wrong answer: under tsx's transform `import.meta.dirname` is
+   * `undefined`, and a config deriving a path from it loads with nonsense in it and
+   * no warning. So the assertion is on the value, and the count rules out it having
+   * been reached by falling back after a failure.
+   *
+   * Three projects, because what decides the kind differs in each and a rule can be
+   * right about one and wrong about the others: `"type": "module"` says so; a
+   * typeless project says nothing and is still ESM, since node reads a typeless
+   * `.js` as CommonJS and reparses it as ESM when that fails; and `.mts` says so in
+   * its own extension.
    */
-  it('loads one using import.meta, with import.meta actually populated', () => {
-    const { config, warnings, evaluations } = resultFor('esm-config-using-import-meta');
+  it.each([
+    [`${IMPORT_META}-in-an-esm-project`],
+    [`${IMPORT_META}-in-a-plain-project`],
+    [`${IMPORT_META}-named-mts`],
+  ])('loads %s with import.meta actually populated', (name) => {
+    const { config, warnings, evaluations } = resultFor(name as keyof typeof CASES);
 
-    // The config derives this from its own directory, which is the case's name.
-    expect(config.srcDirs).toEqual(['esm-config-using-import-meta']);
+    // The config reports its own directory's name, which is the case's own key.
+    expect(config.srcDirs).toEqual([name]);
     expect(warnings).toEqual([]);
     expect(evaluations).toBe(1);
   });

@@ -326,21 +326,26 @@ crash the CLI, which is why #362 did not cover it. `createRequire()` is the
 route that works from ESM, and `lib/load-config.ts` is where that now lives,
 with the reason each loader exists written next to it.
 
-**Which loader goes first is decided per file, from node's own rule — the
-extension, else the nearest `package.json`'s `type` — and that is load-bearing
-rather than tidy.** A loader that fails does so at *runtime*, with everything
-above the failing line already run, so retrying runs the whole file again: the
-consumer's config gets its top-level side effects twice and the object that
-reaches the sprite is the second run's. Both fixed orders get an ordinary shape
-wrong, measured across thirteen shapes. `import()` first runs a CommonJS config
-in a `"type": "module"` project twice — `module.exports` is valid ESM syntax and
-fails only on execution. `require()` first is worse on an ESM config using
-`import.meta`: **tsx's CommonJS transform shims `import.meta.url` and leaves
-`import.meta.dirname` undefined**, so that config loads with no error and a wrong
-value in it. Following the declared kind reads every config that agrees with its
-own package once, and leaves exactly one shape read twice — `module.exports` in a
-`.js` file under `"type": "module"`, which nothing can identify without running
-it, and which used to be dropped entirely.
+**`import()` goes first unless the extension rules ESM out — `.cjs`, `.cts`,
+`.json` — and that asymmetry is load-bearing rather than tidy.** A loader that
+fails does so at *runtime*, with everything above the failing line already run, so
+retrying runs the whole file again: the consumer's config gets its top-level side
+effects twice and the object that reaches the sprite is the second run's. That is
+what guessing `import()` wrong costs. Guessing `require()` wrong costs something
+worse and silent — **tsx's CommonJS transform shims `import.meta.url` and leaves
+`import.meta.dirname` undefined**, so an ESM config read that way loads with no
+error and a wrong value in it.
+
+**Do not replace that with a rule that reads the nearest `package.json`'s
+`type`.** It looks more precise and is wrong in the common case: node has read a
+typeless `.js` as CommonJS *and reparsed it as ESM when that fails* since 22.7, so
+"declares no type" does not mean CommonJS, and treating it that way hands every
+typeless ESM config an undefined `import.meta.dirname`. The kind of a `.js` file
+is not statically knowable — node does not claim to know it either. The only
+question worth asking is the one the extension answers.
+
+One shape that loads is still read twice: `module.exports` in a `.js` file under
+`"type": "module"`, which used to be dropped entirely.
 
 **Testing one of these costs a process, and the reason is worth knowing before
 you write the test.** What a loader does is decided by the module system reading
