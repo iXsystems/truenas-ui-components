@@ -222,15 +222,39 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
   };
 
   /**
-   * @param shielded whether everything below this node is already inside a function with an
-   * explicit return type. Inference stops at one, so nothing under it can reach the published
-   * `.d.ts` by being inferred — which is exactly the condition that makes a types directive
-   * safe to leave undeclared.
+   * The body an annotated function hides from declaration emit, or undefined when it hides
+   * nothing.
+   *
+   * **A function shields its body and not itself.** Its signature is emitted verbatim, so a
+   * `jest.Mock` in a return type, a parameter, or a type-parameter constraint reaches the
+   * consumer however carefully the function is annotated — and the annotation is what would
+   * otherwise mark the whole node safe. `export interface M { f(): jest.Mock }` is the shape
+   * that makes this matter: a `MethodSignature` is function-like and carries a `.type`, so a
+   * shield applied to the node would be applied by the very type that leaks. Writing
+   * `MockSpriteLoader`'s fields as methods rather than properties is the obvious alternative
+   * to this ticket's rewrite, which is to say it is the likely next edit.
+   *
+   * `ts.isFunctionLike` also admits signatures with no body at all — call, construct, index
+   * and method signatures, and function types — where there is nothing to shield. `.type` on
+   * an `IndexSignatureDeclaration` is its value type rather than a return type, so that one
+   * would shield itself with the leak.
+   */
+  const shieldedBodyOf = (node: ts.Node): ts.Node | undefined => {
+    if (!ts.isFunctionLike(node) || node.type === undefined) {
+      return undefined;
+    }
+
+    return (node as ts.FunctionLikeDeclaration).body;
+  };
+
+  /**
+   * @param shielded whether this node sits inside the body of a function with an explicit
+   * return type. Inference stops at one, so nothing in that body can reach the published
+   * `.d.ts` by being inferred — which is the condition that makes a types directive safe to
+   * leave undeclared.
    */
   const visit = (node: ts.Node, shielded: boolean): void => {
-    const shieldedHere = shielded || (ts.isFunctionLike(node) && node.type !== undefined);
-
-    if (!shieldedHere) {
+    if (!shielded) {
       const root = rootOf(node);
 
       if (root !== null) {
@@ -262,7 +286,9 @@ function dependenciesOfSource(fileName: string, text: string): FileDependencies 
       }
     }
 
-    ts.forEachChild(node, (child) => visit(child, shieldedHere));
+    const body = shielded ? undefined : shieldedBodyOf(node);
+
+    ts.forEachChild(node, (child) => visit(child, shielded || child === body));
   };
 
   visit(source, false);
@@ -410,11 +436,46 @@ describe('the reader', () => {
   });
 
   /**
-   * And the shape the exemption is *for*. An explicit return type stops inference, so nothing
-   * under it reaches a consumer — which is what makes leaving `@types/jest` undeclared safe,
-   * and is exactly how `icon-testing.ts`'s own mock factories are written.
+   * A function shields its body, never its own signature — which is emitted verbatim. The
+   * method-signature case is the one to keep: writing `MockSpriteLoader`'s fields as methods
+   * rather than properties is the obvious alternative to this ticket's rewrite, and a
+   * `MethodSignature` is function-like with a `.type`, so a shield applied to the node would
+   * be applied by the leak itself.
    */
-  it('ignores one inside a function with an explicit return type', () => {
+  it('sees one in a method signature', () => {
+    expect(read('export interface M { f(): jest.Mock; }').exposedNamespaces).toEqual(['jest']);
+  });
+
+  it('sees one in an index signature', () => {
+    expect(read('export interface M { [k: string]: jest.Mock; }').exposedNamespaces).toEqual([
+      'jest',
+    ]);
+  });
+
+  it('sees one in the return type of an annotated function', () => {
+    expect(read('export function f(): jest.Mock { return g(); }').exposedNamespaces).toEqual([
+      'jest',
+    ]);
+  });
+
+  it('sees one in a parameter of an annotated function', () => {
+    expect(read('export function f(m: jest.Mock): void { use(m); }').exposedNamespaces).toEqual([
+      'jest',
+    ]);
+  });
+
+  it('sees one in a type parameter constraint', () => {
+    expect(
+      read('export function f<T extends jest.Mock>(t: T): void { use(t); }').exposedNamespaces
+    ).toEqual(['jest']);
+  });
+
+  /**
+   * And the shape the exemption is *for*. An explicit return type stops inference, so nothing
+   * in that body reaches a consumer — which is what makes leaving `@types/jest` undeclared
+   * safe, and is exactly how `icon-testing.ts`'s own mock factories are written.
+   */
+  it('ignores one inside the body of a function with an explicit return type', () => {
     expect(
       read('export function make(): Shape { return { f: jest.fn() }; }').exposedNamespaces
     ).toEqual([]);
@@ -460,12 +521,17 @@ describe('the walk itself', () => {
   /**
    * The reader is exercised directly above, but that says nothing about the walk carrying it
    * through — and if `graph.exposedNamespaces` came back empty, the exemption guard below
-   * would pass on every input. `Intl` is the control because it is a `lib` global rather than
-   * a package, so it is never a declaration question: three walked files reach it outside an
-   * annotated function, `calendar-dates.ts`'s cast to `Intl.Locale` among them.
+   * would pass on every input.
+   *
+   * The floor is on the map's size rather than on a particular name. Naming one means naming
+   * a line in a component, and whether that line is exposed turns on whether the function
+   * around it was annotated — so an ordinary refactor two directories away could retire the
+   * control and report it as a missing namespace. The library has scores of these (`Math`,
+   * `Array`, `ChangeDetectionStrategy`, `Intl`); the count is what the walk is being asked
+   * about.
    */
   it('carries exposed namespaces through from the files it walks', () => {
-    expect(graph.exposedNamespaces.get('Intl')?.length).toBeGreaterThan(0);
+    expect(graph.exposedNamespaces.size).toBeGreaterThan(20);
   });
 
   it('reads the type reference directive the flattened .d.ts drops', () => {

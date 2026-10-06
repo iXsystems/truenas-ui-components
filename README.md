@@ -349,12 +349,15 @@ The directive stays for the `jest.fn()` calls in that module's own body, which
 are values in this repo's build and reach nobody.
 
 The test above holds that line, and the condition it checks is narrower than
-"not in a type position" — **a jest reference must sit inside a function with
-an explicit return type.** That is what stops TypeScript inferring it outward:
-`export const m = jest.fn()` has no type position anywhere and still emits
-`declare const m: jest.Mock<…>` into the published `.d.ts`. The mock factories
-in `icon-testing.ts` declare what they return, so they are already on the right
-side of it; anything that is not fails the test, naming the file.
+"not in a type position" — **a jest reference must sit inside the body of a
+function that declares what it returns.** The return type is what stops
+TypeScript inferring the reference outward: `export const m = jest.fn()` has no
+type position anywhere and still emits `declare const m: jest.Mock<…>` into the
+published `.d.ts`. And it is the *body* that is covered and not the signature,
+which is emitted verbatim — `export function f(): jest.Mock` leaks the
+namespace no matter how deliberately it was written. The mock factories in
+`icon-testing.ts` are on the right side of both halves; anything that is not
+fails the test, naming the file.
 
 **What that check does not cover:** it walks the import graph from
 `src/public-api.ts`, and the published package is more than that graph.
