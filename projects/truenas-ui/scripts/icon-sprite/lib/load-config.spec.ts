@@ -31,6 +31,15 @@ import { resolveConfig } from '../sprite-config-interface';
 const repoRoot = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const tsxCli = path.join(repoRoot, 'node_modules', 'tsx', 'dist', 'cli.mjs');
 
+/**
+ * Whether this node strips TypeScript itself, which is what decides a `.ts` file's
+ * kind when its package scope declares an explicit `"type": "commonjs"`. Absent
+ * before 22.10, `false` when `--no-experimental-strip-types` turns it off, a string
+ * when on; widened because `@types/node` only grew the field in 22.x. The spawn
+ * below uses `process.execPath`, so this is the child's behaviour too.
+ */
+const nodeStripsTypeScript = Boolean((process.features as { typescript?: unknown }).typescript);
+
 interface CaseDefinition {
   /** What the consumer's own `package.json` says — `type` is what decides the config's kind. */
   packageJson: Record<string, unknown>;
@@ -643,12 +652,15 @@ describe('an ESM config', () => {
 });
 
 /**
- * #369. A bare `.ts` config takes its module kind from the nearest `package.json`,
- * and without `"type": "module"` tsx reads it as CommonJS with no ESM reparse. The
- * value cannot be fixed from here — nothing makes tsx reparse the file — so the
- * criterion is that the loader reports the condition rather than loading quietly.
+ * #369. A `.ts`, `.tsx` or `.jsx` config takes its module kind from its package
+ * scope rather than from its own extension, and a scope that does not make it ESM
+ * has tsx read it as CommonJS with no reparse. The value cannot be fixed from here
+ * — nothing makes tsx reparse the file — so the criterion is that the loader
+ * reports the condition rather than loading quietly, and stays quiet when there is
+ * nothing to report. Both halves are below, and the last case states them as one
+ * invariant.
  */
-describe('a .ts config that tsx will read as CommonJS', () => {
+describe('what decides a TypeScript config module kind', () => {
   it('warns and names .mts rather than loading a wrong import.meta silently', () => {
     const { config, warnings } = resultFor(`${IMPORT_META}-named-ts-in-a-plain-project`);
 
@@ -733,13 +745,27 @@ describe('a .ts config that tsx will read as CommonJS', () => {
    * predicate passes the second of these and fails the first — which is why both
    * are here, asserting opposite outcomes against one shared manifest.
    */
-  it('stays quiet for a .ts config under "type": "commonjs", which loads as ESM', () => {
+  /**
+   * **This one is decided by the node running the suite, so it asks that node.**
+   * `.ts` escapes an explicit `"type": "commonjs"` only where node strips
+   * TypeScript itself; with stripping off — every node before 22.18, and the
+   * `--no-experimental-strip-types` flag — it is transformed like `.tsx`. Jest
+   * spawns tsx with `process.execPath`, so the flag read here is the one the child
+   * ran under. Asserting either outcome unconditionally would be asserting CI's
+   * node rather than the loader.
+   */
+  it('matches the node it runs on for a .ts config under "type": "commonjs"', () => {
     const name = `${IMPORT_META}-named-ts-under-an-explicit-commonjs-type`;
     const { config, warnings } = resultFor(name);
 
-    // Populated, so the config reports its own directory rather than 'undefined'.
-    expect(config.srcDirs).toEqual([name]);
-    expect(warnings).toEqual([]);
+    if (nodeStripsTypeScript) {
+      // Populated, so the config reports its own directory rather than 'undefined'.
+      expect(config.srcDirs).toEqual([name]);
+      expect(warnings).toEqual([]);
+    } else {
+      expect(config.srcDirs).toEqual(['undefined']);
+      expect(warnings.join('\n')).toContain('will be read as CommonJS');
+    }
   });
 
   it('warns for a .tsx config under the same "type": "commonjs"', () => {
@@ -747,6 +773,37 @@ describe('a .ts config that tsx will read as CommonJS', () => {
 
     expect(config.srcDirs).toEqual(['undefined']);
     expect(warnings.join('\n')).toContain('will be read as CommonJS');
+  });
+
+  /**
+   * **The invariant the whole warning exists to hold, stated once over every case
+   * whose config reports its own `import.meta`: it is said exactly when the value
+   * is wrong.** Both directions can fail — a silent mis-read, which is #369, and a
+   * warning on a config that loaded correctly, which is noise that teaches a
+   * consumer to ignore it.
+   *
+   * Worth having alongside the cases above because it needs no table: it holds on
+   * any node and any tsx, and it is what a new case is checked against for free.
+   * Every defect three review rounds found here — a walk that stopped in the wrong
+   * place, an extension missed, a predicate that was right for one extension and
+   * wrong for another — breaks it.
+   *
+   * The set is derived from the shared config rather than listed, so a case added
+   * with `contents: IMPORT_META_CONFIG` joins it without anyone remembering to.
+   */
+  it.each(
+    Object.entries(CASES)
+      .filter(([, definition]) => definition.contents === IMPORT_META_CONFIG)
+      .map(([name]) => [name])
+  )('says something for %s exactly when import.meta was not populated', (name) => {
+    const { config, warnings } = resultFor(name as keyof typeof CASES);
+
+    // The config reports `path.basename(String(import.meta.dirname))`, so the
+    // literal string 'undefined' is what a mis-read looks like from out here.
+    const misread = (config.srcDirs as string[])[0] === 'undefined';
+    const warned = warnings.join('\n').includes('will be read as CommonJS');
+
+    expect(warned).toBe(misread);
   });
 });
 

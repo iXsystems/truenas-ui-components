@@ -49,35 +49,51 @@ const NEVER_ESM = ['.cjs', '.cts', '.json'];
  * accessors come back undefined — for an extension whose kind is not settled by
  * the extension itself.
  *
- * **The two families answer to different conditions, and one predicate for both
- * is wrong.** Measured under tsx 4.19.4 on node 24.13.1 and 26.7.0, over every
- * extension against a scope declaring nothing, `commonjs`, `module` and an
- * invalid value:
+ * **The three extensions do not answer to the same condition, and one of them
+ * depends on the node running the CLI.** Measured under tsx 4.19.4 on node 26.7.0
+ * with native TypeScript stripping both on and off — the latter via
+ * `--no-experimental-strip-types`, which is also how every node before 22.18
+ * behaves — over scopes declaring nothing, `commonjs`, `module`, and an invalid
+ * string:
  *
- * | extension | typeless | `commonjs` | `module` | invalid |
+ * | extension | typeless | `commonjs` | `module` | invalid string |
  * |---|---|---|---|---|
- * | `.ts` | **CommonJS** | ESM | ESM | ESM |
+ * | `.ts`, node strips TS | **CommonJS** | ESM | ESM | ESM |
+ * | `.ts`, node does not | **CommonJS** | **CommonJS** | ESM | ESM |
  * | `.tsx`, `.jsx` | **CommonJS** | **CommonJS** | ESM | ESM |
  * | `.mts`, `.cts` | ESM | ESM | ESM | ESM |
  *
- * `.ts` differs from the other two because **node recognises it natively** and so
- * supplies a format whenever the scope declares a `type` at all. tsx's own
- * override is `!resolved.format && (resolved.format = getFormatFromFileUrl(url))`,
- * which therefore never runs, and its `load` hook returns `{ format: 'module' }`
- * for any TS extension it did not transform. Only a scope declaring *nothing*
- * leaves the format unset, reaching tsx's `getPackageType` and its
- * `?? 'commonjs'` default. Node does not recognise `.tsx` or `.jsx`, so for those
- * `getPackageType` always decides and a literal `"type": "commonjs"` transforms.
+ * `.ts` is the only row with two states, and `process.features.typescript` tells
+ * them apart. Where node recognises `.ts` natively it supplies a format for any
+ * declared `type`, so tsx's own `!resolved.format &&
+ * (resolved.format = getFormatFromFileUrl(url))` never runs and its `load` hook
+ * returns `{ format: 'module' }` for a TS extension it did not transform. Where it
+ * does not, `.ts` reaches tsx's `getPackageType` exactly as `.tsx` does and a
+ * literal `"type": "commonjs"` transforms. Node never recognises `.tsx` or `.jsx`,
+ * so those have one row.
+ *
+ * **The second row is a real environment, and CI never exercises it.** The
+ * published manifest declares no `engines`, `cli.cjs` runs `tsx` on whatever node
+ * the consumer has, and tsx supports node 18 — while CI pins 24.15.0, where native
+ * stripping is on. So this is detected rather than assumed: reading the row off the
+ * repo's own development range would be correct about CI and wrong about the
+ * consumer the bin actually runs for.
  *
  * `.mts` and `.cts` are absent because `getFormatFromExtension` answers for them
- * outright; `.cts` reads with `import.meta` populated too, so neither is ever the
- * silent case. The three covered here are tsx's pattern
- * `/\.([cm]?ts|[tj]sx)($|\?)/` minus those two — which is tsx's own internal
+ * outright, in every scope and on both node behaviours. The three covered here are
+ * tsx's pattern `/\.([cm]?ts|[tj]sx)($|\?)/` minus those two — tsx's own internal
  * `['.ts', '.tsx', '.jsx']`.
  *
- * **Case-sensitive, because tsx's pattern is.** A `--config` naming `.TS` is not
- * transformed at all, loads as ESM through node, and correctly draws no warning.
- * That looks like an oversight and is the accurate answer.
+ * An invalid `type` loads as ESM only when it is a *string*. A non-string
+ * `"type": 123` throws out of the loader instead, and `packageScopeType` reports it
+ * as `undefined`, so a warning is printed just before the real failure is reported.
+ * Not worth a branch, and not an ESM load either.
+ *
+ * **Case-sensitive, because tsx's pattern is.** A `--config` naming `.TS` draws no
+ * warning and is right not to, though not by the route it looks like: `import()` of
+ * it fails with an unknown extension, `loadConfig`'s `createRequire` fallback loads
+ * it, and tsx's CommonJS hook populates `import.meta.dirname` there — so the value
+ * that reaches the sprite is correct.
  */
 function willBeReadAsCommonJS(configPath: string): boolean {
   const extension = path.extname(configPath);
@@ -88,9 +104,20 @@ function willBeReadAsCommonJS(configPath: string): boolean {
 
   const scope = packageScopeType(configPath);
 
-  // `.ts` only when the scope declares no `type` whatever; the other two also
-  // when it declares `commonjs`. See the table above for why these differ.
-  return scope === undefined || (extension !== '.ts' && scope === 'commonjs');
+  // A scope declaring nothing is read as CommonJS for all three, on either node.
+  if (scope === undefined) {
+    return true;
+  }
+
+  // Read off `process.features` rather than a version comparison, and widened
+  // because `@types/node` only grew the field in 22.x: it is absent before 22.10,
+  // `false` when the flag turns stripping off, and a string when it is on.
+  const nodeStripsTypeScript = Boolean((process.features as { typescript?: unknown }).typescript);
+
+  // Past that, only `.ts` on a node that strips TypeScript escapes an explicit
+  // `"type": "commonjs"`, because that is what supplies a format and keeps tsx's
+  // own override from running. See the table above.
+  return scope === 'commonjs' && !(extension === '.ts' && nodeStripsTypeScript);
 }
 
 /**
