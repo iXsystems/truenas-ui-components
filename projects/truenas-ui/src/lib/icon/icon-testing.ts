@@ -5,25 +5,43 @@ import { TnIconRegistryService } from './icon-registry.service';
 import { TnSpriteLoaderService } from './sprite-loader.service';
 
 /**
+ * A mocked method, described without naming a test framework's types.
+ *
+ * These fields were `jest.Mock`, and that reached the published `.d.ts` while the
+ * `/// <reference types="jest" />` above it did not: ng-packagr's flattening keeps the types
+ * and drops the directive, so a consumer without jest's types in scope got
+ * `Cannot find namespace 'jest'` from a declaration file they never opened (#358). Declaring
+ * `@types/jest` as a peer of a component library would have fixed the error and is the wrong
+ * shape — so the namespace leaves the public surface instead, and the directive stays for the
+ * `jest.fn()` calls below, which are values in this module's own body and reach no consumer.
+ *
+ * `never[]` rather than `unknown[]`: these are property positions, so `strictFunctionTypes`
+ * makes their parameters contravariant, and `unknown[]` would reject the typed `jest.fn()` a
+ * caller passes through {@link IconTestingMockOverrides}. `never[]` accepts any signature,
+ * which is the whole promise being made here — that a mock goes in.
+ */
+export type TnMockedMethod = (...args: never[]) => unknown;
+
+/**
  * Mock type for TnSpriteLoaderService
  */
 export interface MockSpriteLoader {
-  ensureSpriteLoaded: jest.Mock;
-  getIconUrl: jest.Mock;
-  getSafeIconUrl: jest.Mock;
-  isSpriteLoaded: jest.Mock;
-  getSpriteConfig: jest.Mock;
+  ensureSpriteLoaded: TnMockedMethod;
+  getIconUrl: TnMockedMethod;
+  getSafeIconUrl: TnMockedMethod;
+  isSpriteLoaded: TnMockedMethod;
+  getSpriteConfig: TnMockedMethod;
 }
 
 /**
  * Mock type for TnIconRegistryService
  */
 export interface MockIconRegistry {
-  resolveIcon: jest.Mock;
-  getSpriteLoader: jest.Mock;
-  registerIcon: jest.Mock;
-  registerIcons: jest.Mock;
-  registerLibrary: jest.Mock;
+  resolveIcon: TnMockedMethod;
+  getSpriteLoader: TnMockedMethod;
+  registerIcon: TnMockedMethod;
+  registerIcons: TnMockedMethod;
+  registerLibrary: TnMockedMethod;
 }
 
 /**

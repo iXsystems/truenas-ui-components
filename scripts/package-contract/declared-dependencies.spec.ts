@@ -51,37 +51,38 @@ const declared = new Set([
 
 /**
  * Packages the entry point reaches that the contract does not declare, and whose range is a
- * decision nobody has made yet. Every entry is a real gap rather than an exemption — #354
- * chose the ranges for `@angular/forms` and `rxjs` and scoped itself to those two, because
- * the range on a peer is a contract call: since npm 7 a floor the consumer's tree cannot
- * satisfy is an `ERESOLVE` install failure rather than a warning, so getting one wrong breaks
- * installs that work today. These two surfaced from this check and are proposed as their own
- * ticket:
+ * decision nobody has made yet. **Empty, and meant to stay that way** — an entry here is a
+ * real gap held open, not an exemption.
  *
- * - `@angular/animations` — `table.component.ts` and `stepper.component.ts` build animations
- *   with it. An Angular 22 application does not necessarily have it installed, so declaring
- *   it is the entry here with a real consumer cost to weigh.
- * - `@angular/platform-browser` — `DomSanitizer` in the icon components. Every Angular browser
- *   application already depends on it, so declaring it is close to free; it is held back only
- *   because the range is the same kind of call.
+ * It exists because the range on a peer is a contract call that cannot always be made in the
+ * ticket that surfaces it: since npm 7 a floor the consumer's tree cannot satisfy is an
+ * `ERESOLVE` install failure rather than a warning, so getting one wrong breaks installs that
+ * work today. #354 chose `@angular/forms` and `rxjs` and deferred two others here; #358 then
+ * decided both — `@angular/animations` and `@angular/platform-browser` are declared peers at
+ * `^22.0.0`, for the reasons in README.md's "Peer Dependencies".
  *
  * The test below fails when an entry stops being true, so a fix removes it rather than
  * leaving it to rot.
  */
-const UNDECLARED_PENDING_A_DECISION = ['@angular/animations', '@angular/platform-browser'];
+const UNDECLARED_PENDING_A_DECISION: string[] = [];
 
 /**
- * The same thing for `/// <reference types="..." />`, which names a types package rather
- * than an import.
+ * Types packages a `/// <reference types="..." />` in the graph names, that the contract does
+ * not declare and deliberately will not.
  *
- * - `jest` — `icon-testing.ts` is exported from `public-api.ts` and its mocks are typed
- *   `jest.Mock`, which reaches the published `.d.ts`. The directive itself does not: flattening
- *   drops it, so a consumer without `@types/jest` in scope gets `Cannot find namespace 'jest'`.
- *   Declaring a test framework's types as a peer of a component library is the wrong shape, and
- *   the alternative — moving the jest-typed helpers out of the main entry point — is an API
- *   change. Either way it is a decision rather than a range.
+ * - `jest` — `icon-testing.ts` is exported from `public-api.ts`, and the directive resolves the
+ *   `jest.fn()` calls in its own body. Those are values in this repo's build and reach no
+ *   consumer. Declaring a test framework's types as a peer of a component library is the wrong
+ *   shape, so #358 took the exposure out of the public surface instead of declaring it: the
+ *   mocks are typed `TnMockedMethod` rather than `jest.Mock`.
+ *
+ * **Which is only safe while the namespace stays out of the type surface**, and flattening is
+ * what makes that invisible — it keeps the types a directive resolved and drops the directive,
+ * so the consumer's error names a namespace and nothing names a package. The exemption is
+ * therefore conditional and checked: see 'uses no exempted types namespace in a type position'
+ * below, which goes red naming the file if `jest.Mock` comes back.
  */
-const TYPES_PENDING_A_DECISION = ['jest'];
+const TYPES_USED_ONLY_INTERNALLY = ['jest'];
 
 const builtins = new Set(builtinModules);
 
@@ -123,6 +124,12 @@ interface FileDependencies {
   specifiers: string[];
   /** Packages named by a `/// <reference types="..." />` directive. */
   typeReferences: string[];
+  /**
+   * The leftmost name of every qualified type reference — `jest` for `jest.Mock`. A global
+   * namespace used in a type position is the half of a types directive that survives into the
+   * published `.d.ts`, so it is the half a consumer can be broken by.
+   */
+  typeNamespaces: string[];
 }
 
 /**
@@ -137,17 +144,36 @@ interface FileDependencies {
  * missing: ng-packagr's flattened `.d.ts` drops the directive while keeping the types that
  * needed it, so the consumer's error names a namespace and nothing names a package. The
  * parser populates them for free beside the imports.
+ *
+ * Takes the text rather than only a path so the reader itself can be exercised against both
+ * halves of that distinction — see 'the reader' below. A guard whose only input is a tree it
+ * now expects to be clean passes identically when it reads nothing at all.
  */
-function dependenciesOf(file: string): FileDependencies {
-  const source = ts.createSourceFile(
-    file,
-    readFileSync(file, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
+function dependenciesOfSource(fileName: string, text: string): FileDependencies {
+  const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
   const specifiers: string[] = [];
+  const typeNamespaces: string[] = [];
+
+  /** `jest` from `jest.Mock`, and nothing from an unqualified `Mock`. */
+  const leftmostOf = (name: ts.EntityName): string | null => {
+    let current = name;
+
+    while (ts.isQualifiedName(current)) {
+      current = current.left;
+    }
+
+    return current === name ? null : current.text;
+  };
 
   const visit = (node: ts.Node): void => {
+    if (ts.isTypeReferenceNode(node) || ts.isTypeQueryNode(node)) {
+      const root = leftmostOf(ts.isTypeReferenceNode(node) ? node.typeName : node.exprName);
+
+      if (root !== null) {
+        typeNamespaces.push(root);
+      }
+    }
+
     if (
       (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
       node.moduleSpecifier !== undefined &&
@@ -180,7 +206,13 @@ function dependenciesOf(file: string): FileDependencies {
   return {
     specifiers,
     typeReferences: source.typeReferenceDirectives.map((directive) => directive.fileName),
+    typeNamespaces,
   };
+}
+
+/** Everything one file on disk depends on. */
+function dependenciesOf(file: string): FileDependencies {
+  return dependenciesOfSource(file, readFileSync(file, 'utf8'));
 }
 
 interface Graph {
@@ -188,6 +220,8 @@ interface Graph {
   packages: Map<string, string[]>;
   /** `/// <reference types="x" />` name to the repo-relative files that carry it. */
   typeReferences: Map<string, string[]>;
+  /** Qualified type reference root (`jest` of `jest.Mock`) to the files using it. */
+  typeNamespaces: Map<string, string[]>;
   /** Every file reached from the entry point, repo-relative. */
   files: string[];
   /** Relative specifiers that resolved to no file — a walk that stopped short. */
@@ -197,6 +231,7 @@ interface Graph {
 function walkFromEntryPoint(): Graph {
   const packages = new Map<string, string[]>();
   const typeReferences = new Map<string, string[]>();
+  const typeNamespaces = new Map<string, string[]>();
   const unresolved: string[] = [];
   const queue = [entryPoint];
   const seen = new Set(queue);
@@ -217,6 +252,10 @@ function walkFromEntryPoint(): Graph {
 
     for (const name of dependencies.typeReferences) {
       record(typeReferences, name, file);
+    }
+
+    for (const name of dependencies.typeNamespaces) {
+      record(typeNamespaces, name, file);
     }
 
     for (const specifier of dependencies.specifiers) {
@@ -244,12 +283,44 @@ function walkFromEntryPoint(): Graph {
   return {
     packages,
     typeReferences,
+    typeNamespaces,
     files: queue.map((file) => relative(repoRoot, file)),
     unresolved,
   };
 }
 
 const graph = walkFromEntryPoint();
+
+describe('the reader', () => {
+  /**
+   * The namespace half of the check has nothing left to find in the library once #358's fix
+   * landed, so every assertion about it against the real graph is green against a reader that
+   * returns nothing. These are the positive controls: the same code, on text that does leak.
+   */
+  const read = (text: string): FileDependencies => dependenciesOfSource('probe.ts', text);
+
+  it('sees a namespace used in a type position', () => {
+    expect(read('export interface M { f: jest.Mock; }').typeNamespaces).toEqual(['jest']);
+  });
+
+  it('sees one behind `typeof`', () => {
+    expect(read('export type F = typeof jest.fn;').typeNamespaces).toEqual(['jest']);
+  });
+
+  it('ignores the same name in a value position', () => {
+    expect(read('export const f = jest.fn(() => 1);').typeNamespaces).toEqual([]);
+  });
+
+  it('ignores an unqualified type, which names no namespace', () => {
+    expect(read('export interface M { f: Mock; }').typeNamespaces).toEqual([]);
+  });
+
+  it('reads the types directive beside them', () => {
+    expect(read('/// <reference types="jest" />\nexport const x = 1;').typeReferences).toEqual([
+      'jest',
+    ]);
+  });
+});
 
 describe('the walk itself', () => {
   /**
@@ -271,6 +342,17 @@ describe('the walk itself', () => {
   it('still sees the two packages #354 was filed about', () => {
     expect(graph.packages.get('@angular/forms')?.length).toBeGreaterThan(0);
     expect(graph.packages.get('rxjs')?.length).toBeGreaterThan(0);
+  });
+
+  /**
+   * The reader's namespace half is exercised directly above, but that says nothing about the
+   * walk carrying it through — and if `graph.typeNamespaces` came back empty, the exemption
+   * guard below would pass on every input. `Intl` is the control because it is a `lib` global
+   * rather than a package, so it is never a declaration question: `calendar-dates.ts` casts to
+   * `Intl.Locale` and `month-view.component.ts` takes an `Intl.NumberFormat` parameter.
+   */
+  it('carries type-position namespaces through from the files it walks', () => {
+    expect(graph.typeNamespaces.get('Intl')?.length).toBeGreaterThan(0);
   });
 
   it('reads the type reference directive the flattened .d.ts drops', () => {
@@ -298,7 +380,7 @@ describe('projects/truenas-ui/package.json', () => {
     const undeclared: Record<string, string[]> = {};
 
     for (const [name, referrers] of graph.typeReferences) {
-      if (!typesAreDeclared(name) && !TYPES_PENDING_A_DECISION.includes(name)) {
+      if (!typesAreDeclared(name) && !TYPES_USED_ONLY_INTERNALLY.includes(name)) {
         undeclared[name] = referrers;
       }
     }
@@ -325,17 +407,41 @@ describe('projects/truenas-ui/package.json', () => {
       }
     }
 
-    for (const name of TYPES_PENDING_A_DECISION) {
+    for (const name of TYPES_USED_ONLY_INTERNALLY) {
       if (typesAreDeclared(name)) {
-        stale.push(`${name}: types now declared — delete it from TYPES_PENDING_A_DECISION`);
+        stale.push(`${name}: types now declared — delete it from TYPES_USED_ONLY_INTERNALLY`);
       }
 
       if ((graph.typeReferences.get(name)?.length ?? 0) === 0) {
-        stale.push(`${name}: no longer referenced — delete it from TYPES_PENDING_A_DECISION`);
+        stale.push(`${name}: no longer referenced — delete it from TYPES_USED_ONLY_INTERNALLY`);
       }
     }
 
     expect(stale).toEqual([]);
+  });
+
+  /**
+   * What `TYPES_USED_ONLY_INTERNALLY` is asserting rather than assuming. Exempting a types
+   * package is safe only while its namespace stays in value positions, because ng-packagr's
+   * flattening keeps the types a directive resolved and drops the directive: a `jest.Mock` in
+   * an exported interface lands in the consumer's `.d.ts` with nothing left to name the package
+   * it came from, and `Cannot find namespace 'jest'` is all they get (#358).
+   *
+   * So the exemption carries its own condition. A `jest.fn()` in a function body is a value and
+   * passes; `jest.Mock` on a field is a type and fails, naming the file.
+   */
+  it('uses no exempted types namespace in a type position', () => {
+    const leaked: Record<string, string[]> = {};
+
+    for (const name of TYPES_USED_ONLY_INTERNALLY) {
+      const users = graph.typeNamespaces.get(name) ?? [];
+
+      if (users.length > 0) {
+        leaked[name] = users;
+      }
+    }
+
+    expect(leaked).toEqual({});
   });
 });
 

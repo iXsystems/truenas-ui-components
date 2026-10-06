@@ -225,12 +225,19 @@ consumer's tree cannot satisfy is an `ERESOLVE` install failure rather than a
 warning, so a floor higher than the code actually needs breaks installs that
 work today. Pick the range the source requires, and if the answer is not
 obvious, propose it rather than picking one. #354 did exactly that for the gaps
-it found but was not scoped to decide — they are listed in the spec with the
-reason for each, and the same check fails if one is fixed and left in the list.
+it found but was not scoped to decide, listing them in the spec's
+`UNDECLARED_PENDING_A_DECISION` with the reason for each; #358 then decided
+them, so **that list is empty today and is meant to stay that way** — the same
+check fails if an entry is fixed and left in it.
 
 The check reads `/// <reference types="..." />` as well as imports, because
 ng-packagr's flattened `.d.ts` keeps the types a directive resolved and drops the
-directive.
+directive. **A types package may be exempted from declaration when its namespace
+is used only in value positions** — `TYPES_USED_ONLY_INTERNALLY`, which holds
+`jest` for `icon-testing.ts`'s own `jest.fn()` calls. That exemption is checked
+rather than promised: a separate test fails, naming the file, if an exempted
+namespace appears in a type position, since that is the half flattening carries
+into the consumer's `.d.ts`.
 
 `ng-packagr` does not cover this. `allowedNonPeerDependencies` in
 `ng-package.json` whitelists packages already in the library's `dependencies`;
