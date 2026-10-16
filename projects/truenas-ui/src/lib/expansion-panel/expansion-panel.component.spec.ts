@@ -191,15 +191,40 @@ describe('TnExpansionPanelComponent', () => {
     const declarationsOf = (selector: string): string => rules[indexOf(selector)]?.declarations ?? '';
 
     const header = '.tn-expansion-panel__header';
-    const borderedHeader = `.tn-expansion-panel--bordered ${header}`;
-    const expandedHeader = `.tn-expansion-panel--expanded ${header}`;
+    const borderedHeader = `.tn-expansion-panel--bordered > ${header}`;
+    const expandedHeader = `.tn-expansion-panel--expanded > ${header}`;
+    const dividedHeader = `.tn-expansion-panel--bordered.tn-expansion-panel--expanded > ${header}`;
 
     it('draws the header divider only while a bordered panel is expanded', () => {
       // Collapsed, the divider would sit on the panel's own bottom border and
       // draw that edge 2px thick.
-      expect(declaring('border-bottom').map((rule) => rule.selector)).toEqual([
-        `.tn-expansion-panel--bordered.tn-expansion-panel--expanded ${header}`,
-      ]);
+      expect(declaring('border-bottom').map((rule) => rule.selector)).toEqual([dividedHeader]);
+    });
+
+    it("styles a header by its own panel's state, not by a panel it is nested in", () => {
+      // A collapsed, unbordered panel inside the content of an expanded, bordered one.
+      const host = document.createElement('div');
+      host.innerHTML = `
+        <div class="tn-expansion-panel tn-expansion-panel--bordered tn-expansion-panel--expanded">
+          <button class="tn-expansion-panel__header" id="outer"></button>
+          <div class="tn-expansion-panel__content">
+            <div class="tn-expansion-panel__content-inner">
+              <div class="tn-expansion-panel">
+                <button class="tn-expansion-panel__header" id="inner"></button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      const outer = host.querySelector('#outer') as HTMLElement;
+      const inner = host.querySelector('#inner') as HTMLElement;
+
+      const stateRules = rules.filter(
+        (rule) => rule.selector.endsWith(header) && /--(bordered|expanded)\b/.test(rule.selector),
+      );
+
+      expect(stateRules.map((rule) => rule.selector)).toEqual([borderedHeader, expandedHeader, dividedHeader]);
+      expect(stateRules.filter((rule) => !outer.matches(rule.selector))).toEqual([]);
+      expect(stateRules.filter((rule) => inner.matches(rule.selector))).toEqual([]);
     });
 
     it("rounds the header to the panel's inner corners, squaring the bottom two while expanded", () => {

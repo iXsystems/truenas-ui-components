@@ -167,13 +167,16 @@
   // ring (and hover fill) cut off at each corner. Round it to the panel's inner
   // radius instead — 8px, less the 1px border when there is one — and square
   // the bottom corners once the content sits below it.
+  //
+  // `>` on each state rule: a panel nested in another's content must follow its
+  // own state, not an ancestor's.
   border-radius: 8px;
 
-  .tn-expansion-panel--bordered & {
+  .tn-expansion-panel--bordered > & {
     border-radius: 7px;
   }
 
-  .tn-expansion-panel--expanded & {
+  .tn-expansion-panel--expanded > & {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
@@ -181,7 +184,7 @@
   // The divider separates the header from the content, so it shows only while
   // expanded. Collapsed, it would sit directly on the panel's own bottom border
   // and draw that edge 2px thick.
-  .tn-expansion-panel--bordered.tn-expansion-panel--expanded & {
+  .tn-expansion-panel--bordered.tn-expansion-panel--expanded > & {
     border-bottom: 1px solid var(--tn-lines, #e5e7eb);
   }
 
