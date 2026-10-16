@@ -163,9 +163,25 @@
   font-family: inherit;
   text-align: left;
   transition: background-color 0.2s ease;
-  // The header divider shows in both states; the content collapse no longer
-  // toggles it, so a single bordered rule covers expanded and collapsed alike.
+  // The panel clips to its rounded corners, so a square header has its focus
+  // ring (and hover fill) cut off at each corner. Round it to the panel's inner
+  // radius instead — 8px, less the 1px border when there is one — and square
+  // the bottom corners once the content sits below it.
+  border-radius: 8px;
+
   .tn-expansion-panel--bordered & {
+    border-radius: 7px;
+  }
+
+  .tn-expansion-panel--expanded & {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  // The divider separates the header from the content, so it shows only while
+  // expanded. Collapsed, it would sit directly on the panel's own bottom border
+  // and draw that edge 2px thick.
+  .tn-expansion-panel--bordered.tn-expansion-panel--expanded & {
     border-bottom: 1px solid var(--tn-lines, #e5e7eb);
   }
 
@@ -173,7 +189,9 @@
     background-color: var(--tn-alt-bg1, rgba(0, 0, 0, 0.05));
   }
 
-  &:focus {
+  // :focus-visible, so the ring is for keyboard focus and does not stay on
+  // after a mouse click.
+  &:focus-visible {
     outline: 2px solid var(--tn-primary, #3b82f6);
     outline-offset: -2px;
   }

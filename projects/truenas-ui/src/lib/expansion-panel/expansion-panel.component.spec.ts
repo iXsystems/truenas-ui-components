@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -137,5 +139,89 @@ describe('TnExpansionPanelComponent', () => {
     const classes = component.classes();
 
     expect(classes).not.toContain('tn-expansion-panel--disabled');
+  });
+
+  /**
+   * jsdom has no layout engine and Jest does not compile the component's SCSS,
+   * so neither the doubled edge nor the clipped ring can be measured here. These
+   * read the stylesheet instead, the same reachable form chip-a11y.spec.ts uses,
+   * after flattening its nesting into full selectors.
+   */
+  describe('stylesheet', () => {
+    interface Rule { selector: string; declarations: string }
+
+    function flatten(source: string): Rule[] {
+      const text = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+      const rules: Rule[] = [];
+      const stack: Rule[] = [];
+      let buffer = '';
+      for (const char of text) {
+        if (char === '{') {
+          const raw = buffer.trim().replace(/\s+/g, ' ');
+          // An at-rule wraps its rules without becoming part of their selectors.
+          const parent = [...stack].reverse().find((rule) => !rule.selector.startsWith('@'))?.selector;
+          let selector = raw;
+          if (parent && !raw.startsWith('@')) {
+            selector = raw.includes('&') ? raw.replace(/&/g, parent) : `${parent} ${raw}`;
+          }
+          const rule = { selector, declarations: '' };
+          rules.push(rule);
+          stack.push(rule);
+          buffer = '';
+        } else if (char === '}' || char === ';') {
+          const current = stack[stack.length - 1];
+          if (current) {
+            current.declarations += `${buffer};`;
+          }
+          if (char === '}') {
+            stack.pop();
+          }
+          buffer = '';
+        } else {
+          buffer += char;
+        }
+      }
+      return rules;
+    }
+
+    const rules = flatten(readFileSync(join(__dirname, 'expansion-panel.component.scss'), 'utf8'));
+    const declaring = (property: string): Rule[] =>
+      rules.filter((rule) => new RegExp(`(^|;)\\s*${property}\\s*:`).test(rule.declarations));
+    const indexOf = (selector: string): number => rules.findIndex((rule) => rule.selector === selector);
+    const declarationsOf = (selector: string): string => rules[indexOf(selector)]?.declarations ?? '';
+
+    const header = '.tn-expansion-panel__header';
+    const borderedHeader = `.tn-expansion-panel--bordered ${header}`;
+    const expandedHeader = `.tn-expansion-panel--expanded ${header}`;
+
+    it('draws the header divider only while a bordered panel is expanded', () => {
+      // Collapsed, the divider would sit on the panel's own bottom border and
+      // draw that edge 2px thick.
+      expect(declaring('border-bottom').map((rule) => rule.selector)).toEqual([
+        `.tn-expansion-panel--bordered.tn-expansion-panel--expanded ${header}`,
+      ]);
+    });
+
+    it("rounds the header to the panel's inner corners, squaring the bottom two while expanded", () => {
+      expect(declarationsOf('.tn-expansion-panel')).toMatch(/border-radius:\s*8px;/);
+      expect(declarationsOf('.tn-expansion-panel--bordered')).toMatch(/border:\s*1px solid/);
+
+      expect(declarationsOf(header)).toMatch(/border-radius:\s*8px;/);
+      // 8px less the 1px border.
+      expect(declarationsOf(borderedHeader)).toMatch(/border-radius:\s*7px;/);
+
+      const expanded = declarationsOf(expandedHeader);
+      expect(expanded).toMatch(/border-bottom-left-radius:\s*0;/);
+      expect(expanded).toMatch(/border-bottom-right-radius:\s*0;/);
+      // Same specificity as the bordered rule, so it has to come later to win on
+      // a panel that is both.
+      expect(indexOf(expandedHeader)).toBeGreaterThan(indexOf(borderedHeader));
+    });
+
+    it('rings the header for keyboard focus only', () => {
+      const rings = declaring('outline').filter((rule) => rule.selector.includes(header));
+
+      expect(rings.map((rule) => rule.selector)).toEqual([`${header}:focus-visible`]);
+    });
   });
 });
