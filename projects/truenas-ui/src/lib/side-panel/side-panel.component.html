@@ -76,6 +76,18 @@
       @if (hasTitle()) {
         <h2 class="tn-side-panel__title" [id]="titleId">{{ title() }}</h2>
       }
+      <!--
+        A heading of the consumer's own (#372), in the place `title` takes and
+        outside the actions group. The wrapper is what grows and shrinks, since
+        the projected element is the consumer's and this stylesheet cannot reach
+        it; it is only rendered when something is projected into it, so a titled
+        panel's header is unchanged.
+      -->
+      @if (hasTitleSlot()) {
+        <div class="tn-side-panel__title-slot">
+          <ng-content select="[tnSidePanelTitle]" />
+        </div>
+      }
       <div class="tn-side-panel__header-actions">
         <ng-content select="[tnSidePanelHeaderAction]" />
         <tn-icon-button

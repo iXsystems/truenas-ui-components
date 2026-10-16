@@ -4,7 +4,12 @@ import { expectOpeningMovesFocusInside } from './focus-capture';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
 import { tnIconMarker } from '../lib/icon/icon-marker';
-import { TnSidePanelComponent, TnSidePanelActionDirective } from '../lib/side-panel/side-panel.component';
+import {
+  TnSidePanelComponent,
+  TnSidePanelActionDirective,
+  TnSidePanelHeaderActionDirective,
+  TnSidePanelTitleDirective,
+} from '../lib/side-panel/side-panel.component';
 
 tnIconMarker('close', 'mdi');
 
@@ -59,6 +64,25 @@ Panels can be nested for drill-down workflows:
   <tn-side-panel [(open)]="editOpen" title="Edit User">
     ...form fields...
   </tn-side-panel>
+</tn-side-panel>
+\`\`\`
+
+## A Heading of Your Own
+
+\`title\` takes text. For a heading with an image or a status beside it, project
+it with \`tnSidePanelTitle\`: it goes where \`title\` goes, at the start of the
+header, with the header actions and the close button still at the end. The panel
+renders no heading of its own unless \`title\` is set too, so name the panel by
+pointing \`ariaLabelledby\` at yours.
+
+\`\`\`html
+<tn-side-panel [(open)]="isOpen" ariaLabelledby="assistant-heading">
+  <div tnSidePanelTitle>
+    <h2 id="assistant-heading"><img src="logo.svg" alt="TrueNAS" /> Assistant</h2>
+    <span role="status">3 of 3 systems reachable</span>
+  </div>
+  <tn-button tnSidePanelHeaderAction label="New chat" />
+  ...
 </tn-side-panel>
 \`\`\`
 
@@ -844,5 +868,62 @@ export const LongPath: Story = {
     // `canvasElement`.
     const content = document.querySelector('.tn-side-panel__content') as HTMLElement;
     await expect(content.scrollWidth).toBeLessThanOrEqual(content.clientWidth);
+  },
+};
+
+/**
+ * **A heading of the consumer's own (#372).** `tnSidePanelTitle` takes the
+ * place `title` takes — the start of the header — for a heading `title` cannot
+ * express: here an image and a status beside the text. The panel renders no
+ * `<h2>` of its own, and is named by `ariaLabelledby` pointing at the slotted
+ * one.
+ *
+ * The status is long enough not to fit a 480px panel, so the slot has to shrink
+ * below its content for the header action and the close button to stay in the
+ * header. Truncating the text is the consumer's styling, on their own elements.
+ */
+export const TitleSlot: Story = {
+  render: () => ({
+    template: `
+      <tn-side-panel [open]="true" width="480px" ariaLabelledby="assistant-heading">
+        <div tnSidePanelTitle style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <h2 id="assistant-heading" style="display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--tn-fg1); white-space: nowrap;">
+            <img src="truenas-logo-color.svg" alt="TrueNAS" style="height: 20px;" />
+            Assistant
+          </h2>
+          <span role="status" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; color: var(--tn-fg2);">3 of 3 systems reachable, last checked a moment ago</span>
+        </div>
+        <tn-button tnSidePanelHeaderAction label="New chat" variant="outline" />
+        <p>Ask about your systems.</p>
+      </tn-side-panel>
+    `,
+    moduleMetadata: {
+      imports: [TnSidePanelComponent, TnSidePanelTitleDirective, TnSidePanelHeaderActionDirective, TnButtonComponent],
+    },
+  }),
+  // Layout, which jsdom cannot do; `side-panel-title-slot.spec.ts` asserts the
+  // structure this depends on. An open panel is portaled into a CDK overlay, so
+  // it is out of `canvasElement`.
+  play: async () => {
+    const header = document.querySelector('.tn-side-panel__header') as HTMLElement;
+    const slot = header.querySelector('.tn-side-panel__title-slot') as HTMLElement;
+    const actions = header.querySelector('.tn-side-panel__header-actions') as HTMLElement;
+    const status = slot.querySelector('[role="status"]') as HTMLElement;
+
+    const headerBox = header.getBoundingClientRect();
+    const slotBox = slot.getBoundingClientRect();
+    const actionsBox = actions.getBoundingClientRect();
+
+    // The slot comes first, and the actions — with the × in them — stay inside
+    // the header, on the slot's line rather than one of their own.
+    await expect(slotBox.right).toBeLessThanOrEqual(actionsBox.left);
+    await expect(actionsBox.right).toBeLessThanOrEqual(headerBox.right);
+    await expect(actionsBox.top).toBeLessThan(slotBox.bottom);
+    await expect(slotBox.top).toBeLessThan(actionsBox.bottom);
+    await expect(actions.contains(slot)).toBe(false);
+
+    // And it got there by shrinking: the status did not fit, so this layout is
+    // the one the slot's `min-width: 0` is for, not one where everything fit.
+    await expect(status.scrollWidth).toBeGreaterThan(status.clientWidth);
   },
 };

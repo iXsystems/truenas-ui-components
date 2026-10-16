@@ -41,6 +41,13 @@ export class TnSidePanelHarness extends ComponentHarness {
   /**
    * Get the panel title text, or `''` for a panel that renders no title.
    *
+   * The title is the `title` heading when there is one, and otherwise the
+   * heading inside a projected `tnSidePanelTitle` (#372) — the first `h1`–`h6`
+   * or `role="heading"` element there, which may be the projected element
+   * itself. Only the heading: a status beside it in the slot is not the title.
+   * Its text is the heading's text content, so an image's `alt` is not part of
+   * it.
+   *
    * `locatorForOptional`, not `locatorFor`: since #214 a panel with no `title`
    * renders no heading element at all — an `<h2>` with nothing in it is an
    * `empty-heading` violation — and `locatorFor` throws on a selector that
@@ -52,8 +59,10 @@ export class TnSidePanelHarness extends ComponentHarness {
   async getTitle(): Promise<string> {
     const host = await this.host();
     const panelId = await host.getAttribute('data-tn-panel');
+    const slot = `[data-tn-panel="${panelId}"] .tn-side-panel__title-slot`;
     const titleEl = await this.documentRootLocatorFactory().locatorForOptional(
       `[data-tn-panel="${panelId}"] .tn-side-panel__title`,
+      `${slot} :is(h1, h2, h3, h4, h5, h6, [role="heading"])`,
     )();
     return titleEl ? (await titleEl.text()).trim() : '';
   }
