@@ -7,6 +7,7 @@ import {
   TnSidePanelComponent,
   TnSidePanelActionDirective,
   TnSidePanelHeaderActionDirective,
+  TnSidePanelTitleDirective,
 } from './side-panel.component';
 import { TnSidePanelHarness } from './side-panel.harness';
 import { TnIconTesting } from '../icon/icon-testing';
@@ -54,6 +55,30 @@ class TestHostComponent {
 })
 class MultiPanelHostComponent {}
 
+@Component({
+  selector: 'tn-title-slot-host',
+  standalone: true,
+  imports: [TnSidePanelComponent, TnSidePanelTitleDirective],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <tn-side-panel ariaLabelledby="assistant-heading" [open]="true">
+      <div tnSidePanelTitle>
+        <h2 id="assistant-heading">
+          <img src="logo.svg" alt="TrueNAS" />
+          Assistant
+        </h2>
+        <span role="status">3 of 3 systems reachable</span>
+      </div>
+      <p>Body</p>
+    </tn-side-panel>
+    <tn-side-panel ariaLabel="Bare" [open]="true">
+      <h3 tnSidePanelTitle>Heading as the slot</h3>
+      <p>Body</p>
+    </tn-side-panel>
+  `,
+})
+class TitleSlotHostComponent {}
+
 /* eslint-enable @angular-eslint/component-max-inline-declarations */
 
 describe('TnSidePanelHarness', () => {
@@ -63,7 +88,7 @@ describe('TnSidePanelHarness', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent, MultiPanelHostComponent],
+      imports: [TestHostComponent, MultiPanelHostComponent, TitleSlotHostComponent],
       providers: [TnIconTesting.jest.providers()],
     }).compileComponents();
 
@@ -124,6 +149,41 @@ describe('TnSidePanelHarness', () => {
         TnSidePanelHarness.with({ title: 'Test Panel' }),
       );
       expect(matches.length).toBe(0);
+    });
+
+    // A `tnSidePanelTitle` heading is read the way `title` is (#372): the
+    // heading's text, not the status beside it in the slot.
+    describe('with a slotted heading', () => {
+      let slotFixture: ComponentFixture<TitleSlotHostComponent>;
+      let slotLoader: HarnessLoader;
+
+      beforeEach(() => {
+        // The outer `fixture`'s panel is not part of these, so it is destroyed
+        // to keep the document holding only the two panels below.
+        fixture.destroy();
+        slotFixture = TestBed.createComponent(TitleSlotHostComponent);
+        slotFixture.detectChanges();
+        slotLoader = TestbedHarnessEnvironment.loader(slotFixture);
+      });
+
+      afterEach(() => slotFixture.destroy());
+
+      it('should return the slotted heading text, without the status beside it', async () => {
+        const panels = await slotLoader.getAllHarnesses(TnSidePanelHarness);
+        expect(await panels[0].getTitle()).toBe('Assistant');
+      });
+
+      it('should read a slotted element that is itself the heading', async () => {
+        const panels = await slotLoader.getAllHarnesses(TnSidePanelHarness);
+        expect(await panels[1].getTitle()).toBe('Heading as the slot');
+      });
+
+      it('should let with({title}) match a slotted heading', async () => {
+        const panel = await slotLoader.getHarness(
+          TnSidePanelHarness.with({ title: 'Assistant' }),
+        );
+        expect(await panel.getTitle()).toBe('Assistant');
+      });
     });
   });
 

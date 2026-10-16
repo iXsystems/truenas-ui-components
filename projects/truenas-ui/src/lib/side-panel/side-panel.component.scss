@@ -93,6 +93,17 @@
   white-space: nowrap;
 }
 
+// A `tnSidePanelTitle` heading (#372). Same share of the header as
+// `.tn-side-panel__title`, and `min-width: 0` is what lets it shrink below its
+// content so the actions are never pushed out. No `overflow: hidden` here, as
+// the title has: the slot can hold a link or a button, and clipping would cut
+// off its focus ring. Truncating the content is the consumer's, on their own
+// elements.
+.tn-side-panel__title-slot {
+  flex: 1;
+  min-width: 0;
+}
+
 .tn-side-panel__header-actions {
   display: flex;
   align-items: center;

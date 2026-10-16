@@ -126,6 +126,39 @@ export class TnSidePanelActionDirective {}
 export class TnSidePanelHeaderActionDirective {}
 
 /**
+ * Directive to mark an element as the side-panel's heading, for a heading that
+ * `title` cannot express — one with an image or a status beside the text (#372).
+ *
+ * It takes the place `title` takes: the start of the header, growing into the
+ * free space and shrinking below its content width, with the header actions
+ * and the close button still at the far end. It is not inside
+ * `.tn-side-panel__header-actions`, so a consumer has no private class to
+ * override to get it there.
+ *
+ * The panel renders no `<h2>` of its own unless `title` is set as well, so the
+ * heading is yours to write — and so is the dialog's name: point
+ * `ariaLabelledby` at it.
+ *
+ * @example
+ * ```html
+ * <tn-side-panel [(open)]="isOpen" ariaLabelledby="assistant-heading">
+ *   <div tnSidePanelTitle>
+ *     <h2 id="assistant-heading">
+ *       <img src="logo.svg" alt="TrueNAS" /> Assistant
+ *     </h2>
+ *     <span role="status">3 of 3 systems reachable</span>
+ *   </div>
+ *   Content here
+ * </tn-side-panel>
+ * ```
+ */
+@Directive({
+  selector: '[tnSidePanelTitle]',
+  standalone: true,
+})
+export class TnSidePanelTitleDirective {}
+
+/**
  * A modal side panel: `role="dialog"` with `aria-modal="true"`, focus trapped
  * while it is open and restored to the opener when it closes.
  *
@@ -350,6 +383,14 @@ export class TnSidePanelComponent implements OnDestroy {
   // Content projection queries
   private actionContent = contentChildren(TnSidePanelActionDirective);
   protected hasActions = computed(() => this.actionContent().length > 0);
+
+  /**
+   * Whether a `tnSidePanelTitle` was projected (#372). The slot's wrapper is
+   * rendered only then, because it grows into the header's free space: an
+   * empty one beside a `title` heading would take half of the heading's room.
+   */
+  private titleSlotContent = contentChildren(TnSidePanelTitleDirective);
+  protected hasTitleSlot = computed(() => this.titleSlotContent().length > 0);
 
   // Unique IDs for aria-labelledby and portal correlation
   readonly panelId = `tn-side-panel-${Math.random().toString(36).substring(2, 9)}`;
