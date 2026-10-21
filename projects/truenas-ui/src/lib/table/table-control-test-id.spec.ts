@@ -128,7 +128,16 @@ describe('TnTableComponent ids on its own controls', () => {
     it('gives the select-all one static id', () => {
       const fixture = setup(layout.width);
 
-      expect(attrs(fixture, layout.selectAll)).toEqual(['checkbox-select-all']);
+      expect(attrs(fixture, layout.selectAll)).toEqual(['checkbox-all-rows']);
+    });
+
+    it('keeps a row whose base is "all" distinct from the select-all', () => {
+      const fixture = setup(layout.width);
+      fixture.componentInstance.rowTestId.set((row: Row) => (row.username === 'Jane Doe' ? 'all' : row.username));
+      fixture.detectChanges();
+
+      expect(attrs(fixture, layout.rowSelect)).toEqual(['checkbox-select-truenas-admin', 'checkbox-select-all']);
+      expect(attrs(fixture, layout.selectAll)).toEqual(['checkbox-all-rows']);
     });
 
     it('writes no row-scoped id when the table has no rowTestId, and keeps the select-all id', () => {
@@ -138,7 +147,7 @@ describe('TnTableComponent ids on its own controls', () => {
 
       expect(attrs(fixture, layout.rowSelect)).toEqual([null, null]);
       expect(attrs(fixture, layout.expand)).toEqual([null, null]);
-      expect(attrs(fixture, layout.selectAll)).toEqual(['checkbox-select-all']);
+      expect(attrs(fixture, layout.selectAll)).toEqual(['checkbox-all-rows']);
     });
 
     it('writes no id for a row whose base is empty, rather than a bare "select" or "expand"', () => {
@@ -168,7 +177,7 @@ describe('TnTableComponent ids on its own controls', () => {
         .toEqual(['checkbox-select-truenas-admin', 'checkbox-select-jane-doe']);
       expect(attrs(fixture, layout.expand, 'data-test'))
         .toEqual(['button-expand-truenas-admin', 'button-expand-jane-doe']);
-      expect(attrs(fixture, layout.selectAll, 'data-test')).toEqual(['checkbox-select-all']);
+      expect(attrs(fixture, layout.selectAll, 'data-test')).toEqual(['checkbox-all-rows']);
       expect(attrs(fixture, layout.rowSelect)).toEqual([null, null]);
       expect(attrs(fixture, layout.expand)).toEqual([null, null]);
       expect(attrs(fixture, layout.selectAll)).toEqual([null]);

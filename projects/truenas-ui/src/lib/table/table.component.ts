@@ -377,7 +377,8 @@ export class TnTableComponent<T = unknown> implements OnInit {
    *
    * The controls the table draws for the row are derived from the same base, in both layouts:
    * `checkbox-select-<base>` on its selection checkbox and `button-expand-<base>` on its expand
-   * chevron or Details toggle. The select-all is `checkbox-select-all` with or without this input.
+   * chevron or Details toggle. The select-all is `checkbox-all-rows` with or without this input —
+   * deliberately outside `checkbox-select-*`, so no row base (not even `all`) can produce it.
    *
    * Cells are not covered by this: a suite that has to read one cell of a row still needs an id
    * on the element that cell renders. Tagging the row is what makes the row itself reachable —

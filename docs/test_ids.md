@@ -175,7 +175,7 @@ unreachable from outside. They take their ids from the same row base, with the r
 ```
 checkbox-select-<row base>   each row's selection checkbox
 button-expand-<row base>     the expand chevron, or the card's Details toggle
-checkbox-select-all          the header select-all, or the card toolbar's
+checkbox-all-rows            the header select-all, or the card toolbar's
 ```
 
 A row tagged `row-job-42` therefore has `checkbox-select-job-42` and `button-expand-job-42`. An
@@ -187,6 +187,9 @@ array base is flattened in order, so `['user', row.name]` gives `checkbox-select
   controls carry no id. They do not fall back to a bare `checkbox-select` that every row would share.
 - **One select-all id is enough.** Table mode and card mode are two branches of one `@if`, so only
   one select-all renders at a time. It is tagged whether or not the table has a `rowTestId`.
+- **The select-all is not `checkbox-select-all`.** Any static id under `checkbox-select-` is one a
+  row can produce: a user named `all` would get `checkbox-select-all` and collide with it. Keeping
+  the select-all outside that prefix is what makes the two sets unable to meet.
 
 The checkbox ids go through `tn-checkbox`'s own `testId` input, so they land where every checkbox id
 does: on its `<label>`.
