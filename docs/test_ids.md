@@ -167,6 +167,30 @@ for data with genuinely nothing unique in it.
 This covers the row, not its cells. A suite reading one cell of a row still needs an id on
 whatever that cell renders, which is the consumer's own template and already addressable.
 
+### The controls a table draws for a row
+
+The selection checkbox and the expand control are rendered by `tn-table` too, so they are just as
+unreachable from outside. They take their ids from the same row base, with the role leading:
+
+```
+checkbox-select-<row base>   each row's selection checkbox
+button-expand-<row base>     the expand chevron, or the card's Details toggle
+checkbox-select-all          the header select-all, or the card toolbar's
+```
+
+A row tagged `row-job-42` therefore has `checkbox-select-job-42` and `button-expand-job-42`. An
+array base is flattened in order, so `['user', row.name]` gives `checkbox-select-user-jane`.
+
+- **Same id in both layouts.** Card mode uses the same values, so a narrow viewport renames neither
+  the row nor its controls.
+- **Only with a `rowTestId`.** With no row base, or a base that normalizes to nothing, the row's
+  controls carry no id. They do not fall back to a bare `checkbox-select` that every row would share.
+- **One select-all id is enough.** Table mode and card mode are two branches of one `@if`, so only
+  one select-all renders at a time. It is tagged whether or not the table has a `rowTestId`.
+
+The checkbox ids go through `tn-checkbox`'s own `testId` input, so they land where every checkbox id
+does: on its `<label>`.
+
 ## Rows a consumer writes
 
 `tn-list-item` is the other repeating row, and it is the opposite case to a table row: the
@@ -288,7 +312,7 @@ Every interactive component listed below supports `testId`:
 | `tn-slider` | `testId` input | `.tn-slider-container` |
 | `tn-stepper` | `testId` input | stepper root |
 | `tn-tab` | `testId` input | tab `<button>` |
-| `tn-table` | `hostDirectives` + `rowTestId` callback | host element + every row (`<tr>`, or the card in card mode) |
+| `tn-table` | `hostDirectives` + `rowTestId` callback | host element + every row (`<tr>`, or the card in card mode) + each row's selection checkbox and expand control, and the select-all — see *The controls a table draws for a row* |
 | `tn-tab-panel` | `testId` input | panel `<div>` |
 | `tn-tabs` | `testId` input | tablist root |
 | `tn-time-input` | passthrough to inner `tn-select` | inner select's container |
