@@ -150,7 +150,7 @@ describe('TnTableComponent ids on its own controls', () => {
       expect(attrs(fixture, layout.expand)).toEqual(['button-expand-truenas-admin', null]);
     });
 
-    it('flattens an array row base in order, dropping falsy segments', () => {
+    it('flattens an array row base in order, dropping undefined segments and keeping index 0', () => {
       const fixture = setup(layout.width);
       fixture.componentInstance.rowTestId.set((row: Row, index: number) => ['user', undefined, row.username, index]);
       fixture.detectChanges();
