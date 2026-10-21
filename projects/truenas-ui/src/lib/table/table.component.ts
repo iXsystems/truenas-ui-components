@@ -31,7 +31,7 @@ import {
   TnRowActionsDefDirective,
   TnTableColumnDirective,
 } from '../table-column/table-column.directive';
-import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
+import { TnTestIdDirective, composeTestId, type TnTestIdValue } from '../test-id';
 import { injectTnLabels } from '../utils/inject-labels';
 
 // NOTE: the sort/expand icon names (mat-arrow_upward, mat-keyboard_arrow_down,
@@ -374,6 +374,11 @@ export class TnTableComponent<T = unknown> implements OnInit {
    * <tn-table [dataSource]="users" [rowTestId]="rowTestId" />
    * <!-- <tr data-testid="row-jane-doe"> -->
    * ```
+   *
+   * The controls the table draws for the row are derived from the same base, in both layouts:
+   * `checkbox-select-<base>` on its selection checkbox and `button-expand-<base>` on its expand
+   * chevron or Details toggle. The select-all is `checkbox-all-rows` with or without this input —
+   * deliberately outside `checkbox-select-*`, so no row base (not even `all`) can produce it.
    *
    * Cells are not covered by this: a suite that has to read one cell of a row still needs an id
    * on the element that cell renders. Tagging the row is what makes the row itself reachable —
@@ -1012,6 +1017,25 @@ export class TnTableComponent<T = unknown> implements OnInit {
     const resolve = this.rowTestId();
     return resolve ? this.data().map((row, index) => resolve(row, index)) : [];
   });
+
+  /**
+   * Base for each row's selection checkbox, `['select', ...row base]` — so a row tagged
+   * `row-job-42` gets `checkbox-select-job-42`. Role leads, as in `tn-dialog-shell`'s chrome.
+   *
+   * The same array serves table and card mode, so a narrow viewport does not rename a row's
+   * controls any more than it renames the row. Without a usable row base the entry is
+   * `undefined` rather than `['select']`, which would give every row the same `checkbox-select`.
+   */
+  protected readonly rowSelectTestIds = computed(() => this.rowControlTestIds('select'));
+
+  /** Base for each row's expand control — the table-mode chevron and the card's Details toggle. */
+  protected readonly rowExpandTestIds = computed(() => this.rowControlTestIds('expand'));
+
+  private rowControlTestIds(role: string): TnTestIdValue[] {
+    return this.rowTestIds().map((base) =>
+      composeTestId(undefined, base) === '' ? undefined : [role, ...(Array.isArray(base) ? base : [base])],
+    );
+  }
 
   effectiveDisplayedColumns = computed(() => {
     const cols = [...this.displayedColumns()];
