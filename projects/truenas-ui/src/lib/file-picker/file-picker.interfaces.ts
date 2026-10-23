@@ -61,6 +61,23 @@ export interface FilePickerCreateActionEvent {
   parentPath: string;
 }
 
+/**
+ * Payload of `itemSelectionChange`: the committed value together with the
+ * listed items it refers to, for consumers that need more than the path
+ * (e.g. to require that a FILE was picked).
+ */
+export interface FilePickerSelection {
+  /** The committed value — the same payload `selectionChange` carries. */
+  value: string | string[];
+  /**
+   * One entry per selected path, in value order. `null` when the picker has
+   * not listed that path in this session — e.g. a typed path the user never
+   * browsed to, or the browsed directory itself submitted on an empty
+   * selection before its parent was listed. Empty for a cleared selection.
+   */
+  items: (FileSystemItem | null)[];
+}
+
 export interface FilePickerError {
   type: 'navigation' | 'permission' | 'creation' | 'validation';
   message: string;

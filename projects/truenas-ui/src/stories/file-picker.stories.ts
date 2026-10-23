@@ -45,6 +45,10 @@ const meta: Meta<TnFilePickerComponent> = {
       control: 'text',
       description: 'Initial directory path',
     },
+    allowFreeText: {
+      control: 'boolean',
+      description: 'Commit typed input verbatim (no root/validatePath checks, no valueRoot mapping); comma-separated in multi-select',
+    },
     valueRoot: {
       control: 'text',
       description: 'Root against which the value (form value, selectionChange, input text) is expressed, e.g. /mnt for dataset names',
@@ -1680,6 +1684,56 @@ export const LoadingStates: Story = {
     docs: {
       description: {
         story: 'Tests loading states: spinner appears during async data fetch, then content loads.'
+      }
+    }
+  }
+};
+
+export const FreeTextInput: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: mdiShowcaseCallbacks
+    },
+    template: `
+      <tn-form-field label="Paths or shares">
+        <tn-file-picker
+          [allowFreeText]="allowFreeText"
+          [multiSelect]="multiSelect"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    allowFreeText: true,
+    multiSelect: true,
+    rootPath: '/mnt',
+    startPath: '/mnt/showcase'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const input = await canvas.findByRole('textbox') as HTMLInputElement;
+
+    // A non-path entry outside the root commits without an error, and the
+    // comma-separated text becomes one entry per part
+    await fireEvent.input(input, { target: { value: '/mnt/showcase, EXTERNAL:192.168.0.200\\SHARE' } });
+    await fireEvent.change(input);
+
+    await waitFor(() => {
+      void expect(input).toHaveValue('/mnt/showcase, EXTERNAL:192.168.0.200\\SHARE');
+    });
+    void expect(input.classList.contains('error')).toBe(false);
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `allowFreeText` the typed text is the value: no `rootPath` confinement, no `validatePath`, no `valueRoot` mapping — so entries the browser cannot list (an SMB `EXTERNAL:host\\\\share`, a dataset on a pool that is not imported) are accepted. In multi-select the text is split on commas. Popup selections work as usual, and `itemSelectionChange` reports the listed item behind each entry (or `null` for one never listed).'
       }
     }
   }

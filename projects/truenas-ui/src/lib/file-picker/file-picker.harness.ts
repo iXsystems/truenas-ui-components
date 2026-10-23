@@ -98,35 +98,40 @@ export class TnFilePickerHarness extends ComponentHarness {
   }
 
   /**
-   * Sets the picker's value by typing a single path into the path input and
-   * committing it via the input's `change` event, exactly as a user pressing
-   * Enter would.
+   * Sets the picker's value by typing into the path input and committing it
+   * via the input's `change` event, exactly as a user pressing Enter would.
    *
-   * Unlike `IxExplorerHarness.setValue` there is no `string[]` overload:
-   * tn-file-picker treats typed input as ONE path even in multi-select mode
-   * (commas are legal in paths, so they are never list separators). In
-   * multi-select, committing a typed path REPLACES the whole selection with
-   * that single path; build a real multi-selection through the popup with
-   * {@link clickItem} + {@link clickSelect}.
+   * By default tn-file-picker treats typed input as ONE path even in
+   * multi-select mode (commas are legal in paths, so they are never list
+   * separators): committing a typed path REPLACES the whole selection with
+   * that single path, and commits go through the component's normal
+   * validation — paths outside `rootPath` are rejected (the value stays
+   * unchanged and an `error` is emitted), and `callbacks.validatePath` is
+   * consulted when provided. Build a real multi-selection through the popup
+   * with {@link clickItem} + {@link clickSelect}.
    *
-   * Commits go through the component's normal validation: paths outside
-   * `rootPath` are rejected (the value stays unchanged and an `error` is
-   * emitted), and `callbacks.validatePath` is consulted when provided.
+   * With `allowFreeText`, the typed text is committed verbatim with no
+   * validation, and in multi-select it is split on commas — so passing a
+   * `string[]` (typed joined with `', '`) sets one entry per element.
+   *
    * Setting an empty string clears the selection. Has no effect when
    * `allowManualInput` is false (the input is readonly).
    *
-   * @param value The path to set.
+   * @param value The path to set, or several entries for a free-text
+   *   multi-select picker.
    *
    * @example
    * ```typescript
    * await picker.setValue('/mnt/tank/media');
+   * await freeTextMultiPicker.setValue(['/mnt/tank/a', 'EXTERNAL:host\\share']);
    * ```
    */
-  async setValue(value: string): Promise<void> {
+  async setValue(value: string | string[]): Promise<void> {
+    const text = Array.isArray(value) ? value.join(', ') : value;
     const input = await this._input();
     await input.clear();
-    if (value) {
-      await input.sendKeys(value);
+    if (text) {
+      await input.sendKeys(text);
     }
     return input.dispatchEvent('change');
   }

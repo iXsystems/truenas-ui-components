@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TnFilePickerComponent } from './file-picker.component';
+import type { FileSystemItem } from './file-picker.interfaces';
 
 describe('TnFilePickerComponent', () => {
   let component: TnFilePickerComponent;
@@ -421,6 +422,182 @@ describe('TnFilePickerComponent', () => {
       expect(selectionSpy).toHaveBeenCalledWith('');
       expect(component.selectedItems()).toEqual([]);
       expect(component.hasError()).toBe(false);
+    });
+  });
+
+  describe('Free Text Input', () => {
+    function getInput(): HTMLInputElement {
+      return fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+    }
+
+    function commitText(value: string): void {
+      const inputEl = getInput();
+      inputEl.value = value;
+      inputEl.dispatchEvent(new Event('change'));
+    }
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('allowFreeText', true);
+    });
+
+    it('commits a non-path value verbatim, skipping root and validatePath checks', () => {
+      const validatePath = jest.fn().mockResolvedValue(false);
+      fixture.componentRef.setInput('rootPath', '/mnt/backups');
+      fixture.componentRef.setInput('callbacks', { validatePath });
+      const changeSpy = jest.fn();
+      const errorSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      component.error.subscribe(errorSpy);
+      fixture.detectChanges();
+
+      commitText('EXTERNAL:192.168.0.200\\SHARE');
+
+      expect(changeSpy).toHaveBeenCalledWith('EXTERNAL:192.168.0.200\\SHARE');
+      expect(component.selectedPath()).toBe('EXTERNAL:192.168.0.200\\SHARE');
+      expect(validatePath).not.toHaveBeenCalled();
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(component.hasError()).toBe(false);
+    });
+
+    it('does not map typed values through valueRoot', () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      fixture.detectChanges();
+
+      commitText('/mnt/tank/apps');
+      expect(changeSpy).toHaveBeenLastCalledWith('/mnt/tank/apps');
+
+      commitText('tank/apps');
+      expect(changeSpy).toHaveBeenLastCalledWith('tank/apps');
+    });
+
+    it('splits multi-select text on commas, trimming and dropping empty entries', () => {
+      fixture.componentRef.setInput('multiSelect', true);
+      const selectionSpy = jest.fn();
+      component.selectionChange.subscribe(selectionSpy);
+      fixture.detectChanges();
+
+      commitText(' /mnt/tank/a ,, pool/dataset,  ');
+
+      expect(selectionSpy).toHaveBeenCalledWith(['/mnt/tank/a', 'pool/dataset']);
+      expect(component.selectedPath()).toBe('/mnt/tank/a, pool/dataset');
+    });
+
+    it('closes the popup on commit', () => {
+      fixture.detectChanges();
+      component.openFilePicker();
+      expect(component.isOpen()).toBe(true);
+
+      commitText('/mnt/tank');
+
+      expect(component.isOpen()).toBe(false);
+    });
+
+    it('clears the value when the text is cleared', () => {
+      fixture.componentRef.setInput('multiSelect', true);
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      fixture.detectChanges();
+      component.writeValue(['/mnt/a']);
+
+      commitText('');
+
+      expect(changeSpy).toHaveBeenCalledWith([]);
+      expect(component.selectedItems()).toEqual([]);
+    });
+
+    it('has no effect when manual input is disallowed', () => {
+      fixture.componentRef.setInput('allowManualInput', false);
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      fixture.detectChanges();
+
+      commitText('anything');
+
+      expect(changeSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Item Selection', () => {
+    const items: FileSystemItem[] = [
+      { path: '/mnt/tank/notes.txt', name: 'notes.txt', type: 'file' },
+      { path: '/mnt/tank/media', name: 'media', type: 'dataset' },
+    ];
+
+    async function listTank(): Promise<void> {
+      fixture.componentRef.setInput('callbacks', { getChildren: jest.fn().mockResolvedValue(items) });
+      fixture.detectChanges();
+      component.navigateToPath('/mnt/tank');
+      await fixture.whenStable();
+    }
+
+    it('emits the listed item behind a popup selection', async () => {
+      const spy = jest.fn();
+      component.itemSelectionChange.subscribe(spy);
+      await listTank();
+
+      component.onItemClick(items[0]);
+      component.onSubmit();
+
+      expect(spy).toHaveBeenCalledWith({ value: '/mnt/tank/notes.txt', items: [items[0]] });
+    });
+
+    it('keeps items picked in another directory in multi-select', async () => {
+      fixture.componentRef.setInput('multiSelect', true);
+      const spy = jest.fn();
+      component.itemSelectionChange.subscribe(spy);
+      await listTank();
+      component.onItemClick(items[0]);
+      component.onItemClick(items[1]);
+
+      component.navigateToPath('/mnt');
+      await fixture.whenStable();
+      component.onSubmit();
+
+      expect(spy).toHaveBeenCalledWith({
+        value: ['/mnt/tank/notes.txt', '/mnt/tank/media'],
+        items: [items[0], items[1]],
+      });
+    });
+
+    it('resolves a typed value to its item when listed, null otherwise', async () => {
+      fixture.componentRef.setInput('allowFreeText', true);
+      fixture.componentRef.setInput('multiSelect', true);
+      const spy = jest.fn();
+      component.itemSelectionChange.subscribe(spy);
+      await listTank();
+
+      const inputEl = fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+      inputEl.value = '/mnt/tank/notes.txt, /mnt/tank/unknown';
+      inputEl.dispatchEvent(new Event('change'));
+
+      expect(spy).toHaveBeenCalledWith({
+        value: ['/mnt/tank/notes.txt', '/mnt/tank/unknown'],
+        items: [items[0], null],
+      });
+    });
+
+    it('resolves value-space entries against absolute listings', async () => {
+      fixture.componentRef.setInput('valueRoot', '/mnt');
+      const spy = jest.fn();
+      component.itemSelectionChange.subscribe(spy);
+      await listTank();
+
+      component.onItemClick(items[1]);
+      component.onSubmit();
+
+      expect(spy).toHaveBeenCalledWith({ value: 'tank/media', items: [items[1]] });
+    });
+
+    it('emits no items for a cleared selection', () => {
+      const spy = jest.fn();
+      component.itemSelectionChange.subscribe(spy);
+      fixture.detectChanges();
+
+      component.onClearSelection();
+
+      expect(spy).toHaveBeenCalledWith({ value: '', items: [] });
     });
   });
 
