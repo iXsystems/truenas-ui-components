@@ -5,6 +5,7 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TnFormFieldComponent } from './form-field.component';
 import { TnAutocompleteComponent } from '../autocomplete/autocomplete.component';
 import { TnChipInputComponent } from '../chip-input/chip-input.component';
+import { TnFilePickerComponent } from '../file-picker/file-picker.component';
 import { TnIconTesting } from '../icon/icon-testing';
 import { TnInputComponent } from '../input/input.component';
 import { TnSelectComponent } from '../select/select.component';
@@ -18,6 +19,7 @@ import { TnSelectComponent } from '../select/select.component';
     TnChipInputComponent,
     TnAutocompleteComponent,
     TnSelectComponent,
+    TnFilePickerComponent,
     ReactiveFormsModule,
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -39,6 +41,10 @@ import { TnSelectComponent } from '../select/select.component';
       <tn-select [formControl]="groupControl" [options]="[{ label: 'Admins', value: 'admins' }]" />
     </tn-form-field>
 
+    <tn-form-field label="Location" testId="location">
+      <tn-file-picker [formControl]="locationControl" />
+    </tn-form-field>
+
     <tn-form-field label="Overridden" testId="overridden">
       <tn-chip-input ariaLabel="Custom name" [formControl]="overriddenControl" />
     </tn-form-field>
@@ -56,6 +62,7 @@ class TestHostComponent {
   aliasesControl = new FormControl<string[]>([]);
   ownerControl = new FormControl('');
   groupControl = new FormControl('');
+  locationControl = new FormControl('');
   overriddenControl = new FormControl<string[]>([]);
   unlabeledControl = new FormControl('');
   standaloneControl = new FormControl('');
@@ -108,6 +115,7 @@ describe('TnFormFieldContext integration', () => {
       ['tn-chip-input', 'aliases', 'input.tn-chip-input__field', 'Aliases'],
       ['tn-autocomplete', 'owner', 'input.tn-autocomplete__input', 'Owner'],
       ['tn-select', 'group', '.tn-select-trigger', 'Group'],
+      ['tn-file-picker', 'location', 'input.tn-file-picker-input', 'Location'],
     ])('%s gets aria-labelledby resolving to the field label', (_name, testId, selector, labelText) => {
       const control = controlOf(testId, selector);
       expect(referencedText(control, 'aria-labelledby')).toBe(labelText);

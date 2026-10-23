@@ -17,6 +17,7 @@ import { TnFilePickerHarness } from './file-picker.harness';
     <tn-file-picker
       [multiSelect]="multiSelect()"
       [allowManualInput]="allowManualInput()"
+      [allowFreeText]="allowFreeText()"
       [placeholder]="placeholder()"
       [testId]="testId()"
       [formControl]="control" />
@@ -30,6 +31,7 @@ import { TnFilePickerHarness } from './file-picker.harness';
 class TestHostComponent {
   multiSelect = signal(false);
   allowManualInput = signal(true);
+  allowFreeText = signal(false);
   placeholder = signal('Select file or folder');
   disabled = signal(false);
   testId = signal<string | undefined>('source-path');
@@ -129,6 +131,15 @@ describe('TnFilePickerHarness', () => {
       const picker = await loader.getHarness(TnFilePickerHarness);
       await picker.setValue('/mnt/tank/media');
       expect(hostComponent.control.value).toEqual(['/mnt/tank/media']);
+    });
+
+    it('sets one entry per array element on a free-text multi-select picker', async () => {
+      hostComponent.multiSelect.set(true);
+      hostComponent.allowFreeText.set(true);
+      const picker = await loader.getHarness(TnFilePickerHarness);
+      await picker.setValue(['/mnt/tank/a', 'EXTERNAL:host\\share']);
+      expect(hostComponent.control.value).toEqual(['/mnt/tank/a', 'EXTERNAL:host\\share']);
+      expect(await picker.getValue()).toBe('/mnt/tank/a, EXTERNAL:host\\share');
     });
   });
 

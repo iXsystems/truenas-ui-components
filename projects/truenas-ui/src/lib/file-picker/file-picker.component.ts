@@ -10,10 +10,11 @@ import { Subject } from 'rxjs';
 import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type {
   FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
-  FilePickerError, FilePickerMode, FileSystemItem, FileSystemItemType
+  FilePickerError, FilePickerMode, FilePickerSelection, FileSystemItem, FileSystemItemType
 } from './file-picker.interfaces';
 import { allowsCurrentDirectorySelection } from './file-picker.utils';
 import { isPathWithinRoot, normalizeRootPath } from './path-utils';
+import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnInputDirective } from '../input/input.directive';
 import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTestIdValue } from '../test-id';
@@ -62,6 +63,24 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   createActions = input<FilePickerCreateAction[]>([]);
   allowManualInput = input<boolean>(true);
   /**
+   * Commit typed input verbatim instead of treating it as a path to validate:
+   * no `rootPath` confinement, no `callbacks.validatePath`, no `valueRoot`
+   * mapping — the text the user typed is the value. Lets a field accept
+   * entries the browser cannot list, e.g. `EXTERNAL:192.168.0.200\SHARE` or
+   * a dataset name for a pool that is not imported. With `multiSelect`, the
+   * text is split on commas into one entry per comma-separated part (trimmed,
+   * empty parts dropped), so commas cannot appear inside an entry. Committing
+   * closes the popup. Popup selections are unaffected. Requires
+   * `allowManualInput`.
+   */
+  allowFreeText = input<boolean>(false);
+  /**
+   * Explicit accessible name for the path input. Inside a `tn-form-field` the
+   * input is named by the field label automatically (via `aria-labelledby`),
+   * so leave this unset there unless the field has no visible label.
+   */
+  ariaLabel = input<string | undefined>(undefined);
+  /**
    * Open the picker popup when the input is clicked while no path is selected
    * yet — an empty field means the user is about to pick something, so the
    * browser opens without the extra click on the folder button. A field that
@@ -100,6 +119,11 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   callbacks = input<FilePickerCallbacks | undefined>(undefined);
 
   selectionChange = output<string | string[]>();
+  /**
+   * Emitted alongside every `selectionChange` with the listed
+   * `FileSystemItem` behind each selected path (or `null` when unknown).
+   */
+  itemSelectionChange = output<FilePickerSelection>();
   pathChange = output<string>();
   /** Re-emitted from the popup when one of the `createActions` buttons is pressed. */
   createAction = output<FilePickerCreateActionEvent>();
@@ -121,6 +145,22 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   loading = signal<boolean>(false);
   hasError = signal<boolean>(false);
   private formDisabled = signal<boolean>(false);
+
+  /**
+   * Field-derived ARIA for the path input when projected into a
+   * `tn-form-field` (label, description, invalid, required). All-null when
+   * standalone or when `ariaLabel` overrides.
+   */
+  protected readonly fieldAria = injectTnFormFieldAria(this.ariaLabel);
+
+  /**
+   * Every item the picker has listed, by absolute path, so a selection can be
+   * resolved back to its item even after browsing elsewhere (multi-select
+   * across directories, `selectPath`, typed paths). Kept for the picker's
+   * lifetime: a stale entry only means a stale `type` for a path that changed
+   * on disk after it was listed.
+   */
+  private listedItems = new Map<string, FileSystemItem>();
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
@@ -210,6 +250,13 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    */
   onPathCommit(event: Event): void {
     const target = event.target as HTMLInputElement;
+
+    if (this.allowManualInput() && this.allowFreeText()) {
+      this.commitFreeText(target.value);
+      this.onTouched();
+      return;
+    }
+
     // Typed text is expressed in value space, like the text the input displays
     const path = this.fromValueSpace(target.value);
 
@@ -245,6 +292,32 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     }
 
     this.onTouched();
+  }
+
+  /**
+   * `allowFreeText` commit: the typed text is the value, verbatim (single
+   * mode keeps even surrounding whitespace, as the field shows it), and a
+   * field holding only whitespace clears the selection like an empty one.
+   * Selection state still tracks the absolute form of each trimmed entry (the
+   * same mapping `writeValue` applies) so reopening the popup reflects it.
+   */
+  private commitFreeText(text: string): void {
+    let value: string | string[];
+    if (this.multiSelect()) {
+      value = text.split(',').map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+    } else {
+      value = text.trim() ? text : '';
+    }
+    const entries = Array.isArray(value) ? value : value ? [value] : [];
+
+    this.hasError.set(false);
+    this.selectedItems.set(entries.map((entry) => this.fromValueSpace(entry.trim())));
+    this.selectedPath.set(entries.join(', '));
+    this.onChange(value);
+    this.emitSelection(value);
+    // A committed typed value settles the interaction — a popup opened by
+    // `openOnClick` has nothing left to pick.
+    this.close();
   }
 
   /** `openOnClick` entry point. */
@@ -359,12 +432,12 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       const values = selected.map(path => this.toValueSpace(path));
       this.selectedPath.set(values.join(', '));
       this.onChange(values);
-      this.selectionChange.emit(values);
+      this.emitSelection(values);
     } else {
       const value = this.toValueSpace(selected[0]);
       this.selectedPath.set(value);
       this.onChange(value);
-      this.selectionChange.emit(value);
+      this.emitSelection(value);
     }
 
     this.close();
@@ -441,7 +514,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.selectedItems.set([]);
     this.selectedPath.set('');
     this.onChange(this.multiSelect() ? [] : '');
-    this.selectionChange.emit(this.multiSelect() ? [] : '');
+    this.emitSelection(this.multiSelect() ? [] : '');
   }
 
   private async loadDirectory(path: string): Promise<void> {
@@ -449,7 +522,9 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     const cb = this.callbacks();
     if (!cb?.getChildren) {
       // Default mock data for development
-      this.fileItems.set(this.getMockFileItems(path));
+      const mockItems = this.getMockFileItems(path);
+      this.indexListedItems(mockItems);
+      this.fileItems.set(mockItems);
       this.currentPath.set(path);
       this.clearStalePendingSelection(directoryChanged);
       this.pathChange.emit(path);
@@ -459,8 +534,9 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.loading.set(true);
 
     try {
-      const items = await cb.getChildren(path);
-      this.fileItems.set(items || []);
+      const items = (await cb.getChildren(path)) || [];
+      this.indexListedItems(items);
+      this.fileItems.set(items);
       this.currentPath.set(path);
       this.clearStalePendingSelection(directoryChanged);
       this.pathChange.emit(path);
@@ -523,7 +599,28 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.onChange(value);
     }
 
-    this.selectionChange.emit(this.multiSelect() ? [value] : value);
+    this.emitSelection(this.multiSelect() ? [value] : value);
+  }
+
+  /**
+   * Emits `selectionChange` and `itemSelectionChange` for a committed value.
+   * Items are looked up by the absolute form of each trimmed entry, which is
+   * how listings are indexed — a free-text value keeps any surrounding
+   * whitespace the user typed, but still resolves to the item it names.
+   */
+  private emitSelection(value: string | string[]): void {
+    this.selectionChange.emit(value);
+    const entries = Array.isArray(value) ? value : value ? [value] : [];
+    this.itemSelectionChange.emit({
+      value,
+      items: entries.map((entry) => this.listedItems.get(this.fromValueSpace(entry.trim())) ?? null),
+    });
+  }
+
+  private indexListedItems(items: FileSystemItem[]): void {
+    for (const item of items) {
+      this.listedItems.set(item.path, item);
+    }
   }
 
   // Mirrors effectiveRootPath so both roots normalize trailing slashes once

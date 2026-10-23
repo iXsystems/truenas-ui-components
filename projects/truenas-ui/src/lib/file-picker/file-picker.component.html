@@ -9,6 +9,11 @@
       [value]="selectedPath()"
       [placeholder]="placeholder()"
       [readonly]="!allowManualInput()"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-labelledby]="fieldAria.labelledby()"
+      [attr.aria-describedby]="fieldAria.describedby()"
+      [attr.aria-invalid]="fieldAria.invalid()"
+      [attr.aria-required]="fieldAria.required()"
       [disabled]="isDisabled()"
       (click)="onInputClick()"
       (change)="onPathCommit($event)">

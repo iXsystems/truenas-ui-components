@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { fireEvent, userEvent, within, screen, expect, waitFor } from 'storybook/test';
+import { fireEvent, fn, userEvent, within, screen, expect, waitFor } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
@@ -44,6 +44,10 @@ const meta: Meta<TnFilePickerComponent> = {
     startPath: {
       control: 'text',
       description: 'Initial directory path',
+    },
+    allowFreeText: {
+      control: 'boolean',
+      description: 'Commit typed input verbatim (no root/validatePath checks, no valueRoot mapping); comma-separated in multi-select',
     },
     valueRoot: {
       control: 'text',
@@ -1680,6 +1684,71 @@ export const LoadingStates: Story = {
     docs: {
       description: {
         story: 'Tests loading states: spinner appears during async data fetch, then content loads.'
+      }
+    }
+  }
+};
+
+/** Spies for the FreeTextInput play test; args named after outputs are not passed through. */
+const freeTextSelectionChange = fn();
+const freeTextItemSelectionChange = fn();
+
+export const FreeTextInput: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: mdiShowcaseCallbacks,
+      onSelectionChange: freeTextSelectionChange,
+      onItemSelectionChange: freeTextItemSelectionChange,
+    },
+    template: `
+      <tn-form-field label="Paths or shares">
+        <tn-file-picker
+          [allowFreeText]="allowFreeText"
+          [multiSelect]="multiSelect"
+          [rootPath]="rootPath"
+          [startPath]="startPath"
+          [callbacks]="callbacks"
+          (selectionChange)="onSelectionChange($event)"
+          (itemSelectionChange)="onItemSelectionChange($event)">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    allowFreeText: true,
+    multiSelect: true,
+    rootPath: '/mnt',
+    startPath: '/mnt/showcase',
+  },
+  play: async ({ canvasElement }) => {
+    freeTextSelectionChange.mockClear();
+    freeTextItemSelectionChange.mockClear();
+    const canvas = within(canvasElement);
+    const input = await canvas.findByRole('textbox') as HTMLInputElement;
+
+    // A non-path entry outside the root commits without an error, and the
+    // comma-separated text becomes one entry per part. Only the free-text
+    // commit emits this: with `allowFreeText` off the text is one path, which
+    // `validatePath` rejects, so nothing is emitted at all.
+    await fireEvent.input(input, { target: { value: '/mnt/showcase, EXTERNAL:192.168.0.200\\SHARE' } });
+    await fireEvent.change(input);
+
+    const entries = ['/mnt/showcase', 'EXTERNAL:192.168.0.200\\SHARE'];
+    await waitFor(() => {
+      void expect(freeTextSelectionChange).toHaveBeenCalledWith(entries);
+    });
+    // Neither entry has been listed yet, so neither resolves to an item
+    void expect(freeTextItemSelectionChange).toHaveBeenCalledWith({ value: entries, items: [null, null] });
+    void expect(input.classList.contains('error')).toBe(false);
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'With `allowFreeText` the typed text is the value: no `rootPath` confinement, no `validatePath`, no `valueRoot` mapping — so entries the browser cannot list (an SMB `EXTERNAL:host\\\\share`, a dataset on a pool that is not imported) are accepted. In multi-select the text is split on commas. Popup selections work as usual, and `itemSelectionChange` reports the listed item behind each entry (or `null` for one never listed).'
       }
     }
   }
