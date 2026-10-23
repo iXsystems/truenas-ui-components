@@ -507,6 +507,30 @@ describe('TnFilePickerComponent', () => {
       expect(component.selectedItems()).toEqual([]);
     });
 
+    it('clears the value when a single-mode field holds only whitespace', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      fixture.detectChanges();
+      component.writeValue('/mnt/a');
+
+      commitText('   ');
+
+      expect(changeSpy).toHaveBeenCalledWith('');
+      expect(component.selectedItems()).toEqual([]);
+      expect(component.selectedPath()).toBe('');
+    });
+
+    it('keeps single-mode surrounding whitespace in the value but not in the selection state', () => {
+      const changeSpy = jest.fn();
+      component.registerOnChange(changeSpy);
+      fixture.detectChanges();
+
+      commitText('/mnt/tank/a ');
+
+      expect(changeSpy).toHaveBeenCalledWith('/mnt/tank/a ');
+      expect(component.selectedItems()).toEqual(['/mnt/tank/a']);
+    });
+
     it('has no effect when manual input is disallowed', () => {
       fixture.componentRef.setInput('allowManualInput', false);
       const changeSpy = jest.fn();
@@ -576,6 +600,19 @@ describe('TnFilePickerComponent', () => {
         value: ['/mnt/tank/notes.txt', '/mnt/tank/unknown'],
         items: [items[0], null],
       });
+    });
+
+    it('resolves a typed value with surrounding whitespace to its listed item', async () => {
+      fixture.componentRef.setInput('allowFreeText', true);
+      const spy = jest.fn();
+      component.itemSelectionChange.subscribe(spy);
+      await listTank();
+
+      const inputEl = fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+      inputEl.value = '/mnt/tank/notes.txt ';
+      inputEl.dispatchEvent(new Event('change'));
+
+      expect(spy).toHaveBeenCalledWith({ value: '/mnt/tank/notes.txt ', items: [items[0]] });
     });
 
     it('resolves value-space entries against absolute listings', async () => {

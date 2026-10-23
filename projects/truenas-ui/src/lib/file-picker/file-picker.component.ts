@@ -296,18 +296,22 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   /**
    * `allowFreeText` commit: the typed text is the value, verbatim (single
-   * mode keeps even surrounding whitespace, as the field shows it). Selection
-   * state still tracks the absolute form of each entry (the same mapping
-   * `writeValue` applies) so reopening the popup reflects it.
+   * mode keeps even surrounding whitespace, as the field shows it), and a
+   * field holding only whitespace clears the selection like an empty one.
+   * Selection state still tracks the absolute form of each trimmed entry (the
+   * same mapping `writeValue` applies) so reopening the popup reflects it.
    */
   private commitFreeText(text: string): void {
-    const value: string | string[] = this.multiSelect()
-      ? text.split(',').map((entry) => entry.trim()).filter((entry) => entry.length > 0)
-      : text;
+    let value: string | string[];
+    if (this.multiSelect()) {
+      value = text.split(',').map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+    } else {
+      value = text.trim() ? text : '';
+    }
     const entries = Array.isArray(value) ? value : value ? [value] : [];
 
     this.hasError.set(false);
-    this.selectedItems.set(entries.map((entry) => this.fromValueSpace(entry)));
+    this.selectedItems.set(entries.map((entry) => this.fromValueSpace(entry.trim())));
     this.selectedPath.set(entries.join(', '));
     this.onChange(value);
     this.emitSelection(value);
@@ -600,15 +604,16 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   /**
    * Emits `selectionChange` and `itemSelectionChange` for a committed value.
-   * Items are looked up by the absolute form of each entry, which is how
-   * listings are indexed.
+   * Items are looked up by the absolute form of each trimmed entry, which is
+   * how listings are indexed — a free-text value keeps any surrounding
+   * whitespace the user typed, but still resolves to the item it names.
    */
   private emitSelection(value: string | string[]): void {
     this.selectionChange.emit(value);
     const entries = Array.isArray(value) ? value : value ? [value] : [];
     this.itemSelectionChange.emit({
       value,
-      items: entries.map((entry) => this.listedItems.get(this.fromValueSpace(entry)) ?? null),
+      items: entries.map((entry) => this.listedItems.get(this.fromValueSpace(entry.trim())) ?? null),
     });
   }
 
