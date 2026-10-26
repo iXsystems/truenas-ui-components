@@ -496,15 +496,19 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   /** An inline `create` flow finished — show the new item selected and applied. */
   onCreated(path: string): void {
-    void this.selectPath(path);
+    void this.selectCreatedPath(path);
   }
 
   /**
    * A footer button for an action without `create` was pressed: await its
    * `run` flow and select what it created, or hand the action to the consumer
    * through `createAction`.
+   *
+   * Deliberately not named `onCreateAction`: Storybook copies a story's props
+   * onto the rendered component, and stories commonly name their
+   * `(createAction)` handler that way, which would replace this method.
    */
-  async onCreateAction(event: FilePickerCreateActionEvent): Promise<void> {
+  async runCreateAction(event: FilePickerCreateActionEvent): Promise<void> {
     const action = this.createActions().find((candidate) => candidate.id === event.actionId);
     if (!action?.run) {
       this.createAction.emit(event);
@@ -519,8 +523,22 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       return;
     }
     if (createdPath) {
-      await this.selectPath(createdPath);
+      await this.selectCreatedPath(createdPath);
     }
+  }
+
+  /**
+   * `selectPath` for an item a create action just made. The user is looking at
+   * the popup, so a path outside `rootPath` — which `selectPath` would only
+   * report as a `validation` error, never shown there — is told as a
+   * `creation` error in the popup instead of the press seeming to do nothing.
+   */
+  private async selectCreatedPath(path: string): Promise<void> {
+    if (!isPathWithinRoot(path, this.effectiveRootPath())) {
+      this.emitError('creation', `Created item is outside of ${this.effectiveRootPath()}`, path);
+      return;
+    }
+    await this.selectPath(path);
   }
 
   /**
@@ -588,6 +606,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     const directoryChanged = path !== this.currentPath();
     const cb = this.effectiveCallbacks();
     if (!cb?.getChildren) {
+      this.popupError.set(null);
       // Default mock data for development
       const mockItems = this.getMockFileItems(path);
       this.indexListedItems(mockItems);

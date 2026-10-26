@@ -897,6 +897,20 @@ describe('TnFilePickerComponent source, errors and create actions', () => {
       expect(popupText()).toBe('');
     });
 
+    it('clears a creation error on the next listing without callbacks, too', async () => {
+      fixture.componentRef.setInput('createActions', [{
+        id: 'zvol', label: 'Create Zvol', run: () => Promise.reject(new Error('No space left')),
+      }]);
+      fixture.detectChanges();
+      await component.runCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+      expect(component.popupError()).toBe('No space left');
+
+      component.navigateToPath('/mnt/Documents');
+      await fixture.whenStable();
+
+      expect(component.popupError()).toBeNull();
+    });
+
     it('drops the message when the popup closes', async () => {
       fixture.componentRef.setInput('callbacks', { getChildren: jest.fn().mockRejectedValue(new Error('Nope')) });
       fixture.detectChanges();
@@ -919,7 +933,7 @@ describe('TnFilePickerComponent source, errors and create actions', () => {
       const createAction = jest.fn();
       component.createAction.subscribe(createAction);
 
-      await component.onCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+      await component.runCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
 
       expect(run).toHaveBeenCalledWith('/mnt');
       expect(createAction).not.toHaveBeenCalled();
@@ -930,7 +944,7 @@ describe('TnFilePickerComponent source, errors and create actions', () => {
       fixture.componentRef.setInput('createActions', [{ id: 'zvol', label: 'Create Zvol', run: () => Promise.resolve(null) }]);
       fixture.detectChanges();
 
-      await component.onCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+      await component.runCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
 
       expect(component.selectedPath()).toBe('');
     });
@@ -943,10 +957,26 @@ describe('TnFilePickerComponent source, errors and create actions', () => {
       const errors: unknown[] = [];
       component.error.subscribe((error) => errors.push(error));
 
-      await component.onCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+      await component.runCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
 
       expect(component.popupError()).toBe('No space left');
       expect(errors).toEqual([{ type: 'creation', message: 'No space left', path: '/mnt' }]);
+    });
+
+    it('shows a run() path outside the root as a creation error in the popup', async () => {
+      fixture.componentRef.setInput('rootPath', '/mnt');
+      fixture.componentRef.setInput('createActions', [{
+        id: 'zvol', label: 'Create Zvol', run: () => Promise.resolve('/dev/zvol/tank/vol'),
+      }]);
+      fixture.detectChanges();
+      const errors: unknown[] = [];
+      component.error.subscribe((error) => errors.push(error));
+
+      await component.runCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+
+      expect(component.popupError()).toBe('Created item is outside of /mnt');
+      expect(errors).toEqual([{ type: 'creation', message: 'Created item is outside of /mnt', path: '/dev/zvol/tank/vol' }]);
+      expect(component.selectedPath()).toBe('');
     });
 
     it('emits createAction for an action with neither create nor run', async () => {
@@ -955,7 +985,7 @@ describe('TnFilePickerComponent source, errors and create actions', () => {
       const createAction = jest.fn();
       component.createAction.subscribe(createAction);
 
-      await component.onCreateAction({ actionId: 'custom', parentPath: '/mnt' });
+      await component.runCreateAction({ actionId: 'custom', parentPath: '/mnt' });
 
       expect(createAction).toHaveBeenCalledWith({ actionId: 'custom', parentPath: '/mnt' });
     });
