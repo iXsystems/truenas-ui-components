@@ -7,7 +7,7 @@
       [tnTestId]="resolvedTestId()"
       [class.error]="hasError()"
       [value]="selectedPath()"
-      [placeholder]="placeholder()"
+      [placeholder]="resolvedPlaceholder()"
       [readonly]="!allowManualInput() || readonly()"
       [attr.aria-label]="ariaLabel()"
       [attr.aria-labelledby]="fieldAria.labelledby()"
@@ -21,8 +21,8 @@
     <button
       type="button"
       class="tn-file-picker-toggle"
-      aria-label="Open file picker"
       tnTestIdType="button"
+      [attr.aria-label]="labels().openPicker"
       [tnTestId]="toggleTestId()"
       [disabled]="isDisabled() || readonly()"
       (click)="openFilePicker()">

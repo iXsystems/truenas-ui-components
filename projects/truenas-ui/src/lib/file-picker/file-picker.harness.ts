@@ -346,7 +346,9 @@ export class TnFilePickerHarness extends ComponentHarness {
    */
   async clickSelect(): Promise<void> {
     const button = await this.documentRootLocatorFactory()
-      .locatorFor(TnButtonHarness.with({ label: 'Select', ancestor: '.tn-file-picker-footer' }))();
+      // By position, not by label: the label is translatable (TN_FILE_PICKER_LABELS)
+      // and the create-action buttons sit before Select in the same row.
+      .locatorFor(TnButtonHarness.with({ selector: ':last-child', ancestor: '.tn-file-picker-footer .footer-actions' }))();
     return button.click();
   }
 
@@ -362,7 +364,8 @@ export class TnFilePickerHarness extends ComponentHarness {
    */
   async clickClearSelection(): Promise<void> {
     const button = await this.documentRootLocatorFactory()
-      .locatorForOptional(TnButtonHarness.with({ label: 'Clear Selection', ancestor: '.tn-file-picker-footer' }))();
+      // The only button on the selection side of the footer; its label is translatable.
+      .locatorForOptional(TnButtonHarness.with({ ancestor: '.tn-file-picker-footer .footer-selection' }))();
     if (!button) {
       throw new Error('No Clear Selection button found — nothing is selected in the file picker popup.');
     }

@@ -1,6 +1,7 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { afterRenderEffect, Component, computed, ElementRef, input, output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { TN_FILE_PICKER_LABELS } from './file-picker-labels';
 import type {
   FileSystemItem, FileSystemItemType, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
 } from './file-picker.interfaces';
@@ -16,6 +17,7 @@ import { FileSizePipe } from '../pipes/file-size/file-size.pipe';
 import { TnTableComponent } from '../table/table.component';
 import { TnTableColumnDirective, TnHeaderCellDefDirective, TnCellDefDirective } from '../table-column/table-column.directive';
 import { TnTestIdDirective, scopeTestId, type TnTestIdValue } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 /** Uniquifies the inline-creation error id across popup instances. */
 let nextInlineErrorId = 0;
@@ -96,6 +98,7 @@ export class TnFilePickerPopupComponent {
    */
   testIdBase = input<TnTestIdValue>(undefined);
 
+  protected readonly labels = injectTnLabels(TN_FILE_PICKER_LABELS);
   private iconRegistry = inject(TnIconRegistryService);
   private elementRef = inject(ElementRef);
 
@@ -335,7 +338,7 @@ export class TnFilePickerPopupComponent {
       // Same abandonment check: a late rejection must not resurrect the row
       // (in a different directory, no less)
       if (this.inlineCreation() !== pending) {return;}
-      const message = err instanceof Error ? err.message : 'Creation failed';
+      const message = err instanceof Error ? err.message : this.labels().createFailed;
       // The row stays editable for retry; it is refocused once after render
       // (the disabled attribute dropped focus during the attempt)
       this.inlineCreation.set({ ...pending, loading: false, error: message });
@@ -457,14 +460,14 @@ export class TnFilePickerPopupComponent {
     
     // Check if it's today
     if (itemDate.getTime() === today.getTime()) {
-      return `Today ${timePart}`;
+      return this.labels().today(timePart);
     }
     
     // Check if it's yesterday
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     if (itemDate.getTime() === yesterday.getTime()) {
-      return `Yesterday ${timePart}`;
+      return this.labels().yesterday(timePart);
     }
     
     // Check if it's this year
