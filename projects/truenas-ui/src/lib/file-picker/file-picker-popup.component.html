@@ -17,6 +17,18 @@
   </nav>
 </div>
 
+<!-- Failed listing or creation, reported by the owning picker -->
+@if (errorMessage(); as message) {
+  <div
+    class="tn-file-picker-error"
+    role="alert"
+    tnTestIdType="text"
+    [tnTestId]="errorTestId()">
+    <tn-icon name="mdi-alert-circle" class="error-icon" aria-hidden="true" />
+    <span class="error-text">{{ message }}</span>
+  </div>
+}
+
 <!-- Loading indicator -->
 @if (loading()) {
   <div class="tn-file-picker-loading">

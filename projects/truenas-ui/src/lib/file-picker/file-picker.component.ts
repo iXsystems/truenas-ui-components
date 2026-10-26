@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
 import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type {
   FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
-  FilePickerError, FilePickerMode, FilePickerSelection, FileSystemItem, FileSystemItemType
+  FilePickerError, FilePickerMode, FilePickerSelection, FilePickerSource, FileSystemItem, FileSystemItemType
 } from './file-picker.interfaces';
 import { allowsCurrentDirectorySelection } from './file-picker.utils';
 import { isPathWithinRoot, normalizeRootPath } from './path-utils';
@@ -94,6 +94,13 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   placeholder = input<string>('Select file or folder');
   disabled = input<boolean>(false);
   /**
+   * Shows the value without letting the user change it: the input cannot be
+   * edited and the popup cannot be opened. Unlike `disabled` (or a disabled
+   * form control) the field stays focusable and its value stays part of the
+   * form — e.g. for a user who may view a setting but not edit it.
+   */
+  readonly = input<boolean>(false);
+  /**
    * Test-id base applied to the file-picker container (`file-picker-` prefixed)
    * and derived onto the inner chrome: the path input (`input-<base>`), the
    * browse toggle (`button-toggle-<base>`), and the popup and its contents.
@@ -102,7 +109,13 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * (default `data-testid`).
    */
   testId = input<TnTestIdValue>(undefined);
-  startPath = input<string>('/mnt');
+  /**
+   * Bundles `callbacks`, `rootPath`, `startPath` and `valueRoot` into one
+   * object. Each of those inputs, when bound, wins over its field here.
+   */
+  source = input<FilePickerSource | undefined>(undefined);
+  /** Directory the popup opens in. Defaults to `source.startPath`, else `/mnt`. */
+  startPath = input<string | undefined>(undefined);
   /** Restricts navigation — users cannot navigate above this path. */
   rootPath = input<string | undefined>(undefined);
   /**
@@ -125,7 +138,10 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    */
   itemSelectionChange = output<FilePickerSelection>();
   pathChange = output<string>();
-  /** Re-emitted from the popup when one of the `createActions` buttons is pressed. */
+  /**
+   * Emitted when one of the `createActions` buttons with neither `create` nor
+   * `run` is pressed.
+   */
   createAction = output<FilePickerCreateActionEvent>();
   error = output<FilePickerError>();
 
@@ -144,6 +160,11 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   selectedItems = signal<string[]>([]);
   loading = signal<boolean>(false);
   hasError = signal<boolean>(false);
+  /**
+   * Message of the last failed listing or creation, shown in the popup until
+   * a listing succeeds or the popup closes.
+   */
+  popupError = signal<string | null>(null);
   private formDisabled = signal<boolean>(false);
 
   /**
@@ -165,6 +186,22 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
 
+  // Explicit inputs win over the bundled `source`
+  private effectiveCallbacks = computed(() => this.callbacks() ?? this.source()?.callbacks);
+  private effectiveStartPath = computed(() => this.startPath() ?? this.source()?.startPath ?? '/mnt');
+  private effectiveValueRoot = computed(() => this.valueRoot() ?? this.source()?.valueRoot);
+
+  /** `createActions` that apply in the directory being browsed (`canCreateAt`). */
+  protected availableCreateActions = computed(() => {
+    const path = this.currentPath();
+    const actions = this.createActions();
+    if (!actions.some((action) => action.canCreateAt)) {
+      return actions;
+    }
+    const directory = this.listedItems.get(path) ?? null;
+    return actions.filter((action) => action.canCreateAt?.(path, directory) ?? true);
+  });
+
   /** Explicit `testId` wins; otherwise the bound control's name (formControlName etc.). */
   protected resolvedTestId = controlTestId(this.testId);
 
@@ -184,7 +221,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // Root the picker is confined to when rootPath is not provided, with
   // trailing slashes collapsed so confinement checks compare exact paths
-  effectiveRootPath = computed(() => normalizeRootPath(this.rootPath() ?? '/mnt'));
+  effectiveRootPath = computed(() => normalizeRootPath(this.rootPath() ?? this.source()?.rootPath ?? '/mnt'));
 
   // ControlValueAccessor implementation
   private onChange = (_value: string | string[]) => {};
@@ -195,7 +232,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   private viewContainerRef = inject(ViewContainerRef);
 
   ngOnInit(): void {
-    this.currentPath.set(this.clampToRoot(this.startPath()));
+    this.currentPath.set(this.clampToRoot(this.effectiveStartPath()));
   }
 
   ngOnDestroy(): void {
@@ -249,6 +286,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * and spam `validatePath` with paths the user never meant.
    */
   onPathCommit(event: Event): void {
+    if (this.readonly()) {return;}
     const target = event.target as HTMLInputElement;
 
     if (this.allowManualInput() && this.allowFreeText()) {
@@ -275,7 +313,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
         return;
       }
 
-      const cb = this.callbacks();
+      const cb = this.effectiveCallbacks();
       if (cb?.validatePath) {
         cb.validatePath(path).then(isValid => {
           if (isValid) {
@@ -365,7 +403,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   openFilePicker(): void {
-    if (this.isOpen() || this.isDisabled()) {return;}
+    if (this.isOpen() || this.isDisabled() || this.readonly()) {return;}
 
     this.createOverlay();
     this.isOpen.set(true);
@@ -373,6 +411,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   }
 
   close(): void {
+    this.popupError.set(null);
     if (this.overlayRef) {
       this.overlayRef.dispose();
       this.overlayRef = undefined;
@@ -440,6 +479,9 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.emitSelection(value);
     }
 
+    // A popup pick is the user's interaction with the field, like a typed
+    // commit: validation messages that wait for `touched` show now.
+    this.onTouched();
     this.close();
   }
 
@@ -455,6 +497,30 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   /** An inline `create` flow finished — show the new item selected and applied. */
   onCreated(path: string): void {
     void this.selectPath(path);
+  }
+
+  /**
+   * A footer button for an action without `create` was pressed: await its
+   * `run` flow and select what it created, or hand the action to the consumer
+   * through `createAction`.
+   */
+  async onCreateAction(event: FilePickerCreateActionEvent): Promise<void> {
+    const action = this.createActions().find((candidate) => candidate.id === event.actionId);
+    if (!action?.run) {
+      this.createAction.emit(event);
+      return;
+    }
+
+    let createdPath: string | null;
+    try {
+      createdPath = await action.run(event.parentPath);
+    } catch (err: unknown) {
+      this.emitError('creation', err instanceof Error ? err.message : 'Failed to create item', event.parentPath);
+      return;
+    }
+    if (createdPath) {
+      await this.selectPath(createdPath);
+    }
   }
 
   /**
@@ -515,11 +581,12 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     this.selectedPath.set('');
     this.onChange(this.multiSelect() ? [] : '');
     this.emitSelection(this.multiSelect() ? [] : '');
+    this.onTouched();
   }
 
   private async loadDirectory(path: string): Promise<void> {
     const directoryChanged = path !== this.currentPath();
-    const cb = this.callbacks();
+    const cb = this.effectiveCallbacks();
     if (!cb?.getChildren) {
       // Default mock data for development
       const mockItems = this.getMockFileItems(path);
@@ -535,6 +602,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
     try {
       const items = (await cb.getChildren(path)) || [];
+      this.popupError.set(null);
       this.indexListedItems(items);
       this.fileItems.set(items);
       this.currentPath.set(path);
@@ -625,7 +693,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   // Mirrors effectiveRootPath so both roots normalize trailing slashes once
   private normalizedValueRoot = computed(() => {
-    const valueRoot = this.valueRoot();
+    const valueRoot = this.effectiveValueRoot();
     return valueRoot ? normalizeRootPath(valueRoot) : undefined;
   });
 
@@ -653,6 +721,10 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
   private emitError(type: FilePickerError['type'], message: string, path?: string): void {
     this.hasError.set(true);
+    // Listing and creation happen in the popup, so that is where they are told
+    if (type === 'navigation' || type === 'creation') {
+      this.popupError.set(message);
+    }
     this.error.emit({ type, message, path });
     // Error persists until cleared by valid input or selection
   }

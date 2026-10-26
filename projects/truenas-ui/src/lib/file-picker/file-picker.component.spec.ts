@@ -788,3 +788,207 @@ describe('TnFilePickerComponent test-id fallback', () => {
     expect(el.querySelector('.tn-file-picker-toggle')?.getAttribute('data-testid')).toBe('button-toggle-backup-path');
   });
 });
+
+describe('TnFilePickerComponent source, errors and create actions', () => {
+  let component: TnFilePickerComponent;
+  let fixture: ComponentFixture<TnFilePickerComponent>;
+
+  const dataset: FileSystemItem = { path: '/mnt/tank', name: 'tank', type: 'dataset' };
+  const folder: FileSystemItem = { path: '/mnt/plain', name: 'plain', type: 'folder' };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TnFilePickerComponent, NoopAnimationsModule]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TnFilePickerComponent);
+    component = fixture.componentInstance;
+  });
+
+  function popupText(): string {
+    return document.querySelector('.tn-file-picker-error .error-text')?.textContent?.trim() ?? '';
+  }
+
+  afterEach(() => component.close());
+
+  describe('source', () => {
+    it('browses and maps values through the bundled source', async () => {
+      const getChildren = jest.fn().mockResolvedValue([dataset]);
+      fixture.componentRef.setInput('source', {
+        callbacks: { getChildren },
+        rootPath: '/mnt',
+        startPath: '/mnt',
+        valueRoot: '/mnt',
+      });
+      fixture.detectChanges();
+      const emitted: (string | string[])[] = [];
+      component.selectionChange.subscribe((value) => emitted.push(value));
+
+      component.openFilePicker();
+      await fixture.whenStable();
+      component.onItemClick(dataset);
+      component.onSubmit();
+
+      expect(getChildren).toHaveBeenCalledWith('/mnt');
+      expect(emitted).toEqual(['tank']);
+    });
+
+    it('lets explicitly bound inputs win over source fields', () => {
+      fixture.componentRef.setInput('source', { rootPath: '/mnt', startPath: '/mnt/a' });
+      fixture.componentRef.setInput('startPath', '/mnt/b');
+      fixture.detectChanges();
+
+      expect(component.currentPath()).toBe('/mnt/b');
+    });
+  });
+
+  describe('touched', () => {
+    it('marks the control touched when a popup selection is applied or cleared', () => {
+      const onTouched = jest.fn();
+      component.registerOnTouched(onTouched);
+      fixture.detectChanges();
+
+      component.onItemClick({ path: '/mnt/tank', name: 'tank', type: 'dataset' });
+      component.onSubmit();
+      expect(onTouched).toHaveBeenCalledTimes(1);
+
+      component.onClearSelection();
+      expect(onTouched).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('readonly', () => {
+    it('shows the value but neither edits it nor opens the popup', () => {
+      fixture.componentRef.setInput('readonly', true);
+      fixture.componentRef.setInput('openOnClick', true);
+      fixture.detectChanges();
+      component.writeValue('/mnt/tank');
+      fixture.detectChanges();
+      const input = fixture.nativeElement.querySelector('.tn-file-picker-input') as HTMLInputElement;
+      const toggle = fixture.nativeElement.querySelector('.tn-file-picker-toggle') as HTMLButtonElement;
+
+      component.openFilePicker();
+      input.value = '/mnt/other';
+      input.dispatchEvent(new Event('change'));
+
+      expect(input.readOnly).toBe(true);
+      expect(input.disabled).toBe(false);
+      expect(toggle.disabled).toBe(true);
+      expect(component.isOpen()).toBe(false);
+      expect(component.selectedPath()).toBe('/mnt/tank');
+    });
+  });
+
+  describe('popup errors', () => {
+    it('shows a failed listing in the popup and clears it once a listing succeeds', async () => {
+      const getChildren = jest.fn()
+        .mockRejectedValueOnce(new Error('Pool is offline'))
+        .mockResolvedValue([dataset]);
+      fixture.componentRef.setInput('callbacks', { getChildren });
+      fixture.detectChanges();
+
+      component.openFilePicker();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(popupText()).toBe('Pool is offline');
+
+      await component.refresh();
+      fixture.detectChanges();
+      expect(popupText()).toBe('');
+    });
+
+    it('drops the message when the popup closes', async () => {
+      fixture.componentRef.setInput('callbacks', { getChildren: jest.fn().mockRejectedValue(new Error('Nope')) });
+      fixture.detectChanges();
+      component.openFilePicker();
+      await fixture.whenStable();
+
+      component.close();
+
+      expect(component.popupError()).toBeNull();
+    });
+  });
+
+  describe('create actions', () => {
+    it('awaits run() and selects the path it resolves with', async () => {
+      const getChildren = jest.fn().mockResolvedValue([dataset]);
+      const run = jest.fn().mockResolvedValue('/mnt/tank');
+      fixture.componentRef.setInput('callbacks', { getChildren });
+      fixture.componentRef.setInput('createActions', [{ id: 'zvol', label: 'Create Zvol', run }]);
+      fixture.detectChanges();
+      const createAction = jest.fn();
+      component.createAction.subscribe(createAction);
+
+      await component.onCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+
+      expect(run).toHaveBeenCalledWith('/mnt');
+      expect(createAction).not.toHaveBeenCalled();
+      expect(component.selectedPath()).toBe('/mnt/tank');
+    });
+
+    it('leaves the value alone when run() resolves with null', async () => {
+      fixture.componentRef.setInput('createActions', [{ id: 'zvol', label: 'Create Zvol', run: () => Promise.resolve(null) }]);
+      fixture.detectChanges();
+
+      await component.onCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+
+      expect(component.selectedPath()).toBe('');
+    });
+
+    it('shows a rejected run() in the popup as a creation error', async () => {
+      fixture.componentRef.setInput('createActions', [{
+        id: 'zvol', label: 'Create Zvol', run: () => Promise.reject(new Error('No space left')),
+      }]);
+      fixture.detectChanges();
+      const errors: unknown[] = [];
+      component.error.subscribe((error) => errors.push(error));
+
+      await component.onCreateAction({ actionId: 'zvol', parentPath: '/mnt' });
+
+      expect(component.popupError()).toBe('No space left');
+      expect(errors).toEqual([{ type: 'creation', message: 'No space left', path: '/mnt' }]);
+    });
+
+    it('emits createAction for an action with neither create nor run', async () => {
+      fixture.componentRef.setInput('createActions', [{ id: 'custom', label: 'Custom' }]);
+      fixture.detectChanges();
+      const createAction = jest.fn();
+      component.createAction.subscribe(createAction);
+
+      await component.onCreateAction({ actionId: 'custom', parentPath: '/mnt' });
+
+      expect(createAction).toHaveBeenCalledWith({ actionId: 'custom', parentPath: '/mnt' });
+    });
+
+    it('shows only the actions whose canCreateAt accepts the browsed directory and its item', async () => {
+      const getChildren = jest.fn().mockResolvedValue([dataset, folder]);
+      const canCreateAt = jest.fn((_path: string, directory: FileSystemItem | null) => directory?.type === 'dataset');
+      fixture.componentRef.setInput('callbacks', { getChildren });
+      fixture.componentRef.setInput('createActions', [
+        { id: 'dataset', label: 'Create Dataset', canCreateAt },
+        { id: 'always', label: 'Always' },
+      ]);
+      fixture.detectChanges();
+      component.openFilePicker();
+      await fixture.whenStable();
+
+      const labels = (): string[] => Array.from(document.querySelectorAll('.footer-actions tn-button'))
+        .map((button) => button.textContent?.trim() ?? '');
+
+      fixture.detectChanges();
+      expect(labels()).toEqual(['Always', 'Select']);
+      expect(canCreateAt).toHaveBeenLastCalledWith('/mnt', null);
+
+      component.navigateToPath('/mnt/tank');
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(labels()).toEqual(['Create Dataset', 'Always', 'Select']);
+      expect(canCreateAt).toHaveBeenLastCalledWith('/mnt/tank', dataset);
+
+      component.navigateToPath('/mnt/plain');
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(labels()).toEqual(['Always', 'Select']);
+    });
+  });
+});

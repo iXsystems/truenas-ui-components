@@ -158,6 +158,26 @@
   }
 }
 
+.tn-file-picker-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px var(--tn-content-padding, 24px) 0;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--tn-error, var(--tn-red, #bd2626)) 10%, transparent);
+  border-left: 3px solid var(--tn-error, var(--tn-red, #bd2626));
+  border-radius: 3px;
+  color: var(--tn-error, var(--tn-red, #bd2626));
+
+  .error-icon {
+    flex-shrink: 0;
+  }
+
+  .error-text {
+    flex: 1;
+  }
+}
+
 .inline-create-error {
   display: flex;
   align-items: center;
