@@ -15,15 +15,35 @@ export interface FileSystemItem {
 }
 
 export interface FilePickerCallbacks {
+  /**
+   * Lists a directory. Reject with an Error to fail the navigation: the popup
+   * shows its message above the listing (and `error` emits a `navigation`
+   * error) until a later listing succeeds.
+   */
   getChildren?: (path: string) => Promise<FileSystemItem[]>;
   validatePath?: (path: string) => Promise<boolean>;
 }
 
 /**
+ * Everything that decides what the picker browses and how its value is
+ * expressed, as one object — for consumers that build it from their own data
+ * source and would otherwise bind the same four inputs at every call site.
+ * Each field mirrors the input of the same name; an input that is bound
+ * explicitly wins over the field.
+ */
+export interface FilePickerSource {
+  callbacks?: FilePickerCallbacks;
+  rootPath?: string;
+  startPath?: string;
+  valueRoot?: string;
+}
+
+/**
  * A consumer-defined creation flow surfaced as a button in the picker footer,
  * e.g. creating a dataset or zvol through a dialog. The creation itself
- * always happens outside the picker — either in a fully consumer-owned flow
- * (`createAction` event) or through the pluggable inline flow (`create`).
+ * always happens outside the picker — through the pluggable inline flow
+ * (`create`), a consumer-owned flow the picker awaits (`run`), or, with
+ * neither, a fully consumer-owned flow driven by the `createAction` event.
  */
 export interface FilePickerCreateAction {
   /** Identifies the action in `createAction` events, e.g. 'dataset'. */
@@ -53,6 +73,23 @@ export interface FilePickerCreateAction {
    * that (e.g. creation is cheap to leave behind, or idempotent).
    */
   create?: (parentPath: string, name: string) => Promise<string>;
+  /**
+   * A consumer-owned creation flow the picker awaits, e.g. one that opens a
+   * dialog or side panel. Called with the browsed directory when the button is
+   * pressed (and `create` is not set). Resolve with the created path to have
+   * the picker refresh the listing and select it, exactly as after an inline
+   * `create`; resolve with `null` when the user cancelled. Reject with an
+   * Error to show its message in the popup (and emit a `creation` error).
+   * Without `create` or `run`, pressing the button emits `createAction`.
+   */
+  run?: (parentPath: string) => Promise<string | null>;
+  /**
+   * Whether the action applies in the directory being browsed. Called with
+   * that directory's path and its listed item — `null` when the picker has not
+   * listed it, e.g. the start directory or the root. The button is hidden
+   * where this returns false. Omit it to show the action everywhere.
+   */
+  canCreateAt?: (parentPath: string, directory: FileSystemItem | null) => boolean;
 }
 
 export interface FilePickerCreateActionEvent {

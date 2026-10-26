@@ -71,8 +71,8 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
   multiSelect = input<boolean>(false);
   /**
    * Consumer-defined creation flows rendered as buttons in the footer, next to the
-   * Select button. Pressing one emits `createAction` with the action id and the
-   * currently browsed path.
+   * Select button. Pressing one without `create` emits `createAction` with the
+   * action id and the currently browsed path; the owning picker runs its `run`.
    */
   createActions = input<FilePickerCreateAction[]>([]);
   currentPath = input<string>('/mnt');
@@ -85,6 +85,8 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
   fileItems = input<FileSystemItem[]>([]);
   selectedItems = input<string[]>([]);
   loading = input<boolean>(false);
+  /** Message of a failed listing or creation, shown above the listing. */
+  errorMessage = input<string | null>(null);
   fileExtensions = input<string[] | undefined>(undefined);
   /**
    * Test-id base the owning picker resolved (explicit `testId`, else the bound
@@ -184,6 +186,7 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
    */
   protected readonly selectTestId = computed(() => ['select', ...this.baseSegments()]);
   protected readonly clearSelectionTestId = computed(() => ['clear-selection', ...this.baseSegments()]);
+  protected readonly errorTestId = computed(() => ['error', ...this.baseSegments()]);
   /** Role-first segments for the inline creation input: `input-create[-<base>]`. */
   protected readonly inlineCreateTestId = computed(() => ['create', ...this.baseSegments()]);
 

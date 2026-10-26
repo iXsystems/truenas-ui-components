@@ -3,7 +3,9 @@ import { fireEvent, fn, userEvent, within, screen, expect, waitFor } from 'story
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnFilePickerComponent } from '../lib/file-picker/file-picker.component';
-import type { FileSystemItem, FilePickerCallbacks } from '../lib/file-picker/file-picker.interfaces';
+import type {
+  FileSystemItem, FilePickerCallbacks, FilePickerCreateAction, FilePickerSource,
+} from '../lib/file-picker/file-picker.interfaces';
 import { TnFormFieldComponent } from '../lib/form-field/form-field.component';
 
 const harnessDoc = loadHarnessDoc('file-picker');
@@ -162,16 +164,19 @@ multiSelect = input<boolean>(false);
 \`\`\`typescript
 createActions = input<FilePickerCreateAction[]>([]);
 \`\`\`
-**Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup footer, next to Select. Two shapes:
+**Description:** Consumer-defined creation flows (e.g. dataset or zvol creation) shown as buttons in the popup footer, next to Select. Three shapes:
 
 - **Event-only** (no \`create\`): pressing the button emits \`createAction\` with \`{ actionId, parentPath }\`; run your own flow (dialog, API call) and, when it completes, call \`selectPath(newPath)\` to show the created item selected and applied as the value — or \`refresh()\` to only re-fetch the listing.
 - **Inline** (\`create\` provided): pressing the button opens an editable name row inside the popup. Submitting calls \`create(parentPath, name)\` — your implementation does the real work (e.g. a websocket API call) and owns validation. Resolve with the created path to have it listed and selected; reject with an Error to show its message inline and keep the row editable.
+- **Awaited** (\`run\` provided, no \`create\`): pressing the button calls \`run(parentPath)\` — e.g. open a dialog — and the picker awaits it. Resolve with the created path to have it listed, selected and applied, or with \`null\` when the user cancelled; reject with an Error to show its message in the popup.
+
+Any shape may set \`canCreateAt(parentPath, directory)\` to hide the button in directories where it does not apply; \`directory\` is the listed item for the browsed path, or \`null\` when it has not been listed (e.g. the root).
 
 ### Navigation Configuration
 \`\`\`typescript
-startPath = input<string>('/mnt');
+startPath = input<string | undefined>(undefined);
 \`\`\`
-**Description:** Initial directory path to display when picker opens.
+**Description:** Initial directory path to display when picker opens. Defaults to \`source.startPath\`, else \`/mnt\`.
 
 \`\`\`typescript
 rootPath = input<string | undefined>(undefined);
@@ -209,11 +214,21 @@ disabled = input<boolean>(false);
 \`\`\`
 **Description:** Disable the file picker input and button.
 
+\`\`\`typescript
+readonly = input<boolean>(false);
+\`\`\`
+**Description:** Show the value without letting the user change it: the input cannot be edited and the popup cannot be opened. Unlike \`disabled\` the field stays focusable and, bound to a form control, its value stays part of the form.
+
 ### Integration
 \`\`\`typescript
 callbacks = input<FilePickerCallbacks | undefined>(undefined);
 \`\`\`
-**Description:** Object containing callback functions for data operations (see Callbacks section).
+**Description:** Object containing callback functions for data operations (see Callbacks section). A rejected \`getChildren\` shows its message above the listing until a later listing succeeds.
+
+\`\`\`typescript
+source = input<FilePickerSource | undefined>(undefined);
+\`\`\`
+**Description:** \`callbacks\`, \`rootPath\`, \`startPath\` and \`valueRoot\` bundled as one object, for consumers that build them from their own data source and would otherwise bind the same four inputs everywhere. Each of those inputs, when bound, wins over its field.
 
 ---
 
@@ -1032,6 +1047,117 @@ export const CreateActions: Story = {
     docs: {
       description: {
         story: 'Demonstrates the full create-action round-trip: `createActions` renders a "Create Dataset" button in the popup footer, `createAction` emits `{ actionId, parentPath }`, the consumer runs its own creation flow, and `selectPath()` refreshes the listing with the new dataset selected and applied as the picker\'s value. Use `refresh()` instead to only re-fetch the listing.'
+      }
+    }
+  }
+};
+
+export const AwaitedCreateAction: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      callbacks: mdiShowcaseCallbacks,
+      createActions: [
+        {
+          id: 'dataset',
+          label: 'Create Dataset',
+          // A real consumer would open a dialog here and resolve with what it
+          // created, or null when the user cancelled.
+          run: async (parentPath: string): Promise<string | null> => {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const newDataset: FileSystemItem = {
+              path: `${parentPath}/awaited-dataset`,
+              name: 'awaited-dataset',
+              type: 'dataset',
+              modified: new Date(),
+              permissions: 'write'
+            };
+            mockFilesystem[parentPath] = [...(mockFilesystem[parentPath] || []), newDataset];
+            return newDataset.path;
+          },
+          // Only offered inside the showcase tree
+          canCreateAt: (parentPath: string) => parentPath.startsWith('/mnt/showcase'),
+        } satisfies FilePickerCreateAction,
+      ],
+    },
+    template: `
+      <tn-form-field label="Awaited create action">
+        <tn-file-picker
+          [mode]="mode"
+          [createActions]="createActions"
+          [startPath]="startPath"
+          [callbacks]="callbacks">
+        </tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  args: {
+    mode: 'dataset',
+    startPath: '/mnt/showcase'
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    resetMockFilesystem();
+
+    await userEvent.click(canvas.getByRole('button', { name: /open file picker/i }));
+    await waitFor(() => {
+      void expect(screen.queryByText('documents')).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    await userEvent.click(screen.getByRole('button', { name: /create dataset/i }));
+
+    await waitFor(() => {
+      void expect(screen.getByText('awaited-dataset')).toBeInTheDocument();
+    }, { timeout: 3000 });
+    const input = canvas.getByRole('textbox') as HTMLInputElement;
+    await waitFor(() => {
+      void expect(input.value).toContain('awaited-dataset');
+    });
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'A `run` create action: the picker awaits the consumer\'s own flow (a dialog, in a real app) and selects the path it resolves with — no `createAction` handler or template ref needed. `canCreateAt` limits the button to the showcase tree.'
+      }
+    }
+  }
+};
+
+export const ListingError: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      source: {
+        startPath: '/mnt/showcase',
+        callbacks: {
+          getChildren: async (path: string): Promise<FileSystemItem[]> => {
+            if (path === '/mnt/showcase/locked') {
+              throw new Error('Permission denied: /mnt/showcase/locked');
+            }
+            const items = await mdiShowcaseCallbacks.getChildren!(path);
+            return path === '/mnt/showcase'
+              ? [{ path: '/mnt/showcase/locked', name: 'locked', type: 'folder' }, ...items]
+              : items;
+          },
+        },
+      } satisfies FilePickerSource,
+    },
+    template: `
+      <tn-form-field label="Listing error">
+        <tn-file-picker [source]="source"></tn-file-picker>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent, TnFilePickerComponent],
+    }
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Open the picker and double-click `locked`: a rejected `getChildren` is shown above the listing, and the previous listing stays put. The message clears once a listing succeeds or the popup closes. The picker is configured through a single `[source]` object.'
       }
     }
   }
