@@ -67,6 +67,24 @@ describe('TnExpansionPanelComponent', () => {
     expect(content.hasAttribute('inert')).toBe(false);
   });
 
+  describe('instance ids', () => {
+    it('gives each instance a distinct deterministic content id', () => {
+      const other = TestBed.createComponent(TnExpansionPanelComponent);
+
+      expect(component.contentId).toMatch(/^tn-expansion-panel-content-\d+$/);
+      expect(other.componentInstance.contentId).toMatch(/^tn-expansion-panel-content-\d+$/);
+      expect(component.contentId).not.toBe(other.componentInstance.contentId);
+    });
+
+    it('points the header aria-controls at the content region', () => {
+      const header = fixture.nativeElement.querySelector('.tn-expansion-panel__header') as HTMLElement;
+      const content = fixture.nativeElement.querySelector('.tn-expansion-panel__content') as HTMLElement;
+
+      expect(content.id).toBe(component.contentId);
+      expect(header.getAttribute('aria-controls')).toBe(content.id);
+    });
+  });
+
   it('should apply correct classes', () => {
     fixture.componentRef.setInput('elevation', 'high');
     fixture.componentRef.setInput('bordered', true);

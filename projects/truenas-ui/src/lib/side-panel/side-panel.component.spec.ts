@@ -101,6 +101,28 @@ describe('TnSidePanelComponent', () => {
     });
   });
 
+  describe('instance ids', () => {
+    it('gives each instance a distinct deterministic panel id', () => {
+      const other = TestBed.createComponent(TnSidePanelComponent);
+
+      expect(component.panelId).toMatch(/^tn-side-panel-\d+$/);
+      expect(other.componentInstance.panelId).toMatch(/^tn-side-panel-\d+$/);
+      expect(component.panelId).not.toBe(other.componentInstance.panelId);
+      expect(component.titleId).toBe(`${component.panelId}-title`);
+      other.destroy();
+    });
+
+    it('points aria-labelledby at the rendered heading', () => {
+      fixture.componentRef.setInput('title', 'My Panel');
+      fixture.componentRef.setInput('open', true);
+      fixture.detectChanges();
+
+      const labelledby = getOverlay().getAttribute('aria-labelledby')!;
+      const heading = document.getElementById(labelledby);
+      expect(heading).toBe(getOverlay().querySelector('.tn-side-panel__title'));
+    });
+  });
+
   describe('DOM rendering', () => {
     it('should render backdrop by default', () => {
       expect(getOverlay().querySelector('.tn-side-panel__backdrop')).toBeTruthy();
