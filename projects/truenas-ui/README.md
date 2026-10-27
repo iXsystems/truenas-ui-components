@@ -315,7 +315,7 @@ Available themes:
 ng build truenas-ui
 
 # Generate icon sprite for library development
-yarn icons
+yarn generate-sprite
 
 # Run Storybook
 yarn run sb
