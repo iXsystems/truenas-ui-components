@@ -1,7 +1,6 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import type { AfterViewChecked } from '@angular/core';
-import { Component, computed, ElementRef, input, output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { afterRenderEffect, Component, computed, ElementRef, input, output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import type {
   FileSystemItem, FileSystemItemType, FilePickerMode, FilePickerCreateAction, FilePickerCreateActionEvent
 } from './file-picker.interfaces';
@@ -62,7 +61,7 @@ interface DisplayedFileItem extends FileSystemItem {
     'class': 'tn-file-picker-popup'
   }
 })
-export class TnFilePickerPopupComponent implements AfterViewChecked {
+export class TnFilePickerPopupComponent {
   /**
    * What can be selected: a single mode, or an explicit list of selectable
    * item types, e.g. ['folder', 'dataset'].
@@ -103,45 +102,41 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
   constructor() {
     // Register TrueNAS custom icons
     registerTruenasIcons(this.iconRegistry);
+
+    // Focus runs after render rather than at the call sites because the input
+    // may not be in the DOM (or may still be disabled) until the row renders.
+    // An effect, not ngAfterViewChecked: that hook only runs when the PARENT
+    // view is re-checked, and a zoneless host refreshes just this signal-dirty
+    // view when a create call settles — so a failed attempt never got focus
+    // back, and Escape then closed the whole popup instead of the row.
+    afterRenderEffect(() => {
+      if (!this.creationFocusRequested()) {return;}
+
+      const creation = this.inlineCreation();
+      if (!creation) {
+        this.creationFocusRequested.set(false);
+        return;
+      }
+      if (creation.loading) {return;}
+
+      const nameInput = (this.elementRef.nativeElement as HTMLElement)
+        .querySelector<HTMLInputElement>('.inline-create-input');
+      if (!nameInput || nameInput.disabled) {return;}
+
+      nameInput.focus();
+      this.creationFocusRequested.set(false);
+    });
   }
 
   /**
-   * Requests a focus of the inline creation input on the next view check.
+   * Requests a focus of the inline creation input after the next render.
    * Set when the row opens and when a failed attempt re-enables the input —
    * the two moments the input either just entered the DOM or just lost focus
-   * to the `disabled` attribute. Cleared once the focus is scheduled, so
-   * focus is NOT permanently forced back: after an error the user can still
-   * click elsewhere without being trapped in the input.
+   * to the `disabled` attribute. Cleared once focus is applied, so focus is
+   * NOT permanently forced back: after an error the user can still click
+   * elsewhere without being trapped in the input.
    */
-  private pendingCreationFocus = false;
-
-  /**
-   * Focus runs here rather than at the call sites because the input may not
-   * be in the DOM (or may still be disabled) until a later view check, and a
-   * re-render can replace the element after focus() was scheduled — render
-   * scheduling differs between hosts. So the request keeps retrying on each
-   * check and is cleared only once the input actually holds focus.
-   */
-  ngAfterViewChecked(): void {
-    if (!this.pendingCreationFocus) {return;}
-
-    const creation = this.inlineCreation();
-    if (!creation) {
-      this.pendingCreationFocus = false;
-      return;
-    }
-    if (creation.loading) {return;}
-
-    const nameInput = (this.elementRef.nativeElement as HTMLElement)
-      .querySelector<HTMLInputElement>('.inline-create-input');
-    if (!nameInput) {return;}
-
-    if (document.activeElement === nameInput) {
-      this.pendingCreationFocus = false;
-      return;
-    }
-    setTimeout(() => nameInput.focus());
-  }
+  private readonly creationFocusRequested = signal(false);
 
   itemClick = output<FileSystemItem>();
   itemDoubleClick = output<FileSystemItem>();
@@ -157,6 +152,12 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
 
   // Table configuration
   displayedColumns = ['select', 'name', 'size', 'modified'];
+  /**
+   * The empty directory is the table's own empty state, worded for a listing —
+   * a second empty-state block here would render under it, so the popup only
+   * words and decorates the table's.
+   */
+  protected readonly emptyIcon = tnIconMarker('folder-open', 'mdi');
 
   // Computed values
 
@@ -290,10 +291,10 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
     if (action.create) {
       // The clicked footer button is about to become disabled while focused;
       // blur it now so the browser's focus fixup doesn't fight the input
-      // focus from ngAfterViewChecked
+      // focus applied after render
       (document.activeElement as HTMLElement | null)?.blur?.();
       this.inlineCreation.set({ action, name: '', loading: false });
-      this.pendingCreationFocus = true;
+      this.creationFocusRequested.set(true);
       return;
     }
     this.createAction.emit({ actionId: action.id, parentPath: this.currentPath() });
@@ -335,10 +336,10 @@ export class TnFilePickerPopupComponent implements AfterViewChecked {
       // (in a different directory, no less)
       if (this.inlineCreation() !== pending) {return;}
       const message = err instanceof Error ? err.message : 'Creation failed';
-      // The row stays editable for retry; ngAfterViewChecked refocuses it
-      // once (the disabled attribute dropped focus during the attempt)
+      // The row stays editable for retry; it is refocused once after render
+      // (the disabled attribute dropped focus during the attempt)
       this.inlineCreation.set({ ...pending, loading: false, error: message });
-      this.pendingCreationFocus = true;
+      this.creationFocusRequested.set(true);
     }
   }
 

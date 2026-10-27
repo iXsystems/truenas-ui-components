@@ -364,7 +364,7 @@ const PAINTS_UNTUNED: Readonly<Record<string, { fills: number; text: number; why
   },
   'file-picker/file-picker-popup.component.scss': {
     fills: 3,
-    text: 15,
+    text: 14,
     why: 'the folder type badge fills --tn-alt-bg1 and the ZFS badge --tn-alt-bg2, both under '
       + '--tn-alt-fg2; the navigate button fills --tn-bg3 on hover but re-points its chevron to '
       + '--tn-primary, an icon at 3:1. Its table header rule used to declare a sixteenth, a '

@@ -42,10 +42,12 @@
   <div class="tn-file-picker-content">
 
   <tn-table
+    emptyMessage="No items found"
     [dataSource]="filteredFileItems()"
     [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)"
     [clickable]="true"
     [activeWhen]="isRowSelected"
+    [emptyIcon]="emptyIcon"
     (rowClick)="onItemClick($event)"
     (rowDoubleClick)="onItemDoubleClick($event)">
 
@@ -190,13 +192,6 @@
 
   </tn-table>
 
-  <!-- Empty state -->
-  @if (filteredFileItems().length === 0) {
-    <div class="empty-state">
-      <tn-icon name="folder-open" library="mdi" customSize="48px" />
-      <p>No items found</p>
-    </div>
-  }
   </div>
 }
 

@@ -545,6 +545,26 @@ describe('TnFilePickerPopupComponent', () => {
       expect(document.activeElement).toBe(inlineInput());
     });
 
+    it('should put focus back in the input after a failed attempt', async () => {
+      create.mockImplementation(() => {
+        // A browser drops focus once the attempt disables the input; jsdom
+        // keeps it, so drop it the way the browser would.
+        (document.activeElement as HTMLElement | null)?.blur();
+        return Promise.reject(new Error('Name is invalid.'));
+      });
+      actionButton().click();
+      fixture.detectChanges();
+      await new Promise(resolve => setTimeout(resolve));
+
+      typeName('bad/name');
+      inlineInput()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+      await new Promise(resolve => setTimeout(resolve));
+
+      expect(document.activeElement).toBe(inlineInput());
+    });
+
     it('should call create with the browsed path and emit created on success', async () => {
       create.mockResolvedValue('/mnt/tank/new-folder');
       const createdSpy = jest.fn();
