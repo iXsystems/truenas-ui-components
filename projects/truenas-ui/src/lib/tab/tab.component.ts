@@ -1,7 +1,7 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import type { TemplateRef, AfterContentInit} from '@angular/core';
-import { Component, input, output, ElementRef, inject, contentChild, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ElementRef, inject, contentChild, computed, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { tabDomId, tabPanelDomId } from '../tabs/tab-ids';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
@@ -51,6 +51,8 @@ export class TnTabComponent implements AfterContentInit {
 
   elementRef = inject(ElementRef<HTMLElement>);
 
+  private tabButton = viewChild.required<ElementRef<HTMLButtonElement>>('tabButton');
+
   protected hasIconContent = signal<boolean>(false);
 
   ngAfterContentInit() {
@@ -67,6 +69,11 @@ export class TnTabComponent implements AfterContentInit {
     if (this.tabsComponent) {
       this.tabsComponent.onKeydown(event, this.index());
     }
+  }
+
+  /** Focuses the `button[role="tab"]`; the `tn-tab` host has no tabindex and cannot take focus. */
+  focus() {
+    this.tabButton().nativeElement.focus();
   }
 
   classes = computed(() => {

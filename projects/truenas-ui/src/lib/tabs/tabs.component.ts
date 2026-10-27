@@ -328,10 +328,7 @@ export class TnTabsComponent implements AfterContentInit, AfterViewInit, OnDestr
   }
 
   private focusTab(index: number) {
-    const tab = this.tabs()[index];
-    if (tab && tab.elementRef) {
-      tab.elementRef.nativeElement.focus();
-    }
+    this.tabs()[index]?.focus();
   }
 
   classes = computed(() => {
