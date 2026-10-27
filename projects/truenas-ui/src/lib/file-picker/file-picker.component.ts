@@ -7,6 +7,7 @@ import { ElementRef, type TemplateRef, ViewContainerRef, Component, computed, fo
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
+import { TN_FILE_PICKER_DEFAULT_LABELS, TN_FILE_PICKER_LABELS } from './file-picker-labels';
 import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type {
   FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
@@ -18,6 +19,7 @@ import { injectTnFormFieldAria } from '../form-field/form-field-context';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnInputDirective } from '../input/input.directive';
 import { TnTestIdDirective, composeTestId, controlTestId, scopeTestId, type TnTestIdValue } from '../test-id';
+import { injectTnLabels } from '../utils/inject-labels';
 
 @Component({
   selector: 'tn-file-picker',
@@ -91,7 +93,12 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * path to the popup.
    */
   openOnClick = input<boolean>(false);
-  placeholder = input<string>('Select file or folder');
+  /**
+   * Left at its English default, the input shows
+   * `TN_FILE_PICKER_LABELS.placeholder` instead, so an app-root labels
+   * provider translates it; any other value is shown as given.
+   */
+  placeholder = input<string>(TN_FILE_PICKER_DEFAULT_LABELS.placeholder);
   disabled = input<boolean>(false);
   /**
    * Shows the value without letting the user change it: the input cannot be
@@ -182,6 +189,12 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * on disk after it was listed.
    */
   private listedItems = new Map<string, FileSystemItem>();
+
+  protected readonly labels = injectTnLabels(TN_FILE_PICKER_LABELS);
+  protected readonly resolvedPlaceholder = computed(() => {
+    const placeholder = this.placeholder();
+    return placeholder === TN_FILE_PICKER_DEFAULT_LABELS.placeholder ? this.labels().placeholder : placeholder;
+  });
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());
@@ -308,7 +321,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
 
       // Manually typed paths honor the same confinement as navigation
       if (!isPathWithinRoot(path, this.effectiveRootPath())) {
-        this.emitError('validation', `Path is outside of ${this.effectiveRootPath()}`, path);
+        this.emitError('validation', this.labels().pathOutsideRoot(this.effectiveRootPath()), path);
         this.onTouched();
         return;
       }
@@ -319,10 +332,10 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
           if (isValid) {
             this.updateSelection(path);
           } else {
-            this.emitError('validation', `Invalid path: ${path}`, path);
+            this.emitError('validation', this.labels().invalidPath(path), path);
           }
         }).catch(err => {
-          this.emitError('validation', err.message || 'Path validation failed', path);
+          this.emitError('validation', err.message || this.labels().pathValidationFailed, path);
         });
       } else {
         this.updateSelection(path);
@@ -519,7 +532,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
     try {
       createdPath = await action.run(event.parentPath);
     } catch (err: unknown) {
-      this.emitError('creation', err instanceof Error ? err.message : 'Failed to create item', event.parentPath);
+      this.emitError('creation', err instanceof Error ? err.message : this.labels().createFailed, event.parentPath);
       return;
     }
     if (createdPath) {
@@ -535,7 +548,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    */
   private async selectCreatedPath(path: string): Promise<void> {
     if (!isPathWithinRoot(path, this.effectiveRootPath())) {
-      this.emitError('creation', `Created item is outside of ${this.effectiveRootPath()}`, path);
+      this.emitError('creation', this.labels().createdOutsideRoot(this.effectiveRootPath()), path);
       return;
     }
     await this.selectPath(path);
@@ -566,7 +579,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    */
   async selectPath(path: string): Promise<void> {
     if (!isPathWithinRoot(path, this.effectiveRootPath())) {
-      this.emitError('validation', `Path is outside of ${this.effectiveRootPath()}`, path);
+      this.emitError('validation', this.labels().pathOutsideRoot(this.effectiveRootPath()), path);
       return;
     }
     // The parent still needs clamping: the root's own parent is outside it
@@ -628,7 +641,7 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
       this.clearStalePendingSelection(directoryChanged);
       this.pathChange.emit(path);
     } catch (err: unknown) {
-      this.emitError('navigation', err instanceof Error ? err.message : 'Failed to load directory', path);
+      this.emitError('navigation', err instanceof Error ? err.message : this.labels().loadFailed, path);
     } finally {
       this.loading.set(false);
     }

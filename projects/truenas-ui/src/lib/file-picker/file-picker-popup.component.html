@@ -1,6 +1,6 @@
 <!-- Header with breadcrumb navigation -->
 <div class="tn-file-picker-header">
-  <nav class="tn-file-picker-breadcrumb" aria-label="File path">
+  <nav class="tn-file-picker-breadcrumb" [attr.aria-label]="labels().breadcrumb">
     @for (segment of currentPath() | tnTruncatePath : rootPath(); track $index; let last = $last) {
       <button
         class="breadcrumb-segment"
@@ -9,7 +9,7 @@
         [class.current]="last"
         [class.nameless]="!segment.name"
         [disabled]="last"
-        [attr.aria-label]="segment.name === '…' || !segment.name ? 'Navigate to ' + segment.path : null"
+        [attr.aria-label]="segment.name === '…' || !segment.name ? labels().navigateTo(segment.path) : null"
         (click)="navigateToPath(segment.path)">
         {{ segment.name }}
       </button>
@@ -33,7 +33,7 @@
 @if (loading()) {
   <div class="tn-file-picker-loading">
     <tn-icon name="loading" library="mdi" />
-    <span>Loading...</span>
+    <span>{{ labels().loading }}</span>
   </div>
 }
 
@@ -42,7 +42,7 @@
   <div class="tn-file-picker-content">
 
   <tn-table
-    emptyMessage="No items found"
+    [emptyMessage]="labels().noItems"
     [dataSource]="filteredFileItems()"
     [displayedColumns]="multiSelect() ? displayedColumns : displayedColumns.slice(1)"
     [clickable]="true"
@@ -63,12 +63,12 @@
            instead, which is the same route tn-table's own row-actions column
            takes (#246). There is no select-all control, so the name describes
            what the column holds. -->
-      <ng-container tnColumnDef="select" width="20px" label="Select" [hideLabel]="true">
+      <ng-container tnColumnDef="select" width="20px" [label]="labels().selectColumn" [hideLabel]="true">
       <ng-template let-item tnCellDef>
         @if (!item.inlineCreate) {
           <tn-checkbox
             [hideLabel]="true"
-            [label]="'Select ' + item.name"
+            [label]="labels().selectItem(item.name)"
             [testId]="itemTestId(item)"
             [checked]="isSelected(item)"
             [disabled]="!!item.disabled"
@@ -81,7 +81,7 @@
 
     <!-- Name column -->
     <ng-container tnColumnDef="name">
-      <ng-template tnHeaderCellDef>Name</ng-template>
+      <ng-template tnHeaderCellDef>{{ labels().nameColumn }}</ng-template>
       <ng-template let-item tnCellDef>
 
         <!-- Inline creation row for create actions with a `create` callback -->
@@ -97,7 +97,7 @@
                   autocomplete="off"
                   tnTestIdType="input"
                   [tnTestId]="inlineCreateTestId()"
-                  [attr.aria-label]="creation.action.label + ' name'"
+                  [attr.aria-label]="labels().inlineCreateName(creation.action.label)"
                   [attr.aria-invalid]="creation.error ? true : null"
                   [attr.aria-describedby]="creation.error ? inlineErrorId : null"
                   [class.error]="!!creation.error"
@@ -154,8 +154,8 @@
               class="navigate-button"
               tnTestIdType="button"
               [tnTestId]="navigateTestId(item)"
-              [attr.aria-label]="'Open ' + item.name"
-              [attr.title]="'Open ' + item.name"
+              [attr.aria-label]="labels().openItem(item.name)"
+              [attr.title]="labels().openItem(item.name)"
               (click)="onNavigateClick($event, item)"
               (dblclick)="$event.stopPropagation()">
               <tn-icon name="mdi-chevron-right" size="sm" />
@@ -168,7 +168,7 @@
 
     <!-- Size column -->
     <ng-container tnColumnDef="size">
-      <ng-template tnHeaderCellDef>Size</ng-template>
+      <ng-template tnHeaderCellDef>{{ labels().sizeColumn }}</ng-template>
       <ng-template let-item tnCellDef>
         @if (item.size !== undefined) {
           <span>{{ item.size | tnFileSize }}</span>
@@ -181,7 +181,7 @@
 
     <!-- Modified column -->
     <ng-container tnColumnDef="modified">
-      <ng-template tnHeaderCellDef>Modified</ng-template>
+      <ng-template tnHeaderCellDef>{{ labels().modifiedColumn }}</ng-template>
       <ng-template let-item tnCellDef>
         @if (item.modified) {
           <span>{{ formatDate(item.modified) }}</span>
@@ -201,20 +201,20 @@
     <div class="footer-selection">
       @if (selectedItems().length > 0) {
         <span class="selection-count">
-          {{ selectedItems().length }} item{{ selectedItems().length !== 1 ? 's' : '' }} selected
+          {{ labels().itemsSelected(selectedItems().length) }}
         </span>
         <tn-button
           variant="outline"
-          label="Clear Selection"
+          [label]="labels().clearSelection"
           [testId]="clearSelectionTestId()"
           (onClick)="onClearSelection()" />
       } @else if (allowCurrentDirectorySelection()) {
         <span class="selection-count current-directory-selection">
-          Current directory selected
+          {{ labels().currentDirectorySelected }}
         </span>
       } @else {
         <span class="selection-count">
-          No items selected
+          {{ labels().noItemsSelected }}
         </span>
       }
     </div>
@@ -230,7 +230,7 @@
       <!-- Disabled while the inline creation row is open: its blur auto-submit
            would race the selection submit -->
       <tn-button
-        label="Select"
+        [label]="labels().select"
         [testId]="selectTestId()"
         [disabled]="(selectedItems().length === 0 && !allowCurrentDirectorySelection()) || !!inlineCreation()"
         (onClick)="onSubmit()" />

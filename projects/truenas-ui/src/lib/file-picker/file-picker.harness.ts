@@ -3,6 +3,32 @@ import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 import { TnButtonHarness } from '../button/button.harness';
 
 /**
+ * One listed item's name cell: the displayed name and, for directory-like
+ * items, the navigation chevron. Lets the picker harness reach an item's
+ * chevron by the item's name rather than by the chevron's accessible name,
+ * which is translatable (`TN_FILE_PICKER_LABELS.openItem`).
+ */
+class FilePickerNameCellHarness extends ComponentHarness {
+  static hostSelector = 'tn-file-picker-popup .file-name-cell';
+
+  private name = this.locatorFor('.file-name');
+  private navigateButton = this.locatorForOptional('.navigate-button');
+
+  async getName(): Promise<string> {
+    return (await (await this.name()).text()).trim();
+  }
+
+  async clickNavigate(): Promise<boolean> {
+    const button = await this.navigateButton();
+    if (!button) {
+      return false;
+    }
+    await button.click();
+    return true;
+  }
+}
+
+/**
  * Harness for interacting with tn-file-picker in tests.
  *
  * The core API (`getValue` / `setValue` / `isDisabled`) mirrors webui's
@@ -325,12 +351,13 @@ export class TnFilePickerHarness extends ComponentHarness {
    * ```
    */
   async navigateToItem(name: string): Promise<void> {
-    const button = await this.documentRootLocatorFactory()
-      .locatorForOptional(`tn-file-picker-popup .navigate-button[aria-label="Open ${name}"]`)();
-    if (!button) {
-      throw new Error(`No navigatable item named "${name}" found in the file picker popup.`);
+    const cells = await this.documentRootLocatorFactory().locatorForAll(FilePickerNameCellHarness)();
+    for (const cell of cells) {
+      if (await cell.getName() === name && await cell.clickNavigate()) {
+        return;
+      }
     }
-    return button.click();
+    throw new Error(`No navigatable item named "${name}" found in the file picker popup.`);
   }
 
   /**
@@ -346,7 +373,9 @@ export class TnFilePickerHarness extends ComponentHarness {
    */
   async clickSelect(): Promise<void> {
     const button = await this.documentRootLocatorFactory()
-      .locatorFor(TnButtonHarness.with({ label: 'Select', ancestor: '.tn-file-picker-footer' }))();
+      // By position, not by label: the label is translatable (TN_FILE_PICKER_LABELS)
+      // and the create-action buttons sit before Select in the same row.
+      .locatorFor(TnButtonHarness.with({ selector: ':last-child', ancestor: '.tn-file-picker-footer .footer-actions' }))();
     return button.click();
   }
 
@@ -362,7 +391,8 @@ export class TnFilePickerHarness extends ComponentHarness {
    */
   async clickClearSelection(): Promise<void> {
     const button = await this.documentRootLocatorFactory()
-      .locatorForOptional(TnButtonHarness.with({ label: 'Clear Selection', ancestor: '.tn-file-picker-footer' }))();
+      // The only button on the selection side of the footer; its label is translatable.
+      .locatorForOptional(TnButtonHarness.with({ ancestor: '.tn-file-picker-footer .footer-selection' }))();
     if (!button) {
       throw new Error('No Clear Selection button found — nothing is selected in the file picker popup.');
     }
