@@ -10,6 +10,7 @@ import { TnRadioComponent } from './radio.component';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-radio label="Option A" value="a" name="group" (change)="changeCount = changeCount + 1" />
+    <tn-radio label="Option B" value="b" name="group" error="Required" />
   `,
 })
 class TestHostComponent {
@@ -41,6 +42,29 @@ describe('TnRadioComponent', () => {
       fixture.detectChanges();
 
       expect(host.changeCount).toBe(1);
+    });
+  });
+
+  describe('instance ids', () => {
+    const getRadios = (): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll('.tn-radio'));
+
+    it('gives each instance a distinct deterministic id', () => {
+      const [first, second] = getRadios().map((radio) => radio.querySelector<HTMLInputElement>('.tn-radio__input')!.id);
+
+      expect(first).toMatch(/^tn-radio-\d+$/);
+      expect(second).toMatch(/^tn-radio-\d+$/);
+      expect(first).not.toBe(second);
+    });
+
+    it('points the label and the error description at the input', () => {
+      const radio = getRadios()[1];
+      const input = radio.querySelector<HTMLInputElement>('.tn-radio__input')!;
+      const label = radio.querySelector<HTMLLabelElement>('.tn-radio__label')!;
+      const error = radio.querySelector<HTMLElement>('.tn-radio__error')!;
+
+      expect(label.htmlFor).toBe(input.id);
+      expect(input.getAttribute('aria-describedby')).toBe(error.id);
+      expect(error.id).toBe(`${input.id}-error`);
     });
   });
 });

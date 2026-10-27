@@ -8,6 +8,10 @@ import { TN_RADIO_GROUP } from './radio-group.token';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 
+// Module-level counter for deterministic, unique instance ids (matches tn-input).
+// Deterministic ids are SSR/hydration-safe and stable across snapshots.
+let nextId = 0;
+
 @Component({
   selector: 'tn-radio',
   standalone: true,
@@ -54,7 +58,7 @@ export class TnRadioComponent implements AfterViewInit, OnDestroy, ControlValueA
    */
   change = output<unknown>();
 
-  id = `tn-radio-${Math.random().toString(36).substr(2, 9)}`;
+  id = `tn-radio-${nextId++}`;
 
   /**
    * The enclosing `tn-radio-group`, when there is one. Present for options rendered from the
