@@ -1,9 +1,11 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TN_FILE_PICKER_DEFAULT_LABELS, TN_FILE_PICKER_LABELS, type TnFilePickerLabels } from './file-picker-labels';
 import { TnFilePickerComponent } from './file-picker.component';
+import { TnFilePickerHarness } from './file-picker.harness';
 import type { FileSystemItem } from './file-picker.interfaces';
 
 /**
@@ -42,6 +44,7 @@ describe('TnFilePickerComponent labels', () => {
     modifiedColumn: 'Modifié',
     selectItem: (name) => `Choisir ${name}`,
     openItem: (name) => `Ouvrir ${name}`,
+    inlineCreateFailed: 'Échec de la création',
     itemsSelected: (count) => `${count} sélectionné(s)`,
     noItemsSelected: 'Rien de sélectionné',
     currentDirectorySelected: 'Dossier courant',
@@ -122,6 +125,25 @@ describe('TnFilePickerComponent labels', () => {
     fixture.componentInstance.picker().error.subscribe((error) => errors.push(error.message));
     await fixture.componentInstance.picker().selectPath('/elsewhere');
     expect(errors).toEqual(['Hors de /mnt']);
+  });
+
+  it('keeps the harness working when no English label is on screen', async () => {
+    await setup(french);
+    const host = fixture.componentInstance;
+    host.callbacks.getChildren = (path?: string) => Promise.resolve(path === '/mnt/tank'
+      ? [{ path: '/mnt/tank/child', name: 'child', type: 'folder' }]
+      : host.items);
+    const picker = await TestbedHarnessEnvironment.loader(fixture).getHarness(TnFilePickerHarness);
+
+    await picker.open();
+    await picker.navigateToItem('tank');
+    expect(await picker.getItemNames()).toEqual(['child']);
+
+    await picker.clickItem('child');
+    await picker.clickClearSelection();
+    await picker.clickItem('child');
+    await picker.clickSelect();
+    expect(await picker.getValue()).toBe('/mnt/tank/child');
   });
 
   it('lets an explicit [placeholder] win over the token', async () => {

@@ -42,6 +42,8 @@ export interface TnFilePickerLabels {
   select: string;
   /** Accessible name of the inline creation row's input, from the action's label. */
   inlineCreateName: (actionLabel: string) => string;
+  /** Inline creation row, when the `create` callback rejects with something other than an Error. */
+  inlineCreateFailed: string;
   /** Modified column, for an item changed today / yesterday; `time` is already formatted. */
   today: (time: string) => string;
   yesterday: (time: string) => string;
@@ -75,6 +77,7 @@ export const TN_FILE_PICKER_DEFAULT_LABELS: TnFilePickerLabels = {
   clearSelection: 'Clear Selection',
   select: 'Select',
   inlineCreateName: (actionLabel) => `${actionLabel} name`,
+  inlineCreateFailed: 'Creation failed',
   today: (time) => `Today ${time}`,
   yesterday: (time) => `Yesterday ${time}`,
   pathOutsideRoot: (rootPath) => `Path is outside of ${rootPath}`,

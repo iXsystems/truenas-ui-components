@@ -34,6 +34,32 @@ import { TnButtonHarness } from '../button/button.harness';
  * await picker.clickSelect();
  * ```
  */
+/**
+ * One listed item's name cell: the displayed name and, for directory-like
+ * items, the navigation chevron. Lets the picker harness reach an item's
+ * chevron by the item's name rather than by the chevron's accessible name,
+ * which is translatable (`TN_FILE_PICKER_LABELS.openItem`).
+ */
+class FilePickerNameCellHarness extends ComponentHarness {
+  static hostSelector = 'tn-file-picker-popup .file-name-cell';
+
+  private name = this.locatorFor('.file-name');
+  private navigateButton = this.locatorForOptional('.navigate-button');
+
+  async getName(): Promise<string> {
+    return (await (await this.name()).text()).trim();
+  }
+
+  async clickNavigate(): Promise<boolean> {
+    const button = await this.navigateButton();
+    if (!button) {
+      return false;
+    }
+    await button.click();
+    return true;
+  }
+}
+
 export class TnFilePickerHarness extends ComponentHarness {
   /**
    * The selector for the host element of a `TnFilePickerComponent` instance.
@@ -325,12 +351,13 @@ export class TnFilePickerHarness extends ComponentHarness {
    * ```
    */
   async navigateToItem(name: string): Promise<void> {
-    const button = await this.documentRootLocatorFactory()
-      .locatorForOptional(`tn-file-picker-popup .navigate-button[aria-label="Open ${name}"]`)();
-    if (!button) {
-      throw new Error(`No navigatable item named "${name}" found in the file picker popup.`);
+    const cells = await this.documentRootLocatorFactory().locatorForAll(FilePickerNameCellHarness)();
+    for (const cell of cells) {
+      if (await cell.getName() === name && await cell.clickNavigate()) {
+        return;
+      }
     }
-    return button.click();
+    throw new Error(`No navigatable item named "${name}" found in the file picker popup.`);
   }
 
   /**

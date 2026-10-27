@@ -338,7 +338,7 @@ export class TnFilePickerPopupComponent {
       // Same abandonment check: a late rejection must not resurrect the row
       // (in a different directory, no less)
       if (this.inlineCreation() !== pending) {return;}
-      const message = err instanceof Error ? err.message : this.labels().createFailed;
+      const message = err instanceof Error ? err.message : this.labels().inlineCreateFailed;
       // The row stays editable for retry; it is refocused once after render
       // (the disabled attribute dropped focus during the attempt)
       this.inlineCreation.set({ ...pending, loading: false, error: message });
