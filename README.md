@@ -82,7 +82,7 @@ yarn run sb           # Start Storybook (localhost:6006)
 yarn build            # Build the library
 yarn test             # Run Jest tests
 yarn test-coverage    # Run tests with coverage
-yarn icons            # Generate icon sprite
+yarn generate-sprite  # Generate icon sprite
 ```
 
 ### Building the Library
