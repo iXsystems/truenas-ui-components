@@ -6,7 +6,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TN_FILE_PICKER_DEFAULT_LABELS, TN_FILE_PICKER_LABELS, type TnFilePickerLabels } from './file-picker-labels';
 import { TnFilePickerComponent } from './file-picker.component';
 import { TnFilePickerHarness } from './file-picker.harness';
-import type { FileSystemItem } from './file-picker.interfaces';
+import type { FilePickerCallbacks, FilePickerCreateAction, FileSystemItem } from './file-picker.interfaces';
 
 /**
  * The app-wide labels for `tn-file-picker` and its popup: everything the
@@ -20,38 +20,55 @@ import type { FileSystemItem } from './file-picker.interfaces';
   standalone: true,
   imports: [TnFilePickerComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
-  template: `
-    <tn-file-picker [multiSelect]="true" [placeholder]="placeholder()" [callbacks]="callbacks" [createActions]="actions" />
-  `,
+  template: `<tn-file-picker [multiSelect]="true" [placeholder]="placeholder()" [rootPath]="rootPath()"
+    [callbacks]="callbacks" [createActions]="actions()" />`,
 })
 class LabelsHostComponent {
   readonly picker = viewChild.required(TnFilePickerComponent);
   placeholder = signal<string | undefined>(undefined);
-  items: FileSystemItem[] = [{ path: '/mnt/tank', name: 'tank', type: 'dataset' }];
-  callbacks = { getChildren: (): Promise<FileSystemItem[]> => Promise.resolve(this.items) };
-  actions = [{ id: 'folder', label: 'Dossier', create: (): Promise<string> => Promise.resolve('/mnt/x') }];
+  rootPath = signal<string | undefined>(undefined);
+  items: FileSystemItem[] = [
+    { path: '/mnt/tank', name: 'tank', type: 'dataset', modified: new Date() },
+    { path: '/mnt/old.txt', name: 'old.txt', type: 'file', modified: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+  ];
+
+  callbacks: FilePickerCallbacks = { getChildren: () => Promise.resolve(this.items) };
+  actions = signal<FilePickerCreateAction[]>([
+    { id: 'folder', label: 'Dossier', create: () => Promise.resolve('/mnt/x') },
+  ]);
 }
 
 describe('TnFilePickerComponent labels', () => {
+  // Every key is overridden (no spread of the English defaults), so a string
+  // that stops coming from the token shows up as English in an assertion
   const french: TnFilePickerLabels = {
-    ...TN_FILE_PICKER_DEFAULT_LABELS,
     placeholder: 'Choisir un fichier',
     openPicker: 'Ouvrir le sélecteur',
     breadcrumb: 'Chemin',
+    navigateTo: (path) => `Aller à ${path}`,
+    loading: 'Chargement…',
     noItems: 'Aucun élément',
+    selectColumn: 'Sélection',
+    selectItem: (name) => `Choisir ${name}`,
+    openItem: (name) => `Ouvrir ${name}`,
     nameColumn: 'Nom',
     sizeColumn: 'Taille',
     modifiedColumn: 'Modifié',
-    selectItem: (name) => `Choisir ${name}`,
-    openItem: (name) => `Ouvrir ${name}`,
-    inlineCreateFailed: 'Échec de la création',
     itemsSelected: (count) => `${count} sélectionné(s)`,
-    noItemsSelected: 'Rien de sélectionné',
     currentDirectorySelected: 'Dossier courant',
+    noItemsSelected: 'Rien de sélectionné',
     clearSelection: 'Effacer',
     select: 'Choisir',
-    loadFailed: 'Échec du chargement',
+    inlineCreateName: (actionLabel) => `Nom : ${actionLabel}`,
+    inlineCreateFailed: 'Échec de la création',
+    today: (time) => `Aujourd'hui ${time}`,
+    yesterday: (time) => `Hier ${time}`,
     pathOutsideRoot: (root) => `Hors de ${root}`,
+    invalidPath: (path) => `Chemin invalide : ${path}`,
+    pathValidationFailed: 'Échec de la validation',
+    loadFailed: 'Échec du chargement',
+    createFailed: 'Échec de la création de l’élément',
+    createdOutsideRoot: (root) => `Créé hors de ${root}`,
   };
 
   let fixture: ComponentFixture<LabelsHostComponent>;
@@ -81,6 +98,18 @@ describe('TnFilePickerComponent labels', () => {
     return overlay.querySelector(selector)?.textContent?.trim() ?? '';
   }
 
+  function collectErrors(): string[] {
+    const errors: string[] = [];
+    fixture.componentInstance.picker().error.subscribe((error) => errors.push(error.message));
+    return errors;
+  }
+
+  async function commitTypedPath(path: string): Promise<void> {
+    input().value = path;
+    input().dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+  }
+
   afterEach(() => fixture.componentInstance.picker().close());
 
   it('renders the English defaults without a provider', async () => {
@@ -101,8 +130,11 @@ describe('TnFilePickerComponent labels', () => {
       .toBe('Ouvrir le sélecteur');
     expect(overlay.querySelector('.tn-file-picker-breadcrumb')?.getAttribute('aria-label')).toBe('Chemin');
     const headers = Array.from(overlay.querySelectorAll('th')).map((th) => th.textContent?.trim()).filter(Boolean);
-    expect(headers).toEqual(expect.arrayContaining(['Nom', 'Taille', 'Modifié']));
+    expect(headers).toEqual(expect.arrayContaining(['Sélection', 'Nom', 'Taille', 'Modifié']));
     expect(overlay.querySelector('[aria-label="Ouvrir tank"]')).not.toBeNull();
+    expect(overlay.querySelector('input[type="checkbox"][aria-label="Choisir tank"]')).not.toBeNull();
+    expect(overlay.textContent).toMatch(/Aujourd'hui \d/);
+    expect(overlay.textContent).toMatch(/Hier \d/);
     expect(text('.selection-count')).toBe('Dossier courant');
 
     fixture.componentInstance.picker().onItemClick(fixture.componentInstance.items[0]);
@@ -121,10 +153,72 @@ describe('TnFilePickerComponent labels', () => {
     expect(text('.tn-file-picker-error .error-text')).toBe('Échec du chargement');
     expect(overlay.textContent).toContain('Aucun élément');
 
-    const errors: string[] = [];
-    fixture.componentInstance.picker().error.subscribe((error) => errors.push(error.message));
+    const errors = collectErrors();
     await fixture.componentInstance.picker().selectPath('/elsewhere');
     expect(errors).toEqual(['Hors de /mnt']);
+  });
+
+  it('words the typed-path and create-action errors from the token', async () => {
+    await setup(french);
+    const host = fixture.componentInstance;
+    const errors = collectErrors();
+
+    host.callbacks.validatePath = () => Promise.resolve(false);
+    await commitTypedPath('/mnt/missing');
+    // Rejected without a message, so the picker words the failure itself
+    host.callbacks.validatePath = () => Promise.reject(new Map());
+    await commitTypedPath('/mnt/broken');
+
+    // Neither rejects with an Error, nor stays inside the root
+    host.actions.set([
+      { id: 'fails', label: 'Échoue', run: () => Promise.reject(new Map()) },
+      { id: 'escapes', label: 'S’évade', run: () => Promise.resolve('/elsewhere') },
+    ]);
+    fixture.detectChanges();
+    await host.picker().runCreateAction({ actionId: 'fails', parentPath: '/mnt' });
+    await host.picker().runCreateAction({ actionId: 'escapes', parentPath: '/mnt' });
+
+    expect(errors).toEqual([
+      'Chemin invalide : /mnt/missing',
+      'Échec de la validation',
+      'Échec de la création de l’élément',
+      'Créé hors de /mnt',
+    ]);
+  });
+
+  it('words the loading state and a nameless breadcrumb segment from the token', async () => {
+    await setup(french);
+    const host = fixture.componentInstance;
+    host.rootPath.set('/');
+    host.callbacks.getChildren = () => new Promise<FileSystemItem[]>(() => undefined);
+    host.picker().openFilePicker();
+    fixture.detectChanges();
+
+    expect(overlay.textContent).toContain('Chargement…');
+    expect(overlay.querySelector('.breadcrumb-segment.nameless')?.getAttribute('aria-label')).toBe('Aller à /');
+  });
+
+  it('words the inline creation row and its non-Error failure from the token', async () => {
+    await setup(french);
+    const host = fixture.componentInstance;
+    host.actions.set([{ id: 'folder', label: 'Dossier', create: () => Promise.reject(new Map()) }]);
+    await open();
+
+    const footerButton = Array.from(overlay.querySelectorAll<HTMLButtonElement>('.footer-actions button'))
+      .find((button) => button.textContent?.trim() === 'Dossier')!;
+    footerButton.click();
+    fixture.detectChanges();
+
+    const row = overlay.querySelector<HTMLInputElement>('.inline-create-input')!;
+    expect(row.getAttribute('aria-label')).toBe('Nom : Dossier');
+
+    row.value = 'nouveau';
+    row.dispatchEvent(new Event('input'));
+    row.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(text('.inline-create-error .error-text')).toBe('Échec de la création');
   });
 
   it('keeps the harness working when no English label is on screen', async () => {
