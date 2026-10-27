@@ -3,6 +3,32 @@ import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 import { TnButtonHarness } from '../button/button.harness';
 
 /**
+ * One listed item's name cell: the displayed name and, for directory-like
+ * items, the navigation chevron. Lets the picker harness reach an item's
+ * chevron by the item's name rather than by the chevron's accessible name,
+ * which is translatable (`TN_FILE_PICKER_LABELS.openItem`).
+ */
+class FilePickerNameCellHarness extends ComponentHarness {
+  static hostSelector = 'tn-file-picker-popup .file-name-cell';
+
+  private name = this.locatorFor('.file-name');
+  private navigateButton = this.locatorForOptional('.navigate-button');
+
+  async getName(): Promise<string> {
+    return (await (await this.name()).text()).trim();
+  }
+
+  async clickNavigate(): Promise<boolean> {
+    const button = await this.navigateButton();
+    if (!button) {
+      return false;
+    }
+    await button.click();
+    return true;
+  }
+}
+
+/**
  * Harness for interacting with tn-file-picker in tests.
  *
  * The core API (`getValue` / `setValue` / `isDisabled`) mirrors webui's
@@ -34,32 +60,6 @@ import { TnButtonHarness } from '../button/button.harness';
  * await picker.clickSelect();
  * ```
  */
-/**
- * One listed item's name cell: the displayed name and, for directory-like
- * items, the navigation chevron. Lets the picker harness reach an item's
- * chevron by the item's name rather than by the chevron's accessible name,
- * which is translatable (`TN_FILE_PICKER_LABELS.openItem`).
- */
-class FilePickerNameCellHarness extends ComponentHarness {
-  static hostSelector = 'tn-file-picker-popup .file-name-cell';
-
-  private name = this.locatorFor('.file-name');
-  private navigateButton = this.locatorForOptional('.navigate-button');
-
-  async getName(): Promise<string> {
-    return (await (await this.name()).text()).trim();
-  }
-
-  async clickNavigate(): Promise<boolean> {
-    const button = await this.navigateButton();
-    if (!button) {
-      return false;
-    }
-    await button.click();
-    return true;
-  }
-}
-
 export class TnFilePickerHarness extends ComponentHarness {
   /**
    * The selector for the host element of a `TnFilePickerComponent` instance.
