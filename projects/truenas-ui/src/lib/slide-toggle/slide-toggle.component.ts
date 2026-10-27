@@ -9,6 +9,10 @@ import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id
 
 export type SlideToggleColor = 'primary' | 'accent' | 'warn';
 
+// Module-level counter for deterministic, unique instance ids (matches tn-input).
+// Deterministic ids are SSR/hydration-safe and stable across snapshots.
+let nextId = 0;
+
 @Component({
   selector: 'tn-slide-toggle',
   standalone: true,
@@ -54,7 +58,7 @@ export class TnSlideToggleComponent implements AfterViewInit, OnDestroy, Control
   change = output<boolean>();
   toggleChange = output<boolean>();
 
-  id = `tn-slide-toggle-${Math.random().toString(36).substr(2, 9)}`;
+  id = `tn-slide-toggle-${nextId++}`;
 
   // Internal state for CVA
   private internalChecked = signal<boolean>(false);

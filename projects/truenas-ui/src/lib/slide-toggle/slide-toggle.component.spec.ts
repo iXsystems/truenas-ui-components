@@ -10,6 +10,7 @@ import { TnSlideToggleComponent } from './slide-toggle.component';
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <tn-slide-toggle label="Enable" [fullWidth]="fullWidth()" (change)="changeCount = changeCount + 1" />
+    <tn-slide-toggle label="Notify" />
   `,
 })
 class TestHostComponent {
@@ -42,6 +43,26 @@ describe('TnSlideToggleComponent', () => {
       fixture.detectChanges();
 
       expect(host.changeCount).toBe(1);
+    });
+  });
+
+  describe('instance ids', () => {
+    const getInputs = (): HTMLInputElement[] =>
+      Array.from(fixture.nativeElement.querySelectorAll('.tn-slide-toggle__input'));
+
+    it('gives each instance a distinct deterministic id', () => {
+      const [first, second] = getInputs().map((input) => input.id);
+
+      expect(first).toMatch(/^tn-slide-toggle-\d+$/);
+      expect(second).toMatch(/^tn-slide-toggle-\d+$/);
+      expect(first).not.toBe(second);
+    });
+
+    it('points the label at the input', () => {
+      const toggle = fixture.nativeElement.querySelector('.tn-slide-toggle') as HTMLElement;
+      const label = toggle.querySelector<HTMLLabelElement>('.tn-slide-toggle__label')!;
+
+      expect(label.htmlFor).toBe(toggle.querySelector<HTMLInputElement>('.tn-slide-toggle__input')!.id);
     });
   });
 

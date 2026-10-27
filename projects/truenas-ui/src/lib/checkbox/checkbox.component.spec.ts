@@ -164,6 +164,28 @@ describe('TnCheckboxComponent', () => {
     });
   });
 
+  describe('instance ids', () => {
+    it('gives each instance a distinct deterministic id', () => {
+      const first = getInput('checkbox-main').id;
+      const second = getInput('checkbox-plain').id;
+
+      expect(first).toMatch(/^tn-checkbox-\d+$/);
+      expect(second).toMatch(/^tn-checkbox-\d+$/);
+      expect(first).not.toBe(second);
+    });
+
+    it('points the label and the error description at the input', () => {
+      host.error.set('Required');
+      fixture.detectChanges();
+
+      const input = getInput();
+      const label = getWrapper().querySelector('.tn-checkbox__label') as HTMLLabelElement;
+      expect(label.htmlFor).toBe(input.id);
+      expect(input.getAttribute('aria-describedby')).toBe(getError()!.id);
+      expect(getError()!.id).toBe(`${input.id}-error`);
+    });
+  });
+
   describe('error display', () => {
     it('should not show error by default', () => {
       expect(getError()).toBeNull();

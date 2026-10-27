@@ -8,6 +8,10 @@ import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { LabelTextPipe } from '../pipes/label-markup/label-text.pipe';
 import { TnTestIdDirective, controlTestId, type TnTestIdValue } from '../test-id';
 
+// Module-level counter for deterministic, unique instance ids (matches tn-input).
+// Deterministic ids are SSR/hydration-safe and stable across snapshots.
+let nextId = 0;
+
 /**
  * Directive to mark content for projection into the checkbox label area.
  * Use when the label needs rich content (links, icons, etc.) instead of plain text.
@@ -59,7 +63,7 @@ export class TnCheckboxComponent implements AfterViewInit, OnDestroy, ControlVal
   private labelContent = contentChildren(TnCheckboxLabelDirective);
   protected hasProjectedLabel = computed(() => this.labelContent().length > 0);
 
-  id = `tn-checkbox-${Math.random().toString(36).substr(2, 9)}`;
+  id = `tn-checkbox-${nextId++}`;
 
   // Internal state for CVA
   private internalChecked = signal<boolean>(false);
