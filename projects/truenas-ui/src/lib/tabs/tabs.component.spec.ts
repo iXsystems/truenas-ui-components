@@ -223,7 +223,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[1] || buttons[1].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[1]);
     });
 
     it('should move to previous tab with LEFT_ARROW', () => {
@@ -234,7 +234,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[1] || buttons[1].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[1]);
     });
 
     it('should wrap to last tab from first with LEFT_ARROW', () => {
@@ -242,7 +242,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[2] || buttons[2].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[2]);
     });
 
     it('should wrap to first tab from last with RIGHT_ARROW', () => {
@@ -250,7 +250,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[0] || buttons[0].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[0]);
     });
 
     it('should skip disabled tabs', () => {
@@ -261,7 +261,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[2] || buttons[2].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[2]);
     });
 
     it('should ignore UP/DOWN_ARROW in horizontal mode', () => {
@@ -279,7 +279,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[0] || buttons[0].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[0]);
     });
 
     it('should go to last tab with END', () => {
@@ -287,7 +287,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[2] || buttons[2].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[2]);
     });
 
     it('should select current tab with ENTER', () => {
@@ -322,7 +322,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[1] || buttons[1].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[1]);
     });
 
     it('should move to previous tab with UP_ARROW', () => {
@@ -333,7 +333,7 @@ describe('TnTabsComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button[role="tab"]');
-      expect(document.activeElement === buttons[1] || buttons[1].matches(':focus')).toBeTruthy;
+      expect(document.activeElement).toBe(buttons[1]);
     });
 
     it('should ignore LEFT/RIGHT_ARROW in vertical mode', () => {
