@@ -205,9 +205,9 @@ openOnClick = input<boolean>(false);
 **Description:** Open the picker popup when the input is clicked while no path is selected — an empty field signals the user is about to pick something. Pointer-only by design: keyboard users tabbing through a form never get the overlay opened on them; the folder button remains the keyboard path.
 
 \`\`\`typescript
-placeholder = input<string | undefined>(undefined);
+placeholder = input<string>('Select file or folder');
 \`\`\`
-**Description:** Placeholder text for the input field. Defaults to \`TN_FILE_PICKER_LABELS.placeholder\` ("Select file or folder").
+**Description:** Placeholder text for the input field. While it holds the English default, the input shows \`TN_FILE_PICKER_LABELS.placeholder\` instead, so an app-root labels provider translates it; any other value is shown as given.
 
 ### Translating the picker
 Every string the picker and its popup render or announce — column headers, footer text, button labels, accessible names, error messages — comes from the \`TN_FILE_PICKER_LABELS\` token (English defaults: \`TN_FILE_PICKER_DEFAULT_LABELS\`). Provide it once at the app root, as a plain object or as a \`Signal\` so an open picker follows a language change. Labels that carry a value are functions, so the consumer places it however its i18n needs (word order, plurals):

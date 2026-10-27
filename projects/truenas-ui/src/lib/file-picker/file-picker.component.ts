@@ -7,7 +7,7 @@ import { ElementRef, type TemplateRef, ViewContainerRef, Component, computed, fo
 import type { ControlValueAccessor} from '@angular/forms';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { TN_FILE_PICKER_LABELS } from './file-picker-labels';
+import { TN_FILE_PICKER_DEFAULT_LABELS, TN_FILE_PICKER_LABELS } from './file-picker-labels';
 import { TnFilePickerPopupComponent } from './file-picker-popup.component';
 import type {
   FilePickerCallbacks, FilePickerCreateAction, FilePickerCreateActionEvent,
@@ -93,8 +93,12 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
    * path to the popup.
    */
   openOnClick = input<boolean>(false);
-  /** Defaults to `TN_FILE_PICKER_LABELS.placeholder`. */
-  placeholder = input<string | undefined>(undefined);
+  /**
+   * Left at its English default, the input shows
+   * `TN_FILE_PICKER_LABELS.placeholder` instead, so an app-root labels
+   * provider translates it; any other value is shown as given.
+   */
+  placeholder = input<string>(TN_FILE_PICKER_DEFAULT_LABELS.placeholder);
   disabled = input<boolean>(false);
   /**
    * Shows the value without letting the user change it: the input cannot be
@@ -187,7 +191,10 @@ export class TnFilePickerComponent implements ControlValueAccessor, OnInit, OnDe
   private listedItems = new Map<string, FileSystemItem>();
 
   protected readonly labels = injectTnLabels(TN_FILE_PICKER_LABELS);
-  protected readonly resolvedPlaceholder = computed(() => this.placeholder() ?? this.labels().placeholder);
+  protected readonly resolvedPlaceholder = computed(() => {
+    const placeholder = this.placeholder();
+    return placeholder === TN_FILE_PICKER_DEFAULT_LABELS.placeholder ? this.labels().placeholder : placeholder;
+  });
 
   // Computed disabled state (combines input and form state)
   isDisabled = computed(() => this.disabled() || this.formDisabled());

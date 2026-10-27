@@ -3,8 +3,9 @@ import { InjectionToken, type Signal } from '@angular/core';
 /**
  * Every string `tn-file-picker` and its popup render or announce. Consumers
  * translate them once at the app root by providing `TN_FILE_PICKER_LABELS` —
- * typically wired to an i18n service — instead of per call site. The
- * `placeholder` input still wins over `placeholder` here when bound.
+ * typically wired to an i18n service — instead of per call site. A
+ * `placeholder` input bound to anything but its English default wins over
+ * `placeholder` here.
  *
  * Strings that carry a value (a count, a path, a name) are functions, so the
  * consumer decides how to place it: a word order, an ICU plural, a translated

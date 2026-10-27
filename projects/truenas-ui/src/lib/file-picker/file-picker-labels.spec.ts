@@ -11,8 +11,8 @@ import type { FilePickerCallbacks, FilePickerCreateAction, FileSystemItem } from
 /**
  * The app-wide labels for `tn-file-picker` and its popup: everything the
  * picker renders or announces comes from `TN_FILE_PICKER_LABELS`, an explicit
- * `[placeholder]` still wins, and a signal-valued token re-renders when the
- * app switches language.
+ * `[placeholder]` other than the English default still wins, and a
+ * signal-valued token re-renders when the app switches language.
  */
 
 @Component({
@@ -25,7 +25,7 @@ import type { FilePickerCallbacks, FilePickerCreateAction, FileSystemItem } from
 })
 class LabelsHostComponent {
   readonly picker = viewChild.required(TnFilePickerComponent);
-  placeholder = signal<string | undefined>(undefined);
+  placeholder = signal(TN_FILE_PICKER_DEFAULT_LABELS.placeholder);
   rootPath = signal<string | undefined>(undefined);
   items: FileSystemItem[] = [
     { path: '/mnt/tank', name: 'tank', type: 'dataset', modified: new Date() },
@@ -246,6 +246,13 @@ describe('TnFilePickerComponent labels', () => {
     fixture.detectChanges();
 
     expect(input().placeholder).toBe('Pick a backup');
+  });
+
+  it('keeps reading back the English default from placeholder() while showing the translation', async () => {
+    await setup(french);
+
+    expect(fixture.componentInstance.picker().placeholder()).toBe('Select file or folder');
+    expect(input().placeholder).toBe('Choisir un fichier');
   });
 
   it('follows a signal-valued token when the language changes', async () => {
