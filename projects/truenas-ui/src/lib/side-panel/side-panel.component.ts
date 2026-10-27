@@ -92,6 +92,10 @@ const TN_SIDE_PANEL_ATTACHED_CLASS = 'tn-side-panel__overlay--attached';
  */
 const TN_SIDE_PANEL_OPEN_CLASS = 'tn-side-panel__overlay--open';
 
+// Module-level counter for deterministic, unique instance ids (matches tn-input).
+// Deterministic ids are SSR/hydration-safe and stable across snapshots.
+let nextId = 0;
+
 /**
  * Directive to mark an element as a side-panel footer action.
  *
@@ -393,7 +397,7 @@ export class TnSidePanelComponent implements OnDestroy {
   protected hasTitleSlot = computed(() => this.titleSlotContent().length > 0);
 
   // Unique IDs for aria-labelledby and portal correlation
-  readonly panelId = `tn-side-panel-${Math.random().toString(36).substring(2, 9)}`;
+  readonly panelId = `tn-side-panel-${nextId++}`;
   readonly titleId = `${this.panelId}-title`;
 
   /**

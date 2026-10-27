@@ -60,6 +60,10 @@ const PANEL_RADIUS_PROPERTY = '--tn-tooltip-radius';
 const FALLBACK_ARROW_HALF_WIDTH = 6;
 const FALLBACK_PANEL_RADIUS = 4;
 
+// Module-level counter for deterministic, unique instance ids (matches tn-input).
+// Deterministic ids are SSR/hydration-safe and stable across snapshots.
+let nextId = 0;
+
 @Directive({
   selector: '[tnTooltip]',
   standalone: true,
@@ -135,7 +139,7 @@ export class TnTooltipDirective implements AfterViewInit, OnDestroy {
   private _dismissSub: OutputRefSubscription | null = null;
   private _focusSub: Subscription | null = null;
   // Unique ID for the overlay tooltip element
-  private _tooltipId = `tn-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+  private _tooltipId = `tn-tooltip-${nextId++}`;
 
   private _overlay = inject(Overlay);
   private _elementRef = inject(ElementRef<HTMLElement>);

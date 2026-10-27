@@ -2,6 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TnTestIdDirective, type TnTestIdValue } from '../test-id';
 
+// Module-level counter for deterministic, unique instance ids (matches tn-input).
+// Deterministic ids are SSR/hydration-safe and stable across snapshots.
+let nextId = 0;
+
 @Component({
   selector: 'tn-expansion-panel',
   standalone: true,
@@ -41,7 +45,7 @@ export class TnExpansionPanelComponent {
     return internal !== null ? internal : this.expanded();
   });
 
-  readonly contentId = `tn-expansion-panel-content-${Math.random().toString(36).substr(2, 9)}`;
+  readonly contentId = `tn-expansion-panel-content-${nextId++}`;
 
   toggle(): void {
     if (this.disabled()) {

@@ -851,6 +851,28 @@ describe('TnTooltipDirective sticky mode', () => {
       expect(host.hasAttribute('aria-controls')).toBe(false);
     });
 
+    it('points aria-controls at the rendered panel by a deterministic id', () => {
+      click();
+
+      const controls = host.getAttribute('aria-controls')!;
+      expect(controls).toMatch(/^tn-tooltip-\d+$/);
+      expect(document.getElementById(controls)).toBe(tooltipPanel());
+    });
+
+    it('gives each tooltip instance a distinct panel id', () => {
+      hover(plainHost);
+      const first = tooltipPanel()!.id;
+      leave(plainHost);
+
+      hover(sideHost);
+      const second = tooltipPanel()!.id;
+      leave(sideHost);
+
+      expect(first).toMatch(/^tn-tooltip-\d+$/);
+      expect(second).toMatch(/^tn-tooltip-\d+$/);
+      expect(first).not.toBe(second);
+    });
+
     it('leaves it off a hover tooltip, which reveals nothing on activation', () => {
       expect(plainHost.hasAttribute('aria-expanded')).toBe(false);
       expect(plainHost.hasAttribute('aria-haspopup')).toBe(false);
