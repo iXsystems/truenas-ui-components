@@ -233,7 +233,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    *
    * Defaults to `Infinity` so browsing the open dropdown without a search term
    * never silently truncates a long list. Pass an explicit cap if you want to
-   * limit how many filtered results are rendered at once.
+   * limit how many filtered results are rendered at once. The committed value's
+   * row is listed past the cap when it would fall outside it, unless the user
+   * is typing a search.
    */
   maxResults = input<number>(Infinity);
 
@@ -548,16 +550,35 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       filtered = all.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
     }
 
-    // `maxResults` caps the rows the source returned, not the two rows that are
+    // `maxResults` caps the rows the source returned, not the rows that are
     // there by construction: the action row is pinned on top after the slice,
-    // and the kept-selected row — always last, appended by `resolvedOptions` —
-    // is held back across it.
-    const kept = this.keptSelectedOption();
-    const capped = kept && filtered.at(-1) === kept
-      ? [...filtered.slice(0, -1).slice(0, max), kept]
+    // and the committed value's row (see `committedRow`) is held back across it.
+    const held = this.committedRow(filtered);
+    const capped = held && filtered.indexOf(held) >= max
+      ? [...filtered.filter((option) => option !== held).slice(0, max), held]
       : filtered.slice(0, max);
     return action ? [action, ...capped] : capped;
   });
+
+  /**
+   * The row in `filtered` that `maxResults` must not cut off, or `undefined`:
+   * the kept-selected row always, and otherwise the committed value's option
+   * while the field shows its label rather than a draft. Opening on a value
+   * lists every row unfiltered, so the cap would drop a committed option past
+   * it, leaving nothing highlighted or `aria-selected` and nothing the arrow
+   * keys could reach.
+   */
+  private committedRow(filtered: TnAutocompleteOption<T>[]): TnAutocompleteOption<T> | undefined {
+    const kept = this.keptSelectedOption();
+    if (kept) {
+      return kept;
+    }
+    const value = this.selectedValue();
+    if (this.termIsDraft() || value === null || value === undefined) {
+      return undefined;
+    }
+    return filtered.find((option) => this.valueMatches(option.value, value));
+  }
 
   /** Whether there are any rows to render (the action row counts). */
   protected hasResults = computed(() => this.filteredOptions().length > 0);

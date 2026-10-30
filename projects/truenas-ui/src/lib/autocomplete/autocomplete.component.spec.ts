@@ -536,6 +536,31 @@ describe('TnAutocompleteComponent', () => {
       expect(getInput().value).toBe('Germany');
       expect(getOptions()).toHaveLength(5);
     });
+
+    it('holds the committed option past a maxResults cap it falls outside', () => {
+      host.maxResults.set(3);
+      host.control.setValue('DE');
+      fixture.detectChanges();
+
+      focusInput();
+
+      expect(getOptions().map((option) => option.textContent?.trim()))
+        .toEqual(['United States', 'Canada', 'Mexico', 'Germany']);
+      expect(getHighlighted()?.textContent?.trim()).toBe('Germany');
+      const selected = getOptions().filter((option) => option.getAttribute('aria-selected') === 'true');
+      expect(selected.map((option) => option.textContent?.trim())).toEqual(['Germany']);
+    });
+
+    it('caps a draft without holding the committed option', () => {
+      host.maxResults.set(1);
+      host.control.setValue('GB');
+      fixture.detectChanges();
+      focusInput();
+
+      typeInInput('United');
+
+      expect(getOptions().map((option) => option.textContent?.trim())).toEqual(['United States']);
+    });
   });
 
   describe('requireSelection', () => {
