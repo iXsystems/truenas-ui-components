@@ -361,7 +361,9 @@ export const LongList: Story = {
  * **CVA round-tripping with written values.** The bound `FormControl` starts at
  * `'DE'`, so the input renders "Germany" on load: a written value resolves
  * back to its option's label (falling back to the raw value until options
- * load), and selections commit the option's `value`.
+ * load), and selections commit the option's `value`. Opening the field lists
+ * every country with Germany highlighted — the committed label is not a search
+ * term — and the list filters once the text is edited.
  */
 export const ValueMapping: Story = {
   render: () => ({

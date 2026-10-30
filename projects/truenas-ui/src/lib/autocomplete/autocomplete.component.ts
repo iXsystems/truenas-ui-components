@@ -353,8 +353,16 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     return typeof value === 'number' ? `${value}px` : value;
   });
 
-  /** Current search term typed by the user */
+  /** Text in the field: the user's search, or the committed value's label */
   protected searchTerm = signal('');
+
+  /**
+   * Whether {@link searchTerm} is text the user typed, as opposed to the label
+   * the component painted for the committed value. Only a draft filters the
+   * list: filtering by the selection's own label listed that one option and
+   * hid every other until the user cleared the field (#391).
+   */
+  private readonly termIsDraft = signal(false);
 
   /** Whether the dropdown is open */
   protected isOpen = signal(false);
@@ -519,7 +527,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Filtered and capped options, with {@link actionOption} pinned on top. */
   protected filteredOptions = computed(() => {
-    const term = this.searchTerm();
+    const term = this.termIsDraft() ? this.searchTerm() : '';
     const all = this.resolvedOptions();
     const customFilter = this.filterFn();
     const max = this.maxResults();
@@ -646,6 +654,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         const match = this.resolvableOptions().find((opt) => this.valueMatches(opt.value, value));
         if (match) {
           this.searchTerm.set(match.label);
+          this.termIsDraft.set(false);
           this.displayIsFallback = false;
         }
       });
@@ -774,6 +783,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
+    this.termIsDraft.set(false);
     this.displayIsFallback = false;
     this.onChange(option.value);
   }
@@ -784,6 +794,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
     // The text is the user's now, whatever it was before this keystroke.
+    this.termIsDraft.set(true);
     this.displayIsFallback = false;
     // A new term is a new pagination context — don't hold back its first page.
     this.loadMorePending = false;
@@ -1124,6 +1135,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // that name back and commit the option it belongs to. `writeValue` clears
     // it for the same reason.
     this.selectedLabel.set(null);
+    // The text is the committed value now, no longer a search over the list.
+    this.termIsDraft.set(false);
     this.onChange(value);
   }
 
@@ -1139,6 +1152,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * it may well have been paged away since.
    */
   private setDisplayFromValue(value: T | null): void {
+    this.termIsDraft.set(false);
     if (value === null || value === undefined) {
       this.searchTerm.set('');
       this.displayIsFallback = false;
@@ -1211,6 +1225,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
+    this.termIsDraft.set(false);
     this.displayIsFallback = false;
     this.onChange(option.value);
     this.optionSelected.emit(option);
