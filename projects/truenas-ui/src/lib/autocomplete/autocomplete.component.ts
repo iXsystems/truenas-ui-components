@@ -233,7 +233,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    *
    * Defaults to `Infinity` so browsing the open dropdown without a search term
    * never silently truncates a long list. Pass an explicit cap if you want to
-   * limit how many filtered results are rendered at once.
+   * limit how many filtered results are rendered at once. The committed value's
+   * row is listed past the cap when it would fall outside it, unless the user
+   * is typing a search.
    */
   maxResults = input<number>(Infinity);
 
@@ -353,8 +355,16 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     return typeof value === 'number' ? `${value}px` : value;
   });
 
-  /** Current search term typed by the user */
+  /** Text in the field: the user's search, or the committed value's label */
   protected searchTerm = signal('');
+
+  /**
+   * Whether {@link searchTerm} is text the user typed, as opposed to the label
+   * the component painted for the committed value. Only a draft filters the
+   * list: filtering by the selection's own label listed that one option and
+   * hid every other until the user cleared the field (#391).
+   */
+  private readonly termIsDraft = signal(false);
 
   /** Whether the dropdown is open */
   protected isOpen = signal(false);
@@ -519,7 +529,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
 
   /** Filtered and capped options, with {@link actionOption} pinned on top. */
   protected filteredOptions = computed(() => {
-    const term = this.searchTerm();
+    const term = this.termIsDraft() ? this.searchTerm() : '';
     const all = this.resolvedOptions();
     const customFilter = this.filterFn();
     const max = this.maxResults();
@@ -540,16 +550,35 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       filtered = all.filter((opt) => opt.label.toLowerCase().includes(lowerTerm));
     }
 
-    // `maxResults` caps the rows the source returned, not the two rows that are
+    // `maxResults` caps the rows the source returned, not the rows that are
     // there by construction: the action row is pinned on top after the slice,
-    // and the kept-selected row — always last, appended by `resolvedOptions` —
-    // is held back across it.
-    const kept = this.keptSelectedOption();
-    const capped = kept && filtered.at(-1) === kept
-      ? [...filtered.slice(0, -1).slice(0, max), kept]
+    // and the committed value's row (see `committedRow`) is held back across it.
+    const held = this.committedRow(filtered);
+    const capped = held && filtered.indexOf(held) >= max
+      ? [...filtered.filter((option) => option !== held).slice(0, max), held]
       : filtered.slice(0, max);
     return action ? [action, ...capped] : capped;
   });
+
+  /**
+   * The row in `filtered` that `maxResults` must not cut off, or `undefined`:
+   * the kept-selected row always, and otherwise the committed value's option
+   * while the field shows its label rather than a draft. Opening on a value
+   * lists every row unfiltered, so the cap would drop a committed option past
+   * it, leaving nothing highlighted or `aria-selected` and nothing the arrow
+   * keys could reach.
+   */
+  private committedRow(filtered: TnAutocompleteOption<T>[]): TnAutocompleteOption<T> | undefined {
+    const kept = this.keptSelectedOption();
+    if (kept) {
+      return kept;
+    }
+    const value = this.selectedValue();
+    if (this.termIsDraft() || value === null || value === undefined) {
+      return undefined;
+    }
+    return filtered.find((option) => this.valueMatches(option.value, value));
+  }
 
   /** Whether there are any rows to render (the action row counts). */
   protected hasResults = computed(() => this.filteredOptions().length > 0);
@@ -646,6 +675,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
         const match = this.resolvableOptions().find((opt) => this.valueMatches(opt.value, value));
         if (match) {
           this.searchTerm.set(match.label);
+          this.termIsDraft.set(false);
           this.displayIsFallback = false;
         }
       });
@@ -774,6 +804,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
+    this.termIsDraft.set(false);
     this.displayIsFallback = false;
     this.onChange(option.value);
   }
@@ -784,6 +815,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     const value = (event.target as HTMLInputElement).value;
     this.searchTerm.set(value);
     // The text is the user's now, whatever it was before this keystroke.
+    this.termIsDraft.set(true);
     this.displayIsFallback = false;
     // A new term is a new pagination context — don't hold back its first page.
     this.loadMorePending = false;
@@ -1124,6 +1156,8 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     // that name back and commit the option it belongs to. `writeValue` clears
     // it for the same reason.
     this.selectedLabel.set(null);
+    // The text is the committed value now, no longer a search over the list.
+    this.termIsDraft.set(false);
     this.onChange(value);
   }
 
@@ -1139,6 +1173,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * it may well have been paged away since.
    */
   private setDisplayFromValue(value: T | null): void {
+    this.termIsDraft.set(false);
     if (value === null || value === undefined) {
       this.searchTerm.set('');
       this.displayIsFallback = false;
@@ -1211,6 +1246,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
+    this.termIsDraft.set(false);
     this.displayIsFallback = false;
     this.onChange(option.value);
     this.optionSelected.emit(option);

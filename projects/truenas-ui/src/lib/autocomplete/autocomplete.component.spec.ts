@@ -456,6 +456,113 @@ describe('TnAutocompleteComponent', () => {
     });
   });
 
+  // The text of a committed value is its option's label, not a search: opening
+  // the field filtered by it listed that one option and hid every other (#391).
+  describe('opening on a committed value', () => {
+    const blurInput = () => {
+      getInput().dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+    };
+
+    it('lists every option and marks the written value when it opens', () => {
+      host.control.setValue('MX');
+      fixture.detectChanges();
+
+      focusInput();
+
+      expect(getOptions()).toHaveLength(5);
+      expect(getHighlighted()?.textContent?.trim()).toBe('Mexico');
+      const selected = getOptions().filter((option) => option.getAttribute('aria-selected') === 'true');
+      expect(selected.map((option) => option.textContent?.trim())).toEqual(['Mexico']);
+    });
+
+    it('lists every option when reopened after a selection', () => {
+      focusInput();
+      getOptions()[3].click();
+      fixture.detectChanges();
+      blurInput();
+
+      focusInput();
+
+      expect(getInput().value).toBe('United Kingdom');
+      expect(getOptions()).toHaveLength(5);
+      expect(getHighlighted()?.textContent?.trim()).toBe('United Kingdom');
+    });
+
+    it('filters again once the user edits the text', () => {
+      host.control.setValue('US');
+      fixture.detectChanges();
+      focusInput();
+
+      typeInInput('United');
+
+      expect(getOptions().map((option) => option.textContent?.trim()))
+        .toEqual(['United States', 'United Kingdom']);
+    });
+
+    it('lists every option after closing repaints an abandoned draft with the label', () => {
+      host.control.setValue('US');
+      fixture.detectChanges();
+      focusInput();
+      typeInInput('can');
+      blurInput();
+
+      focusInput();
+
+      expect(getInput().value).toBe('United States');
+      expect(getOptions()).toHaveLength(5);
+    });
+
+    it('keeps filtering by a draft left in a field with no value', () => {
+      focusInput();
+      typeInInput('can');
+      blurInput();
+
+      focusInput();
+
+      expect(getOptions().map((option) => option.textContent?.trim())).toEqual(['Canada']);
+    });
+
+    it('lists every option after requireSelection reverts a draft', () => {
+      host.requireSelection.set(true);
+      host.control.setValue('DE');
+      fixture.detectChanges();
+      focusInput();
+      typeInInput('garbage');
+      blurInput();
+
+      focusInput();
+
+      expect(getInput().value).toBe('Germany');
+      expect(getOptions()).toHaveLength(5);
+    });
+
+    it('holds the committed option past a maxResults cap it falls outside', () => {
+      host.maxResults.set(3);
+      host.control.setValue('DE');
+      fixture.detectChanges();
+
+      focusInput();
+
+      expect(getOptions().map((option) => option.textContent?.trim()))
+        .toEqual(['United States', 'Canada', 'Mexico', 'Germany']);
+      expect(getHighlighted()?.textContent?.trim()).toBe('Germany');
+      const selected = getOptions().filter((option) => option.getAttribute('aria-selected') === 'true');
+      expect(selected.map((option) => option.textContent?.trim())).toEqual(['Germany']);
+    });
+
+    it('caps a draft without holding the committed option', () => {
+      host.maxResults.set(1);
+      host.control.setValue('GB');
+      fixture.detectChanges();
+      focusInput();
+
+      typeInInput('United');
+
+      expect(getOptions().map((option) => option.textContent?.trim())).toEqual(['United States']);
+    });
+  });
+
   describe('requireSelection', () => {
     beforeEach(() => {
       host.requireSelection.set(true);
