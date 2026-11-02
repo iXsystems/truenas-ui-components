@@ -130,7 +130,7 @@ const meta: Meta<TnTableComponent> = {
       description: 'Optional per-row predicate `(row) => boolean`; rows returning false show no expand control',
       control: false,
     },
-    bordered: { description: 'Adds an outer border around the table', control: 'boolean' },
+    bordered: { description: 'Adds an outer border around the table, and around each card in card mode', control: 'boolean' },
     activeRow: { description: 'Row reference to mark with the active-row indicator (left bar)', control: false },
     activeBg: { description: 'Override for the active-row background color (any CSS color or var())', control: 'text' },
     activeIndicator: { description: 'Override for the left-side indicator color (any CSS color or var())', control: 'text' },
@@ -1092,7 +1092,7 @@ export const ResponsiveCards: Story = {
     docs: {
       description: {
         story:
-          'When the table container is narrower than `cardBreakpoint` and `mobileLayout="cards"` is set, each row collapses into a card. Card mode is opt-in — `mobileLayout` defaults to `scroll`, which keeps the table and scrolls it horizontally instead. The `cardTitle` column anchors the card header alongside any `[tnRowActionsDef]` controls; remaining columns become priority-ranked fields, with lower-priority ones folded under "More fields".\n\nThe switch is driven by a `ResizeObserver` on the table\'s own host, so it follows the **container**, not the viewport — a table in a narrow sidebar goes to cards on a wide screen. The wrapper here starts at 520px (below the breakpoint, so cards) and is resizable: **drag its bottom-right handle** past 640px to watch the regular table come back. Lowering the `cardBreakpoint` control below 520 flips it the same way.',
+          'When the table container is narrower than `cardBreakpoint` and `mobileLayout="cards"` is set, each row collapses into a card. Card mode is opt-in — `mobileLayout` defaults to `scroll`, which keeps the table and scrolls it horizontally instead. The `cardTitle` column anchors the card header alongside any `[tnRowActionsDef]` controls; remaining columns become priority-ranked fields, with lower-priority ones folded under "More fields".\n\nThe switch is driven by a `ResizeObserver` on the table\'s own host, so it follows the **container**, not the viewport — a table in a narrow sidebar goes to cards on a wide screen. The wrapper here starts at 520px (below the breakpoint, so cards) and is resizable: **drag its bottom-right handle** past 640px to watch the regular table come back. Lowering the `cardBreakpoint` control below 520 flips it the same way.\n\nCards follow `[bordered]` the way `tn-card` does: unbordered by default, set apart from the page by their background alone. See *Responsive Cards (bordered)* for the outlined look.',
       },
     },
   },
@@ -1100,6 +1100,7 @@ export const ResponsiveCards: Story = {
     dataSource: sampleData,
     displayedColumns: ['name', 'email', 'role', 'status'],
     selectable: true,
+    bordered: false,
     cardBreakpoint: 640,
     mobileLayout: 'cards',
     // Two of the three fields show directly; the rest fold, so the "More fields"
@@ -1118,6 +1119,7 @@ export const ResponsiveCards: Story = {
           [dataSource]="dataSource"
           [displayedColumns]="displayedColumns"
           [selectable]="selectable"
+          [bordered]="bordered"
           [cardBreakpoint]="cardBreakpoint"
           [cardPrimaryCount]="cardPrimaryCount"
           [mobileLayout]="mobileLayout">
@@ -1149,6 +1151,23 @@ export const ResponsiveCards: Story = {
       </div>
     `,
   }),
+};
+
+export const ResponsiveCardsBordered: Story = {
+  name: 'Responsive Cards (bordered)',
+  parameters: {
+    docs: {
+      description: {
+        story:
+          '`[bordered]="true"` outlines each card with a 1px `--tn-lines` border as well as the table, so the one input means "bordered" in both layouts. Without it, as in *Responsive Cards*, cards have no outline.',
+      },
+    },
+  },
+  args: {
+    ...ResponsiveCards.args,
+    bordered: true,
+  },
+  render: ResponsiveCards.render,
 };
 
 export const ResponsiveCardsInteractive: Story = {

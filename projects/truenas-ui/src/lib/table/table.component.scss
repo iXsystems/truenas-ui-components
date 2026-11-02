@@ -90,6 +90,12 @@
   border-radius: 4px;
 }
 
+// Cards follow `[bordered]` the way `tn-card` follows its own: unbordered by default, where
+// `--tn-bg2` alone sets them apart from the page, and outlined when the table is.
+:host(.tn-table--bordered) .tn-table__card {
+  border: 1px solid var(--tn-lines);
+}
+
 // While loading, prevent interaction with the content behind the overlay — the backstop that
 // matters, because the overlay cannot be relied on to cover everything (see below).
 //
@@ -583,7 +589,6 @@
 
   &__card {
     background-color: var(--tn-bg2);
-    border: 1px solid var(--tn-lines);
     border-radius: 6px;
     padding: 12px;
 

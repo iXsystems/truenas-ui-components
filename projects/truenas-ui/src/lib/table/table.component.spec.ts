@@ -1204,6 +1204,34 @@ describe('TnTableComponent', () => {
       expect(component.isScrollMode()).toBe(false);
     });
 
+    // Jest does not apply the stylesheet, so the border is asserted against the source, as the
+    // fixedLayout rules are above; comments are dropped and whitespace collapsed the same way.
+    describe('card border', () => {
+      const scss = (): string => readFileSync(join(__dirname, 'table.component.scss'), 'utf8')
+        .replace(/\/\/[^\n]*/g, '')
+        .replace(/\s+/g, ' ');
+
+      it('draws no border on a card unless the table is bordered', () => {
+        // `&__card {` up to its first nested rule: the declarations every card gets.
+        const base = /&__card \{([^{}]*)/.exec(scss())?.[1] ?? '';
+
+        expect(base).toContain('background-color: var(--tn-bg2)');
+        expect(base).not.toMatch(/\bborder(?!-radius)[\w-]*\s*:/);
+        expect(fixture.nativeElement.classList).not.toContain('tn-table--bordered');
+      });
+
+      it('borders each card when the table is bordered', () => {
+        fixture.componentRef.setInput('mobileLayout', 'cards');
+        fixture.componentRef.setInput('bordered', true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.classList).toContain('tn-table--bordered');
+        expect(scss()).toContain(
+          ':host(.tn-table--bordered) .tn-table__card { border: 1px solid var(--tn-lines); }',
+        );
+      });
+    });
+
     describe('card column computeds (no column defs)', () => {
       beforeEach(() => {
         fixture.componentRef.setInput('displayedColumns', ['name', 'email', 'role', 'status', 'id']);
