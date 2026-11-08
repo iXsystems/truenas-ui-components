@@ -36,7 +36,7 @@ const fgRoles: Record<string, string> = {
 };
 const bgVars = ['--tn-bg1', '--tn-bg2', '--tn-bg3', '--tn-alt-bg1', '--tn-alt-bg2'];
 const uiVars = ['--tn-primary', '--tn-primary-txt', '--tn-accent', '--tn-accent-txt', '--tn-topbar', '--tn-topbar-txt', '--tn-lines'];
-const statusVars = ['--tn-red', '--tn-green', '--tn-yellow', '--tn-orange', '--tn-blue', '--tn-cyan', '--tn-magenta', '--tn-violet'];
+const statusVars = ['--tn-red', '--tn-red-txt', '--tn-green', '--tn-yellow', '--tn-orange', '--tn-blue', '--tn-cyan', '--tn-magenta', '--tn-violet'];
 const statusTextVars = ['--tn-error-text'];
 
 /**

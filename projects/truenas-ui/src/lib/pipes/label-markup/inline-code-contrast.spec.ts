@@ -93,17 +93,6 @@ const PAGE_SURFACES = ['--tn-bg1', '--tn-bg2'] as const;
 /** How a stylesheet spells "whatever is behind me shows through". */
 const TRANSPARENT = 'transparent';
 
-/**
- * The one colour name these stylesheets spell out, and the hex it is.
- *
- * `contrast-testing.ts` refuses named colours on purpose — guessing at one is
- * how a wrong ratio gets asserted — so the equivalence is declared here, once,
- * where it can be read and disagreed with. The tables below hold `white`,
- * matching what `button.component.scss` actually says, and only the measurement
- * translates.
- */
-const NAMED_COLOURS: Readonly<Record<string, string>> = { white: '#ffffff' };
-
 /** One colour a code span can inherit, and the surface its element paints. */
 interface CodeSpanState {
   /** How it reads in a failure: `.button-primary`. */
@@ -139,17 +128,18 @@ const CALL_SITES: readonly CallSite[] = [
     // than on a per-variant label: one rule paints code spans in all nine. The
     // outline variants are transparent at rest and FILLED on hover, which is the
     // half of this that is easy to miss — a code span in a hovered
-    // `.button-outline-warn` is white on --tn-red exactly as `.button-warn` is.
+    // `.button-outline-warn` is --tn-red-txt on --tn-red exactly as
+    // `.button-warn` is.
     states: [
       { name: '.button-primary', colour: '--tn-primary-txt', surface: '--tn-primary' },
       { name: '.button-default', colour: '--tn-btn-default-txt', surface: '--tn-btn-default-bg' },
-      { name: '.button-warn', colour: 'white', surface: '--tn-red' },
+      { name: '.button-warn', colour: '--tn-red-txt', surface: '--tn-red' },
       { name: '.button-outline-primary', colour: '--tn-primary-text', surface: TRANSPARENT },
       { name: '.button-outline-primary:hover', colour: '--tn-primary-txt', surface: '--tn-primary' },
       { name: '.button-outline-default', colour: '--tn-fg1', surface: TRANSPARENT },
       { name: '.button-outline-default:hover', colour: '--tn-btn-default-txt', surface: '--tn-btn-default-bg' },
       { name: '.button-outline-warn', colour: '--tn-error-text', surface: TRANSPARENT },
-      { name: '.button-outline-warn:hover', colour: 'white', surface: '--tn-red' },
+      { name: '.button-outline-warn:hover', colour: '--tn-red-txt', surface: '--tn-red' },
     ],
   },
   {
@@ -292,20 +282,10 @@ interface KnownGap {
  * an entry per component while saying the same thing each time.
  */
 const KNOWN_GAPS: readonly KnownGap[] = [
-  // .button-warn fills with --tn-red and labels it `white`. --tn-red is tuned
-  // toward the 3:1 border/icon minimum rather than the 4.5:1 text one —
-  // `radio.component.scss` and `button.component.scss` both say so about the
-  // OUTLINE variants, which is why those read --tn-error-text instead (#234).
-  // The filled variant labels the token itself, so it inherits the same gap, and
-  // no foreground fixes it: `white` is already the furthest a label can get from
-  // a mid-red. It needs a darker fill or a companion token, which is a change to
-  // five palettes rather than to a code span, and every one of these ratios is
-  // what the button's ORDINARY label text measures too.
-  { selector: '.tn-dracula', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 3.14:1' },
-  { selector: '.tn-high-contrast', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 3.99:1' },
-  { selector: '.tn-midnight', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 3.99:1' },
-  { selector: '.tn-nord', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 4.09:1' },
-  { selector: '.tn-paper', colour: 'white', surface: '--tn-red', why: '.button-warn fills --tn-red, a 3:1 token, and labels it white — 3.99:1' },
+  // Five .button-warn entries used to sit here: white on --tn-red in Dracula,
+  // High Contrast, Midnight, Nord and Paper, 3.14:1 to 4.09:1. #397 gave every
+  // palette a --tn-red-txt companion and the button reads it, so those pairings
+  // clear AA and red-text-contrast.spec.ts holds the token.
   // Four .tn-solarized-dark entries used to sit here and are gone: that theme's
   // --tn-fg1 (2.79:1 on --tn-bg1, 2.42:1 on --tn-bg2), its --tn-fg2 (4.32:1 on
   // --tn-bg2), and its --tn-btn-default-txt against its own fill (3.03:1),
@@ -332,11 +312,14 @@ function scssFiles(directory: string): string[] {
   });
 }
 
-/** The colour a token or literal resolves to on this palette, ready to measure. */
+/**
+ * The colour a token or literal resolves to on this palette, ready to measure.
+ * A named colour such as `white` reaches `contrast-testing.ts` as written and is
+ * refused there, which is deliberate: guessing at one is how a wrong ratio gets
+ * asserted.
+ */
 function resolved(palette: ThemePalette, colour: string): string {
-  return colour.startsWith('--')
-    ? palette.color(colour)
-    : (NAMED_COLOURS[colour] ?? colour);
+  return colour.startsWith('--') ? palette.color(colour) : colour;
 }
 
 describe('a <code> span in a label clears AA wherever the mixin is included (#262)', () => {
@@ -578,19 +561,23 @@ describe('a <code> span in a label clears AA wherever the mixin is included (#26
       expect([...excused.keys()].filter((key) => !painted.has(key))).toEqual([]);
     });
 
-    it.each(gaps)(
-      '$selector $where: $foreground on $surface ($background) measures $ratioLabel',
-      ({ ratio, own }) => {
-        // The wash is not what broke it: the same colour already fails on a
-        // surface the element itself paints it on, so no change to where the
-        // span sits can fix this pairing.
-        expect(meetsAa(own, 'normal')).toBe(false);
-        // And it is still broken. A gap that has started clearing AA is a stale
-        // exclusion, and the entry has to go rather than go on excusing a case
-        // that would now pass on its own.
-        expect(meetsAa(ratio, 'normal')).toBe(false);
-      }
-    );
+    // `it.each` on an empty table is a collection error, and KNOWN_GAPS is
+    // empty today. The case above still holds any entry to a painted pairing.
+    if (gaps.length > 0) {
+      it.each(gaps)(
+        '$selector $where: $foreground on $surface ($background) measures $ratioLabel',
+        ({ ratio, own }) => {
+          // The wash is not what broke it: the same colour already fails on a
+          // surface the element itself paints it on, so no change to where the
+          // span sits can fix this pairing.
+          expect(meetsAa(own, 'normal')).toBe(false);
+          // And it is still broken. A gap that has started clearing AA is a
+          // stale exclusion, and the entry has to go rather than go on excusing
+          // a case that would now pass on its own.
+          expect(meetsAa(ratio, 'normal')).toBe(false);
+        }
+      );
+    }
   });
 
   it('records why the two excluded states are excluded', () => {
