@@ -306,7 +306,7 @@ export const StepStates: Story = {
           <p style="color: var(--tn-error-text, var(--tn-red, #b91c1c));">
             There was an error during profile setup. Please review and try again.
           </p>
-          <div style="background: var(--tn-red, #dc3545); color: white; padding: 8px; border-radius: 4px; margin-top: 8px;">
+          <div style="background: var(--tn-red, #dc3545); color: var(--tn-red-txt, #ffffff); padding: 8px; border-radius: 4px; margin-top: 8px;">
             <strong>Error:</strong> Email verification failed - please check your email address
           </div>
         </tn-step>

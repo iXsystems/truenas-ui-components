@@ -107,6 +107,16 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
+  /* TEXT DRAWN ON A --tn-red FILL — .button-warn's label — the same arrangement
+     as --tn-primary / --tn-primary-txt above. Not --tn-error-text below, which
+     is red drawn AS text on the page.
+
+     --tn-red is tuned for the 3:1 non-text minimum, and white on it measured
+     under 4.5:1 in five palettes (#397). Every theme declares its own: white
+     where it already clears 4.5:1, black where it does not. Black is the
+     furthest any colour gets from those reds, so no other dark value does
+     better. red-text-contrast.spec.ts holds all nine to it. */
+  --tn-red-txt: #ffffff; /* 5.28:1 on --tn-red */
   /* >=4.5:1 against both --tn-bg1 (5.17:1) and --tn-bg2 (4.57:1); --tn-red itself
      is only 3.15:1 on --tn-bg1, tuned for the 3:1 border/icon minimum. */
   --tn-error-text: #de6d6d;
@@ -222,6 +232,7 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
+  --tn-red-txt: #ffffff; /* 5.28:1 on --tn-red */
   /* >=4.5:1 against both --tn-bg1 (5.17:1) and --tn-bg2 (4.57:1); --tn-red itself
      is only 3.15:1 on --tn-bg1. */
   --tn-error-text: #de6d6d;
@@ -284,6 +295,7 @@
   --tn-yellow: #DED142;
   --tn-orange: #E68D37;
   --tn-red: #CE2929;
+  --tn-red-txt: #ffffff; /* 5.28:1 on --tn-red */
   /* --tn-red already clears 4.5:1 against --tn-bg1 here (measured 4.72:1). */
   --tn-error-text: var(--tn-red);
   --tn-magenta: #C006C7;
@@ -342,6 +354,7 @@
   --tn-yellow: #f1fa8c;
   --tn-orange: #ffb86c;
   --tn-red: #ff5555;
+  --tn-red-txt: #000000; /* 6.68:1 on --tn-red; white was 3.14:1 */
   /* --tn-red already clears 4.5:1 against --tn-bg1 here (measured 5.50:1). */
   --tn-error-text: var(--tn-red);
   --tn-magenta: #ff79c6;
@@ -412,6 +425,7 @@
   --tn-yellow: #ebcb8b;
   --tn-orange: #d08770;
   --tn-red: #bf616a;
+  --tn-red-txt: #000000; /* 5.13:1 on --tn-red; white was 4.09:1 */
   /* >=4.5:1 against both --tn-bg1 (5.67:1) and --tn-bg2 (4.57:1); --tn-red itself
      is only 3.05:1 on --tn-bg1. */
   --tn-error-text: #d9a0a6;
@@ -469,6 +483,7 @@
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
   --tn-red: #ff0013;
+  --tn-red-txt: #000000; /* 5.26:1 on --tn-red; white was 3.99:1 */
   /* 4.5:1 against --tn-bg1 (measured 4.67:1); --tn-red itself is only 3.57:1. */
   --tn-error-text: #db0010;
   --tn-magenta: #d238ff;
@@ -601,6 +616,7 @@
   --tn-yellow: #b58900;
   --tn-orange: #cb4b16;
   --tn-red: #dc322f;
+  --tn-red-txt: #ffffff; /* 4.63:1 on --tn-red */
   /* >=4.5:1 against both --tn-bg1 (5.28:1) and --tn-bg2 (4.57:1); --tn-red itself
      is only 3.25:1 on --tn-bg1. */
   --tn-error-text: #e87876;
@@ -680,6 +696,7 @@
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
   --tn-red: #ff0013;
+  --tn-red-txt: #000000; /* 5.26:1 on --tn-red; white was 3.99:1 */
   /* >=4.5:1 against both --tn-bg1 (6.01:1) and --tn-bg2 (4.61:1); --tn-red itself
      is only 3.64:1 on --tn-bg1. */
   --tn-error-text: #ff8089;
@@ -744,6 +761,10 @@
   --tn-yellow: #f0cb00;
   --tn-orange: #ee9302;
   --tn-red: #ff0013;
+  /* Black is the most any label reaches on this red, 5.26:1. More than AA
+     would need a darker fill, and --tn-red stays as it is for the borders and
+     icons that use it. */
+  --tn-red-txt: #000000; /* 5.26:1 on --tn-red; white was 3.99:1 */
   /* 4.5:1 against --tn-bg1 (measured 4.68:1); --tn-red itself is only 2.94:1 — the worst of the nine. */
   --tn-error-text: #c2000e;
   --tn-magenta: #d238ff;

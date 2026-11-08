@@ -120,9 +120,11 @@ a.storybook-button {
   color: var(--tn-btn-default-txt);
   box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 0px 1px inset;
 }
+// --tn-red is a 3:1 token, so the label on it is its companion --tn-red-txt
+// rather than white, which fell under 4.5:1 in five palettes (#397).
 .button-warn {
   background-color: var(--tn-red);
-  color: white;
+  color: var(--tn-red-txt, #ffffff);
 }
 .button-outline-warn {
   background-color: transparent;
@@ -136,7 +138,7 @@ a.storybook-button {
 .button-outline-warn:hover {
   background-color: var(--tn-red);
   border: 1px solid var(--tn-red);
-  color: white;
+  color: var(--tn-red-txt, #ffffff);
 }
 .storybook-button--small {
   padding: 10px 16px;
