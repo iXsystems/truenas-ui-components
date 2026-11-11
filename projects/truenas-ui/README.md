@@ -334,6 +334,60 @@ yarn test-coverage
 yarn test-sb
 ```
 
+### Accessibility Checks
+
+Accessibility is checked in three places, each run by a CI job on every pull
+request.
+
+| CI job | Command | What it checks | Fails the job? |
+|---|---|---|---|
+| Run Linter | `yarn lint` | Angular template rules from `@angular-eslint/template`: `alt-text`, `elements-content`, `no-distracting-elements`, `click-events-have-key-events`, `interactive-supports-focus`, `role-has-required-aria`, `valid-aria` | Yes |
+| Run Tests | `yarn test` | Jest specs: axe-core scans of rendered components (`*-a11y.spec.ts`), and WCAG AA contrast of theme tokens in every palette in `themes.css` (`*-contrast.spec.ts`) | Yes |
+| Storybook Interaction Tests | `yarn test-sb` | `@storybook/addon-a11y` runs axe over every story in a real browser, including `color-contrast` | No: violations are reported as warnings (#337) |
+
+The rules are in `eslint.config.js`. The addon's mode is set in
+`.storybook/preview.ts`, which explains why it does not fail the job yet.
+
+**Running them locally:**
+
+```bash
+# Every Jest spec, accessibility specs included
+yarn test
+
+# One component's accessibility spec
+yarn test chip-a11y
+
+# The Storybook scan: start Storybook, then run the tests against it
+yarn run sb
+yarn test-sb
+```
+
+`yarn run sb` also shows each story's result in Storybook's **Accessibility**
+panel, which names the rule and the element a violation is about.
+
+**Adding one:** put a `<component>-a11y.spec.ts` beside the component and use
+the helpers in `src/lib/a11y/` rather than calling axe yourself:
+
+- `axeScan(fixture)` in `axe-testing.ts` scans a rendered component and reports
+  everything axe found. Assert on `violations`, `incomplete` and `passed`:
+  axe puts some real defects in `incomplete`, and only `passed` tells a clean
+  scan from one that matched no rules.
+- `axeResult(root, targets, rules)` pins named rules to named elements, which
+  is the shape for a regression test.
+- `accessibleName(el)` in `accessible-name-testing.ts` returns the name a
+  screen reader would announce.
+- jsdom has no layout engine, so axe cannot measure colour contrast in Jest.
+  Measure a theme token with `testEachPalette` in
+  `palette-contrast-testing.ts`; `src/lib/theme/error-text-contrast.spec.ts`
+  is an example.
+
+A story that renders something axe is right to object to excludes it in its
+own `parameters.a11y`, with the reason next to it, as `API/Color Palette` does.
+
+These helpers are not exported from the package. The full guide, with worked
+examples and the traps each helper guards against, is the "Accessibility Tests"
+section of `docs/component_testing.md` in the repository.
+
 ### Publishing
 
 ```bash
