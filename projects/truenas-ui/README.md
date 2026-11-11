@@ -343,7 +343,7 @@ request.
 |---|---|---|---|
 | Run Linter | `yarn lint` | Angular template rules from `@angular-eslint/template`: `alt-text`, `elements-content`, `no-distracting-elements`, `click-events-have-key-events`, `interactive-supports-focus`, `role-has-required-aria`, `valid-aria` | Yes |
 | Run Tests | `yarn test` | Jest specs: axe-core scans of rendered components (`*-a11y.spec.ts`), and WCAG AA contrast of theme tokens in every palette in `themes.css` (`*-contrast.spec.ts`) | Yes |
-| Storybook Interaction Tests | `yarn test-sb` | `@storybook/addon-a11y` runs axe over every story in a real browser, including `color-contrast` | No: violations are reported as warnings (#337) |
+| Storybook Interaction Tests | `yarn test-sb` | `@storybook/addon-a11y` runs axe over every story in a real browser, including `color-contrast` | No: violations are reported as warnings ([#337](https://github.com/iXsystems/truenas-ui-components/issues/337)) |
 
 The rules are in `eslint.config.js`. The addon's mode is set in
 `.storybook/preview.ts`, which explains why it does not fail the job yet.
@@ -357,8 +357,9 @@ yarn test
 # One component's accessibility spec
 yarn test chip-a11y
 
-# The Storybook scan: start Storybook, then run the tests against it
+# The Storybook scan: start Storybook and leave it running...
 yarn run sb
+# ...then, in a second terminal, run the tests against it
 yarn test-sb
 ```
 
