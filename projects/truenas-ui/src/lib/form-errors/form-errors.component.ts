@@ -9,6 +9,10 @@ import {
   resolveErrorMessage,
 } from '../form-field/form-field.errors';
 import type { TnFormFieldErrorMessages } from '../form-field/form-field.errors';
+import {
+  dismissedValues, signalErrorsToValidationErrors, withoutDismissed,
+} from '../form-field/signal-field';
+import type { TnSignalField } from '../form-field/signal-field';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { TnTestIdDirective } from '../test-id';
 import type { TnTestIdValue } from '../test-id';
@@ -41,6 +45,9 @@ const EMPTY_STATE: FormErrorsState = { invalid: false, interacted: false, errors
  * messages around it. Like `tn-form-field`, it shows ONE message — the active
  * error, chosen by the same priority — rather than every error at once.
  *
+ * `control` also takes a signal forms field (`fields.schedule`), whose own
+ * errors — not its children's — are rendered the same way.
+ *
  * @example
  * ```html
  * <tn-form-errors [control]="form.controls.schedule" />
@@ -55,8 +62,11 @@ const EMPTY_STATE: FormErrorsState = { invalid: false, interacted: false, errors
   styleUrls: ['./form-errors.component.scss'],
 })
 export class TnFormErrorsComponent {
-  /** The control whose errors are rendered. Usually a group or an array. */
-  control = input.required<AbstractControl>();
+  /**
+   * The control whose errors are rendered. Usually a group or an array — a
+   * Reactive Forms `AbstractControl`, or a signal forms field.
+   */
+  control = input.required<AbstractControl | TnSignalField>();
 
   /**
    * Per-instance overrides, keyed by error key. Take precedence over the
@@ -130,16 +140,26 @@ export class TnFormErrorsComponent {
 
   private state = signal<FormErrorsState>(EMPTY_STATE);
 
+  /**
+   * Error objects the user dismissed on a signal forms field, hidden while that
+   * same object is reported (see `withoutDismissed`). Always empty for an
+   * `AbstractControl`, whose dismissed errors are deleted from it.
+   */
+  private dismissedErrors = signal<readonly unknown[]>([]);
+
+  private visibleErrors = computed(() => withoutDismissed(this.state().errors, this.dismissedErrors()));
+
   protected errorMessage = computed(() => {
-    const { errors } = this.state();
+    const errors = this.visibleErrors();
     if (!errors) {
       return '';
     }
+    const control = this.control();
     return resolveErrorMessage({
       errors,
       errorMessages: this.errorMessages(),
       resolver: this.errorResolver,
-      control: this.control(),
+      control: isSignalField(control) ? null : control,
       selector: 'tn-form-errors',
     });
   });
@@ -167,7 +187,7 @@ export class TnFormErrorsComponent {
    * being read.
    */
   protected activeError = computed(() => {
-    const { errors } = this.state();
+    const errors = this.visibleErrors();
     return errors ? activeErrorKey(errors) : null;
   });
 
@@ -190,8 +210,14 @@ export class TnFormErrorsComponent {
       return;
     }
     const control = this.control();
-    clearDismissibleErrors(control, this.dismissible.resolvedDismissibleErrors());
-    this.sync(control);
+    const dismissible = this.dismissible.resolvedDismissibleErrors();
+    if (isSignalField(control)) {
+      const closed = dismissedValues(this.visibleErrors(), dismissible);
+      this.dismissedErrors.update((dismissed) => [...dismissed, ...closed]);
+    } else {
+      clearDismissibleErrors(control, dismissible);
+      this.sync(control);
+    }
     this.dismiss.emit(key);
   }
 
@@ -201,6 +227,13 @@ export class TnFormErrorsComponent {
     // a cross-field error the user never focused into.
     effect((onCleanup) => {
       const control = this.control();
+      if (isSignalField(control)) {
+        // A signal forms field is its own change source: reading its state here
+        // makes this effect re-run whenever the errors, status or interaction
+        // state change.
+        this.syncSignalField(control);
+        return;
+      }
       const subscription = control.events.subscribe(() => this.sync(control));
       onCleanup(() => subscription.unsubscribe());
       this.sync(control);
@@ -208,10 +241,35 @@ export class TnFormErrorsComponent {
   }
 
   private sync(control: AbstractControl): void {
-    this.state.set({
+    this.setState({
       invalid: control.invalid,
       interacted: control.dirty || control.touched,
       errors: control.errors,
     });
   }
+
+  private syncSignalField(field: TnSignalField): void {
+    const state = field();
+    this.setState({
+      invalid: state.invalid(),
+      interacted: state.dirty() || state.touched(),
+      errors: signalErrorsToValidationErrors(state.errors()),
+    });
+  }
+
+  private setState(state: FormErrorsState): void {
+    // Forget dismissals whose error is gone, so an object reported again later is
+    // not hidden by an old dismissal and the list cannot grow.
+    this.dismissedErrors.update((dismissed) => {
+      const current = state.errors ? Object.values(state.errors) : [];
+      const kept = dismissed.filter((value) => current.includes(value));
+      return kept.length === dismissed.length ? dismissed : kept;
+    });
+    this.state.set(state);
+  }
+}
+
+/** An `AbstractControl` is an object; a signal forms field is a function. */
+function isSignalField(control: AbstractControl | TnSignalField): control is TnSignalField {
+  return typeof control === 'function';
 }

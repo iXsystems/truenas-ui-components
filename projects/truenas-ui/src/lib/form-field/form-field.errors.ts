@@ -157,6 +157,16 @@ export function defaultErrorMessage(
       return detail['requiredLength'] == null
         ? 'Value is too long'
         : `Maximum length is ${detail['requiredLength']}`;
+    // Signal forms' kinds for the same two rules: camelCase, with the limit
+    // under its own name rather than `requiredLength`.
+    case 'minLength':
+      return detail['minLength'] == null
+        ? 'Value is too short'
+        : `Minimum length is ${detail['minLength']}`;
+    case 'maxLength':
+      return detail['maxLength'] == null
+        ? 'Value is too long'
+        : `Maximum length is ${detail['maxLength']}`;
     case 'pattern':
       return 'Please enter a valid format';
     case 'min':
@@ -177,7 +187,7 @@ export function defaultErrorMessage(
  * more than one at once.
  */
 const BUILT_IN_ERROR_PRIORITY = [
-  'required', 'email', 'minlength', 'maxlength', 'pattern', 'min', 'max',
+  'required', 'email', 'minlength', 'maxlength', 'minLength', 'maxLength', 'pattern', 'min', 'max',
 ] as const;
 
 /**
@@ -250,10 +260,13 @@ export interface ResolveErrorMessageOptions {
  * `tn-form-field` has always used:
  *
  * 1. a per-instance `errorMessages` override (string or factory),
- * 2. the app-wide {@link TN_FORM_FIELD_ERRORS} resolver,
- * 3. {@link defaultErrorMessage} for Angular's standard validators,
- * 4. the error value itself, when a custom validator returned its own string,
- * 5. the raw error key.
+ * 2. the `message` a signal forms rule was given (`minLength(path.name, 3,
+ *    { message })`) — written for that one field, so it outranks the app-wide
+ *    wording the way a per-instance override does,
+ * 3. the app-wide {@link TN_FORM_FIELD_ERRORS} resolver,
+ * 4. {@link defaultErrorMessage} for Angular's standard validators,
+ * 5. the error value itself, when a custom validator returned its own string,
+ * 6. the raw error key.
  *
  * Shared with `tn-form-errors` so a group-level message reads exactly like the
  * field-level one it sits beside.
@@ -276,6 +289,9 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
     if (message != null) {return message;}
   }
 
+  const own = signalErrorMessage(key, value);
+  if (own != null) {return own;}
+
   const resolved = runGuarded(
     () => resolver?.(key, value, control ?? null),
     selector,
@@ -289,4 +305,17 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
   if (typeof value === 'string') {return value;}
 
   return key;
+}
+
+/**
+ * The author-written message of a signal forms error, recognized by its shape:
+ * an object whose `kind` is the key it is stored under. Reactive Forms error
+ * values do not carry their own key, so their resolution is unchanged.
+ */
+function signalErrorMessage(key: string, value: unknown): string | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const { kind, message } = value as { kind?: unknown; message?: unknown };
+  return kind === key && typeof message === 'string' && message.trim() !== '' ? message : null;
 }

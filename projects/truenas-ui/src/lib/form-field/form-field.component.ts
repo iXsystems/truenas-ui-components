@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import type { AfterContentInit } from '@angular/core';
 import {
   Component, ElementRef, input, output, computed, signal, contentChild, forwardRef, inject,
-  viewChild, DestroyRef,
+  viewChild, DestroyRef, Injector, effect,
   ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,6 +19,7 @@ import {
   resolveErrorMessage,
 } from './form-field.errors';
 import type { TnFormFieldErrorMessages } from './form-field.errors';
+import { canSetErrors, dismissedValues, withoutDismissed } from './signal-field';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
@@ -201,6 +202,8 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
 
   private destroyRef = inject(DestroyRef);
 
+  private injector = inject(Injector);
+
   /**
    * App-wide message resolver, captured once at construction. Unlike the
    * `errorMessages` input it is not reactive — swapping the provided function at
@@ -210,8 +213,10 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
 
   /**
    * Snapshot of the relevant control state. Updated from the control's status
-   * stream because `NgControl` itself is not signal-based; downstream `computed`s
-   * read this so the derived state stays reactive.
+   * stream because `NgControl` itself is not signal-based — or, for a control
+   * bound with signal forms' `[formField]`, from an effect over its
+   * signal-backed getters. Downstream `computed`s read this so the derived state
+   * stays reactive.
    */
   private controlState = signal<ControlStateSnapshot>({
     invalid: false,
@@ -245,13 +250,29 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
   /** Whether the wrapper hosts any inline extras and lays out as a flex row. */
   protected showInlineExtras = computed(() => this.showInlineTooltip() || this.showInlineRequired());
 
+  /**
+   * Error objects the user dismissed on a `[formField]` control. Signal forms
+   * errors come from the model and its rules and cannot be deleted, so the field
+   * hides the ones the user closed for as long as that same error object is
+   * reported. Always empty for a Reactive Forms control, whose dismissed errors
+   * are removed from the control itself.
+   */
+  private dismissedErrors = signal<readonly unknown[]>([]);
+
+  /** The control's errors minus any dismissed ones — what the message is read from. */
+  private visibleErrors = computed(() => withoutDismissed(this.controlState().errors, this.dismissedErrors()));
+
   protected hasError = computed(() => {
     const state = this.controlState();
-    return state.invalid && state.interacted;
+    // A control whose every error was dismissed stops reading as in error, so
+    // `aria-invalid` drops along with the message. Without dismissals this is
+    // the plain invalid-and-interacted check.
+    const allDismissed = !!state.errors && !this.visibleErrors();
+    return state.invalid && state.interacted && !allDismissed;
   });
 
   protected errorMessage = computed(() => {
-    const { errors } = this.controlState();
+    const errors = this.visibleErrors();
     return errors ? this.resolveErrorMessage(errors) : '';
   });
 
@@ -261,7 +282,7 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    * being read.
    */
   protected activeError = computed(() => {
-    const { errors } = this.controlState();
+    const errors = this.visibleErrors();
     return errors ? activeErrorKey(errors) : null;
   });
 
@@ -298,8 +319,16 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
     const button = this.dismissButton()?.nativeElement;
     const hadFocus = !!button && button.contains(button.ownerDocument.activeElement);
 
-    clearDismissibleErrors(control, this.dismissible.resolvedDismissibleErrors());
-    this.syncControlState();
+    const dismissible = this.dismissible.resolvedDismissibleErrors();
+    if (canSetErrors(control)) {
+      clearDismissibleErrors(control, dismissible);
+      this.syncControlState();
+    } else {
+      // A `[formField]` control: hide what the user closed. The `dismiss` output
+      // is how the app retires the failure itself, e.g. a server error.
+      const closed = dismissedValues(this.visibleErrors(), dismissible);
+      this.dismissedErrors.update((dismissed) => [...dismissed, ...closed]);
+    }
     this.dismiss.emit(key);
 
     if (hadFocus) {
@@ -320,24 +349,40 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
       // to `statusChanges` for NgControl implementations whose underlying
       // AbstractControl isn't reachable yet.
       const changes = control.control?.events ?? control.statusChanges;
-      changes
-        ?.pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => {
-          this.syncControlState();
-        });
+      if (changes) {
+        changes
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.syncControlState();
+          });
 
-      // Initial error state check
-      this.syncControlState();
+        // Initial error state check
+        this.syncControlState();
+      } else {
+        // No stream to follow: the `NgControl` signal forms provide for a
+        // `[formField]` binding has neither `events` nor `statusChanges`, but its
+        // getters read signals, so an effect over them re-syncs whenever the
+        // field's errors, status, touched/dirty state or `required` change.
+        effect(() => this.syncControlState(), { injector: this.injector });
+      }
     }
   }
 
   private syncControlState(): void {
     const control = this.control();
     if (control) {
+      const errors = control.errors ?? null;
+      // Forget dismissals whose error is gone, so the list cannot grow and an
+      // identical object reported again later is not hidden by an old dismissal.
+      this.dismissedErrors.update((dismissed) => {
+        const current = errors ? Object.values(errors) : [];
+        const kept = dismissed.filter((value) => current.includes(value));
+        return kept.length === dismissed.length ? dismissed : kept;
+      });
       this.controlState.set({
         invalid: !!control.invalid,
         interacted: !!(control.dirty || control.touched),
-        errors: control.errors ?? null,
+        errors,
         required: !!(control.control?.hasValidator(Validators.required)
           || control.control?.hasValidator(Validators.requiredTrue)),
       });

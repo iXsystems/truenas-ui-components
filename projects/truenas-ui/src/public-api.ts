@@ -61,6 +61,11 @@ export type {
   TnFormFieldErrorResolver,
 } from './lib/form-field/form-field.errors';
 export * from './lib/form-field/form-field.harness';
+export type {
+  TnSignalField,
+  TnSignalFieldState,
+  TnSignalValidationError,
+} from './lib/form-field/signal-field';
 export * from './lib/form-errors/form-errors.component';
 export * from './lib/form-errors/form-errors.harness';
 export * from './lib/form-list/form-list.component';
