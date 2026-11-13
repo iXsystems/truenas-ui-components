@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
+import { SignalFormsDemoComponent } from './signal-forms-demo.component';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnCheckboxComponent } from '../lib/checkbox/checkbox.component';
@@ -757,6 +758,33 @@ export const ComponentHarness: Story = {
     layout: 'fullscreen'
   },
   render: () => ({ template: '' })
+};
+
+export const SignalForms: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The same controls bound with Angular signal forms\' `[formField]` instead of ' +
+          'Reactive Forms. Errors appear once the field is touched or the form is submitted, ' +
+          'the required asterisk follows the `required` rule, and a rule\'s own `message` ' +
+          'is shown before the app-wide resolver. `tn-form-errors` takes the group field ' +
+          '(`fields.window`) as its `control`; `tn-form-list` takes an array field the same way.\n\n' +
+          'Press **Save** with the form incomplete to see the validation errors, then fill it in ' +
+          'and save again: the server rejects the name. That error is dismissible here — a ' +
+          'signal forms error cannot be deleted, so dismissing only hides it until the field reports ' +
+          'a new one. The field stays invalid, so in this demo **Save** does nothing until the name ' +
+          'is changed (which is what clears a `submit()` error). In an app, `(dismiss)` is where the ' +
+          'app retires the failure itself so the form can be saved again.\n\n' +
+          'With no `testId`, a control still gets `input-<field name>` (`input-name`), the id ' +
+          '`formControlName="name"` would give it.',
+      },
+    },
+  },
+  render: () => ({
+    template: '<tn-signal-forms-demo />',
+    moduleMetadata: { imports: [SignalFormsDemoComponent] },
+  }),
 };
 
 /**

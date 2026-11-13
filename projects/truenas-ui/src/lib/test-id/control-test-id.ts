@@ -1,11 +1,14 @@
 import { Injector, computed, inject, type Signal } from '@angular/core';
 import { NgControl } from '@angular/forms';
 import { composeTestId, type TnTestIdValue } from './compose-test-id';
+import { signalFieldName } from '../form-field/signal-field';
 
 /**
  * Resolve a form control's test-id base, falling back to the bound control's
- * name (`formControlName`, a named `[formControl]`, or `ngModel`) when the
- * consumer provides no explicit `testId`.
+ * name (`formControlName`, a named `[formControl]`, `ngModel`, or the field a
+ * signal forms `[formField]` binds — its last path segment, so `fields.sshPort`
+ * gives `ssh-port` just as `formControlName="sshPort"` does) when the consumer
+ * provides no explicit `testId`.
  *
  * Call from a form control's field initializer and bind the result on the
  * element that represents the control:
@@ -50,7 +53,8 @@ export function controlTestId(testId: Signal<TnTestIdValue>): Signal<TnTestIdVal
       ngControl = injector.get(NgControl, null, { self: true, optional: true });
     }
     // `?? explicit` preserves the falsy passthrough — with no control name the
-    // base stays empty and the directive writes no attribute.
-    return ngControl?.name ?? explicit;
+    // base stays empty and the directive writes no attribute. The signal forms
+    // `NgControl` has no `name`; its field's name is read instead.
+    return ngControl?.name ?? signalFieldName(ngControl) ?? explicit;
   });
 }

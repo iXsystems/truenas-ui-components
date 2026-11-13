@@ -9,6 +9,7 @@ import { TnFormListItemComponent } from './form-list-item.component';
 import { TnButtonComponent } from '../button/button.component';
 import { TnFormErrorsComponent } from '../form-errors/form-errors.component';
 import type { TnFormFieldErrorMessages } from '../form-field/form-field.errors';
+import type { TnSignalField } from '../form-field/signal-field';
 import { TnIconComponent } from '../icon/icon.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective } from '../test-id';
@@ -67,11 +68,12 @@ let nextUniqueId = 0;
 })
 export class TnFormListComponent implements TnFormListContext {
   /**
-   * The `FormArray` being edited. Optional, and used only to render an error
-   * that belongs to the array as a whole — a minimum or maximum length. The
-   * component neither reads the elements nor writes to it.
+   * The `FormArray` being edited — or, with signal forms, the array field
+   * (`fields.entries`). Optional, and used only to render an error that belongs
+   * to the array as a whole — a minimum or maximum length. The component neither
+   * reads the elements nor writes to it.
    */
-  control = input<AbstractControl | undefined>(undefined);
+  control = input<AbstractControl | TnSignalField | undefined>(undefined);
 
   /**
    * What the list is called, in the plural ('ACL entries'). Names the group,

@@ -141,7 +141,8 @@ export function clearDismissibleErrors(
  */
 export function defaultErrorMessage(
   errorKey: string,
-  errorValue: unknown
+  errorValue: unknown,
+  signalForms = false
 ): string | null {
   const detail = (errorValue ?? {}) as Record<string, unknown>;
   switch (errorKey) {
@@ -157,6 +158,20 @@ export function defaultErrorMessage(
       return detail['requiredLength'] == null
         ? 'Value is too long'
         : `Maximum length is ${detail['requiredLength']}`;
+    // Signal forms' kinds for the same two rules: camelCase, with the limit
+    // under its own name rather than `requiredLength`. Only for signal forms
+    // errors, so a Reactive validator that happens to use these keys keeps the
+    // message it had.
+    case 'minLength':
+      if (!signalForms) {return null;}
+      return detail['minLength'] == null
+        ? 'Value is too short'
+        : `Minimum length is ${detail['minLength']}`;
+    case 'maxLength':
+      if (!signalForms) {return null;}
+      return detail['maxLength'] == null
+        ? 'Value is too long'
+        : `Maximum length is ${detail['maxLength']}`;
     case 'pattern':
       return 'Please enter a valid format';
     case 'min':
@@ -181,14 +196,24 @@ const BUILT_IN_ERROR_PRIORITY = [
 ] as const;
 
 /**
+ * The same order for signal forms errors, whose length rules report as
+ * `minLength`/`maxLength`. Kept apart so a Reactive custom error under one of
+ * those keys is not promoted over the others.
+ */
+const SIGNAL_ERROR_PRIORITY = [
+  'required', 'email', 'minLength', 'maxLength', 'pattern', 'min', 'max',
+] as const;
+
+/**
  * Picks which error to display when a control has more than one. Built-in keys
- * are preferred in {@link BUILT_IN_ERROR_PRIORITY} order; any remaining custom
+ * are preferred in {@link BUILT_IN_ERROR_PRIORITY} order (or
+ * {@link SIGNAL_ERROR_PRIORITY} for signal forms errors); any remaining custom
  * key falls back to insertion order.
  *
  * @internal
  */
-export function activeErrorKey(errors: ValidationErrors): string | null {
-  for (const key of BUILT_IN_ERROR_PRIORITY) {
+export function activeErrorKey(errors: ValidationErrors, signalForms = false): string | null {
+  for (const key of signalForms ? SIGNAL_ERROR_PRIORITY : BUILT_IN_ERROR_PRIORITY) {
     if (errors[key] != null) {
       return key;
     }
@@ -237,6 +262,12 @@ export interface ResolveErrorMessageOptions {
   /** The failing control, passed through to the resolver. */
   control?: AbstractControl | null;
   /**
+   * Whether `errors` came from Angular signal forms. Only then does an error's
+   * own `message` take part in the ladder — a Reactive validator's error value
+   * is left to the resolver even when it happens to carry `kind` and `message`.
+   */
+  signalForms?: boolean;
+  /**
    * Who is asking, used only to attribute the dev-mode `console.error` this
    * logs when a caller-supplied message provider throws. Optional: the library's
    * own components pass their selector so the log names the element on screen,
@@ -250,18 +281,23 @@ export interface ResolveErrorMessageOptions {
  * `tn-form-field` has always used:
  *
  * 1. a per-instance `errorMessages` override (string or factory),
- * 2. the app-wide {@link TN_FORM_FIELD_ERRORS} resolver,
- * 3. {@link defaultErrorMessage} for Angular's standard validators,
- * 4. the error value itself, when a custom validator returned its own string,
- * 5. the raw error key.
+ * 2. with `signalForms`, the `message` a signal forms rule was given
+ *    (`minLength(path.name, 3, { message })`) — written for that one field, so
+ *    it outranks the app-wide wording the way a per-instance override does,
+ * 3. the app-wide {@link TN_FORM_FIELD_ERRORS} resolver,
+ * 4. {@link defaultErrorMessage} for Angular's standard validators,
+ * 5. the error value itself, when a custom validator returned its own string,
+ * 6. the raw error key.
  *
  * Shared with `tn-form-errors` so a group-level message reads exactly like the
  * field-level one it sits beside.
  */
 export function resolveErrorMessage(options: ResolveErrorMessageOptions): string {
-  const { errors, errorMessages, resolver, control, selector = 'resolveErrorMessage' } = options;
+  const {
+    errors, errorMessages, resolver, control, signalForms = false, selector = 'resolveErrorMessage',
+  } = options;
 
-  const key = activeErrorKey(errors);
+  const key = activeErrorKey(errors, signalForms);
   if (!key) {return 'Invalid input';}
 
   const value = errors[key];
@@ -276,6 +312,9 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
     if (message != null) {return message;}
   }
 
+  const own = signalForms ? signalErrorMessage(key, value) : null;
+  if (own != null) {return own;}
+
   const resolved = runGuarded(
     () => resolver?.(key, value, control ?? null),
     selector,
@@ -283,10 +322,23 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
   );
   if (resolved != null) {return resolved;}
 
-  const builtIn = defaultErrorMessage(key, value);
+  const builtIn = defaultErrorMessage(key, value, signalForms);
   if (builtIn != null) {return builtIn;}
 
   if (typeof value === 'string') {return value;}
 
   return key;
+}
+
+/**
+ * The author-written message of a signal forms error: an object whose `kind` is
+ * the key it is stored under. Only consulted when the caller says the errors are
+ * signal forms ones, so a Reactive error of the same shape is not affected.
+ */
+function signalErrorMessage(key: string, value: unknown): string | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const { kind, message } = value as { kind?: unknown; message?: unknown };
+  return kind === key && typeof message === 'string' && message.trim() !== '' ? message : null;
 }
