@@ -120,6 +120,26 @@ export function withoutDismissed(
 }
 
 /**
+ * Forgets dismissals whose error is no longer reported, so the list cannot grow
+ * and an identical object reported again later is not hidden by an old
+ * dismissal. Returns the same array when nothing changed, so a signal holding it
+ * does not notify.
+ *
+ * @internal
+ */
+export function pruneDismissed(
+  dismissed: readonly unknown[],
+  errors: ValidationErrors | null,
+): readonly unknown[] {
+  if (!dismissed.length) {
+    return dismissed;
+  }
+  const current = errors ? Object.values(errors) : [];
+  const kept = dismissed.filter((value) => current.includes(value));
+  return kept.length === dismissed.length ? dismissed : kept;
+}
+
+/**
  * The error values to remember as dismissed: every listed key the field reports
  * right now, not only the one on screen, for the same reason a reactive control
  * loses all of them at once (see `clearDismissibleErrors`).

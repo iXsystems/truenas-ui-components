@@ -190,6 +190,16 @@ describe('tn-form-field with signal forms [formField]', () => {
       // A rule without a message still goes to the resolver.
       expect(await (await field('Name')).getErrorMessage()).toBe('From the resolver');
     });
+
+    it('hands the resolver null, not the stand-in NgControl, for a [formField] control', async () => {
+      const resolver = jest.fn(() => 'From the resolver');
+      await setUp([{ provide: TN_FORM_FIELD_ERRORS, useValue: resolver }]);
+      host.fields.name().markAsTouched();
+      await settle();
+
+      expect(await (await field('Name')).getErrorMessage()).toBe('From the resolver');
+      expect(resolver).toHaveBeenCalledWith('required', expect.anything(), null);
+    });
   });
 
   describe('dismissing', () => {
@@ -398,5 +408,24 @@ describe('tn-form-field with Reactive Forms, unchanged', () => {
 
     expect(control.errors).toBeNull();
     expect(await field.hasError()).toBe(false);
+  });
+
+  it('leaves a Reactive error shaped like a signal forms one to the resolver, with the control', async () => {
+    const resolver = jest.fn(() => 'From the resolver');
+    await TestBed.configureTestingModule({
+      imports: [ReactiveHostComponent],
+      providers: [TnIconTesting.jest.providers(), { provide: TN_FORM_FIELD_ERRORS, useValue: resolver }],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ReactiveHostComponent);
+    fixture.detectChanges();
+    const control = fixture.componentInstance.control;
+    control.setValue('tank');
+    control.setErrors({ conflict: { kind: 'conflict', message: 'Own message' } });
+    control.markAsTouched();
+    fixture.detectChanges();
+
+    const field = await TestbedHarnessEnvironment.loader(fixture).getHarness(TnFormFieldHarness);
+    expect(await field.getErrorMessage()).toBe('From the resolver');
+    expect(resolver).toHaveBeenCalledWith('conflict', expect.anything(), control);
   });
 });

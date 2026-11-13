@@ -19,7 +19,9 @@ import {
   resolveErrorMessage,
 } from './form-field.errors';
 import type { TnFormFieldErrorMessages } from './form-field.errors';
-import { canSetErrors, dismissedValues, withoutDismissed } from './signal-field';
+import {
+  canSetErrors, dismissedValues, pruneDismissed, withoutDismissed,
+} from './signal-field';
 import { TnIconComponent } from '../icon/icon.component';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
@@ -372,13 +374,7 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
     const control = this.control();
     if (control) {
       const errors = control.errors ?? null;
-      // Forget dismissals whose error is gone, so the list cannot grow and an
-      // identical object reported again later is not hidden by an old dismissal.
-      this.dismissedErrors.update((dismissed) => {
-        const current = errors ? Object.values(errors) : [];
-        const kept = dismissed.filter((value) => current.includes(value));
-        return kept.length === dismissed.length ? dismissed : kept;
-      });
+      this.dismissedErrors.update((dismissed) => pruneDismissed(dismissed, errors));
       this.controlState.set({
         invalid: !!control.invalid,
         interacted: !!(control.dirty || control.touched),
@@ -400,11 +396,18 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    * field-level one it sits beside.
    */
   private resolveErrorMessage(errors: ValidationErrors): string {
+    const bound = this.control()?.control ?? null;
+    // Only a Reactive control is an `AbstractControl`. The stand-in `NgControl`
+    // signal forms provide for `[formField]` is not, so the resolver gets `null`
+    // for it — as it does from `tn-form-errors` — rather than an object that
+    // throws on `.parent` or `.root.get()`.
+    const reactive = canSetErrors(bound);
     return resolveErrorMessage({
       errors,
       errorMessages: this.errorMessages(),
       resolver: this.errorResolver,
-      control: this.control()?.control ?? null,
+      control: reactive ? bound : null,
+      signalForms: !!bound && !reactive,
       selector: 'tn-form-field',
     });
   }

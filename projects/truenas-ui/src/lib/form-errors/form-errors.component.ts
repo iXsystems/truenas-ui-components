@@ -10,7 +10,7 @@ import {
 } from '../form-field/form-field.errors';
 import type { TnFormFieldErrorMessages } from '../form-field/form-field.errors';
 import {
-  dismissedValues, signalErrorsToValidationErrors, withoutDismissed,
+  dismissedValues, pruneDismissed, signalErrorsToValidationErrors, withoutDismissed,
 } from '../form-field/signal-field';
 import type { TnSignalField } from '../form-field/signal-field';
 import { TnIconButtonComponent } from '../icon-button/icon-button.component';
@@ -160,6 +160,7 @@ export class TnFormErrorsComponent {
       errorMessages: this.errorMessages(),
       resolver: this.errorResolver,
       control: isSignalField(control) ? null : control,
+      signalForms: isSignalField(control),
       selector: 'tn-form-errors',
     });
   });
@@ -258,13 +259,7 @@ export class TnFormErrorsComponent {
   }
 
   private setState(state: FormErrorsState): void {
-    // Forget dismissals whose error is gone, so an object reported again later is
-    // not hidden by an old dismissal and the list cannot grow.
-    this.dismissedErrors.update((dismissed) => {
-      const current = state.errors ? Object.values(state.errors) : [];
-      const kept = dismissed.filter((value) => current.includes(value));
-      return kept.length === dismissed.length ? dismissed : kept;
-    });
+    this.dismissedErrors.update((dismissed) => pruneDismissed(dismissed, state.errors));
     this.state.set(state);
   }
 }

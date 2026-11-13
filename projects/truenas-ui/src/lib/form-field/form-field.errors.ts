@@ -247,6 +247,12 @@ export interface ResolveErrorMessageOptions {
   /** The failing control, passed through to the resolver. */
   control?: AbstractControl | null;
   /**
+   * Whether `errors` came from Angular signal forms. Only then does an error's
+   * own `message` take part in the ladder — a Reactive validator's error value
+   * is left to the resolver even when it happens to carry `kind` and `message`.
+   */
+  signalForms?: boolean;
+  /**
    * Who is asking, used only to attribute the dev-mode `console.error` this
    * logs when a caller-supplied message provider throws. Optional: the library's
    * own components pass their selector so the log names the element on screen,
@@ -260,9 +266,9 @@ export interface ResolveErrorMessageOptions {
  * `tn-form-field` has always used:
  *
  * 1. a per-instance `errorMessages` override (string or factory),
- * 2. the `message` a signal forms rule was given (`minLength(path.name, 3,
- *    { message })`) — written for that one field, so it outranks the app-wide
- *    wording the way a per-instance override does,
+ * 2. with `signalForms`, the `message` a signal forms rule was given
+ *    (`minLength(path.name, 3, { message })`) — written for that one field, so
+ *    it outranks the app-wide wording the way a per-instance override does,
  * 3. the app-wide {@link TN_FORM_FIELD_ERRORS} resolver,
  * 4. {@link defaultErrorMessage} for Angular's standard validators,
  * 5. the error value itself, when a custom validator returned its own string,
@@ -272,7 +278,9 @@ export interface ResolveErrorMessageOptions {
  * field-level one it sits beside.
  */
 export function resolveErrorMessage(options: ResolveErrorMessageOptions): string {
-  const { errors, errorMessages, resolver, control, selector = 'resolveErrorMessage' } = options;
+  const {
+    errors, errorMessages, resolver, control, signalForms = false, selector = 'resolveErrorMessage',
+  } = options;
 
   const key = activeErrorKey(errors);
   if (!key) {return 'Invalid input';}
@@ -289,7 +297,7 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
     if (message != null) {return message;}
   }
 
-  const own = signalErrorMessage(key, value);
+  const own = signalForms ? signalErrorMessage(key, value) : null;
   if (own != null) {return own;}
 
   const resolved = runGuarded(
@@ -308,9 +316,9 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
 }
 
 /**
- * The author-written message of a signal forms error, recognized by its shape:
- * an object whose `kind` is the key it is stored under. Reactive Forms error
- * values do not carry their own key, so their resolution is unchanged.
+ * The author-written message of a signal forms error: an object whose `kind` is
+ * the key it is stored under. Only consulted when the caller says the errors are
+ * signal forms ones, so a Reactive error of the same shape is not affected.
  */
 function signalErrorMessage(key: string, value: unknown): string | null {
   if (!value || typeof value !== 'object') {
