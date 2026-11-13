@@ -141,7 +141,8 @@ export function clearDismissibleErrors(
  */
 export function defaultErrorMessage(
   errorKey: string,
-  errorValue: unknown
+  errorValue: unknown,
+  signalForms = false
 ): string | null {
   const detail = (errorValue ?? {}) as Record<string, unknown>;
   switch (errorKey) {
@@ -158,12 +159,16 @@ export function defaultErrorMessage(
         ? 'Value is too long'
         : `Maximum length is ${detail['requiredLength']}`;
     // Signal forms' kinds for the same two rules: camelCase, with the limit
-    // under its own name rather than `requiredLength`.
+    // under its own name rather than `requiredLength`. Only for signal forms
+    // errors, so a Reactive validator that happens to use these keys keeps the
+    // message it had.
     case 'minLength':
+      if (!signalForms) {return null;}
       return detail['minLength'] == null
         ? 'Value is too short'
         : `Minimum length is ${detail['minLength']}`;
     case 'maxLength':
+      if (!signalForms) {return null;}
       return detail['maxLength'] == null
         ? 'Value is too long'
         : `Maximum length is ${detail['maxLength']}`;
@@ -187,18 +192,28 @@ export function defaultErrorMessage(
  * more than one at once.
  */
 const BUILT_IN_ERROR_PRIORITY = [
-  'required', 'email', 'minlength', 'maxlength', 'minLength', 'maxLength', 'pattern', 'min', 'max',
+  'required', 'email', 'minlength', 'maxlength', 'pattern', 'min', 'max',
+] as const;
+
+/**
+ * The same order for signal forms errors, whose length rules report as
+ * `minLength`/`maxLength`. Kept apart so a Reactive custom error under one of
+ * those keys is not promoted over the others.
+ */
+const SIGNAL_ERROR_PRIORITY = [
+  'required', 'email', 'minLength', 'maxLength', 'pattern', 'min', 'max',
 ] as const;
 
 /**
  * Picks which error to display when a control has more than one. Built-in keys
- * are preferred in {@link BUILT_IN_ERROR_PRIORITY} order; any remaining custom
+ * are preferred in {@link BUILT_IN_ERROR_PRIORITY} order (or
+ * {@link SIGNAL_ERROR_PRIORITY} for signal forms errors); any remaining custom
  * key falls back to insertion order.
  *
  * @internal
  */
-export function activeErrorKey(errors: ValidationErrors): string | null {
-  for (const key of BUILT_IN_ERROR_PRIORITY) {
+export function activeErrorKey(errors: ValidationErrors, signalForms = false): string | null {
+  for (const key of signalForms ? SIGNAL_ERROR_PRIORITY : BUILT_IN_ERROR_PRIORITY) {
     if (errors[key] != null) {
       return key;
     }
@@ -282,7 +297,7 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
     errors, errorMessages, resolver, control, signalForms = false, selector = 'resolveErrorMessage',
   } = options;
 
-  const key = activeErrorKey(errors);
+  const key = activeErrorKey(errors, signalForms);
   if (!key) {return 'Invalid input';}
 
   const value = errors[key];
@@ -307,7 +322,7 @@ export function resolveErrorMessage(options: ResolveErrorMessageOptions): string
   );
   if (resolved != null) {return resolved;}
 
-  const builtIn = defaultErrorMessage(key, value);
+  const builtIn = defaultErrorMessage(key, value, signalForms);
   if (builtIn != null) {return builtIn;}
 
   if (typeof value === 'string') {return value;}

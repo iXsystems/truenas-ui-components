@@ -410,6 +410,23 @@ describe('tn-form-field with Reactive Forms, unchanged', () => {
     expect(await field.hasError()).toBe(false);
   });
 
+  it('keeps a Reactive custom error under a `minLength` key on its own message', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ReactiveHostComponent],
+      providers: [TnIconTesting.jest.providers()],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ReactiveHostComponent);
+    fixture.detectChanges();
+    const control = fixture.componentInstance.control;
+    control.setValue('ab');
+    control.setErrors({ minLength: 'Use at least 3 characters' });
+    control.markAsTouched();
+    fixture.detectChanges();
+
+    const field = await TestbedHarnessEnvironment.loader(fixture).getHarness(TnFormFieldHarness);
+    expect(await field.getErrorMessage()).toBe('Use at least 3 characters');
+  });
+
   it('leaves a Reactive error shaped like a signal forms one to the resolver, with the control', async () => {
     const resolver = jest.fn(() => 'From the resolver');
     await TestBed.configureTestingModule({

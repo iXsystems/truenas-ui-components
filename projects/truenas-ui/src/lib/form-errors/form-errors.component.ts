@@ -189,7 +189,7 @@ export class TnFormErrorsComponent {
    */
   protected activeError = computed(() => {
     const errors = this.visibleErrors();
-    return errors ? activeErrorKey(errors) : null;
+    return errors ? activeErrorKey(errors, isSignalField(this.control())) : null;
   });
 
   /**

@@ -285,7 +285,7 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
    */
   protected activeError = computed(() => {
     const errors = this.visibleErrors();
-    return errors ? activeErrorKey(errors) : null;
+    return errors ? activeErrorKey(errors, this.isSignalBound()) : null;
   });
 
   /**
@@ -401,15 +401,25 @@ export class TnFormFieldComponent implements AfterContentInit, TnFormFieldContex
     // signal forms provide for `[formField]` is not, so the resolver gets `null`
     // for it — as it does from `tn-form-errors` — rather than an object that
     // throws on `.parent` or `.root.get()`.
-    const reactive = canSetErrors(bound);
+    const signalForms = this.isSignalBound();
     return resolveErrorMessage({
       errors,
       errorMessages: this.errorMessages(),
       resolver: this.errorResolver,
-      control: reactive ? bound : null,
-      signalForms: !!bound && !reactive,
+      control: signalForms ? null : bound,
+      signalForms,
       selector: 'tn-form-field',
     });
+  }
+
+  /**
+   * Whether the projected control is bound with signal forms' `[formField]`:
+   * it has a control, but not one errors can be set on, which every Reactive
+   * `AbstractControl` can.
+   */
+  private isSignalBound(): boolean {
+    const bound = this.control()?.control ?? null;
+    return !!bound && !canSetErrors(bound);
   }
 
   showError = computed(() => {

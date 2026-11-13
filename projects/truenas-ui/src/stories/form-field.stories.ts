@@ -772,8 +772,10 @@ export const SignalForms: Story = {
           '(`fields.window`) as its `control`; `tn-form-list` takes an array field the same way.\n\n' +
           'Press **Save** with the form incomplete to see the validation errors, then fill it in ' +
           'and save again: the server rejects the name. That error is dismissible here — a ' +
-          'signal forms error cannot be deleted, so dismissing hides it until the field reports a ' +
-          'new one, and `(dismiss)` tells the app to retire it.\n\n' +
+          'signal forms error cannot be deleted, so dismissing only hides it until the field reports ' +
+          'a new one. The field stays invalid, so in this demo **Save** does nothing until the name ' +
+          'is changed (which is what clears a `submit()` error). In an app, `(dismiss)` is where the ' +
+          'app retires the failure itself so the form can be saved again.\n\n' +
           'With no `testId`, a control still gets `input-<field name>` (`input-name`), the id ' +
           '`formControlName="name"` would give it.',
       },
