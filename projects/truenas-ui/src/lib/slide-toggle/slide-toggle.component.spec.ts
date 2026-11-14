@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
@@ -82,6 +84,20 @@ describe('TnSlideToggleComponent', () => {
 
       expect(toggle.classList).toContain('tn-slide-toggle-host--full-width');
       expect(toggle.querySelector('.tn-slide-toggle')!.classList).toContain('tn-slide-toggle--full-width');
+    });
+  });
+
+  describe('host box', () => {
+    // An inline host's box is one line of text tall on the toggle's baseline, so a page
+    // background on it (webui's keyboard-focus highlight) painted a strip over the bottom
+    // half of the track (#402). Jest neither compiles the SCSS nor lays anything out, so
+    // the rule is checked against the source.
+    it('gives the host a box around the whole toggle', () => {
+      const scss = readFileSync(join(__dirname, 'slide-toggle.component.scss'), 'utf8')
+        .replace(/\/\/[^\n]*/g, '')
+        .replace(/\s+/g, ' ');
+
+      expect(scss).toMatch(/(^|\}|;) ?:host \{[^}]*display: inline-(flex|block);/);
     });
   });
 });
