@@ -2,6 +2,14 @@
 // Based on Angular Material Design patterns
 @use '../pipes/label-markup/label-markup' as label-markup;
 
+// The host needs a box of its own. Left inline, its box is one line of text
+// tall on the toggle's baseline, so any background or outline a page gives it
+// (e.g. a keyboard-focus highlight) paints as a strip over the bottom half of
+// the track instead of around the component (#402).
+:host {
+  display: inline-flex;
+}
+
 :host(.tn-slide-toggle-host--full-width) {
   display: block;
   width: 100%;
