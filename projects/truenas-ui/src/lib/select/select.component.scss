@@ -103,6 +103,10 @@
   // No position / top / left here on purpose: the panel is rendered inside a
   // CDK overlay pane that handles positioning. Adding `position: absolute`
   // collapses the pane to zero height and the panel never becomes visible.
+  //
+  // The pane is a flex row with a `minWidth` of the trigger's width; growing
+  // into it makes the panel at least as wide as the trigger (#404).
+  flex: 1 1 auto;
   background-color: var(--tn-bg2, #f5f5f5);
   border: 1px solid var(--tn-lines, #d1d5db);
   border-radius: 0.375rem;

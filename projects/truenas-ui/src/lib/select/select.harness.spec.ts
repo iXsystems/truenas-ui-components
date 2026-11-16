@@ -384,6 +384,43 @@ describe('TnSelectHarness', () => {
     });
   });
 
+  describe('panel width', () => {
+    // jsdom does no layout, so the trigger's width is stubbed and the test
+    // asserts the pane style CDK writes; the browser-side check that the panel
+    // really is as wide as the trigger is the Default story's play function.
+    let triggerWidth: number;
+
+    const pane = (): HTMLElement => document.querySelector<HTMLElement>('.cdk-overlay-pane')!;
+
+    beforeEach(() => {
+      triggerWidth = 600;
+      const trigger = fixture.nativeElement.querySelector('[role="combobox"]') as HTMLElement;
+      jest.spyOn(trigger, 'getBoundingClientRect').mockImplementation(
+        () => ({ width: triggerWidth }) as DOMRect,
+      );
+    });
+
+    it('should make the pane at least as wide as the trigger, within the viewport cap', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+
+      expect(pane().style.minWidth).toBe('min(600px, calc(100% - 16px))');
+      expect(pane().style.maxWidth).toBe('calc(100% - 16px)');
+    });
+
+    it('should follow the trigger width when the viewport resizes while open', async () => {
+      const select = await loader.getHarness(TnSelectHarness);
+      await select.open();
+
+      triggerWidth = 320;
+      window.dispatchEvent(new Event('resize'));
+      // ViewportRuler.change() is throttled (20ms by default).
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(pane().style.minWidth).toBe('min(320px, calc(100% - 16px))');
+    });
+  });
+
   describe('selectOption', () => {
     it('should select an option by exact text', async () => {
       const select = await loader.getHarness(TnSelectHarness);

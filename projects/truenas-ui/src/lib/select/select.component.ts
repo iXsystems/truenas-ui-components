@@ -1,6 +1,7 @@
 
 import { Overlay, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { ViewportRuler } from '@angular/cdk/scrolling';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, forwardRef, InjectionToken, inject, input, output, signal, viewChild, ViewContainerRef } from '@angular/core';
 import type { ElementRef, OnDestroy, Signal, TemplateRef } from '@angular/core';
 import type { ControlValueAccessor } from '@angular/forms';
@@ -330,6 +331,7 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
   private cdr = inject(ChangeDetectorRef);
   private overlay = inject(Overlay);
   private viewContainerRef = inject(ViewContainerRef);
+  private viewportRuler = inject(ViewportRuler);
   private triggerEl = viewChild.required<ElementRef<HTMLElement>>('triggerEl');
   private dropdownTemplate = viewChild.required<TemplateRef<unknown>>('dropdownTemplate');
 
@@ -405,17 +407,14 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
    *   - Escapes parent `overflow: hidden`/clipping in surrounding layouts.
    *   - Position is recomputed on scroll so the panel stays attached.
    *
-   * Dismissal uses a transparent, full-viewport backdrop (`backdropClick()`).
-   * We previously ran backdrop-less with `outsidePointerEvents()`, but that
-   * only closes when the click lands strictly OUTSIDE the overlay pane — and
-   * the pane was sized to the (often full-width) trigger while the panel itself
-   * is only as wide as its content. The empty pane area to the right of the
-   * options stayed `pointer-events: auto`, so clicks there never counted as
-   * "outside" and the dropdown wouldn't close. A transparent backdrop closes on
-   * ANY click outside the panel regardless of pane geometry — the standard
-   * pattern used by native `<select>` and Material's `mat-select`. We therefore
-   * also drop the explicit `width`: the pane sizes to the panel content so the
-   * clickable surface matches what the user sees.
+   * Dismissal uses a transparent, full-viewport backdrop (`backdropClick()`),
+   * so ANY click outside the panel closes it whatever the pane's geometry —
+   * the pattern native `<select>` and Material's `mat-select` use.
+   *
+   * The pane is at least as wide as the trigger (`minWidth`, kept in step with
+   * viewport resizes) and grows past it for wider labels; the panel stretches
+   * to fill the pane (see `.tn-select-dropdown`), so the pane holds no empty
+   * area beside the options (#404).
    */
   private attachOverlay(): void {
     const trigger = this.triggerEl().nativeElement;
@@ -453,10 +452,20 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
       // capped pane always fits the push viewport exactly. 100vw includes the
       // scrollbar and would overshoot by its width.
       maxWidth: `calc(100% - ${2 * VIEWPORT_MARGIN_PX}px)`,
+      minWidth: this.paneMinWidth(),
     });
 
     const portal = new TemplatePortal(this.dropdownTemplate(), this.viewContainerRef);
     this.overlayRef.attach(portal);
+
+    // The trigger usually tracks its container's width, so a resize while open
+    // changes it; re-measure so the panel keeps matching.
+    this.overlaySubs.push(
+      this.viewportRuler.change().subscribe(() => {
+        this.overlayRef?.updateSize({ minWidth: this.paneMinWidth() });
+        this.overlayRef?.updatePosition();
+      }),
+    );
 
     // Dismiss on any click outside the panel. The transparent backdrop spans
     // the viewport and captures the click, so this fires no matter where the
@@ -484,6 +493,17 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
         }
       }),
     );
+  }
+
+  /**
+   * The pane's `minWidth`: the trigger's current width, capped by the same
+   * bound as `maxWidth`. The cap matters because CSS lets `min-width` win over
+   * `max-width`, so a trigger wider than the viewport would otherwise push the
+   * panel past its edge.
+   */
+  private paneMinWidth(): string {
+    const width = this.triggerEl().nativeElement.getBoundingClientRect().width;
+    return `min(${width}px, calc(100% - ${2 * VIEWPORT_MARGIN_PX}px))`;
   }
 
   private detachOverlay(): void {
