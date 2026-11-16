@@ -73,7 +73,7 @@ describe('tn-autocomplete dropdown scroll region (#292)', () => {
     overlayEl = overlayContainer.getContainerElement();
     fixture.detectChanges();
 
-    input().dispatchEvent(new Event('focus'));
+    input().click();
     fixture.detectChanges();
   });
 

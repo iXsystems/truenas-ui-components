@@ -620,7 +620,7 @@ export const ComponentHarness: Story = {
  * when `testId` is unset. The option discriminator defaults to the option's
  * `label` — the text on screen, rather than a value that is often an enum ordinal
  * or a record id. Override it with `[optionTestIdKey]="(o) => o.value.id"`.
- * Under `data-testid` by default / `data-test`. Focus the input to see the
+ * Under `data-testid` by default / `data-test`. Click the input to see the
  * option ids in the DOM; type a non-match to see the no-results row.
  */
 export const TestIds: Story = {

@@ -24,7 +24,7 @@
     [attr.aria-owns]="isOpen() ? uid + '-dropdown' : null"
     [attr.aria-activedescendant]="highlightedIndex() >= 0 ? uid + '-option-' + highlightedIndex() : null"
     (input)="onInput($event)"
-    (focus)="onFocus()"
+    (click)="onClick()"
     (blur)="onBlur()"
     (keydown)="onKeydown($event)" />
 </div>

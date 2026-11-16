@@ -337,7 +337,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
   loadMore = output<void>();
 
   /**
-   * Emits every time the panel opens (focus, click, typing, ArrowDown). For
+   * Emits every time the panel opens (click, typing, ArrowDown). For
    * click-to-suggest pickers, prime the first page from here when `options`
    * is still empty — `searchChange` alone never fires until the user types.
    */
@@ -438,7 +438,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * Rows the host named itself, honoured even while a `dataSource` is bound.
    *
    * With a source the dropdown is the server's to fill — but its first page is
-   * not fetched until the field is focused, so a value the host already holds
+   * not fetched until the panel opens, so a value the host already holds
    * the label for renders as its raw `String(value)` until someone opens the
    * panel. An edit form bound to an id shows the number. `options` is how that
    * label is supplied, so it stays part of the LOOKUP even where it is not
@@ -835,10 +835,14 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.highlightedIndex.set(-1);
   }
 
-  onFocus(): void {
-    if (!this.isDisabled()) {
-      this.open();
-    }
+  /**
+   * A click on the field opens the panel; focus alone does not. Focus also
+   * arrives from Tab and from a host's programmatic `focus()` — webui's form
+   * error handler focuses the invalid field after a failed save — and a panel
+   * opened then covers the error message under the field.
+   */
+  onClick(): void {
+    this.open();
   }
 
   onBlur(): void {
@@ -861,14 +865,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       );
 
       if (match) {
-        this.selectOption(match);
+        this.selectOption(match, true);
       } else {
-        // Revert to last valid selection or clear
-        const current = this.selectedValue();
-        this.revertDisplayToValue(current);
-        if (current === null || current === undefined) {
-          this.onChange(null);
-        }
+        // Revert to the last valid selection, or to empty. The value itself is
+        // unchanged either way, so the control is not written.
+        this.revertDisplayToValue(this.selectedValue());
       }
     }
 
@@ -1129,6 +1130,11 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
    * `'admins'` over the id it names — a label it would not read back. Same
    * asymmetry `tn-chip-input` closed by pointing `commitText` at its
    * `labelOptions`.
+   *
+   * A value equal to the committed one is not written to the control. Blur
+   * runs this on every exit from the field, and `onChange` makes Angular
+   * re-run the validators, dropping an error the host set with `setErrors()`
+   * — a server-side error, typically.
    */
   private commitCustomValue(): void {
     const term = this.searchTerm();
@@ -1137,7 +1143,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       (opt) => !opt.disabled && opt.label.toLowerCase() === lowerTerm
     );
     if (match) {
-      this.selectOption(match);
+      this.selectOption(match, true);
       return;
     }
     // Best-effort guard: silent when options haven't loaded yet (the common
@@ -1149,6 +1155,7 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
       );
     }
     const value = term === '' ? null : (term as unknown as T);
+    const changed = !this.valueMatches(this.selectedValue(), value);
     this.selectedValue.set(value);
     // The remembered label belongs to the option that WAS selected; a custom
     // value came from no option, so keeping it would let `setDisplayFromValue`
@@ -1158,7 +1165,9 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     this.selectedLabel.set(null);
     // The text is the committed value now, no longer a search over the list.
     this.termIsDraft.set(false);
-    this.onChange(value);
+    if (changed) {
+      this.onChange(value);
+    }
   }
 
   /**
@@ -1242,13 +1251,23 @@ export class TnAutocompleteComponent<T = unknown> implements ControlValueAccesso
     return false;
   }
 
-  private selectOption(option: TnAutocompleteOption<T>): void {
+  /**
+   * Commit `option`. `onlyIfChanged` is for the paths that match typed text
+   * back to an option — blur, and Enter with no row highlighted — where the
+   * text is usually just the committed value's own label: writing that value
+   * again would re-run the control's validators and drop an error set with
+   * `setErrors()`. Choosing a row, by click or Enter, always writes.
+   */
+  private selectOption(option: TnAutocompleteOption<T>, onlyIfChanged = false): void {
+    const changed = !this.valueMatches(this.selectedValue(), option.value);
     this.selectedValue.set(option.value);
     this.selectedLabel.set(option.label);
     this.searchTerm.set(option.label);
     this.termIsDraft.set(false);
     this.displayIsFallback = false;
-    this.onChange(option.value);
+    if (changed || !onlyIfChanged) {
+      this.onChange(option.value);
+    }
     this.optionSelected.emit(option);
     this.close();
   }

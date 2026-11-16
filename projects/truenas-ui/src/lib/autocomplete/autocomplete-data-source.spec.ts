@@ -96,9 +96,9 @@ describe('tn-autocomplete [dataSource]', () => {
       .map((option) => option.textContent?.trim() ?? '');
   }
 
-  /** Focus the field, which is what triggers the first page. */
-  function focus(): void {
-    input().dispatchEvent(new Event('focus'));
+  /** Open the field with a click, which is what triggers the first page. */
+  function open(): void {
+    input().click();
     fixture.detectChanges();
   }
 
@@ -182,23 +182,23 @@ describe('tn-autocomplete [dataSource]', () => {
       // current user could not even see issued a query.
       expect(requests).toEqual([]);
 
-      focus();
+      open();
 
       expect(requests).toEqual([{ query: '', page: 0 }]);
     });
 
     it('does not refetch the first page when the panel is reopened', () => {
-      focus();
+      open();
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(requests).toHaveLength(1);
     });
 
     it('debounces typing into a single request for the final term', () => {
-      focus();
+      open();
       requests = [];
 
       input().value = 'a';
@@ -220,7 +220,7 @@ describe('tn-autocomplete [dataSource]', () => {
       // drop rows it matched on some other field — a domain-prefixed username
       // found by its bare name, say.
       responder = () => of([{ label: 'ACME\\jsmith', value: 'jsmith' }]);
-      focus();
+      open();
       type('jsmith');
 
       expect(renderedOptions()).toEqual(['ACME\\jsmith']);
@@ -230,7 +230,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.staticOptions.set([{ label: 'static', value: 'static' }]);
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
     });
@@ -247,7 +247,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.source.set(undefined);
       fixture.detectChanges();
 
-      focus();
+      open();
       type('ali');
       expect(requests).toEqual([]);
 
@@ -256,21 +256,21 @@ describe('tn-autocomplete [dataSource]', () => {
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(requests).toEqual([{ query: 'ali', page: 0 }]);
     });
 
     it('fetches without waiting for a reopen when the panel is already open', () => {
       // The harder half of the same shape, and the one that sticks: `prime` is
-      // only called from open/focus, so a source that binds while the panel is
+      // only called from open, so a source that binds while the panel is
       // UP had nothing left to ask. The panel sat on "No results found" — with
       // the user looking straight at it — until they typed or closed and
       // reopened the field.
       host.source.set(undefined);
       fixture.detectChanges();
 
-      focus();
+      open();
       expect(requests).toEqual([]);
       expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeTruthy();
 
@@ -305,7 +305,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.staticOptions.set(pageOf('', 0, 5));
       fixture.detectChanges();
 
-      focus();
+      open();
 
       // A keystroke legitimately resets the latch — a new term is a new
       // pagination context — so the scroll below is what arms it.
@@ -327,7 +327,7 @@ describe('tn-autocomplete [dataSource]', () => {
   describe('paging', () => {
     it('appends the next page when scrolled to the end', () => {
       responder = (query, page) => of(pageOf(query, page, page < 2 ? 5 : 1));
-      focus();
+      open();
       expect(renderedOptions()).toEqual(pageOf('', 0, 5).map((o) => o.label));
 
       scrollToEnd();
@@ -340,7 +340,7 @@ describe('tn-autocomplete [dataSource]', () => {
       // Without an exhaustion latch every further scroll issues another query
       // at a growing offset that can only come back empty.
       responder = (query, page) => of(pageOf(query, page, page === 0 ? 5 : 2));
-      focus();
+      open();
 
       scrollToEnd();
       expect(requests).toHaveLength(2);
@@ -357,7 +357,7 @@ describe('tn-autocomplete [dataSource]', () => {
       restorePanelGeometry();
       responder = (query, page) => of(pageOf(query, page, page < 2 ? 5 : 1));
 
-      focus();
+      open();
 
       expect(requests.map((request) => request.page)).toEqual([0, 1, 2]);
       expect(renderedOptions()).toHaveLength(11);
@@ -370,14 +370,14 @@ describe('tn-autocomplete [dataSource]', () => {
       restorePanelGeometry();
       responder = (query, page) => of(pageOf(query, page, 5));
 
-      focus();
+      open();
 
       expect(requests.length).toBeLessThanOrEqual(21);
     });
 
     it('restarts paging at page 0 for a new search term', () => {
       responder = (query, page) => of(pageOf(query, page, 5));
-      focus();
+      open();
       scrollToEnd();
       expect(requests).toContainEqual({ query: '', page: 1 });
 
@@ -398,7 +398,7 @@ describe('tn-autocomplete [dataSource]', () => {
         }
         return of(pageOf(query, page, 5));
       };
-      focus();
+      open();
 
       scrollToEnd();
       expect(host.errors).toHaveLength(1);
@@ -417,7 +417,7 @@ describe('tn-autocomplete [dataSource]', () => {
         }
         return of(pageOf(query, page, 5));
       };
-      focus();
+      open();
       scrollToEnd();
 
       type('bob');
@@ -439,7 +439,7 @@ describe('tn-autocomplete [dataSource]', () => {
         ? throwError(() => new Error('boom'))
         : of(pageOf(query, page, 2)));
 
-      focus();
+      open();
       expect(host.errors).toHaveLength(1);
 
       failing = false;
@@ -456,7 +456,7 @@ describe('tn-autocomplete [dataSource]', () => {
         ? throwError(() => new Error('boom'))
         : of(pageOf(query, page, 2)));
 
-      focus();
+      open();
       type('bob');
       expect(host.errors).toHaveLength(2);
 
@@ -474,7 +474,7 @@ describe('tn-autocomplete [dataSource]', () => {
       // succeeded, so the retry asked for page 1 and the first page of matches
       // was silently skipped.
       responder = () => throwError(() => new Error('boom'));
-      focus();
+      open();
       requests = [];
 
       scrollToEnd();
@@ -491,12 +491,12 @@ describe('tn-autocomplete [dataSource]', () => {
         ? throwError(() => new Error('boom'))
         : of(pageOf(query, page, 2)));
 
-      focus();
+      open();
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
 
       failing = false;
-      focus();
+      open();
 
       expect(renderedOptions()).toEqual(pageOf('', 0, 2).map((option) => option.label));
     });
@@ -509,14 +509,14 @@ describe('tn-autocomplete [dataSource]', () => {
         ? throwError(() => new Error('boom'))
         : of(pageOf(query, page, 2)));
 
-      focus();
+      open();
       type('bob');
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
 
       failing = false;
       requests = [];
-      focus();
+      open();
 
       expect(requests).toEqual([{ query: 'bob', page: 0 }]);
     });
@@ -531,7 +531,7 @@ describe('tn-autocomplete [dataSource]', () => {
     });
 
     it('pins the row above the results and keeps it while searching', () => {
-      focus();
+      open();
       expect(renderedOptions()[0]).toBe('Add New');
 
       type('bob');
@@ -542,7 +542,7 @@ describe('tn-autocomplete [dataSource]', () => {
     it('emits actionSelected and commits nothing to the control', () => {
       // The old picker committed a `NEW` sentinel, which satisfied
       // `Validators.required` and could be submitted as if it were a username.
-      focus();
+      open();
       type('bo');
 
       (overlayEl.querySelector('.tn-autocomplete__option') as HTMLElement).click();
@@ -555,12 +555,12 @@ describe('tn-autocomplete [dataSource]', () => {
     });
 
     it('restores the committed value\'s label after the action row is chosen', () => {
-      focus();
+      open();
       (overlayEl.querySelectorAll('.tn-autocomplete__option')[1] as HTMLElement).click();
       fixture.detectChanges();
       expect(host.control.value).toBe('all-p0-0');
 
-      focus();
+      open();
       type('zz');
       (overlayEl.querySelector('.tn-autocomplete__option') as HTMLElement).click();
       fixture.detectChanges();
@@ -571,7 +571,7 @@ describe('tn-autocomplete [dataSource]', () => {
 
     it('still reports no results when only the action row matched', () => {
       responder = () => of([]);
-      focus();
+      open();
 
       expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeTruthy();
       expect(renderedOptions()).toEqual(['Add New']);
@@ -591,7 +591,7 @@ describe('tn-autocomplete [dataSource]', () => {
         // Updating only the display left the field showing the new name, that
         // row marked selected, and the control still on its old value — which
         // is the value a submit then sent.
-        focus();
+        open();
         (overlayEl.querySelector('.tn-autocomplete__option') as HTMLElement).click();
         fixture.detectChanges();
         expect(host.control.value).toBeNull();
@@ -628,7 +628,7 @@ describe('tn-autocomplete [dataSource]', () => {
   describe('[options] alongside a source', () => {
     it('names a written value before the first page is fetched', () => {
       // The record holds an id and only the host can name it, while the
-      // source's first page does not exist until the field is focused.
+      // source's first page does not exist until the field is opened.
       // Ignoring `[options]` here left every id-valued edit form reading as a
       // raw number until someone clicked into it — `tn-chip-input` already
       // treated its own `options` as a label source for exactly this reason.
@@ -644,7 +644,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.control.setValue('4242');
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(renderedOptions()).toContain('archived-user');
     });
@@ -674,7 +674,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.staticOptions.set([{ label: 'archived-user', value: '4242' }]);
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
     });
@@ -684,7 +684,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.control.setValue('all-p0-0');
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
     });
@@ -698,7 +698,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.staticOptions.set([{ label: 'admins', value: 'g-7' }]);
       fixture.detectChanges();
 
-      focus();
+      open();
       type('admins');
       expect(renderedOptions()).not.toContain('admins');
 
@@ -716,7 +716,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.staticOptions.set([{ label: 'admins', value: 'g-7' }]);
       fixture.detectChanges();
 
-      focus();
+      open();
       type('admins');
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
@@ -732,7 +732,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.staticOptions.set([{ label: 'admins', value: 'g-7' }]);
       fixture.detectChanges();
 
-      focus();
+      open();
       type('nobody');
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
@@ -755,7 +755,7 @@ describe('tn-autocomplete [dataSource]', () => {
       responder = () => of([{ label: 'archived-user', value: '4242' }]);
       fixture.detectChanges();
 
-      focus();
+      open();
       (overlayEl.querySelector('.tn-autocomplete__option') as HTMLElement).click();
       fixture.detectChanges();
       expect(host.control.value).toBe('4242');
@@ -780,7 +780,7 @@ describe('tn-autocomplete [dataSource]', () => {
       fixture.detectChanges();
       expect(input().value).toBe('bob');
 
-      focus();
+      open();
 
       expect(renderedOptions()).toContain('bob');
       expect(input().value).toBe('bob');
@@ -793,7 +793,7 @@ describe('tn-autocomplete [dataSource]', () => {
       // value's label as though the server had returned it.
       host.control.setValue('bob');
       fixture.detectChanges();
-      focus();
+      open();
 
       responder = () => of([]);
       type('zzz');
@@ -806,7 +806,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.control.setValue('all-p0-0');
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
     });
@@ -823,7 +823,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.requireSelection.set(true);
       fixture.detectChanges();
 
-      focus();
+      open();
       responder = () => of([]);
       type('zzz');
       expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeTruthy();
@@ -836,7 +836,7 @@ describe('tn-autocomplete [dataSource]', () => {
       // The revert re-asked for the empty term, through the usual debounce.
       jest.advanceTimersByTime(250);
       fixture.detectChanges();
-      focus();
+      open();
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
       expect(overlayEl.querySelector('.tn-autocomplete__no-results')).toBeFalsy();
@@ -846,7 +846,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.allowCustomValue.set(true);
       fixture.detectChanges();
 
-      focus();
+      open();
       responder = () => of([]);
       type('zzz');
 
@@ -858,7 +858,7 @@ describe('tn-autocomplete [dataSource]', () => {
       jest.advanceTimersByTime(250);
       fixture.detectChanges();
 
-      focus();
+      open();
 
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
     });
@@ -869,7 +869,7 @@ describe('tn-autocomplete [dataSource]', () => {
       host.allowCustomValue.set(true);
       fixture.detectChanges();
 
-      focus();
+      open();
       const before = requests.length;
 
       input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -904,7 +904,7 @@ describe('tn-autocomplete [dataSource]', () => {
     }
 
     it('re-queries the current term instead of being suppressed as a duplicate', () => {
-      focus();
+      open();
       type('ann');
       requests = [];
 
@@ -915,7 +915,7 @@ describe('tn-autocomplete [dataSource]', () => {
     });
 
     it('replaces the rows on screen with the new configuration\'s', () => {
-      focus();
+      open();
       expect(renderedOptions()).toEqual(['all-p0-0', 'all-p0-1']);
 
       responder = () => of([{ label: 'narrowed', value: 'narrowed' }]);
@@ -926,7 +926,7 @@ describe('tn-autocomplete [dataSource]', () => {
     });
 
     it('restarts paging, so the next scroll asks for page 1 of the new results', () => {
-      focus();
+      open();
       responder = (query, page) => of(pageOf(query, page, 5));
       component().refreshOptions();
       fixture.detectChanges();
@@ -944,7 +944,7 @@ describe('tn-autocomplete [dataSource]', () => {
       // rows while the input read the newer one, and nothing re-queried until
       // the next keystroke — so picking a row committed a value the typed term
       // had never matched.
-      focus();
+      open();
       type('al');
       requests = [];
 
@@ -967,7 +967,7 @@ describe('tn-autocomplete [dataSource]', () => {
       fixture.detectChanges();
       expect(requests).toEqual([]);
 
-      focus();
+      open();
 
       expect(requests).toEqual([{ query: '', page: 0 }]);
     });
@@ -979,7 +979,7 @@ describe('tn-autocomplete [dataSource]', () => {
       // rows for good — only a keystroke recovered it.
       const inFlight = new Subject<Option[]>();
       responder = () => inFlight;
-      focus();
+      open();
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
 
@@ -992,14 +992,14 @@ describe('tn-autocomplete [dataSource]', () => {
       fixture.detectChanges();
       requests = [];
 
-      focus();
+      open();
 
       expect(requests).toEqual([{ query: '', page: 0 }]);
       expect(renderedOptions()).toEqual(['narrowed']);
     });
 
     it('defers to the next open when the panel is closed, and is not suppressed there', () => {
-      focus();
+      open();
       input().dispatchEvent(new Event('blur'));
       fixture.detectChanges();
 
@@ -1008,7 +1008,7 @@ describe('tn-autocomplete [dataSource]', () => {
       fixture.detectChanges();
       expect(requests).toHaveLength(1);
 
-      focus();
+      open();
 
       // `prime` latches once a query succeeds, and the term has not changed —
       // without the refresh clearing that latch AND arming the duplicate-term
