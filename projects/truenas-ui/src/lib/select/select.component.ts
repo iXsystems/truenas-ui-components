@@ -469,9 +469,9 @@ export class TnSelectComponent<T = unknown> implements ControlValueAccessor, OnD
 
     // Dismiss on any click outside the panel. The transparent backdrop spans
     // the viewport and captures the click, so this fires no matter where the
-    // user clicks (including the empty area beside a narrow panel). Clicking
-    // the trigger while open also hits the backdrop — it closes here and the
-    // trigger's own click never fires, so there's no reopen race.
+    // user clicks. Clicking the trigger while open also hits the backdrop —
+    // it closes here and the trigger's own click never fires, so there's no
+    // reopen race.
     this.overlaySubs.push(
       this.overlayRef.backdropClick().subscribe(() => this.closeDropdown(false)),
     );
