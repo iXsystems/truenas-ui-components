@@ -89,9 +89,22 @@ describe('TnAutocompleteHarness', () => {
       expect(await ac.isOpen()).toBe(false);
     });
 
-    it('should open on focus', async () => {
+    it('should stay closed on focus', async () => {
       const ac = await loader.getHarness(TnAutocompleteHarness);
       await ac.focus();
+      expect(await ac.isOpen()).toBe(false);
+    });
+
+    it('should open with open()', async () => {
+      const ac = await loader.getHarness(TnAutocompleteHarness);
+      await ac.open();
+      expect(await ac.isOpen()).toBe(true);
+    });
+
+    it('should leave an open dropdown open when open() is called again', async () => {
+      const ac = await loader.getHarness(TnAutocompleteHarness);
+      await ac.open();
+      await ac.open();
       expect(await ac.isOpen()).toBe(true);
     });
   });
@@ -128,7 +141,7 @@ describe('TnAutocompleteHarness', () => {
   describe('getOptions', () => {
     it('should return all options when input is empty', async () => {
       const ac = await loader.getHarness(TnAutocompleteHarness);
-      await ac.focus();
+      await ac.open();
       const options = await ac.getOptions();
       expect(options).toEqual(['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry']);
     });

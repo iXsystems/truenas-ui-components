@@ -228,8 +228,8 @@ describe('TnAutocompleteComponent', () => {
     fixture.detectChanges();
   };
 
-  const focusInput = () => {
-    getInput().dispatchEvent(new Event('focus'));
+  const clickInput = () => {
+    getInput().click();
     fixture.detectChanges();
   };
 
@@ -262,8 +262,29 @@ describe('TnAutocompleteComponent', () => {
       expect(getDropdown()).toBeNull();
     });
 
-    it('should open on focus', () => {
-      focusInput();
+    it('should open on click', () => {
+      clickInput();
+      expect(getDropdown()).toBeTruthy();
+    });
+
+    // A host focusing the field — webui's form error handler does after a
+    // failed save — must not cover the error under it with the panel.
+    it('should stay closed on focus', () => {
+      getInput().dispatchEvent(new Event('focus'));
+      fixture.detectChanges();
+      expect(getDropdown()).toBeNull();
+    });
+
+    it('should stay closed on a programmatic focus()', () => {
+      getInput().focus();
+      fixture.detectChanges();
+      expect(document.activeElement).toBe(getInput());
+      expect(getDropdown()).toBeNull();
+    });
+
+    it('should leave the panel open on a second click', () => {
+      clickInput();
+      clickInput();
       expect(getDropdown()).toBeTruthy();
     });
 
@@ -273,7 +294,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should close on Escape', () => {
-      focusInput();
+      clickInput();
       expect(getDropdown()).toBeTruthy();
 
       pressKey('Escape');
@@ -289,7 +310,7 @@ describe('TnAutocompleteComponent', () => {
       ) as HTMLInputElement;
       expect(input.disabled).toBe(true);
 
-      input.dispatchEvent(new Event('focus'));
+      input.click();
       dFixture.detectChanges();
 
       expect(getDropdown()).toBeNull();
@@ -298,7 +319,7 @@ describe('TnAutocompleteComponent', () => {
 
   describe('filtering', () => {
     it('should show all options when input is empty', () => {
-      focusInput();
+      clickInput();
       expect(getOptions().length).toBe(5);
     });
 
@@ -326,14 +347,14 @@ describe('TnAutocompleteComponent', () => {
       host.maxResults.set(2);
       fixture.detectChanges();
 
-      focusInput();
+      clickInput();
       expect(getOptions().length).toBe(2);
     });
   });
 
   describe('selection', () => {
     it('should update input text on option click', () => {
-      focusInput();
+      clickInput();
       getOptions()[1].click();
       fixture.detectChanges();
 
@@ -341,7 +362,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should emit optionSelected', () => {
-      focusInput();
+      clickInput();
       getOptions()[2].click();
       fixture.detectChanges();
 
@@ -349,7 +370,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should update form control value', () => {
-      focusInput();
+      clickInput();
       getOptions()[0].click();
       fixture.detectChanges();
 
@@ -357,7 +378,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should close dropdown after selection', () => {
-      focusInput();
+      clickInput();
       getOptions()[0].click();
       fixture.detectChanges();
 
@@ -372,7 +393,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should highlight next option on ArrowDown', () => {
-      focusInput();
+      clickInput();
       pressKey('ArrowDown');
       expect(getHighlighted()?.textContent?.trim()).toBe('United States');
 
@@ -381,7 +402,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should wrap to first option on ArrowDown from last', () => {
-      focusInput();
+      clickInput();
       for (let i = 0; i < 5; i++) {
         pressKey('ArrowDown');
       }
@@ -392,7 +413,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should highlight previous option on ArrowUp', () => {
-      focusInput();
+      clickInput();
       pressKey('ArrowDown');
       pressKey('ArrowDown');
       pressKey('ArrowUp');
@@ -400,14 +421,14 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should wrap to last option on ArrowUp from first', () => {
-      focusInput();
+      clickInput();
       pressKey('ArrowDown');
       pressKey('ArrowUp');
       expect(getHighlighted()?.textContent?.trim()).toBe('Germany');
     });
 
     it('should select highlighted option on Enter', () => {
-      focusInput();
+      clickInput();
       pressKey('ArrowDown');
       pressKey('ArrowDown');
       pressKey('Enter');
@@ -417,7 +438,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should not select on Enter when nothing is highlighted', () => {
-      focusInput();
+      clickInput();
       pressKey('Enter');
 
       expect(host.control.value).toBeNull();
@@ -447,7 +468,7 @@ describe('TnAutocompleteComponent', () => {
       fixture.detectChanges();
       expect(getInput().disabled).toBe(true);
 
-      focusInput();
+      clickInput();
       expect(getDropdown()).toBeNull();
 
       host.control.enable();
@@ -468,7 +489,7 @@ describe('TnAutocompleteComponent', () => {
       host.control.setValue('MX');
       fixture.detectChanges();
 
-      focusInput();
+      clickInput();
 
       expect(getOptions()).toHaveLength(5);
       expect(getHighlighted()?.textContent?.trim()).toBe('Mexico');
@@ -477,12 +498,12 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('lists every option when reopened after a selection', () => {
-      focusInput();
+      clickInput();
       getOptions()[3].click();
       fixture.detectChanges();
       blurInput();
 
-      focusInput();
+      clickInput();
 
       expect(getInput().value).toBe('United Kingdom');
       expect(getOptions()).toHaveLength(5);
@@ -492,7 +513,7 @@ describe('TnAutocompleteComponent', () => {
     it('filters again once the user edits the text', () => {
       host.control.setValue('US');
       fixture.detectChanges();
-      focusInput();
+      clickInput();
 
       typeInInput('United');
 
@@ -503,22 +524,22 @@ describe('TnAutocompleteComponent', () => {
     it('lists every option after closing repaints an abandoned draft with the label', () => {
       host.control.setValue('US');
       fixture.detectChanges();
-      focusInput();
+      clickInput();
       typeInInput('can');
       blurInput();
 
-      focusInput();
+      clickInput();
 
       expect(getInput().value).toBe('United States');
       expect(getOptions()).toHaveLength(5);
     });
 
     it('keeps filtering by a draft left in a field with no value', () => {
-      focusInput();
+      clickInput();
       typeInInput('can');
       blurInput();
 
-      focusInput();
+      clickInput();
 
       expect(getOptions().map((option) => option.textContent?.trim())).toEqual(['Canada']);
     });
@@ -527,11 +548,11 @@ describe('TnAutocompleteComponent', () => {
       host.requireSelection.set(true);
       host.control.setValue('DE');
       fixture.detectChanges();
-      focusInput();
+      clickInput();
       typeInInput('garbage');
       blurInput();
 
-      focusInput();
+      clickInput();
 
       expect(getInput().value).toBe('Germany');
       expect(getOptions()).toHaveLength(5);
@@ -542,7 +563,7 @@ describe('TnAutocompleteComponent', () => {
       host.control.setValue('DE');
       fixture.detectChanges();
 
-      focusInput();
+      clickInput();
 
       expect(getOptions().map((option) => option.textContent?.trim()))
         .toEqual(['United States', 'Canada', 'Mexico', 'Germany']);
@@ -555,7 +576,7 @@ describe('TnAutocompleteComponent', () => {
       host.maxResults.set(1);
       host.control.setValue('GB');
       fixture.detectChanges();
-      focusInput();
+      clickInput();
 
       typeInInput('United');
 
@@ -570,7 +591,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('should revert to last valid selection on blur with invalid text', () => {
-      focusInput();
+      clickInput();
       getOptions()[0].click();
       fixture.detectChanges();
 
@@ -588,6 +609,53 @@ describe('TnAutocompleteComponent', () => {
 
       expect(getInput().value).toBe('');
       expect(host.control.value).toBeNull();
+    });
+
+    // A blur that leaves the value as it was must not write the control:
+    // writing re-runs its validators and drops an error set with setErrors().
+    describe('blur with the value unchanged', () => {
+      const blurInput = () => {
+        getInput().dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+      };
+
+      it('keeps an error set on the control when the label is untouched', () => {
+        host.control.setValue('US');
+        host.control.setErrors({ server: 'taken' });
+        fixture.detectChanges();
+        const changes = jest.fn();
+        host.control.valueChanges.subscribe(changes);
+
+        clickInput();
+        blurInput();
+
+        expect(changes).not.toHaveBeenCalled();
+        expect(host.control.errors).toEqual({ server: 'taken' });
+      });
+
+      it('keeps an error set on an empty control when a draft is reverted', () => {
+        host.control.setErrors({ server: 'required' });
+        const changes = jest.fn();
+        host.control.valueChanges.subscribe(changes);
+
+        typeInInput('garbage');
+        blurInput();
+
+        expect(changes).not.toHaveBeenCalled();
+        expect(host.control.errors).toEqual({ server: 'required' });
+      });
+
+      it('still commits when the typed label names a different option', () => {
+        host.control.setValue('US');
+        host.control.setErrors({ server: 'taken' });
+        fixture.detectChanges();
+
+        typeInInput('canada');
+        blurInput();
+
+        expect(host.control.value).toBe('CA');
+        expect(host.control.errors).toBeNull();
+      });
     });
   });
 
@@ -689,8 +757,8 @@ describe('TnAutocompleteComponent', () => {
       expect(getVwInput().value).toBe('United States');
     });
 
-    const focusVw = () => {
-      getVwInput().dispatchEvent(new Event('focus'));
+    const clickVw = () => {
+      getVwInput().click();
       vwFixture.detectChanges();
     };
 
@@ -700,7 +768,7 @@ describe('TnAutocompleteComponent', () => {
     it('marks the committed option with aria-selected, independent of the cursor', () => {
       vwHost.control.setValue('CA');
       vwFixture.detectChanges();
-      focusVw();
+      clickVw();
 
       const selected = getVwOptions().filter(
         (opt) => opt.getAttribute('aria-selected') === 'true'
@@ -712,7 +780,7 @@ describe('TnAutocompleteComponent', () => {
     it('pre-highlights the committed option on open so ArrowDown resumes from it', () => {
       vwHost.control.setValue('CA');
       vwFixture.detectChanges();
-      focusVw();
+      clickVw();
 
       const highlighted = overlayEl.querySelector('.tn-autocomplete__option.highlighted');
       expect(highlighted?.textContent?.trim()).toBe('Canada');
@@ -724,7 +792,7 @@ describe('TnAutocompleteComponent', () => {
 
     it('does not pre-highlight when nothing is committed', () => {
       // All options visible, but no committed value to seed the cursor.
-      focusVw();
+      clickVw();
 
       expect(getVwOptions().length).toBeGreaterThan(0);
       expect(overlayEl.querySelector('.tn-autocomplete__option.highlighted')).toBeNull();
@@ -733,7 +801,7 @@ describe('TnAutocompleteComponent', () => {
     it('clears the pre-highlight once the user starts typing', () => {
       vwHost.control.setValue('CA');
       vwFixture.detectChanges();
-      focusVw();
+      clickVw();
       expect(overlayEl.querySelector('.tn-autocomplete__option.highlighted')).toBeTruthy();
 
       typeVw('united');
@@ -751,8 +819,8 @@ describe('TnAutocompleteComponent', () => {
     const getDOptions = (): HTMLElement[] =>
       Array.from(overlayEl.querySelectorAll('.tn-autocomplete__option'));
 
-    const focusD = () => {
-      getDInput().dispatchEvent(new Event('focus'));
+    const clickD = () => {
+      getDInput().click();
       dFixture.detectChanges();
     };
 
@@ -768,14 +836,14 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('renders a disabled option with the disabled class and aria-disabled', () => {
-      focusD();
+      clickD();
       const banana = getDOptions()[1];
       expect(banana.classList).toContain('disabled');
       expect(banana.getAttribute('aria-disabled')).toBe('true');
     });
 
     it('does not commit a disabled option on click', () => {
-      focusD();
+      clickD();
       getDOptions()[1].click();
       dFixture.detectChanges();
 
@@ -784,7 +852,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('skips disabled options during keyboard navigation', () => {
-      focusD();
+      clickD();
       pressDKey('ArrowDown'); // Apple
       pressDKey('ArrowDown'); // skips Banana → Cherry
       pressDKey('Enter');
@@ -793,7 +861,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('wraps past a disabled option going up', () => {
-      focusD();
+      clickD();
       pressDKey('ArrowUp'); // from nothing → last (Cherry)
       pressDKey('ArrowUp'); // skips Banana → Apple
       pressDKey('Enter');
@@ -883,7 +951,7 @@ describe('TnAutocompleteComponent', () => {
       tFixture.nativeElement.querySelector('.tn-autocomplete__input');
 
     const openAndGetOptionTestIds = (): (string | null)[] => {
-      getTInput().dispatchEvent(new Event('focus'));
+      getTInput().click();
       tFixture.detectChanges();
       return Array.from(overlayEl.querySelectorAll<HTMLElement>('.tn-autocomplete__option'))
         .map((el) => el.getAttribute('data-testid'));
@@ -933,7 +1001,7 @@ describe('TnAutocompleteComponent', () => {
       const oFixture = TestBed.createComponent(ObjectValueHostComponent);
       oFixture.detectChanges();
       const input = oFixture.nativeElement.querySelector('.tn-autocomplete__input') as HTMLInputElement;
-      input.dispatchEvent(new Event('focus'));
+      input.click();
       oFixture.detectChanges();
 
       const ids = Array.from(overlayEl.querySelectorAll<HTMLElement>('.tn-autocomplete__option'))
@@ -946,7 +1014,7 @@ describe('TnAutocompleteComponent', () => {
       tHost.loading.set(true);
       tFixture.detectChanges();
 
-      getTInput().dispatchEvent(new Event('focus'));
+      getTInput().click();
       tFixture.detectChanges();
 
       const row = overlayEl.querySelector('.tn-autocomplete__loading');
@@ -970,7 +1038,7 @@ describe('TnAutocompleteComponent', () => {
       const input = cFixture.nativeElement.querySelector('.tn-autocomplete__input') as HTMLInputElement;
       expect(input.getAttribute('data-testid')).toBe('autocomplete-country');
 
-      input.dispatchEvent(new Event('focus'));
+      input.click();
       cFixture.detectChanges();
       const first = overlayEl.querySelector('.tn-autocomplete__option');
       expect(first?.getAttribute('data-testid')).toBe('option-country-united-states');
@@ -998,7 +1066,7 @@ describe('TnAutocompleteComponent', () => {
     });
 
     it('emits opened when the panel opens so consumers can prime the first page', () => {
-      getAsyncInput().dispatchEvent(new Event('focus'));
+      getAsyncInput().click();
       asyncFixture.detectChanges();
       expect(asyncHost.openedCount).toBe(1);
 
@@ -1008,7 +1076,7 @@ describe('TnAutocompleteComponent', () => {
 
       getAsyncInput().dispatchEvent(new Event('blur'));
       asyncFixture.detectChanges();
-      getAsyncInput().dispatchEvent(new Event('focus'));
+      getAsyncInput().click();
       asyncFixture.detectChanges();
       expect(asyncHost.openedCount).toBe(2);
     });
@@ -1196,7 +1264,7 @@ describe('TnAutocompleteComponent', () => {
 
       // The panel is underfilled (jsdom: zero heights) but rendering is already
       // capped at the 3 loaded rows — more data could never fill it.
-      getAsyncInput().dispatchEvent(new Event('focus'));
+      getAsyncInput().click();
       asyncFixture.detectChanges();
       expect(asyncHost.loadMoreCount).toBe(0);
     });
@@ -1221,7 +1289,7 @@ describe('TnAutocompleteComponent', () => {
       // preferred it over the custom value: Escape repainted `beta` over
       // `zzz`, and the next blur read `beta` back and silently committed the
       // option it names over the text the user actually typed.
-      getAsyncInput().dispatchEvent(new Event('focus'));
+      getAsyncInput().click();
       asyncFixture.detectChanges();
       const overlay = TestBed.inject(OverlayContainer).getContainerElement();
       (Array.from(overlay.querySelectorAll('.tn-autocomplete__option'))
@@ -1234,7 +1302,7 @@ describe('TnAutocompleteComponent', () => {
       asyncFixture.detectChanges();
       expect(asyncHost.control.value).toBe('zzz');
 
-      getAsyncInput().dispatchEvent(new Event('focus'));
+      getAsyncInput().click();
       asyncFixture.detectChanges();
       getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       asyncFixture.detectChanges();
@@ -1254,6 +1322,110 @@ describe('TnAutocompleteComponent', () => {
       asyncFixture.detectChanges();
 
       expect(asyncHost.control.value).toBeNull();
+    });
+
+    // Clicking outside blurs the field, and a blur that commits the value it
+    // already holds must not write the control: writing re-runs its validators
+    // and drops an error set with setErrors() — webui's server-side errors.
+    describe('blur with the value unchanged', () => {
+      const blurAsync = () => {
+        getAsyncInput().dispatchEvent(new Event('blur'));
+        asyncFixture.detectChanges();
+      };
+
+      const watchChanges = (): jest.Mock => {
+        const changes = jest.fn();
+        asyncHost.control.valueChanges.subscribe(changes);
+        return changes;
+      };
+
+      it('keeps an error on a value that is an option', () => {
+        asyncHost.control.setValue('beta');
+        asyncHost.control.setErrors({ server: 'taken' });
+        asyncFixture.detectChanges();
+        const changes = watchChanges();
+
+        getAsyncInput().click();
+        asyncFixture.detectChanges();
+        blurAsync();
+
+        expect(changes).not.toHaveBeenCalled();
+        expect(asyncHost.control.errors).toEqual({ server: 'taken' });
+      });
+
+      it('keeps an error on a custom value', () => {
+        asyncHost.control.setValue('/custom/path');
+        asyncHost.control.setErrors({ server: 'missing' });
+        asyncFixture.detectChanges();
+        const changes = watchChanges();
+
+        getAsyncInput().focus();
+        blurAsync();
+
+        expect(changes).not.toHaveBeenCalled();
+        expect(asyncHost.control.errors).toEqual({ server: 'missing' });
+      });
+
+      it('keeps an error on an empty control', () => {
+        asyncHost.control.setErrors({ server: 'required' });
+        const changes = watchChanges();
+
+        getAsyncInput().focus();
+        blurAsync();
+
+        expect(changes).not.toHaveBeenCalled();
+        expect(asyncHost.control.errors).toEqual({ server: 'required' });
+      });
+
+      it('keeps an error when the same value is retyped', () => {
+        asyncHost.control.setValue('/custom/path');
+        asyncHost.control.setErrors({ server: 'missing' });
+        asyncFixture.detectChanges();
+        const changes = watchChanges();
+
+        typeAsync('/custom/path');
+        blurAsync();
+
+        expect(changes).not.toHaveBeenCalled();
+        expect(asyncHost.control.errors).toEqual({ server: 'missing' });
+      });
+
+      it('keeps an error when Enter commits the same value', () => {
+        asyncHost.control.setValue('/custom/path');
+        asyncHost.control.setErrors({ server: 'missing' });
+        asyncFixture.detectChanges();
+        const changes = watchChanges();
+
+        getAsyncInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        asyncFixture.detectChanges();
+
+        expect(changes).not.toHaveBeenCalled();
+        expect(asyncHost.control.errors).toEqual({ server: 'missing' });
+      });
+
+      it('still commits a changed value, which clears the error', () => {
+        asyncHost.control.setValue('/custom/path');
+        asyncHost.control.setErrors({ server: 'missing' });
+        asyncFixture.detectChanges();
+        const changes = watchChanges();
+
+        typeAsync('/other/path');
+        blurAsync();
+
+        expect(changes).toHaveBeenCalledWith('/other/path');
+        expect(asyncHost.control.value).toBe('/other/path');
+        expect(asyncHost.control.errors).toBeNull();
+      });
+
+      it('still commits an option picked by typing its label', () => {
+        asyncHost.control.setValue('beta');
+        asyncFixture.detectChanges();
+
+        typeAsync('gamma');
+        blurAsync();
+
+        expect(asyncHost.control.value).toBe('gamma');
+      });
     });
   });
 });

@@ -220,6 +220,11 @@ function focusInput(fixture: ComponentFixture<PanelHost>): void {
   fixture.detectChanges();
 }
 
+function clickInput(fixture: ComponentFixture<PanelHost>): void {
+  (input(fixture) as HTMLElement).click();
+  fixture.detectChanges();
+}
+
 const CASES: PopupCase[] = [
   {
     name: 'tn-file-picker',
@@ -260,7 +265,7 @@ const CASES: PopupCase[] = [
   {
     name: 'tn-autocomplete',
     host: AutocompletePanelHostComponent,
-    openPopup: focusInput,
+    openPopup: clickInput,
     popup: '.tn-autocomplete__dropdown',
     escapeFrom: input,
   },
@@ -539,8 +544,8 @@ describe('Escape in a combobox inside a tn-drawer (#324)', () => {
   });
 
   it('closes the tn-autocomplete panel and leaves the drawer open', () => {
-    const field = inDrawer('tn-autocomplete input');
-    field.dispatchEvent(new Event('focus'));
+    const field = inDrawer('tn-autocomplete input') as HTMLElement;
+    field.click();
     fixture.detectChanges();
     expect(overlayEl.querySelector('.tn-autocomplete__dropdown')).not.toBeNull();
 

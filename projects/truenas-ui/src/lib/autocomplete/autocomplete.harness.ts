@@ -114,7 +114,7 @@ export class TnAutocompleteHarness extends ComponentHarness {
    * ```typescript
    * const ac = await loader.getHarness(TnAutocompleteHarness);
    * expect(await ac.isOpen()).toBe(false);
-   * await ac.focus();
+   * await ac.open();
    * expect(await ac.isOpen()).toBe(true);
    * ```
    */
@@ -143,8 +143,8 @@ export class TnAutocompleteHarness extends ComponentHarness {
   }
 
   /**
-   * Gets the labels of all visible options in the dropdown.
-   * Opens the dropdown via focus if not already open.
+   * Gets the labels of all visible options in the dropdown. Reads an open
+   * dropdown only: call {@link open} or {@link setInputValue} first.
    *
    * @returns Promise resolving to an array of option label strings.
    *
@@ -168,7 +168,7 @@ export class TnAutocompleteHarness extends ComponentHarness {
   }
 
   /**
-   * Selects an option by its label text. Opens the dropdown via focus if needed.
+   * Selects an option by its label text. Opens the dropdown via a click if needed.
    *
    * @param filter The text to match against option labels. Supports string or RegExp.
    * @returns Promise that resolves when the option has been selected.
@@ -186,8 +186,7 @@ export class TnAutocompleteHarness extends ComponentHarness {
    * ```
    */
   async selectOption(filter: string | RegExp): Promise<void> {
-    const input = await this._input();
-    await input.focus();
+    await this.open();
 
     // Options render inside a CDK overlay (outside the host element), so search
     // the document root rather than the harness-local subtree.
@@ -205,7 +204,28 @@ export class TnAutocompleteHarness extends ComponentHarness {
   }
 
   /**
-   * Focuses the autocomplete input, which opens the dropdown.
+   * Opens the dropdown by clicking the input, unless it is already open.
+   *
+   * @returns Promise that resolves when the dropdown has been opened.
+   *
+   * @example
+   * ```typescript
+   * const ac = await loader.getHarness(TnAutocompleteHarness);
+   * await ac.open();
+   * expect(await ac.isOpen()).toBe(true);
+   * ```
+   */
+  async open(): Promise<void> {
+    if (await this.isOpen()) {
+      return;
+    }
+    const input = await this._input();
+    return input.click();
+  }
+
+  /**
+   * Focuses the autocomplete input. Focus alone does not open the dropdown;
+   * use {@link open} for that.
    *
    * @returns Promise that resolves when the input is focused.
    *
@@ -213,7 +233,7 @@ export class TnAutocompleteHarness extends ComponentHarness {
    * ```typescript
    * const ac = await loader.getHarness(TnAutocompleteHarness);
    * await ac.focus();
-   * expect(await ac.isOpen()).toBe(true);
+   * expect(await ac.isOpen()).toBe(false);
    * ```
    */
   async focus(): Promise<void> {
@@ -247,7 +267,7 @@ export class TnAutocompleteHarness extends ComponentHarness {
    * @example
    * ```typescript
    * const ac = await loader.getHarness(TnAutocompleteHarness);
-   * await ac.focus();
+   * await ac.open();
    * expect(await ac.isLoading()).toBe(true);
    * ```
    */
