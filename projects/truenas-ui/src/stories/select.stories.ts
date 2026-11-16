@@ -430,6 +430,52 @@ export const NearRightEdge: Story = {
   },
 };
 
+// A wide trigger with short labels: the panel takes the trigger's full width
+// rather than shrinking to the options, and lines up with its left edge.
+export const PanelMatchesTriggerWidth: Story = {
+  render: (args) => ({
+    props: {
+      ...args,
+      logSelection: (_value: unknown) => {},
+    },
+    template: `
+      <tn-form-field
+        label="Choose an option"
+        hint="The open panel is as wide as the field">
+        <tn-select
+          [options]="options"
+          placeholder="Select an option"
+          (selectionChange)="logSelection($event)">
+        </tn-select>
+      </tn-form-field>
+    `,
+    moduleMetadata: {
+      imports: [TnFormFieldComponent],
+    },
+  }),
+  args: {
+    options: defaultOptions,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByRole('combobox');
+
+    await userEvent.click(trigger);
+    const panel = await waitFor(() => {
+      const el = document.querySelector('.tn-select-dropdown');
+      if (!el) {throw new Error('dropdown panel not rendered yet');}
+      return el as HTMLElement;
+    });
+
+    await waitFor(async () => {
+      const triggerRect = trigger.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      await expect(panelRect.width).toBeGreaterThanOrEqual(triggerRect.width - 1);
+      await expect(Math.abs(panelRect.left - triggerRect.left)).toBeLessThanOrEqual(1);
+    });
+  },
+};
+
 export const EmptyWithCustomMessage: Story = {
   render: (args) => ({
     props: {
