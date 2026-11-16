@@ -387,7 +387,8 @@ describe('TnSelectHarness', () => {
   describe('panel width', () => {
     // jsdom does no layout, so the trigger's width is stubbed and the test
     // asserts the pane style CDK writes; the browser-side check that the panel
-    // really is as wide as the trigger is the Default story's play function.
+    // really is as wide as the trigger is the PanelMatchesTriggerWidth story's
+    // play function.
     let triggerWidth: number;
 
     const pane = (): HTMLElement => document.querySelector<HTMLElement>('.cdk-overlay-pane')!;
