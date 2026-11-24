@@ -171,7 +171,7 @@ describe('tn-menu suffix icon and tooltip', () => {
       expect(tooltipText()).toBe('Projected reason');
     });
 
-    it('lets the pointer through a disabled button to its row', () => {
+    it('marks only a disabled item\'s row with the class that passes the pointer to it', () => {
       expect(row('Locked').classList).toContain('tn-menu-item-row--disabled');
       expect(row('Alpha').classList).not.toContain('tn-menu-item-row--disabled');
     });
