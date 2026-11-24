@@ -63,6 +63,16 @@
   z-index: 1000;
 }
 
+// Hosts the item's tooltip. A disabled <button> gets no pointer events, so on a
+// disabled item the button lets them through to this row instead.
+.tn-menu-item-row--disabled {
+  cursor: not-allowed;
+
+  > .tn-menu-item {
+    pointer-events: none;
+  }
+}
+
 .tn-menu-item {
   // Hover, focus and both selected states fill --tn-alt-bg2, and `tnMenuItem`
   // content is whatever the caller put in the row — so a projected
@@ -163,12 +173,32 @@
   opacity: 0.7;
 }
 
+// Trailing order: label, shortcut, suffix icon, caret. The label's `flex: 1`
+// pushes the rest to the end; the auto margin does the same after projected
+// content, which has no label to grow.
+.tn-menu-item-suffix-icon {
+  font-size: 1rem;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+// The spacer stands in for the caret on a leaf row with a suffix icon, in a
+// panel that has submenus, so suffix icons stay in one column. Both have a
+// fixed width so the caret column lines up across rows.
+.tn-menu-item-arrow,
+.tn-menu-item-arrow-spacer {
+  width: 10px;
+  margin-left: 8px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
 .tn-menu-item-arrow {
   font-size: 10px;
-  margin-left: 8px;
   color: var(--tn-fg2, #666666);
   transition: transform 0.2s ease;
-  flex-shrink: 0;
 }
 
 .tn-menu-item--nested {

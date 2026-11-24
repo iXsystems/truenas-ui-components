@@ -1,6 +1,6 @@
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectionStrategy, forwardRef, inject, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, forwardRef, inject, input } from '@angular/core';
 import { LabelMarkupPipe } from '../pipes/label-markup/label-markup.pipe';
 import { TnTestIdDirective, scopeTestId, type TnTestIdValue } from '../test-id';
 import { TnMenuActivateHoverDirective } from './menu-activate-hover.directive';
@@ -8,6 +8,7 @@ import type { TnMenuItemComponent } from './menu-item.component';
 import type { TnMenuItem } from './menu.component';
 import { TnMenuComponent } from './menu.component';
 import { TnIconComponent } from '../icon/icon.component';
+import { TnTooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * Renders one complete menu panel: the `<div cdkMenu>` container plus every
@@ -51,6 +52,7 @@ import { TnIconComponent } from '../icon/icon.component';
     CdkMenuTrigger,
     TnIconComponent,
     TnTestIdDirective,
+    TnTooltipDirective,
     TnMenuActivateHoverDirective,
     LabelMarkupPipe,
     forwardRef(() => TnMenuPanelComponent),
@@ -68,6 +70,13 @@ export class TnMenuPanelComponent {
 
   /** Applies the nested-submenu styling/offset. */
   nested = input<boolean>(false);
+
+  /**
+   * Whether any item in this panel opens a submenu. A leaf item with a suffix
+   * icon then reserves the caret's width after it, so suffix icons line up in
+   * one column whether or not their row also carries a caret.
+   */
+  protected hasSubmenus = computed(() => this.items().some((item) => !item.separator && !!item.children?.length));
 
   // The panel is rendered inside a CDK overlay portal, but the portal's
   // template is declared inside `<tn-menu>` — so the view-DI chain still walks

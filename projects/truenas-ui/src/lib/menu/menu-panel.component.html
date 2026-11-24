@@ -3,83 +3,127 @@
     Projected <tn-menu-item> entries (root panel only) render as sibling
     cdkMenuItem buttons so they participate in CdkMenu's keyboard navigation
     (arrow keys, Home/End, type-ahead) alongside the items() array below.
+
+    Every item button sits in a `.tn-menu-item-row` that carries the item's
+    tooltip. A disabled <button> gets no pointer events in every browser, so the
+    row takes them instead (see `.tn-menu-item-row--disabled`); the tooltip's
+    description still lands on the button, its single interactive descendant.
   -->
   @for (projected of projectedItems(); track projected) {
-    <button
-      cdkMenuItem
-      class="tn-menu-item"
-      type="button"
-      tnTestIdType="button"
-      [tnTestId]="projected.resolvedTestId()"
-      [disabled]="projected.disabled()"
-      [cdkMenuItemDisabled]="projected.disabled()"
-      [class.disabled]="projected.disabled()"
-      [class.tn-menu-item--selected]="projected.selected()"
-      [attr.aria-current]="projected.selected() ? 'true' : null"
-      (click)="onProjectedClick(projected, $event)"
+    <div
+      class="tn-menu-item-row"
+      role="none"
+      [class.tn-menu-item-row--disabled]="projected.disabled()"
+      [tnTooltip]="projected.tooltip() ?? null"
+      [tnTooltipSticky]="false"
     >
-      @if (projected.label() !== undefined) {
-        @if (projected.icon()) {
-          <tn-icon size="sm" class="tn-menu-item-icon" [name]="projected.icon()!" [library]="projected.iconLibrary()" />
+      <button
+        cdkMenuItem
+        class="tn-menu-item"
+        type="button"
+        tnTestIdType="button"
+        [tnTestId]="projected.resolvedTestId()"
+        [disabled]="projected.disabled()"
+        [cdkMenuItemDisabled]="projected.disabled()"
+        [class.disabled]="projected.disabled()"
+        [class.tn-menu-item--selected]="projected.selected()"
+        [attr.aria-current]="projected.selected() ? 'true' : null"
+        (click)="onProjectedClick(projected, $event)"
+      >
+        @if (projected.label() !== undefined) {
+          @if (projected.icon()) {
+            <tn-icon size="sm" class="tn-menu-item-icon" [name]="projected.icon()!" [library]="projected.iconLibrary()" />
+          }
+          <span class="tn-menu-item-label" [innerHTML]="projected.label() | tnLabelMarkup"></span>
+          @if (projected.shortcut()) {
+            <span class="tn-menu-item-shortcut">{{ projected.shortcut() }}</span>
+          }
+        } @else {
+          <ng-container [ngTemplateOutlet]="projected.content()" />
         }
-        <span class="tn-menu-item-label" [innerHTML]="projected.label() | tnLabelMarkup"></span>
-        @if (projected.shortcut()) {
-          <span class="tn-menu-item-shortcut">{{ projected.shortcut() }}</span>
+        @if (projected.suffixIcon()) {
+          <tn-icon size="sm" class="tn-menu-item-suffix-icon" [name]="projected.suffixIcon()!" [library]="projected.suffixIconLibrary()" />
+          @if (hasSubmenus()) {
+            <span class="tn-menu-item-arrow-spacer" aria-hidden="true"></span>
+          }
         }
-      } @else {
-        <ng-container [ngTemplateOutlet]="projected.content()" />
-      }
-    </button>
+      </button>
+    </div>
   }
 
   @for (item of items(); track trackByItemId($index, item)) {
     @if (item.separator) {
       <div class="tn-menu-separator" role="separator"></div>
     } @else if (!item.children || item.children.length === 0) {
-      <button
-        cdkMenuItem
-        class="tn-menu-item"
-        type="button"
-        tnTestIdType="button"
-        [tnTestId]="resolvedItemTestId(item)"
-        [disabled]="item.disabled"
-        [cdkMenuItemDisabled]="!!item.disabled"
-        [class.disabled]="item.disabled"
-        [class.tn-menu-item--selected]="item.selected"
-        [attr.aria-current]="item.selected ? 'true' : null"
-        (click)="onItemClick(item)"
+      <div
+        class="tn-menu-item-row"
+        role="none"
+        [class.tn-menu-item-row--disabled]="item.disabled"
+        [tnTooltip]="item.tooltip ?? null"
+        [tnTooltipSticky]="false"
       >
-        @if (item.icon) {
-          <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
-        }
-        <span class="tn-menu-item-label" [innerHTML]="item.label | tnLabelMarkup"></span>
-        @if (item.shortcut) {
-          <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
-        }
-      </button>
+        <button
+          cdkMenuItem
+          class="tn-menu-item"
+          type="button"
+          tnTestIdType="button"
+          [tnTestId]="resolvedItemTestId(item)"
+          [disabled]="item.disabled"
+          [cdkMenuItemDisabled]="!!item.disabled"
+          [class.disabled]="item.disabled"
+          [class.tn-menu-item--selected]="item.selected"
+          [attr.aria-current]="item.selected ? 'true' : null"
+          (click)="onItemClick(item)"
+        >
+          @if (item.icon) {
+            <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
+          }
+          <span class="tn-menu-item-label" [innerHTML]="item.label | tnLabelMarkup"></span>
+          @if (item.shortcut) {
+            <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
+          }
+          @if (item.suffixIcon) {
+            <tn-icon size="sm" class="tn-menu-item-suffix-icon" [name]="item.suffixIcon!" [library]="item.suffixIconLibrary" />
+            @if (hasSubmenus()) {
+              <span class="tn-menu-item-arrow-spacer" aria-hidden="true"></span>
+            }
+          }
+        </button>
+      </div>
     } @else {
-      <button
-        cdkMenuItem
-        class="tn-menu-item tn-menu-item--nested"
-        type="button"
-        tnTestIdType="button"
-        [tnTestId]="resolvedItemTestId(item)"
-        [cdkMenuTriggerFor]="submenuTpl"
-        [disabled]="item.disabled"
-        [cdkMenuItemDisabled]="!!item.disabled"
-        [class.disabled]="item.disabled"
-        [class.tn-menu-item--selected]="item.selected"
-        [attr.aria-current]="item.selected ? 'true' : null"
+      <div
+        class="tn-menu-item-row"
+        role="none"
+        [class.tn-menu-item-row--disabled]="item.disabled"
+        [tnTooltip]="item.tooltip ?? null"
+        [tnTooltipSticky]="false"
       >
-        @if (item.icon) {
-          <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
-        }
-        <span class="tn-menu-item-label" [innerHTML]="item.label | tnLabelMarkup"></span>
-        @if (item.shortcut) {
-          <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
-        }
-        <span class="tn-menu-item-arrow">▶</span>
-      </button>
+        <button
+          cdkMenuItem
+          class="tn-menu-item tn-menu-item--nested"
+          type="button"
+          tnTestIdType="button"
+          [tnTestId]="resolvedItemTestId(item)"
+          [cdkMenuTriggerFor]="submenuTpl"
+          [disabled]="item.disabled"
+          [cdkMenuItemDisabled]="!!item.disabled"
+          [class.disabled]="item.disabled"
+          [class.tn-menu-item--selected]="item.selected"
+          [attr.aria-current]="item.selected ? 'true' : null"
+        >
+          @if (item.icon) {
+            <tn-icon size="sm" class="tn-menu-item-icon" [name]="item.icon!" [library]="item.iconLibrary" />
+          }
+          <span class="tn-menu-item-label" [innerHTML]="item.label | tnLabelMarkup"></span>
+          @if (item.shortcut) {
+            <span class="tn-menu-item-shortcut">{{ item.shortcut }}</span>
+          }
+          @if (item.suffixIcon) {
+            <tn-icon size="sm" class="tn-menu-item-suffix-icon" [name]="item.suffixIcon!" [library]="item.suffixIconLibrary" />
+          }
+          <span class="tn-menu-item-arrow">▶</span>
+        </button>
+      </div>
 
       <ng-template #submenuTpl>
         <tn-menu-panel [items]="item.children!" [nested]="true" />

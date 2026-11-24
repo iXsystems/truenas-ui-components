@@ -7,8 +7,9 @@ import type { TnTestIdValue } from '../test-id';
  * Projection-based menu item for use inside `<tn-menu>`.
  *
  * Two authoring modes:
- * 1. **Convenience** — set `label` (and optionally `icon`/`shortcut`); the
- *    default icon + label + shortcut layout renders.
+ * 1. **Convenience** — set `label` (and optionally `icon`/`shortcut`/
+ *    `suffixIcon`); the default icon + label + shortcut + suffix icon layout
+ *    renders.
  * 2. **Custom content** — omit `label`; project arbitrary content via
  *    `<ng-content>` (badges, two-line layouts, etc.).
  *
@@ -62,6 +63,20 @@ export class TnMenuItemComponent {
   icon = input<string | undefined>(undefined);
   iconLibrary = input<'material' | 'mdi' | 'custom' | 'lucide' | undefined>(undefined);
   shortcut = input<string | undefined>(undefined);
+  /**
+   * Icon drawn at the end of the row, after the label (or the projected
+   * content) and the shortcut — e.g. a lock on an item the user lacks
+   * permission for.
+   */
+  suffixIcon = input<string | undefined>(undefined);
+  suffixIconLibrary = input<'material' | 'mdi' | 'custom' | 'lucide' | undefined>(undefined);
+  /**
+   * Text shown on hover, and on keyboard focus, of the item. Shown on a
+   * disabled item too, where it is the usual way to say why it is disabled.
+   * Plain text is the intended use: a link in it cannot be reached, because a
+   * menu item's click is spoken for.
+   */
+  tooltip = input<string | undefined>(undefined);
   disabled = input<boolean>(false);
   selected = input<boolean>(false);
   /**

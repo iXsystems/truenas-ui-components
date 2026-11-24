@@ -9,6 +9,7 @@ import type { TnMenuItem } from './menu.component';
 import { TnMenuComponent } from './menu.component';
 import { TnMenuHarness } from './menu.harness';
 import { TnIconTesting } from '../icon/icon-testing';
+import { TnTooltipHarness } from '../tooltip/tooltip.harness';
 
 @Component({
   selector: 'tn-test-host',
@@ -129,5 +130,54 @@ describe('TnMenuHarness', () => {
     openMenu();
     const menu = await rootLoader.getHarness(TnMenuHarness);
     expect(await menu.getSelectedItemLabel()).toBeNull();
+  });
+
+  describe('suffix icon and tooltip', () => {
+    beforeEach(() => {
+      hostComponent.items.set([
+        { id: 'edit', label: 'Edit', tooltip: 'Edit this dataset' },
+        {
+          id: 'delete',
+          label: 'Delete',
+          disabled: true,
+          suffixIcon: 'lock',
+          suffixIconLibrary: 'mdi',
+          tooltip: 'Missing permissions for this action',
+        },
+        { id: 'plain', label: 'Plain' },
+      ]);
+      fixture.detectChanges();
+      openMenu();
+    });
+
+    it('reads the suffix icon, or null without one', async () => {
+      const menu = await rootLoader.getHarness(TnMenuHarness);
+      expect(await menu.getItemSuffixIcon({ label: 'Delete' })).toBe('lock');
+      expect(await menu.getItemSuffixIcon({ label: 'Plain' })).toBeNull();
+    });
+
+    it('reads the tooltip of an enabled and of a disabled item, or null without one', async () => {
+      const menu = await rootLoader.getHarness(TnMenuHarness);
+      expect(await menu.getItemTooltip({ label: 'Edit' })).toBe('Edit this dataset');
+      expect(await menu.getItemTooltip({ label: 'Delete' })).toBe('Missing permissions for this action');
+      expect(await menu.getItemTooltip({ label: 'Plain' })).toBeNull();
+    });
+
+    it('shows a disabled item\'s tooltip on hoverItem', async () => {
+      const menu = await rootLoader.getHarness(TnMenuHarness);
+      await menu.hoverItem({ label: 'Delete' });
+      // The tooltip opens from a setTimeout, which zoneless stabilisation does not wait for.
+      await new Promise<void>((resolve) => setTimeout(resolve));
+
+      const tooltip = await rootLoader.getHarness(TnTooltipHarness);
+      expect(await tooltip.getText()).toBe('Missing permissions for this action');
+    });
+
+    it('throws for an item that does not exist', async () => {
+      const menu = await rootLoader.getHarness(TnMenuHarness);
+      await expect(menu.getItemTooltip({ label: 'Nope' })).rejects.toThrow(
+        'Could not find menu item with label "Nope"'
+      );
+    });
   });
 });

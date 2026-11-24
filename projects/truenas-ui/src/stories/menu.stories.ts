@@ -3,10 +3,14 @@ import { expect, userEvent, within } from 'storybook/test';
 import { TestIdInspectorComponent } from './testid-inspector.component';
 import { loadHarnessDoc } from '../../.storybook/harness-docs-loader';
 import { TnButtonComponent } from '../lib/button/button.component';
+import { tnIconMarker } from '../lib/icon/icon-marker';
 import { TnMenuItemComponent } from '../lib/menu/menu-item.component';
 import { TnMenuTriggerDirective } from '../lib/menu/menu-trigger.directive';
 import type { TnMenuItem } from '../lib/menu/menu.component';
 import { TnMenuComponent } from '../lib/menu/menu.component';
+
+tnIconMarker('lock', 'mdi');
+tnIconMarker('open-in-new', 'mdi');
 
 const harnessDoc = loadHarnessDoc('menu');
 
@@ -479,6 +483,108 @@ export const TemplatedItemsCustomLayout: Story = {
     docs: {
       description: {
         story: 'Omit the `label` input on `<tn-menu-item>` to project arbitrary content (badges, two-line layouts, etc.).',
+      },
+    },
+  },
+};
+
+const suffixIconItems: TnMenuItem[] = [
+  { id: 'edit', label: 'Edit', shortcut: '⌘E', tooltip: 'Rename or change this dataset' },
+  {
+    id: 'delete',
+    label: 'Delete',
+    disabled: true,
+    suffixIcon: 'lock',
+    suffixIconLibrary: 'mdi',
+    tooltip: 'Missing permissions for this action',
+  },
+  {
+    id: 'snapshot',
+    label: 'Snapshot',
+    shortcut: '⌘S',
+    disabled: true,
+    suffixIcon: 'lock',
+    suffixIconLibrary: 'mdi',
+    tooltip: 'Missing permissions for this action',
+  },
+  { id: 'sep1', label: '', separator: true },
+  {
+    id: 'share',
+    label: 'Share',
+    shortcut: '⌘H',
+    suffixIcon: 'lock',
+    suffixIconLibrary: 'mdi',
+    tooltip: 'Some protocols need more permissions',
+    children: [
+      { id: 'smb', label: 'SMB' },
+      {
+        id: 'nfs',
+        label: 'NFS',
+        disabled: true,
+        suffixIcon: 'lock',
+        suffixIconLibrary: 'mdi',
+        tooltip: 'Missing permissions for this action',
+      },
+    ],
+  },
+  { id: 'export', label: 'Export', children: [{ id: 'json', label: 'JSON' }, { id: 'csv', label: 'CSV' }] },
+  { id: 'sep2', label: '', separator: true },
+  { id: 'docs', label: 'Documentation', suffixIcon: 'open-in-new', suffixIconLibrary: 'mdi' },
+];
+
+export const SuffixIconsAndTooltips: Story = {
+  args: {
+    items: suffixIconItems,
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <tn-button label="Dataset actions" [tnMenuTriggerFor]="menu" />
+      <tn-menu #menu [items]="items" (menuItemClick)="menuItemClick($event)">
+        <tn-menu-item
+          id="permissions"
+          label="Edit permissions"
+          suffixIcon="lock"
+          suffixIconLibrary="mdi"
+          tooltip="Missing permissions for this action"
+          [disabled]="true"
+        />
+      </tn-menu>
+    `,
+    moduleMetadata: {
+      imports: [TnMenuTriggerDirective, TnButtonComponent, TnMenuItemComponent],
+    },
+  }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: /dataset actions/i }));
+
+    // The menu and the tooltip both render in overlays outside the canvas. A
+    // disabled item's button lets the pointer through to its row, which is
+    // what carries the tooltip, so the row is what gets hovered.
+    const page = within(document.body);
+    const deleteItem = await page.findByRole('menuitem', { name: /^Delete/ });
+    await expect(deleteItem).toBeDisabled();
+    await userEvent.hover(deleteItem.closest('.tn-menu-item-row')!);
+    await expect(await page.findByText('Missing permissions for this action', { selector: '.tn-tooltip__message' }))
+      .toBeInTheDocument();
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: `
+\`suffixIcon\` / \`suffixIconLibrary\` draw an icon at the end of a row, and \`tooltip\` shows text on hover and keyboard focus. Both exist on the \`TnMenuItem\` interface and as \`<tn-menu-item>\` inputs.
+
+The tooltip works on a **disabled** item, which is its main use: saying why an action is unavailable. A disabled button gets no pointer events, so each item sits in a \`.tn-menu-item-row\` that carries the tooltip, and a disabled button lets the pointer through to it. Keyboard navigation still skips disabled items, so a disabled item's tooltip is reached by pointer only; its text is also the button's accessible description.
+
+**Trailing order:** label, shortcut, suffix icon, then the \`▶\` caret of an item with children. The caret has a fixed width, so it lines up across the panel. In a panel that has submenus, a leaf item with a suffix icon reserves the caret's width after it, so suffix icons line up in one column too (compare *Delete* with *Share*).
+
+\`\`\`typescript
+{ id: 'delete', label: 'Delete', disabled: true,
+  suffixIcon: 'lock', suffixIconLibrary: 'mdi',
+  tooltip: 'Missing permissions for this action' }
+\`\`\`
+        `,
       },
     },
   },

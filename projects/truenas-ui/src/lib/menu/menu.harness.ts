@@ -1,18 +1,25 @@
 import type { BaseHarnessFilters } from '@angular/cdk/testing';
 import { ComponentHarness, HarnessPredicate } from '@angular/cdk/testing';
 
+/** Prefix of the ids CDK's `AriaDescriber` gives the description elements `tnTooltip` creates. */
+const TOOLTIP_DESCRIPTION_ID_PREFIX = 'cdk-describedby-message';
+
 /**
- * Harness for a single menu item (`button.tn-menu-item`).
+ * Harness for a single menu item: the `.tn-menu-item-row` holding its
+ * `button.tn-menu-item`. The row is the host because it is what carries the
+ * tooltip and takes the pointer on a disabled item.
  * @internal Used by TnMenuHarness to interact with individual items.
  */
 class TnMenuItemHarness extends ComponentHarness {
-  static hostSelector = '.tn-menu-item';
+  static hostSelector = '.tn-menu-item-row';
 
+  private _button = this.locatorFor('.tn-menu-item');
   private _label = this.locatorForOptional('.tn-menu-item-label');
+  private _suffixIcon = this.locatorForOptional('.tn-menu-item-suffix-icon');
 
   /**
    * Gets the label text of this menu item. Reads `.tn-menu-item-label` when
-   * present (the default layout), otherwise falls back to the host text so
+   * present (the default layout), otherwise falls back to the button's text so
    * fully-projected `<tn-menu-item>` content still resolves a label.
    */
   async getLabel(): Promise<string> {
@@ -20,27 +27,58 @@ class TnMenuItemHarness extends ComponentHarness {
     if (label) {
       return (await label.text()).trim();
     }
-    const host = await this.host();
-    return (await host.text()).trim();
+    const button = await this._button();
+    return (await button.text()).trim();
   }
 
   /** Checks whether this menu item is disabled via the native `disabled` attribute. */
   async isDisabled(): Promise<boolean> {
-    const host = await this.host();
-    const disabled = await host.getProperty<boolean>('disabled');
+    const button = await this._button();
+    const disabled = await button.getProperty<boolean>('disabled');
     return !!disabled;
   }
 
   /** Checks whether this menu item is marked as the currently-selected option. */
   async isSelected(): Promise<boolean> {
+    const button = await this._button();
+    return (await button.getAttribute('aria-current')) === 'true';
+  }
+
+  /** Gets the name of the suffix icon, or null when the item has none. */
+  async getSuffixIcon(): Promise<string | null> {
+    const icon = await this._suffixIcon();
+    return icon ? icon.getAttribute('name') : null;
+  }
+
+  /**
+   * Gets the tooltip text, or null when the item has none. Read from the
+   * description `tnTooltip` attaches to the button, so the tooltip does not
+   * have to be on screen.
+   */
+  async getTooltip(): Promise<string | null> {
+    const button = await this._button();
+    const ids = ((await button.getAttribute('aria-describedby')) ?? '')
+      .split(/\s+/)
+      .filter((id) => id.startsWith(TOOLTIP_DESCRIPTION_ID_PREFIX));
+    for (const id of ids) {
+      const description = await this.documentRootLocatorFactory().locatorForOptional(`[id="${id}"]`)();
+      if (description) {
+        return (await description.text()).trim();
+      }
+    }
+    return null;
+  }
+
+  /** Moves the pointer onto this item's row, which shows its tooltip. */
+  async hover(): Promise<void> {
     const host = await this.host();
-    return (await host.getAttribute('aria-current')) === 'true';
+    await host.hover();
   }
 
   /** Clicks this menu item. */
   async click(): Promise<void> {
-    const host = await this.host();
-    await host.click();
+    const button = await this._button();
+    await button.click();
   }
 }
 
@@ -199,6 +237,72 @@ export class TnMenuHarness extends ComponentHarness {
         : text === filter.label;
       if (matches) {
         return item.isSelected();
+      }
+    }
+    throw new Error(`Could not find menu item with label "${String(filter.label)}"`);
+  }
+
+  /**
+   * Gets the name of a menu item's suffix icon, or `null` when it has none.
+   *
+   * @param filter Object with `label` to match (string or RegExp).
+   *
+   * @example
+   * ```typescript
+   * const menu = await rootLoader.getHarness(TnMenuHarness);
+   * expect(await menu.getItemSuffixIcon({ label: 'Delete' })).toBe('lock');
+   * ```
+   */
+  async getItemSuffixIcon(filter: { label: string | RegExp }): Promise<string | null> {
+    return (await this._findItem(filter)).getSuffixIcon();
+  }
+
+  /**
+   * Gets a menu item's tooltip text, or `null` when it has none. Works on a
+   * disabled item, and without the tooltip being shown.
+   *
+   * @param filter Object with `label` to match (string or RegExp).
+   *
+   * @example
+   * ```typescript
+   * const menu = await rootLoader.getHarness(TnMenuHarness);
+   * expect(await menu.getItemTooltip({ label: 'Delete' }))
+   *   .toBe('Missing permissions for this action');
+   * ```
+   */
+  async getItemTooltip(filter: { label: string | RegExp }): Promise<string | null> {
+    return (await this._findItem(filter)).getTooltip();
+  }
+
+  /**
+   * Hovers a menu item, disabled or not, which shows its tooltip. The tooltip
+   * opens on a timer, so let a macrotask pass before reading it with
+   * `TnTooltipHarness`.
+   *
+   * @param filter Object with `label` to match (string or RegExp).
+   *
+   * @example
+   * ```typescript
+   * const menu = await rootLoader.getHarness(TnMenuHarness);
+   * await menu.hoverItem({ label: 'Delete' });
+   * await new Promise((resolve) => setTimeout(resolve));
+   * const tooltip = await rootLoader.getHarness(TnTooltipHarness);
+   * expect(await tooltip.getText()).toBe('Missing permissions for this action');
+   * ```
+   */
+  async hoverItem(filter: { label: string | RegExp }): Promise<void> {
+    return (await this._findItem(filter)).hover();
+  }
+
+  private async _findItem(filter: { label: string | RegExp }): Promise<TnMenuItemHarness> {
+    const items = await this._items();
+    for (const item of items) {
+      const text = await item.getLabel();
+      const matches = filter.label instanceof RegExp
+        ? filter.label.test(text)
+        : text === filter.label;
+      if (matches) {
+        return item;
       }
     }
     throw new Error(`Could not find menu item with label "${String(filter.label)}"`);

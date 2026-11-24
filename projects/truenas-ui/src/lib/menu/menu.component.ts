@@ -24,6 +24,20 @@ export interface TnMenuItem {
   children?: TnMenuItem[];
   shortcut?: string;
   /**
+   * Icon drawn at the end of the row, after the label and the shortcut and
+   * before a submenu's `▶` caret — e.g. a lock on an item the user lacks
+   * permission for.
+   */
+  suffixIcon?: string;
+  suffixIconLibrary?: 'material' | 'mdi' | 'custom' | 'lucide';
+  /**
+   * Text shown on hover, and on keyboard focus, of the item. Shown on a
+   * disabled item too, where it is the usual way to say why it is disabled.
+   * Plain text is the intended use: a link in it cannot be reached, because a
+   * menu item's click is spoken for.
+   */
+  tooltip?: string;
+  /**
    * Marks this item as the currently-chosen option (e.g. the active sort key
    * or export format). Applies the `tn-menu-item--selected` class and an
    * `aria-current="true"` attribute. Visually distinct from focus/hover.
